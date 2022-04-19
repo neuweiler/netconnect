@@ -2,31 +2,23 @@
 *.d
 
 # Compiled Object files
-*.slo
-*.lo
 *.o
-*.obj
 
-# Precompiled Headers
-*.gch
-*.pch
+# Precompiled files
+*.gst
+*.gst.info
+NetConnectStrings.h
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+# Compiled libraries
+*.libraray
 
 # Executables
-*.exe
-*.out
-*.app
+NetConnect/Controller/src/NetConnect
+NetConnect/Prefs/src/NetConnectPrefs
+Prefs/src/AmiTCPConfig
+
+# Other
+*.uaem
+.settings
+.project
+.cproject
