@@ -26,14 +26,18 @@
 #define MUIM_IconBarPrefs_ModifyIcon		(TAGBASE_NETCONNECT | 0x1014)
 #define MUIM_IconBarPrefs_SetStates			(TAGBASE_NETCONNECT | 0x1015)
 
-#define MUIV_IconBarPrefs_ModifyIcon_Remove		1
-#define MUIV_IconBarPrefs_ModifyIcon_Name			2
-#define MUIV_IconBarPrefs_ModifyIcon_Program		3
-#define MUIV_IconBarPrefs_ModifyIcon_Image		4
-#define MUIV_IconBarPrefs_ModifyIcon_Sound		5
-#define MUIV_IconBarPrefs_ModifyIcon_Volume		6
-#define MUIV_IconBarPrefs_ModifyIcon_Advanced	7
-#define MUIV_IconBarPrefs_ModifyIcon_Script		8
+#define MUIV_IconBarPrefs_ModifyIcon_Remove			1
+#define MUIV_IconBarPrefs_ModifyIcon_Name				2
+#define MUIV_IconBarPrefs_ModifyIcon_Type				3
+#define MUIV_IconBarPrefs_ModifyIcon_Program			4
+#define MUIV_IconBarPrefs_ModifyIcon_Hotkey			5
+#define MUIV_IconBarPrefs_ModifyIcon_Image			6
+#define MUIV_IconBarPrefs_ModifyIcon_Sound			7
+#define MUIV_IconBarPrefs_ModifyIcon_PlaySound		8
+#define MUIV_IconBarPrefs_ModifyIcon_Volume			9
+#define MUIV_IconBarPrefs_ModifyIcon_LoadScript		10
+#define MUIV_IconBarPrefs_ModifyIcon_SaveScript		11
+#define MUIV_IconBarPrefs_ModifyIcon_ClearScript	12
 
 struct MUIP_IconBarPrefs_ModifyIcon			{ ULONG MethodID; LONG flags; };
 struct MUIP_IconBarPrefs_SetStates			{ ULONG MethodID; LONG level; };
@@ -75,16 +79,19 @@ struct IconBarPrefs_Data
 	Object *SL_Rows;
 	Object *STR_Name;
 	Object *PA_Program;
+	Object *STR_Hotkey;
 	Object *PA_Image;
 	Object *PA_Sound;
-	Object *CH_Advanced;
+	Object *BT_PlaySound;
+	Object *CY_Type;
 	Object *SL_Volume;
 	Object *GR_Script;
 	Object *GR_Editor;
-	Object *TV_Editor;
-	Object *PA_FindProgram;
-	Object *BT_Add;
-	Object *PA_SaveScript;
+	Object *TF_Editor;
+	Object *SB_Editor;
+	Object *BT_LoadScript;
+	Object *BT_SaveScript;
+	Object *BT_ClearScript;
 
 	Object *BT_Save;
 	Object *BT_Use;
@@ -111,14 +118,16 @@ struct Icon
 {
 	char Name[81];
 	char Program[MAXPATHLEN];
+	char Hotkey[81];
 	char ImageFile[MAXPATHLEN];
 	char Sound[MAXPATHLEN];
 	LONG Volume;
-	BOOL Advanced;
-	char Script[MAXPATHLEN];
+	LONG Type;
 
 	Object *bodychunk;
 	Object *list;
 	UBYTE *body;
+	struct BitMapHeader *bmhd;
 	ULONG *cols;					/* pointer to color array (MUST be ULONG !!) */
+	CxObj *cx_filter;
 };

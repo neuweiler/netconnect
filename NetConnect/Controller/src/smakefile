@@ -26,11 +26,11 @@ GST		= GSTIMM GST=includes.gst
 CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS
 #CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS DBG=FULL
 
-#LFLAGS	= SC SD NOICONS
 LFLAGS	= ND SC SD NOICONS
+#LFLAGS	= SC SD NOICONS
 
-OBJS		= main.o globals.o mui.o
-LIBS		= textviewclass.lib misc.lib foundation.lib lib:amiga.lib lib:sc.lib
+OBJS		= main.o globals.o mui.o TextFieldAuto.o
+LIBS		= lib:amiga.lib lib:sc.lib
 
 all:	 includes.gst NetConnectStrings.h default_icon.bh logo.bh NetConnect
 
@@ -58,5 +58,7 @@ NetConnect:	$(OBJS)
 
 globals.o:	globals.c	NetConnect.h NetConnectStrings.h	logo.bh default_icon.bh
 	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
+TextFieldAuto.o: TextFieldAuto.c
+	sc $(CFLAGS) $(GST) $(OPTIONS) TextFieldAuto.c
 main.o:		main.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
 mui.o:		mui.c			NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh

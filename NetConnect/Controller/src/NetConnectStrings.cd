@@ -1,3 +1,5 @@
+MSG_STR_Empty (//)
+
 MSG_AppDescription (//)
 Net Connect
 MSG_AppCopyright (//)
@@ -6,128 +8,82 @@ MSG_WI_IconBar (//)
 NetConnect Control Center
 MSG_WI_IconBarPrefs (//)
 Icon Bar Preferences
-MSG_WI_AmiTCPPrefs (//)
-AmiTCP Preferences
-MSG_GR_Register0 (//)
-Server
-MSG_GR_Register1 (//)
-User
-MSG_GR_Register2 (//)
-Misc
-MSG_GR_Register3 (//)
-Interface
-MSG_GR_Register4 (//)
-DialScript
-MSG_GR_Register5 (//)
-UserStartnet
 MSG_LV_ButtonBankTitle (//)
 Button Bank
 MSG_LV_IconBarTitle (//)
 Icon Bar
 MSG_GR_ButtonConrtolTitle (//)
 Button Control
-MSG_BT_New (//)
-_New
-MSG_BT_Remove (//)
-_Remove
-MSG_LA_Name (//)
-Name :
-MSG_LA_Program (//)
-Program :
-MSG_LA_Image (//)
-Image :
-MSG_LA_Sound (//)
-Sound :
-MSG_LA_PlaySound (//)
-Play Sound
-MSG_LA_Advanced (//)
-Advanced Editing
-MSG_LA_Volume (//)
-Volume
 MSG_GR_ScriptEditTitle (//)
 Script Editor
-MSG_LA_FindProgram (//)
-Find Program :
-MSG_BT_Add (//)
-_Add
-MSG_LA_SaveScript (//)
-Save Script :
-MSG_GR_ConnectionTitle (//)
-Connection
-MSG_RA_Connection0 (//)
-Dynamic
-MSG_RA_Connection1 (//)
-Static
-MSG_GR_UserDetailsTitle (//)
-User Details
-MSG_LA_UserName (//)
-Username :
-MSG_LA_NodeName (//)
-Node name :
-MSG_LA_RealName (//)
-Real name :
-MSG_LA_DomainName (//)
-Doman name :
-MSG_LA_Organisation (//)
-Organisation :
-MSG_LA_Address (//)
-IP Address :
-MSG_LA_Password (//)
-Password :
-MSG_GR_CountryTitle (//)
-Country
-MSG_LA_Country (//)
-Choose your Country :
-MSG_GR_ProviderTitle (//)
-Internet Provider
-MSG_LA_Provider (//)
-Choose a Provider :
-MSG_LA_PoP (//)
-Choose a PoP:
-MSG_LA_Phone (//)
-PoP Phone Number :
-MSG_GR_DetailsTitle (//)
-Server Details
-MSG_LA_NameServer1 (//)
-Nameserver 1 :
-MSG_LA_MailServer (//)
-Mail Server :
-MSG_LA_NameServer2 (//)
-Nameserver 2 :
-MSG_LA_NewsServer (//)
-News Server :
-MSG_LA_Netmask (//)
-Netmask :
-MSG_LA_IRCServer (//)
-IRC Server :
-MSG_GR_DrawersTitle (//)
-Drawer setup
-MSG_LA_MailIn (//)
-Mail IN Drawer :
-MSG_LA_MailOut (//)
-Mail OUT Drawer :
-MSG_LA_FilesIn (//)
-Files IN Drawer :
-MSG_LA_FilesOut (//)
-Files OUT Drawer :
-MSG_GR_ModemTitle (//)
-Modem settings
-MSG_LA_SerialDriver (//)
-Serial Driver :
-MSG_LA_ModemInit (//)
-Modem Init :
-MSG_LA_SerialUnit (//)
-Serial Unit :
-MSG_LA_DialString (//)
-Dial String :
-MSG_LA_BaudRate (//)
-Baud Rate (BPS) :
+MSG_BT_Okay (//)
+_Okay
+MSG_BT_New (//)
+Ne_w
+MSG_BT_Remove (//)
+_Remove
 MSG_BT_Save (//)
 _Save
 MSG_BT_Use (//)
 _Use
 MSG_BT_Cancel (//)
 _Cancel
+MSG_BT_LoadScript (//)
+_Load
+MSG_BT_SaveScript (//)
+S_ave
+MSG_BT_ClearScript (//)
+Cl_ear
+MSG_LA_Rows (//)
+Rows :
+MSG_CC_Rows (/1/1)
+o
+MSG_LA_Name (//)
+Name :
+MSG_CC_Name (//)
+n
+MSG_LA_Program (//)
+Program :
+MSG_CC_Program (//)
+p
+MSG_LA_Hotkey (//)
+Hotkey :
+MSG_CC_Hotkey (//)
+h
+MSG_LA_Image (//)
+Image :
+MSG_CC_Image (//)
+i
+MSG_LA_Sound (//)
+Sound :
+MSG_CC_Sound (//)
+d
+MSG_LA_ProgramType (//)
+Type :
+MSG_CC_ProgramType (//)
+t
+MSG_LA_Volume (//)
+Volume :
+MSG_CC_Volume (//)
+v
+MSG_LA_FileExists (//)
+File already exists !
+MSG_BT_OverwriteAbort (//)
+_Overwrite|_Abort
+MSG_LA_ScriptModified (//)
+Script has been modified.
+MSG_BT_SaveDiscardChanges (//)
+Save Changes|Discard Changes
+MSG_LA_About (//)
+About
+MSG_TX_About1 (//)
+\33c\nNetConnect Control 1.00 (30.6.96)\n© 1996 Michael Neuweiler\n\nAuthors:\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler\n\n\n\33bDEMO\33n\n\33cDo NOT redistribute !!
+MSG_TX_About2 (//)
+\33c\n\NetConnect uses:\n\nMUI - Copyright © Stefan Stuntz\n\ntextfield.gadget - Copyright © 1995 Mark Thomas
+MSG_TX_New (//)
+New
+MSG_LA_NoWBStartHandler (//)
+L:WBStartHandler not found.
 MSG_MENU_PROJECT (//)
 Project
 MSG_MENU_ABOUT (//)
@@ -146,3 +102,43 @@ MSG_MENU_MUI (//)
 MUI...
 MSG_MENU_RESET_DEFAULT (//)
 Reset to default
+MSG_HELP_InactiveIcons (//)
+This list contains Icons\nwhich are not used at\nthe moment.
+MSG_HELP_ActiveIcons (//)
+This list constains the\ncurrently active icons.
+MSG_HELP_New (//)
+Create a new icon.
+MSG_HELP_Remove (//)
+Delete the active icon.
+MSG_HELP_Rows (//)
+Determine the number of\nrows the main window will\nuse to display the icons.
+MSG_HELP_Name (//)
+A name you can give\nto the button.
+MSG_HELP_Type (//)
+The type of program.\nIt determines how the\nprogram is beeing launched.
+MSG_HELP_Program (//)
+The filename of the program.
+MSG_HELP_Hotkey (//)
+A hotkey to launch\nthe program.\n\n(currently inactive)
+MSG_HELP_Image (//)
+Name of an IFF file which\nholds the image for the\nbutton.
+MSG_HELP_Sound (//)
+Name of a sound file\nwhich will be played\nif you hit the button.
+MSG_HELP_PlaySound (//)
+Listen to the\nselected sound.
+MSG_HELP_Volume (//)
+The sound's volume.
+MSG_HELP_Editor (//)
+Edit the script file you\nentered in \"Program\".
+MSG_HELP_LoadScript (//)
+Load the script.
+MSG_HELP_SaveScript (//)
+Save the script.
+MSG_HELP_ClearScript (//)
+Delete the contents\nof the script.
+MSG_HELP_Save (//)
+Save all changes\npermanently.
+MSG_HELP_Use (//)
+Save the changes\ntemporarely.\n(until you reboot)
+MSG_HELP_Cancel (//)
+Discard all changes.

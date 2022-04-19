@@ -17,6 +17,7 @@ struct	Library					*UtilityBase	= NULL;
 struct	Library					*LocaleBase		= NULL;
 struct	Library					*IFFParseBase	= NULL; /* this one's for the config-file */
 struct	Library					*DataTypesBase	= NULL;
+struct	Library					*CxBase			= NULL;
 struct	Catalog					*cat				= NULL; /* pointer to our locale catalog */
 
 STATIC LONG Stops[] =			/* IFF ID's for our config file	*/
@@ -29,14 +30,17 @@ STATIC LONG Stops[] =			/* IFF ID's for our config file	*/
 Object *app						= NULL;	/* our MUI application												*/
 Object *win						= NULL;	/* a global pointer to our main window (the icon bar) 	*/
 
-struct MUI_CustomClass  *CL_IconBar;			/* class for the main (icon bar) window									*/
-struct MUI_CustomClass  *CL_IconBarPrefs;		/* icon bar preferences window class										*/
-struct MUI_CustomClass  *CL_IconList;			/* list class for the two listviews in the icon bar prefs			*/
-struct MUI_CustomClass	*CL_Button;
-struct MUI_CustomClass	*CL_About;
+struct MUI_CustomClass  *CL_IconBar			= NULL;	/* class for the main (icon bar) window									*/
+struct MUI_CustomClass  *CL_IconBarPrefs	= NULL;	/* icon bar preferences window class										*/
+struct MUI_CustomClass  *CL_IconList		= NULL;	/* list class for the two listviews in the icon bar prefs			*/
+struct MUI_CustomClass	*CL_Button			= NULL;
+struct MUI_CustomClass	*CL_About			= NULL;
 
 LONG Rows = 1;
 Object *SoundObject = NULL;
+struct ClipboardHandle *clip_handle = NULL, *undo_handle = NULL;
+STRPTR ARR_ProgramTypes[] = { "AmigaDOS", "Workbench", "Script", "ARexx", NULL };
+
 
 enum { MEN_RESET = 1 };
 struct NewMenu IconBarPrefsMenu[] =
@@ -66,3 +70,6 @@ struct NewMenu IconBarMenu[] =
 	{ NM_END  , NULL								, 0 , 0, 0, (APTR)0				},
 
 };
+
+SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg);
+struct Hook BrokerHook = { { 0,0 }, (VOID *)BrokerFunc, NULL, NULL };

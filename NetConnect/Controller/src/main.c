@@ -18,11 +18,13 @@ VOID exit_libs(VOID)
 	if(UtilityBase)		CloseLibrary(UtilityBase);
 	if(MUIMasterBase)		CloseLibrary(MUIMasterBase);
 	if(LocaleBase)			CloseLibrary(LocaleBase);
+	if(CxBase)				CloseLibrary(CxBase);
 
 	cat			= NULL;
 	SoundObject	= NULL;
 	IFFParseBase	= IntuitionBase	= UtilityBase		=
-	MUIMasterBase	= LocaleBase		= DataTypesBase	= NULL;
+	MUIMasterBase	= LocaleBase		= DataTypesBase	=
+	CxBase			= NULL;
 }
 
 
@@ -40,10 +42,11 @@ BOOL init_libs(VOID)
 	IntuitionBase	= OpenLibrary("intuition.library"	, 36);
 	IFFParseBase	= OpenLibrary("iffparse.library"		, 0);
 	DataTypesBase	= OpenLibrary("datatypes.library"	, 39);
+	CxBase			= OpenLibrary("commodities.library"	, 37);
 
 	if(MUIMasterBase && UtilityBase && IntuitionBase && IFFParseBase)
 		return(TRUE);
-	/* the program will still work without locale.library */
+	/* the program will still work without locale.library or commodity.library*/
 
 	exit_libs();
 	return(FALSE);
@@ -95,6 +98,7 @@ LONG main(VOID)
 				MUIA_Application_Version		, "$VER: NetConnect 1.0 (01.06.96)",
 				MUIA_Application_Copyright		, GetStr(MSG_AppCopyright),
 				MUIA_Application_Description	, GetStr(MSG_AppDescription),
+				MUIA_Application_BrokerHook	, &BrokerHook,
 				MUIA_Application_Window			, win = NewObject(CL_IconBar->mcc_Class, NULL, TAG_DONE),
 				End;
 
