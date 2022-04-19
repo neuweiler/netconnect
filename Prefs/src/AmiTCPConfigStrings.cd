@@ -1,0 +1,174 @@
+MSG_AppDescription (//)
+Net Connect
+MSG_AppCopyright (//)
+Michael Neuweiler
+MSG_WI_IconBar (//)
+NetConnect Control Center
+MSG_WI_IconBarPrefs (//)
+Icon Bar Preferences
+MSG_WI_AmiTCPPrefs (//)
+AmiTCP Config
+MSG_GR_Register0 (//)
+Provider
+MSG_GR_Register1 (//)
+User
+MSG_GR_Register2 (//)
+Modem
+MSG_GR_Register3 (//)
+Misc
+MSG_GR_Register4 (//)
+DialScript
+MSG_GR_Register5 (//)
+UserStartnet
+MSG_GR_Register6 (//)
+User Database
+MSG_LV_ButtonBankTitle (//)
+Button Bank
+MSG_LV_IconBarTitle (//)
+Icon Bar
+MSG_GR_ButtonConrtolTitle (//)
+Button Control
+MSG_BT_New (//)
+_New
+MSG_BT_Remove (//)
+_Remove
+MSG_LA_Name (//)
+Name :
+MSG_LA_Program (//)
+Program :
+MSG_LA_Image (//)
+Image :
+MSG_LA_Sound (//)
+Sound :
+MSG_LA_PlaySound (//)
+Play Sound
+MSG_LA_Advanced (//)
+Advanced Editing
+MSG_LA_Volume (//)
+Volume
+MSG_GR_ScriptEditTitle (//)
+Script Editor
+MSG_LA_FindProgram (//)
+Find Program :
+MSG_BT_Add (//)
+_Add
+MSG_LA_SaveScript (//)
+Save Script :
+MSG_GR_ConnectionTitle (//)
+Connection
+MSG_RA_Connection0 (//)
+Dynamic
+MSG_RA_Connection1 (//)
+Static
+MSG_GR_UserDetailsTitle (//)
+User Details
+MSG_LA_UserName (//)
+Username :
+MSG_LA_HostName (//)
+Host name :
+MSG_LA_RealName (//)
+Real name :
+MSG_LA_DomainName (//)
+Domain name :
+MSG_LA_Organisation (//)
+Organisation :
+MSG_LA_Address (//)
+IP Address :
+MSG_LA_Password (//)
+Password :
+MSG_GR_CountryTitle (//)
+Country
+MSG_LA_Country (//)
+Choose your Country :
+MSG_GR_ProviderTitle (//)
+Internet Provider
+MSG_LA_Provider (//)
+Choose a Provider :
+MSG_LA_PoP (//)
+Choose a PoP :
+MSG_LA_Phone (//)
+PoP Phone Number(s) :
+MSG_GR_DetailsTitle (//)
+Server Details
+MSG_LA_NameServer1 (//)
+Nameserver 1 :
+MSG_LA_MailServer (//)
+Mail Server :
+MSG_LA_NameServer2 (//)
+Nameserver 2 :
+MSG_LA_NewsServer (//)
+News Server :
+MSG_LA_Netmask (//)
+Netmask :
+MSG_LA_IRCServer (//)
+IRC Server :
+MSG_LA_Gateway (//)
+Gateway :
+MSG_GR_DrawersTitle (//)
+Drawer Setup
+MSG_LA_MailIn (//)
+Mail IN :
+MSG_LA_MailOut (//)
+Mail OUT :
+MSG_LA_NewsIn (//)
+News IN :
+MSG_LA_NewsOut (//)
+News OUT :
+MSG_LA_FilesIn (//)
+Files IN :
+MSG_LA_FilesOut (//)
+Files OUT :
+MSG_GR_ModemTitle (//)
+Modem Settings
+MSG_LA_Modem (//)
+Choose Modem :
+MSG_LA_SerialDriver (//)
+Device :
+MSG_LA_ModemInit (//)
+Modem Init :
+MSG_LA_SerialUnit (//)
+Unit :
+MSG_LA_DialPrefix (//)
+Dial Prefix :
+MSG_LA_DialSuffix (//)
+Dial Suffix :
+MSG_LA_BaudRate (//)
+Baud Rate :
+MSG_BT_Save (//)
+_Save
+MSG_BT_Use (//)
+_Use
+MSG_BT_Cancel (//)
+_Cancel
+MSG_MENU_PROJECT (//)
+Project
+MSG_MENU_ABOUT (//)
+About
+MSG_MENU_QUIT (//)
+Quit
+MSG_MENU_SETTINGS (//)
+Settings
+MSG_MENU_ICONBAR (//)
+Icon Bar
+MSG_MENU_AMITCP (//)
+AmiTCP
+MSG_MENU_TIME (//)
+Time
+MSG_MENU_MUI (//)
+MUI...
+MSG_MENU_RESET_DEFAULT (//)
+Reset to default
+MSG_BT_LoadScript (//)
+_Load
+MSG_BT_SaveScript (//)
+S_ave
+MSG_BT_ClearScript (//)
+Cl_ear
+MSG_LA_FileExists (//)
+File already exists !
+MSG_BT_OverwriteAbort (//)
+_Overwrite|_Abort
+MSG_LA_ScriptModified (//)
+Script has been modified.
+MSG_BT_SaveDiscardChanges (//)
+Save Changes|Discard Changes
