@@ -2,7 +2,7 @@
 #
 #	SMakefile
 #
-#	Makefile for the `SMake' utility required to build `NetConnect'
+#	Makefile for the `SMake' utility required to build `NetConnect Config'
 #
 #	1996 by Michael Neuweiler
 #
@@ -17,7 +17,7 @@
 CPU		= ANY
 #CPU		= 68030
 
-OPTIMIZE	= OPT NOOPTINLOCAL
+#OPTIMIZE	= OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS	= CPU=$(CPU) $(OPTIMIZE)
 
@@ -30,33 +30,27 @@ CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST ST
 LFLAGS	= ND SC SD NOICONS
 
 OBJS		= main.o globals.o mui.o
-LIBS		= textviewclass.lib misc.lib foundation.lib lib:amiga.lib lib:sc.lib
+LIBS		= lib:amiga.lib lib:sc.lib
 
-all:	 includes.gst NetConnectStrings.h default_icon.bh logo.bh NetConnect
+all:	 includes.gst ConfigStrings.h Config
 
 includes.gst:	includes.h
 		GST >NIL: UNLOAD $@
 		SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ includes.h
 		GST $@
 
-NetConnectStrings.h: NetConnectStrings.cd
-	cat2h NetConnectStrings.cd NetConnectStrings.h
+ConfigStrings.h: ConfigStrings.cd
+	cat2h ConfigStrings.cd ConfigStrings.h
 
-default_icon.bh: default_icon.iff
-	brush2c default_icon.iff >default_icon.bh
-
-logo.bh: logo.iff
-	brush2c logo.iff >logo.bh
-
-NetConnect:	$(OBJS)
-   SLINK WITH T:NetConnect.WITH <<!(T:NetConnect.WITH)
+Config:	$(OBJS)
+   SLINK WITH T:Config.WITH <<!(T:Config.WITH)
 		FROM	lib:c.o $(OBJS)
-		TO		NetConnect
+		TO		Config
 		LIB	$(LIBS)
 		$(LFLAGS)
 	<
 
-globals.o:	globals.c	NetConnect.h NetConnectStrings.h	logo.bh default_icon.bh
+globals.o:	globals.c	Config.h ConfigStrings.h
 	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
-main.o:		main.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
-mui.o:		mui.c			NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
+main.o:		main.c		Config.h ConfigStrings.h globals.c
+mui.o:		mui.c			Config.h ConfigStrings.h globals.c

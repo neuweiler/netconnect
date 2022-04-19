@@ -16,4 +16,3 @@
 #include <clib/datatypes_protos.h>
 #include <datatypes/pictureclass.h>
 #include <datatypes/soundclass.h>
-#include <TextView.h>

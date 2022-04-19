@@ -1,17 +1,29 @@
 #include "NetConnect.h"
 #include "NetConnectStrings.h"
 
+#define USE_DEFAULT_ICON_HEADER
+#define USE_DEFAULT_ICON_BODY
+#define USE_DEFAULT_ICON_COLORS
+#include "default_icon.bh"
+
+#define USE_LOGO_HEADER
+#define USE_LOGO_BODY
+#define USE_LOGO_COLORS
+#include "logo.bh"
+
 struct	Library					*IntuitionBase	= NULL;
 struct	Library					*MUIMasterBase	= NULL;
 struct	Library					*UtilityBase	= NULL;
 struct	Library					*LocaleBase		= NULL;
 struct	Library					*IFFParseBase	= NULL; /* this one's for the config-file */
+struct	Library					*DataTypesBase	= NULL;
 struct	Catalog					*cat				= NULL; /* pointer to our locale catalog */
 
 STATIC LONG Stops[] =			/* IFF ID's for our config file	*/
 {
 	ID_NTCN, ID_AICN,				/* Active ICoN		: Holds a "struct Icon", an icon for the Icon Bar		*/
-	ID_NTCN, ID_IICN				/* Inactive ICoN	: Holds a "struct Icon", an icon fot the Icon Bank	*/
+	ID_NTCN, ID_IICN,				/* Inactive ICoN	: Holds a "struct Icon", an icon fot the Icon Bank	*/
+	ID_NTCN, ID_ROWS
 };
 
 Object *app						= NULL;	/* our MUI application												*/
@@ -21,13 +33,10 @@ struct MUI_CustomClass  *CL_IconBar;			/* class for the main (icon bar) window		
 struct MUI_CustomClass  *CL_IconBarPrefs;		/* icon bar preferences window class										*/
 struct MUI_CustomClass  *CL_IconList;			/* list class for the two listviews in the icon bar prefs			*/
 struct MUI_CustomClass	*CL_Button;
-struct MUI_CustomClass	*CL_AmiTCPPrefs;
-struct MUI_CustomClass  *CL_UserPrefs;
-struct MUI_CustomClass  *CL_ServerPrefs;
-struct MUI_CustomClass  *CL_MiscPrefs;
+struct MUI_CustomClass	*CL_About;
 
-STRPTR STR_GR_Register[5];			/* contains the strings for the register fields in AmiTCP prefs							*/
-STRPTR STR_RA_Connection[3];		/* array which holds the strings for static/dynamic radio buttons in AmiTCP prefs	*/
+LONG Rows = 1;
+Object *SoundObject = NULL;
 
 enum { MEN_RESET = 1 };
 struct NewMenu IconBarPrefsMenu[] =

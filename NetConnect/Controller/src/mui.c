@@ -1,7 +1,3 @@
-/***********************************************************/
-/* you should set the tabulator spacing to 3 for this file */
-/***********************************************************/
-
 #include "globals.c"
 
 extern STRPTR GetStr(STRPTR idstr);
@@ -26,8 +22,8 @@ Object *create_bodychunk(struct Icon *icon)
 	struct IFFHandle *Handle;
 	struct ContextNode *cn;
 	struct StoredProperty *sp;
-	int size;
-	UBYTE *cols = NULL;
+	int size, i;
+	UBYTE *src;
 
 	if(Handle=AllocIFF())
 	{
@@ -49,7 +45,14 @@ Object *create_bodychunk(struct Icon *icon)
 								!ParseIFF(Handle, IFFPARSE_SCAN))
 							{
 								if(sp = FindProp(Handle, ID_ILBM, ID_CMAP))
-									cols = sp->sp_Data;
+								{
+									src = sp->sp_Data;
+									if(icon->cols = AllocVec(sizeof(ULONG) * sp->sp_Size, MEMF_ANY))
+									{
+										for (i = 0; i < sp->sp_Size; i++)
+											icon->cols[i] = to32(src[i]);
+									}
+								}
 
 								if(sp = FindProp(Handle, ID_ILBM, ID_BMHD))
 								{
@@ -62,7 +65,7 @@ Object *create_bodychunk(struct Icon *icon)
 										{
 											bodychunk = BodychunkObject,
 												ButtonFrame,
-//												MUIA_Bitmap_SourceColors	, cols,
+												MUIA_Bitmap_SourceColors	, icon->cols,
 												MUIA_Bitmap_Width				, bmhd->bmh_Width,
 												MUIA_Bitmap_Height			, bmhd->bmh_Height,
 												MUIA_FixWidth					, bmhd->bmh_Width,
@@ -88,6 +91,25 @@ Object *create_bodychunk(struct Icon *icon)
 		}
 		FreeIFF(Handle);
 	}
+	if(!bodychunk)
+	{
+		bodychunk = BodychunkObject,
+			ButtonFrame,
+			MUIA_Bitmap_SourceColors	, (ULONG *)default_icon_colors,
+			MUIA_Bitmap_Width				, DEFAULT_ICON_WIDTH ,
+			MUIA_Bitmap_Height			, DEFAULT_ICON_HEIGHT,
+			MUIA_FixWidth					, DEFAULT_ICON_WIDTH ,
+			MUIA_FixHeight					, DEFAULT_ICON_HEIGHT,
+			MUIA_Background				, MUII_ButtonBack,
+			MUIA_InputMode					, MUIV_InputMode_RelVerify,
+			MUIA_Bodychunk_Depth			, DEFAULT_ICON_DEPTH ,
+			MUIA_Bodychunk_Body			, (UBYTE *)default_icon_body,
+			MUIA_Bodychunk_Compression	, DEFAULT_ICON_COMPRESSION,
+			MUIA_Bodychunk_Masking		, DEFAULT_ICON_MASKING,
+			MUIA_Bitmap_Transparent		, 0,
+		End;
+	}
+
 	return(bodychunk);
 }
 
@@ -95,6 +117,7 @@ VOID init_icon(struct Icon *icon, Object *list)
 {
 	icon->body		= NULL;
 	icon->list		= NULL;
+	icon->cols		= NULL;
 	if(icon->bodychunk = create_bodychunk(icon))
 	{
 		if(list)
@@ -102,364 +125,209 @@ VOID init_icon(struct Icon *icon, Object *list)
 	}
 }
 
-
-
-/****************************************************************************/
-/* User Prefs class (GROUP)                                                 */
-/****************************************************************************/
-
-ULONG UserPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
+LONG get_file_size(STRPTR file)
 {
-	struct UserPrefs_Data tmp;
+	struct FileInfoBlock *fib;
+	BPTR lock;
+	LONG size = 0;
 
-	STR_RA_Connection[0] = GetStr(MSG_RA_Connection0);
-	STR_RA_Connection[1] = GetStr(MSG_RA_Connection1);
-	STR_RA_Connection[2] = NULL;
+	if(lock = Lock(file, ACCESS_READ))
+	{
+		if(fib = AllocDosObject(DOS_FIB, NULL))
+		{
+			if(Examine(lock, fib))
+				size = (fib->fib_DirEntryType > 0 ? -1 : fib->fib_Size);
+
+			FreeDosObject(DOS_FIB, fib);
+		}
+		UnLock(lock);
+	}
+	return(size);
+}
+
+
+STRPTR LoadFile(STRPTR file)
+{
+	LONG size;
+	STRPTR buf = NULL;
+	BPTR fh;
+	BOOL success = FALSE;
+
+	if((size = get_file_size(file)) > 0)
+	{
+		if(buf = AllocVec(size, MEMF_ANY))
+		{
+			if(fh = Open(file, MODE_OLDFILE))
+			{
+				if(Read(fh, buf, size) == size)
+					success = TRUE;
+				Close(fh);
+			}
+		}
+	}
+
+	if(!success)
+	{
+		FreeVec(buf);
+		buf = NULL;
+	}
+
+	return(buf);
+}
+
+int find_max(VOID)
+{
+	struct Icon *icon;
+	struct BitMapHeader *bmhd;
+	struct IFFHandle *Handle1, *Handle2;
+	struct ContextNode *cn1, *cn2;
+	struct StoredProperty *sp;
+	int max_height = 0;
+
+	if(icon = AllocVec(sizeof(struct Icon), MEMF_ANY | MEMF_CLEAR))
+	{
+		if(Handle1 = AllocIFF())
+		{
+			if(Handle1->iff_Stream = Open("ENV:NetConnectPrefs", MODE_OLDFILE))
+			{
+				InitIFFasDOS(Handle1);
+				if(!(OpenIFF(Handle1, IFFF_READ)))
+				{
+					if(!(StopChunks(Handle1, Stops, NUM_STOPS)))
+					{
+						while(!ParseIFF(Handle1, IFFPARSE_SCAN))
+						{
+							cn1 = CurrentChunk(Handle1);
+							if(cn1->cn_ID == ID_AICN || cn1->cn_ID == ID_IICN)
+							{
+								if(ReadChunkBytes(Handle1, icon, MIN(sizeof(struct Icon), cn1->cn_Size)) == MIN(sizeof(struct Icon), cn1->cn_Size))
+								{
+									if(Handle2=AllocIFF())
+									{
+										if(Handle2->iff_Stream = Open(icon->ImageFile, MODE_OLDFILE))
+										{
+											InitIFFasDOS(Handle2);
+											if(!OpenIFF(Handle2, IFFF_READ))
+											{
+												if(!ParseIFF(Handle2, IFFPARSE_STEP))
+												{
+													if((cn2 = CurrentChunk(Handle2)) && (cn2->cn_ID == ID_FORM))
+													{
+														if(cn2->cn_Type == ID_ILBM)
+														{
+															if(!PropChunk(Handle2, ID_ILBM, ID_BMHD) &&
+																!PropChunk(Handle2, ID_ILBM, ID_CMAP) &&
+																!StopChunk(Handle2, ID_ILBM, ID_BODY) &&
+																!StopOnExit(Handle2, ID_ILBM, ID_FORM) &&
+																!ParseIFF(Handle2, IFFPARSE_SCAN))
+															{
+																if(sp = FindProp(Handle2, ID_ILBM, ID_BMHD))
+																{
+																	bmhd = (struct BitMapHeader *)sp->sp_Data;
+																	max_height = MAX(max_height, bmhd->bmh_Height);
+																}
+															}
+														}
+													}
+												}
+												CloseIFF(Handle2);
+											}
+											Close(Handle2->iff_Stream);
+										}
+										FreeIFF(Handle2);
+									}
+								}
+							}
+						}
+					}
+					CloseIFF(Handle1);
+				}
+				Close(Handle1->iff_Stream);
+			}
+			FreeIFF(Handle1);
+		}
+		FreeVec(icon);
+	}
+
+	if(max_height)
+		return(max_height);
+	else
+		return(40);
+}
+
+
+
+/****************************************************************************/
+/* About class                                                              */
+/****************************************************************************/
+
+ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct About_Data tmp;
 
 	if(obj = (Object *)DoSuperNew(cl, obj,
-		MUIA_HelpNode, "GR_User",
-		Child, HGroup,
-			MUIA_HelpNode	, "GR_Connection",
-			MUIA_Frame		, MUIV_Frame_Group,
-			MUIA_FrameTitle, GetStr(MSG_GR_ConnectionTitle),
-			Child, HVSpace,
-			Child, tmp.RA_Connection = RadioObject,
-				MUIA_HelpNode		, "RA_Connection",
-				MUIA_Radio_Entries, STR_RA_Connection,
+		MUIA_Window_Title, "About",
+		MUIA_Window_ID   , MAKE_ID('A','B','O','U'),
+		WindowContents, VGroup,
+			MUIA_Background, MUII_RequesterBack,
+			Child, HGroup,
+				TextFrame,
+				MUIA_Background, MUII_GroupBack,
+				Child, HVSpace,
+				Child, BodychunkObject,
+					MUIA_FixWidth             , LOGO_WIDTH ,
+					MUIA_FixHeight            , LOGO_HEIGHT,
+					MUIA_Bitmap_Width         , LOGO_WIDTH ,
+					MUIA_Bitmap_Height        , LOGO_HEIGHT,
+					MUIA_Bodychunk_Depth      , LOGO_DEPTH ,
+					MUIA_Bodychunk_Body       , (UBYTE *)logo_body,
+					MUIA_Bodychunk_Compression, LOGO_COMPRESSION,
+					MUIA_Bodychunk_Masking    , LOGO_MASKING,
+					MUIA_Bitmap_SourceColors  , (ULONG *)logo_colors,
+					MUIA_Bitmap_Transparent   , 0,
+				End,
+				Child, HVSpace,
 			End,
-			Child, HVSpace,
-		End,
-		Child, ColGroup(4),
-			MUIA_HelpNode	, "GR_UserDetails",
-			MUIA_Frame		, MUIV_Frame_Group,
-			MUIA_FrameTitle, GetStr(MSG_GR_UserDetailsTitle),
-			Child, Label(GetStr(MSG_LA_UserName)),
-			Child, tmp.STR_UserName = String("enquiries", 80),
-			Child, Label(GetStr(MSG_LA_NodeName)),
-			Child, tmp.STR_NodeName = String("active2", 80),
-			Child, Label(GetStr(MSG_LA_RealName)),
-			Child, tmp.STR_RealName = String("Chris Wiles", 80),
-			Child, Label(GetStr(MSG_LA_DomainName)),
-			Child, tmp.STR_DomainName = String("demon.co.uk", 80),
-			Child, Label(GetStr(MSG_LA_Organisation)),
-			Child, tmp.STR_Organisation = String("Active Software", 80),
-			Child, Label(GetStr(MSG_LA_Address)),
-			Child, tmp.STR_IP_Address = StringObject,
-				MUIA_Frame				, MUIV_Frame_String,
-				MUIA_HelpNode			, "STR_IP_Address",
-				MUIA_String_Contents	, "0.0.0.0",
-				MUIA_String_Accept	, "0123456789.",
-				MUIA_String_MaxLen	, 18,
-			End,
-			Child, Label(GetStr(MSG_LA_Password)),
-			Child, tmp.STR_Password = StringObject,
-				MUIA_Frame				, MUIV_Frame_String,
-				MUIA_HelpNode			, "STR_Password",
-				MUIA_String_Contents	, "password",
-				MUIA_String_Secret	, TRUE,
-			End,
-			Child, HVSpace,
-			Child, HVSpace,
-		End,
-		TAG_MORE, msg->ops_AttrList))
-	{
-		struct UserPrefs_Data *data = INST_DATA(cl,obj);
-
-		*data = tmp;
-	}
-	return((ULONG)obj);
-}
-
-SAVEDS ASM ULONG UserPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
-{
-	switch (msg->MethodID)
-	{
-		case OM_NEW										: return(UserPrefs_New		(cl, obj, (APTR)msg));
-	}
-	return(DoSuperMethodA(cl, obj, msg));
-}
-
-
-
-/****************************************************************************/
-/* Server Prefs class (GROUP)                                               */
-/****************************************************************************/
-
-ULONG ServerPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
-{
-	struct ServerPrefs_Data tmp;
-
-	if(obj = (Object *)DoSuperNew(cl, obj,
-		MUIA_HelpNode, "GR_Server",
-		Child, ColGroup(2),
-			MUIA_HelpNode	, "GR_Country",
-			MUIA_Frame		, MUIV_Frame_Group,
-			MUIA_FrameTitle, GetStr(MSG_GR_CountryTitle),
-			Child, Label(GetStr(MSG_LA_Country)),
-			Child, tmp.PO_Country = PopobjectObject,
-				MUIA_Popstring_String, String("", 80),
-				MUIA_Popstring_Button, PopButton(MUII_PopUp),
-				MUIA_Popobject_Object, tmp.LV_Country = ListviewObject,
-					MUIA_Listview_DoubleClick	, TRUE,
-					MUIA_Listview_List			, ListObject,
-						MUIA_Frame			, MUIV_Frame_InputList,
-						MUIA_List_Active	, MUIV_List_Active_Top,
+			Child, ScrollgroupObject,
+				MUIA_Background, MUII_ReadListBack,
+				MUIA_Scrollgroup_FreeHoriz, FALSE,
+				MUIA_Scrollgroup_Contents, VirtgroupObject,
+					ReadListFrame,
+					Child, TextObject,
+						MUIA_Text_Contents, "\33c\nNetConnect Control 1.00 (13.6.96)\n© 1996 Michael Neuweiler\n\nAuthors:\nMichael Neuweiler\n...\n\n\n\33bDEMO\33n\n",
+					End,
+					Child, MUI_MakeObject(MUIO_HBar, 2),
+					Child, TextObject,
+						MUIA_Text_Contents, "\33c\n\NetConnect uses MUI\nMUI is copyrighted by Stefan Stuntz",
 					End,
 				End,
-			End,
-		End,
-		Child, ColGroup(2),
-			MUIA_HelpNode	, "GR_Provider",
-			MUIA_Frame		, MUIV_Frame_Group,
-			MUIA_FrameTitle, GetStr(MSG_GR_ProviderTitle),
-			Child, Label(GetStr(MSG_LA_Provider)),
-			Child, tmp.PO_Provider = PopobjectObject,
-				MUIA_Popstring_String, String("", 80),
-				MUIA_Popstring_Button, PopButton(MUII_PopUp),
-				MUIA_Popobject_Object, tmp.LV_Provider = ListviewObject,
-					MUIA_Listview_DoubleClick	, TRUE,
-					MUIA_Listview_List			, ListObject,
-						MUIA_Frame			, MUIV_Frame_InputList,
-						MUIA_List_Active	, MUIV_List_Active_Top,
-					End,
-				End,
-			End,
-			Child, Label(GetStr(MSG_LA_PoP)),
-			Child, tmp.PO_PoP = PopobjectObject,
-				MUIA_Popstring_String, String("", 80),
-				MUIA_Popstring_Button, PopButton(MUII_PopUp),
-				MUIA_Popobject_Object, tmp.LV_PoP = ListviewObject,
-					MUIA_Listview_DoubleClick	, TRUE,
-					MUIA_Listview_List			, ListObject,
-						MUIA_Frame			, MUIV_Frame_InputList,
-						MUIA_List_Active	, MUIV_List_Active_Top,
-					End,
-				End,
-			End,
-			Child, Label(GetStr(MSG_LA_Phone)),
-			Child, tmp.STR_Phone = String("01642 33 76 76", 80),
-		End,
-		Child, ColGroup(4),
-			MUIA_HelpNode	, "GR_Details",
-			MUIA_Frame		, MUIV_Frame_Group,
-			MUIA_FrameTitle, GetStr(MSG_GR_DetailsTitle),
-			Child, Label(GetStr(MSG_LA_NameServer1)),
-			Child, tmp.STR_NameServer1 = StringObject,
-				MUIA_Frame				, MUIV_Frame_String,
-				MUIA_String_Contents	, "158.152.1.65",
-				MUIA_String_Accept	, "0123456789.",
-				MUIA_String_MaxLen	, 18,
-			End,
-			Child, Label(GetStr(MSG_LA_MailServer)),
-			Child, tmp.STR_MailServer = String("mail", 80),
-			Child, Label(GetStr(MSG_LA_NameServer2)),
-			Child, tmp.STR_NameServer2 = StringObject,
-				MUIA_Frame				, MUIV_Frame_String,
-				MUIA_String_Accept	, "0123456789.",
-				MUIA_String_MaxLen	, 18,
-			End,
-			Child, Label(GetStr(MSG_LA_NewsServer)),
-			Child, tmp.STR_NewsServer = String("news", 80),
-			Child, Label(GetStr(MSG_LA_Netmask)),
-			Child, tmp.STR_Netmask = StringObject,
-				MUIA_Frame				, MUIV_Frame_String,
-				MUIA_String_Contents	, "255.255.255.0",
-				MUIA_String_Accept	, "0123456789.",
-				MUIA_String_MaxLen	, 18,
-			End,
-			Child, Label(GetStr(MSG_LA_IRCServer)),
-			Child, tmp.STR_IRCServer = String("dismayl", 80),
-		End,
-		TAG_MORE, msg->ops_AttrList))
-	{
-		struct ServerPrefs_Data *data = INST_DATA(cl,obj);
-
-		*data = tmp;
-	}
-	return((ULONG)obj);
-}
-
-SAVEDS ASM ULONG ServerPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
-{
-	switch (msg->MethodID)
-	{
-		case OM_NEW										: return(ServerPrefs_New		(cl, obj, (APTR)msg));
-	}
-	return(DoSuperMethodA(cl, obj, msg));
-}
-
-
-
-/****************************************************************************/
-/* Misc Prefs class (GROUP)                                                 */
-/****************************************************************************/
-
-ULONG MiscPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
-{
-	struct MiscPrefs_Data tmp;
-
-	if(obj = (Object *)DoSuperNew(cl, obj,
-		MUIA_HelpNode, "GR_Misc",
-		Child, ColGroup(2),
-			MUIA_HelpNode	, "GR_Drawers",
-			MUIA_Frame		, MUIV_Frame_Group,
-			MUIA_FrameTitle, GetStr(MSG_GR_DrawersTitle),
-			Child, Label(GetStr(MSG_LA_MailIn)),
-			Child, tmp.PA_MailIn = PopaslObject,
-				MUIA_Popasl_Type		, 0,
-				MUIA_Popstring_String, String("", MAXPATHLEN),
-				MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
-			End,
-			Child, Label(GetStr(MSG_LA_MailOut)),
-			Child, tmp.PA_MailOut = PopaslObject,
-				MUIA_Popasl_Type		, 0,
-				MUIA_Popstring_String, String("", MAXPATHLEN),
-				MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
-			End,
-			Child, Label(GetStr(MSG_LA_FilesIn)),
-			Child, tmp.PA_FilesIn = PopaslObject,
-				MUIA_Popasl_Type		, 0,
-				MUIA_Popstring_String, String("", MAXPATHLEN),
-				MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
-			End,
-			Child, Label(GetStr(MSG_LA_FilesOut)),
-			Child, tmp.PA_FilesOut = PopaslObject,
-				MUIA_Popasl_Type		, 0,
-				MUIA_Popstring_String, String("", MAXPATHLEN),
-				MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
-			End,
-		End,
-		Child, ColGroup(4),
-			MUIA_HelpNode	, "GR_Modem",
-			MUIA_Frame		, MUIV_Frame_Group,
-			MUIA_FrameTitle, GetStr(MSG_GR_ModemTitle),
-			Child, Label(GetStr(MSG_LA_SerialDriver)),
-			Child, tmp.PA_SerialDriver = PopaslObject,
-				MUIA_Popasl_Type		, 0,
-				MUIA_Popstring_String, String("serial.device", MAXPATHLEN),
-				MUIA_Popstring_Button, PopButton(MUII_PopFile),
-			End,
-			Child, Label(GetStr(MSG_LA_ModemInit)),
-			Child, tmp.STR_ModemInit = String("ATZ", 80),
-			Child, Label(GetStr(MSG_LA_SerialUnit)),
-			Child, tmp.STR_SerialUnit = StringObject,
-				StringFrame,
-				MUIA_String_MaxLen	, 5,
-				MUIA_String_Integer	, 0,
-				MUIA_String_Accept	, "1234567890",
-			End,
-			Child, Label(GetStr(MSG_LA_DialString)),
-			Child, tmp.STR_DialString = String("ATDT", 80),
-			Child, Label(GetStr(MSG_LA_BaudRate)),
-			Child, tmp.PO_BaudRate = PopobjectObject,
-				MUIA_Popstring_String, StringObject,
-					StringFrame,
-					MUIA_String_MaxLen	, 5,
-					MUIA_String_Integer	, 56700,
-					MUIA_String_Accept	, "1234567890",
-				End,
-				MUIA_Popstring_Button, PopButton(MUII_PopUp),
-				MUIA_Popobject_Object, tmp.LV_BaudRate = ListviewObject,
-					MUIA_Listview_DoubleClick	, TRUE,
-					MUIA_Listview_List			, ListObject,
-						MUIA_Frame			, MUIV_Frame_InputList,
-						MUIA_List_Active	, MUIV_List_Active_Top,
-					End,
-				End,
-			End,
-			Child, HVSpace,
-			Child, HVSpace,
-		End,
-		TAG_MORE, msg->ops_AttrList))
-	{
-		struct MiscPrefs_Data *data = INST_DATA(cl,obj);
-
-		*data = tmp;
-	}
-	return((ULONG)obj);
-}
-
-SAVEDS ASM ULONG MiscPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
-{
-	switch (msg->MethodID)
-	{
-		case OM_NEW										: return(MiscPrefs_New		(cl, obj, (APTR)msg));
-	}
-	return(DoSuperMethodA(cl, obj, msg));
-}
-
-
-
-/****************************************************************************/
-/* AmiTCP Prefs class                                                       */
-/****************************************************************************/
-
-ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs_Finish *msg)
-{
-//	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
-//	struct Button *icon;
-
-	set(obj, MUIA_Window_Open, FALSE);
-	set(win, MUIA_Window_Sleep, FALSE);
-	DoMethod(app, OM_REMMEMBER, obj);
-	MUI_DisposeObject(obj);
-
-	return(NULL);
-}
-
-ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
-{
-	struct AmiTCPPrefs_Data tmp;
-
-	STR_GR_Register[0] = GetStr(MSG_GR_Register0);
-	STR_GR_Register[1] = GetStr(MSG_GR_Register1);
-	STR_GR_Register[2] = GetStr(MSG_GR_Register2);
-	STR_GR_Register[3] = GetStr(MSG_GR_Register3);
-	STR_GR_Register[4] = NULL;
-
-	if(obj = (Object *)DoSuperNew(cl, obj,
-		MUIA_Window_Title	, GetStr(MSG_WI_AmiTCPPrefs),
-		MUIA_Window_ID		, MAKE_ID('A','R','E','F'),
-		WindowContents		, VGroup,
-			Child, tmp.GR_Register = RegisterObject,
-				MUIA_Register_Titles, STR_GR_Register,
-				MUIA_HelpNode, "GR_Register",
-				Child, tmp.GR_User		= NewObject(CL_UserPrefs->mcc_Class			, NULL, TAG_DONE),
-				Child, tmp.GR_Server		= NewObject(CL_ServerPrefs->mcc_Class		, NULL, TAG_DONE),
-				Child, tmp.GR_Misc		= NewObject(CL_MiscPrefs->mcc_Class			, NULL, TAG_DONE),
-//				Child, tmp.GR_DialScript= NewObject(CL_DialScriptPrefs->mcc_Class	, NULL, TAG_DONE),
 			End,
 			Child, HGroup,
-				MUIA_HelpNode			, "GR_PrefsControl",
-				MUIA_Group_SameSize	, TRUE,
-				Child, tmp.BT_Save	= SimpleButton(GetStr(MSG_BT_Save)),
 				Child, HSpace(0),
-				Child, tmp.BT_Use		= SimpleButton(GetStr(MSG_BT_Use)),
+				Child, tmp.BT_Button = SimpleButton("_Okay"),
 				Child, HSpace(0),
-				Child, tmp.BT_Cancel	= SimpleButton(GetStr(MSG_BT_Cancel)),
 			End,
-		End,
-		TAG_MORE, msg->ops_AttrList))
+		End))
 	{
-		struct AmiTCPPrefs_Data *data = INST_DATA(cl, obj);
+		struct About_Data *data = INST_DATA(cl,obj);
 
 		*data = tmp;
 
-		DoMethod(obj				, MUIM_Notify, MUIA_Window_CloseRequest, TRUE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 0);
-		DoMethod(tmp.BT_Cancel	, MUIM_Notify, MUIA_Pressed				, FALSE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 0);
-		DoMethod(tmp.BT_Use		, MUIM_Notify, MUIA_Pressed				, FALSE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 1);
-		DoMethod(tmp.BT_Save		, MUIM_Notify, MUIA_Pressed				, FALSE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 2);
+		DoMethod(obj, MUIM_Notify, MUIA_Window_CloseRequest, TRUE ,
+			MUIV_Notify_Application, 5, MUIM_Application_PushMethod,
+			win, 2, MUIM_IconBar_About_Finish, obj);
+		DoMethod(data->BT_Button, MUIM_Notify, MUIA_Pressed, FALSE ,
+			MUIV_Notify_Application, 5, MUIM_Application_PushMethod,
+			win, 2, MUIM_IconBar_About_Finish, obj);
 	}
-
 	return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG AmiTCPPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
 {
 	switch (msg->MethodID)
 	{
-		case OM_NEW							: return(AmiTCPPrefs_New		(cl, obj, (APTR)msg));
-		case MUIM_AmiTCPPrefs_Finish	: return(AmiTCPPrefs_Finish	(cl, obj, (APTR)msg));
+		case OM_NEW : return(About_New		(cl,obj,(APTR)msg));
 	}
 	return(DoSuperMethodA(cl, obj, msg));
 }
@@ -536,6 +404,7 @@ ULONG IconList_DragDrop(struct IClass *cl, Object *obj, struct MUIP_DragDrop *ms
 				icon->bodychunk	= NULL;						/* zero these pointers so they don't get cleared */
 				icon->list			= NULL;						/* by PrefsIconList_Desctruct */
 				icon->body			= NULL;
+				icon->cols			= NULL;
 				DoMethod(msg->obj, MUIM_List_Remove, pos);
 				pos = 0;											/* start over again because we lost an entry */
 			}
@@ -593,6 +462,8 @@ SAVEDS ASM VOID IconList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Icon *ic
 			MUI_DisposeObject(icon->bodychunk);
 		if(icon->body)
 			FreeVec(icon->body);
+		if(icon->cols)
+			FreeVec(icon->cols);
 		FreeVec(icon);
 	}
 }
@@ -615,7 +486,6 @@ SAVEDS ASM LONG IconList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **a
 	return(NULL);
 }
 
-
 ULONG IconList_New(struct IClass *cl,Object *obj,struct opSet *msg)
 {
 	static const struct Hook IconList_DisplayHook	= { { 0,0 }, (VOID *)IconList_DisplayFunc		, NULL, NULL };
@@ -628,7 +498,7 @@ ULONG IconList_New(struct IClass *cl,Object *obj,struct opSet *msg)
 		MUIA_List_ConstructHook	, &IconList_ConstructHook,
 		MUIA_List_DestructHook	, &IconList_DestructHook,
 		MUIA_List_Format			, ",",
-MUIA_List_MinLineHeight	, 40,
+		MUIA_List_MinLineHeight	, find_max() + 6,
 		MUIA_List_AutoVisible	, TRUE,
 		MUIA_List_DragSortable	, TRUE,
 		TAG_MORE, msg->ops_AttrList);
@@ -699,6 +569,7 @@ ULONG IconBarPrefs_LoadIcons(struct IClass *cl, Object *obj, Msg msg)
 	struct ContextNode *cn;
 	BOOL anything = FALSE;
 
+	set(obj, MUIA_Window_Sleep, TRUE);
 	set(data->LI_ActiveIcons	, MUIA_List_Quiet, TRUE);
 	set(data->LI_InactiveIcons	, MUIA_List_Quiet, TRUE);
 
@@ -751,6 +622,10 @@ ULONG IconBarPrefs_LoadIcons(struct IClass *cl, Object *obj, Msg msg)
 	set(data->LI_ActiveIcons, MUIA_List_Quiet, FALSE);
 	set(data->LI_InactiveIcons, MUIA_List_Quiet, FALSE);
 
+	set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
+	setslider(data->SL_Rows, Rows);
+	set(obj, MUIA_Window_Sleep, FALSE);
+
 	return(NULL);
 }
 
@@ -760,6 +635,7 @@ ULONG IconBarPrefs_Reset(struct IClass *cl, Object *obj, Msg msg)
 	struct Icon *icon;
 	LONG pos;
 
+	set(obj, MUIA_Window_Sleep, TRUE);
 	set(data->LI_ActiveIcons	, MUIA_List_Quiet, TRUE);
 	set(data->LI_InactiveIcons	, MUIA_List_Quiet, TRUE);
 
@@ -862,17 +738,39 @@ ULONG IconBarPrefs_Reset(struct IClass *cl, Object *obj, Msg msg)
 	set(data->LI_ActiveIcons	, MUIA_List_Quiet, FALSE);
 	set(data->LI_InactiveIcons	, MUIA_List_Quiet, FALSE);
 
+	set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
+	setslider(data->SL_Rows, Rows);
+	set(obj, MUIA_Window_Sleep, FALSE);
+
 	return(NULL);
 }
 
 ULONG IconBarPrefs_NewIcon(struct IClass *cl, Object *obj, Msg msg)
 {
 	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
+	struct Icon *icon;
 
-	DoMethod(data->LI_InactiveIcons, MUIM_List_InsertSingle, NULL, MUIV_List_Insert_Bottom);
-	set(data->LI_InactiveIcons, MUIA_List_Active, xget(data->LI_InactiveIcons, MUIA_List_InsertPosition));
-	set(data->LI_ActiveIcons, MUIA_List_Active, MUIV_List_Active_Off);
+	if(icon = AllocVec(sizeof(struct Icon), MEMF_ANY | MEMF_CLEAR))
+	{
+		strcpy(icon->Name, "New");
+		strcpy(icon->Program, "NetConnect:Programs/");
+		strcpy(icon->ImageFile, "NetConnect:Images/");
+		init_icon(icon, data->LI_ActiveIcons);
+		DoMethod(data->LI_InactiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
+		set(data->LI_InactiveIcons, MUIA_List_Active, xget(data->LI_InactiveIcons, MUIA_List_InsertPosition));
+		set(data->LI_ActiveIcons, MUIA_List_Active, MUIV_List_Active_Off);
 
+		FreeVec(icon);
+	}
+
+	return(NULL);
+}
+
+ULONG IconBarPrefs_Rows(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
+
+	Rows = xget(data->SL_Rows, MUIA_Numeric_Value);
 	return(NULL);
 }
 
@@ -908,17 +806,20 @@ ULONG IconBarPrefs_ModifyIcon(struct IClass *cl, Object *obj, struct MUIP_IconBa
 
 	if(find_list(data, &list, &icon))
 	{
-		switch(msg->flag)
+		switch(msg->flags)
 		{
 			case MUIV_IconBarPrefs_ModifyIcon_Remove:
 				if(icon->list)
 					DoMethod(data->LI_ActiveIcons, MUIM_List_DeleteImage, icon->list);
 				icon->list = NULL;
 				DoMethod(list, MUIM_List_Remove, MUIV_List_Remove_Active);
+
+				set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
+				setslider(data->SL_Rows, Rows);
 				break;
 
 			case MUIV_IconBarPrefs_ModifyIcon_Name:
-				strcpy(icon->Name, (STRPTR)xget(data->PO_Name, MUIA_String_Contents));
+				strcpy(icon->Name, (STRPTR)xget(data->STR_Name, MUIA_String_Contents));
 				DoMethod(list, MUIM_List_Redraw, MUIV_List_Redraw_Active);
 				break;
 
@@ -931,6 +832,7 @@ ULONG IconBarPrefs_ModifyIcon(struct IClass *cl, Object *obj, struct MUIP_IconBa
 					struct Icon *new_icon;
 					LONG position = MUIV_List_Insert_Active;
 
+					set(obj, MUIA_Window_Sleep, TRUE);
 					if(xget(list, MUIA_List_Entries))
 					{
 						DoMethod(list, MUIM_List_GetEntry, xget(list, MUIA_List_Entries) - 1, &new_icon);
@@ -956,6 +858,7 @@ ULONG IconBarPrefs_ModifyIcon(struct IClass *cl, Object *obj, struct MUIP_IconBa
 
 						FreeVec(new_icon);
 					}
+					set(obj, MUIA_Window_Sleep, FALSE);
 				}
 				break;
 
@@ -972,6 +875,10 @@ ULONG IconBarPrefs_ModifyIcon(struct IClass *cl, Object *obj, struct MUIP_IconBa
 				set(data->GR_Script, MUIA_Disabled, (icon->Advanced ? FALSE : TRUE));
 				set(data->PA_Program, MUIA_Disabled, (icon->Advanced ? TRUE : FALSE));
 				break;
+
+			case MUIV_IconBarPrefs_ModifyIcon_Script:
+				strcpy(icon->Script, (STRPTR)xget(data->PA_SaveScript, MUIA_String_Contents));
+				break;
 		}
 	}
 	return(NULL);
@@ -982,6 +889,8 @@ ULONG IconBarPrefs_SetStates(struct IClass *cl, Object *obj, struct MUIP_IconBar
 	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
 	struct Icon *icon;
 	LONG i;
+
+	set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
 
 	nnset((msg->level ? data->LI_InactiveIcons : data->LI_ActiveIcons), MUIA_List_Active, MUIV_List_Active_Off);
 	DoMethod((msg->level ? data->LI_InactiveIcons : data->LI_ActiveIcons), MUIM_List_Select, MUIV_List_Select_All, MUIV_List_Select_Ask, &i);
@@ -996,21 +905,32 @@ ULONG IconBarPrefs_SetStates(struct IClass *cl, Object *obj, struct MUIP_IconBar
 		set(data->GR_Script, MUIA_Disabled, (icon->Advanced ? FALSE : TRUE));
 		set(data->PA_Program, MUIA_Disabled, (icon->Advanced ? TRUE : FALSE));
 
-		setstring(data->PO_Name			, icon->Name);
+		setstring(data->STR_Name		, icon->Name);
 		setstring(data->PA_Program		, icon->Program);
 		setstring(data->PA_Image		, icon->ImageFile);
 		setstring(data->PA_Sound		, icon->Sound);
 		setslider(data->SL_Volume		, icon->Volume);
 		setcheckmark(data->CH_Advanced, icon->Advanced);
 		setstring(data->PA_SaveScript	, icon->Script);
-	}
+
+/*		if(icon->Advanced)
+		{
+			STRPTR buf;
+
+			if(buf = LoadFile(icon->Script))
+			{
+			  DoMethod(data->TV_Editor, MUIM_TextView_InsertText, buf, TVFontF_Normal);
+			  FreeVec(buf);
+			}
+		}
+*/	}
 	else
 	{
 		set(data->BT_Remove, MUIA_Disabled, TRUE);
 		set(data->GR_Script, MUIA_Disabled, TRUE);
 		set(data->GR_Button, MUIA_Disabled, TRUE);
 
-		setstring(data->PO_Name		, "");
+		setstring(data->STR_Name	, "");
 		setstring(data->PA_Program	, "");
 		setstring(data->PA_Image	, "");
 		setstring(data->PA_Sound	, "");
@@ -1049,12 +969,18 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 						Child, tmp.BT_Remove = SimpleButton(GetStr(MSG_BT_Remove)),
 					End,
 				End,
-				Child, tmp.LV_ActiveIcons = ListviewObject,
-					MUIA_FrameTitle				, GetStr(MSG_LV_IconBarTitle),
-					MUIA_Listview_MultiSelect	, MUIV_Listview_MultiSelect_Default,
-//					MUIA_Listview_DoubleClick	, TRUE,
-					MUIA_Listview_DragType		, 1,
-					MUIA_Listview_List			, tmp.LI_ActiveIcons = NewObject(CL_IconList->mcc_Class, NULL, TAG_DONE),
+				Child, VGroup,
+					Child, tmp.LV_ActiveIcons = ListviewObject,
+						MUIA_FrameTitle				, GetStr(MSG_LV_IconBarTitle),
+						MUIA_Listview_MultiSelect	, MUIV_Listview_MultiSelect_Default,
+//						MUIA_Listview_DoubleClick	, TRUE,
+						MUIA_Listview_DragType		, 1,
+						MUIA_Listview_List			, tmp.LI_ActiveIcons = NewObject(CL_IconList->mcc_Class, NULL, TAG_DONE),
+					End,
+					Child, HGroup,
+						Child, Label("Rows :"),
+						Child, tmp.SL_Rows = Slider(1, 10, Rows),
+					End,
 				End,
 			End,
 			Child, HGroup,
@@ -1064,20 +990,8 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 					MUIA_Frame		, MUIV_Frame_Group,
 					MUIA_FrameTitle, GetStr(MSG_GR_ButtonConrtolTitle),
 					Child, ColGroup(2),
-						Child, Label("Columns :"),
-						Child, tmp.SL_Columns = Slider(1, 10, 1),
 						Child, Label(GetStr(MSG_LA_Name)),
-						Child, tmp.PO_Name = PopobjectObject,
-							MUIA_Popstring_String, String("", 80),
-							MUIA_Popstring_Button, PopButton(MUII_PopUp),
-							MUIA_Popobject_Object, tmp.LV_Name = ListviewObject,
-								MUIA_Listview_DoubleClick	, TRUE,
-								MUIA_Listview_List			, ListObject,
-									MUIA_Frame			, MUIV_Frame_InputList,
-									MUIA_List_Active	, MUIV_List_Active_Top,
-								End,
-							End,
-						End,
+						Child, tmp.STR_Name = String("", 80),
 						Child, Label(GetStr(MSG_LA_Program)),
 						Child, tmp.PA_Program = PopaslObject,
 							MUIA_Popasl_Type		, 0,
@@ -1127,7 +1041,13 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 					MUIA_Frame		, MUIV_Frame_Group,
 					MUIA_FrameTitle, GetStr(MSG_GR_ScriptEditTitle),
 					Child, tmp.GR_Editor = ScrollgroupObject,
-						MUIA_Scrollgroup_Contents, tmp.TF_Editor = HVSpace,
+						MUIA_Scrollgroup_Contents, tmp.TV_Editor =
+HVSpace,
+//TextViewObject,
+//							VirtualFrame,
+//							MUIA_Background, MUII_TextBack,
+//							MUIA_TextView_Editable, TRUE,
+//						End,
 					End,
 					Child, ColGroup(2),
 						Child, Label(GetStr(MSG_LA_FindProgram)),
@@ -1178,17 +1098,19 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		DoMethod(tmp.LV_InactiveIcons	, MUIM_Notify, MUIA_List_Active, MUIV_EveryTime			, obj, 2, MUIM_IconBarPrefs_SetStates, 0);
 		DoMethod(tmp.BT_New				, MUIM_Notify, MUIA_Pressed				, FALSE			, obj, 1, MUIM_IconBarPrefs_NewIcon);
 		DoMethod(tmp.BT_Remove			, MUIM_Notify, MUIA_Pressed				, FALSE			, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Remove);
-		DoMethod(tmp.PO_Name				, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Name);
+		DoMethod(tmp.SL_Rows				, MUIM_Notify, MUIA_Numeric_Value, MUIV_EveryTime		, obj, 2, MUIM_IconBarPrefs_Rows);
+		DoMethod(tmp.STR_Name			, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Name);
 		DoMethod(tmp.PA_Program			, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Program);
 		DoMethod(tmp.PA_Image			, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Image);
 		DoMethod(tmp.PA_Sound			, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Sound);
 		DoMethod(tmp.SL_Volume			, MUIM_Notify, MUIA_Numeric_Value, MUIV_EveryTime		, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Volume);
 		DoMethod(tmp.CH_Advanced		, MUIM_Notify, MUIA_Selected, MUIV_EveryTime				, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Advanced);
+		DoMethod(tmp.PA_SaveScript		, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Script);
 
-		DoMethod(obj						, MUIM_Notify, MUIA_Window_CloseRequest, TRUE	, win, 2, MUIM_IconBar_IconBarPrefs_Finish, 0);
-		DoMethod(tmp.BT_Cancel			, MUIM_Notify, MUIA_Pressed				, FALSE	, win, 2, MUIM_IconBar_IconBarPrefs_Finish, 0);
-		DoMethod(tmp.BT_Use				, MUIM_Notify, MUIA_Pressed				, FALSE	, win, 2, MUIM_IconBar_IconBarPrefs_Finish, 1);
-		DoMethod(tmp.BT_Save				, MUIM_Notify, MUIA_Pressed				, FALSE	, win, 2, MUIM_IconBar_IconBarPrefs_Finish, 2);
+		DoMethod(obj						, MUIM_Notify, MUIA_Window_CloseRequest, TRUE	, MUIV_Notify_Application, 6, MUIM_Application_PushMethod, win, 3, MUIM_IconBar_IconBarPrefs_Finish, obj, 0);
+		DoMethod(tmp.BT_Cancel			, MUIM_Notify, MUIA_Pressed				, FALSE	, MUIV_Notify_Application, 6, MUIM_Application_PushMethod, win, 3, MUIM_IconBar_IconBarPrefs_Finish, obj, 0);
+		DoMethod(tmp.BT_Use				, MUIM_Notify, MUIA_Pressed				, FALSE	, MUIV_Notify_Application, 6, MUIM_Application_PushMethod, win, 3, MUIM_IconBar_IconBarPrefs_Finish, obj, 1);
+		DoMethod(tmp.BT_Save				, MUIM_Notify, MUIA_Pressed				, FALSE	, MUIV_Notify_Application, 6, MUIM_Application_PushMethod, win, 3, MUIM_IconBar_IconBarPrefs_Finish, obj, 2);
 
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_RESET)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
 			obj, 2, MUIM_IconBarPrefs_Reset, 0);
@@ -1205,6 +1127,7 @@ SAVEDS ASM ULONG IconBarPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Obje
 		case MUIM_IconBarPrefs_LoadIcons		: return(IconBarPrefs_LoadIcons	(cl, obj, (APTR)msg));
 		case MUIM_IconBarPrefs_Reset			: return(IconBarPrefs_Reset		(cl, obj, (APTR)msg));
 		case MUIM_IconBarPrefs_NewIcon		: return(IconBarPrefs_NewIcon		(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_Rows			: return(IconBarPrefs_Rows			(cl, obj, (APTR)msg));
 		case MUIM_IconBarPrefs_ModifyIcon	: return(IconBarPrefs_ModifyIcon	(cl, obj, (APTR)msg));
 		case MUIM_IconBarPrefs_SetStates		: return(IconBarPrefs_SetStates	(cl, obj, (APTR)msg));
 	}
@@ -1217,12 +1140,60 @@ SAVEDS ASM ULONG IconBarPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Obje
 /* Button class                                                             */
 /****************************************************************************/
 
-ULONG Button_Dispose(struct IClass *cl, Object *obj, struct opSet *msg)
+ULONG Button_Action(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct Button_Data *data = INST_DATA(cl, obj);
+	char command[MAXPATHLEN];
+
+	if(*data->icon->Sound && DataTypesBase)
+	{
+		if(SoundObject)
+			DisposeDTObject(SoundObject);
+
+		if(SoundObject = NewDTObject(data->icon->Sound,
+			DTA_SourceType	, DTST_FILE,
+			DTA_GroupID		, GID_SOUND,
+			SDTA_Volume		, data->icon->Volume,
+			SDTA_Cycles		, 1,
+		TAG_DONE))
+		{
+			DoMethod(SoundObject, DTM_TRIGGER, NULL, STM_PLAY, NULL);
+		}
+	}
+
+	if(data->icon->Advanced)
+		sprintf(command, "Execute %ls", data->icon->Script);
+	else
+		strcpy(command, data->icon->Program);
+
+	SystemTags(command,
+		SYS_Input		, NULL,
+		SYS_Output		, NULL,
+		SYS_Asynch		, TRUE,
+		NP_CloseInput	, FALSE,
+		NP_CloseOutput	, FALSE,
+		TAG_DONE);
+
+	if(data->icon->Advanced && (!stricmp(data->icon->Script, "AmiTCP:bin/startnet") || !stricmp(data->icon->Script, "AmiTCP:bin/stopnet"))) 
+	{
+		set(win, MUIA_Window_Sleep, TRUE);
+		Delay(150);
+		set(win, MUIA_Window_Sleep, FALSE);
+		DoMethod(app, MUIM_Application_PushMethod, win, 1, MUIM_IconBar_LoadButtons);
+	}
+
+	return(NULL);
+}
+
+ULONG Button_Dispose(struct IClass *cl, Object *obj, Msg msg)
 {
 	struct Button_Data *data = INST_DATA(cl, obj);
 
 	if(data->icon->body)					/* this one gets allocated in create_bodychunk */
 		FreeVec(data->icon->body);
+
+	if(data->icon->cols)
+		FreeVec(data->icon->cols);
 
 	if(data->icon)
 		FreeVec(data->icon);
@@ -1238,8 +1209,10 @@ ULONG Button_New(struct IClass *cl, Object *obj, struct opSet *msg)
 	struct IFFHandle *Handle;
 	struct ContextNode *cn;
 	struct StoredProperty *sp;
-	int size;
-	UBYTE *cols = NULL;
+	int size, i;
+	UBYTE *src;
+	BOOL success = FALSE;
+	Object *bodychunk = NULL;
 
 	if(icon = (struct Icon *)GetTagData(MUIA_NetConnect_Icon, (ULONG)"", msg->ops_AttrList))
 	{
@@ -1263,7 +1236,14 @@ ULONG Button_New(struct IClass *cl, Object *obj, struct opSet *msg)
 									!ParseIFF(Handle, IFFPARSE_SCAN))
 								{
 									if(sp = FindProp(Handle, ID_ILBM, ID_CMAP))
-										cols = sp->sp_Data;
+									{
+										src = sp->sp_Data;
+										if(icon->cols = AllocVec(sizeof(ULONG) * sp->sp_Size, MEMF_ANY))
+										{
+											for (i = 0; i < sp->sp_Size; i++)
+												icon->cols[i] = to32(src[i]);
+										}
+									}
 
 									if(sp = FindProp(Handle, ID_ILBM, ID_BMHD))
 									{
@@ -1274,9 +1254,9 @@ ULONG Button_New(struct IClass *cl, Object *obj, struct opSet *msg)
 										{
 											if(ReadChunkBytes(Handle, icon->body, size) == size)
 											{
-												if(obj = (Object *)DoSuperNew(cl, obj,
+												if(bodychunk = (Object *)DoSuperNew(cl, obj,
 													ButtonFrame,
-//													MUIA_Bitmap_SourceColors	, cols,
+													MUIA_Bitmap_SourceColors	, (ULONG *)icon->cols,
 													MUIA_Bitmap_Width				, bmhd->bmh_Width,
 													MUIA_Bitmap_Height			, bmhd->bmh_Height,
 													MUIA_FixWidth					, bmhd->bmh_Width,
@@ -1290,52 +1270,59 @@ ULONG Button_New(struct IClass *cl, Object *obj, struct opSet *msg)
 													MUIA_Bitmap_Transparent		, 0,
 													TAG_MORE, msg->ops_AttrList))
 												{
-													struct Button_Data *data = INST_DATA(cl, obj);
-													*data = tmp;
-
-													if(data->icon = AllocVec(sizeof(struct Icon), MEMF_ANY))
-													{
-														memcpy(data->icon, icon, sizeof(struct Icon));
-													}
+													success = TRUE;
 												}
 											}
-											else
-												obj = NULL;
 										}
-										else
-											obj = NULL;
 									}
-									else
-										obj = NULL;
 								}
-								else
-									obj = NULL;
 							}
-							else
-								obj = NULL;
 						}
-						else
-							obj = NULL;
 					}
-					else
-						obj = NULL;
 					CloseIFF(Handle);
 				}
-				else
-					obj = NULL;
 				Close(Handle->iff_Stream);
 			}
-			else
-				obj = NULL;
 			FreeIFF(Handle);
 		}
-		else
-			obj = NULL;
-	}
-	else
-		obj = NULL;
 
-	return((ULONG)obj);
+		if(!success)
+		{
+			icon->body = NULL;		/* so it doesn't get freed */
+			if(bodychunk = (Object *)DoSuperNew(cl, obj,
+				ButtonFrame,
+				MUIA_Bitmap_SourceColors	, (ULONG *)default_icon_colors,
+				MUIA_Bitmap_Width				, DEFAULT_ICON_WIDTH ,
+				MUIA_Bitmap_Height			, DEFAULT_ICON_HEIGHT,
+				MUIA_FixWidth					, DEFAULT_ICON_WIDTH ,
+				MUIA_FixHeight					, DEFAULT_ICON_HEIGHT,
+				MUIA_Background				, MUII_ButtonBack,
+				MUIA_InputMode					, MUIV_InputMode_RelVerify,
+				MUIA_Bodychunk_Depth			, DEFAULT_ICON_DEPTH ,
+				MUIA_Bodychunk_Body			, (UBYTE *)default_icon_body,
+				MUIA_Bodychunk_Compression	, DEFAULT_ICON_COMPRESSION,
+				MUIA_Bodychunk_Masking		, DEFAULT_ICON_MASKING,
+				MUIA_Bitmap_Transparent		, 0,
+				TAG_MORE, msg->ops_AttrList))
+			{
+				success = TRUE;
+			}
+		}
+		if(success && bodychunk)
+		{
+			struct Button_Data *data = INST_DATA(cl, bodychunk);
+
+			if(tmp.icon = AllocVec(sizeof(struct Icon), MEMF_ANY))
+			{
+				memcpy(tmp.icon, icon, sizeof(struct Icon));
+
+				DoMethod(bodychunk, MUIM_Notify, MUIA_Pressed, FALSE	, bodychunk, 1, MUIM_Button_Action);
+			}
+			*data = tmp;
+		}
+	}
+
+	return((ULONG)bodychunk);
 }
 
 SAVEDS ASM ULONG Button_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
@@ -1344,6 +1331,7 @@ SAVEDS ASM ULONG Button_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *ob
 	{
 		case OM_NEW									: return(Button_New				(cl, obj, (APTR)msg));
 		case OM_DISPOSE							: return(Button_Dispose			(cl, obj, (APTR)msg));
+		case MUIM_Button_Action					: return(Button_Action			(cl, obj, (APTR)msg));
 	}
 	return(DoSuperMethodA(cl, obj, msg));
 }
@@ -1362,7 +1350,13 @@ ULONG IconBar_LoadButtons(struct IClass *cl, Object *obj, struct MUIP_IconBar_Lo
 	struct IFFHandle *Handle;
 	struct ContextNode *cn;
 
-	if(group = ColGroup(3), End)
+	if(group = RowGroup(Rows),
+		MUIA_Group_Spacing, 0,
+		MUIA_InnerBottom	, 0,
+		MUIA_InnerLeft		, 0,
+		MUIA_InnerTop		, 0,
+		MUIA_InnerRight	, 0,
+		End)
 	{
 		DoMethod(group, MUIM_Group_InitChange);
 		if(icon = AllocVec(sizeof(struct Icon), MEMF_ANY))
@@ -1380,12 +1374,43 @@ ULONG IconBar_LoadButtons(struct IClass *cl, Object *obj, struct MUIP_IconBar_Lo
 							{
 								cn = CurrentChunk(Handle);
 
+								if(cn->cn_ID == ID_ROWS)
+								{
+									ReadChunkBytes(Handle, &Rows, MIN(sizeof(LONG), cn->cn_Size));
+									set(group, MUIA_Group_Rows, Rows);
+								}
+
 								/* is it an active icon ? */
 								if(cn->cn_ID == ID_AICN)
 								{
 									/* load the data into the buffer */
 									if(ReadChunkBytes(Handle, icon, MIN(sizeof(struct Icon), cn->cn_Size)) == MIN(sizeof(struct Icon), cn->cn_Size))
 									{
+										if(icon->Advanced && (!stricmp(icon->Script, "AmiTCP:bin/startnet") || !stricmp(icon->Script, "AmiTCP:bin/stopnet"))) 
+										{
+											STRPTR ptr;
+											struct Library *lib;
+
+											if(lib = OpenLibrary("bsdsocket.library", NULL))
+											{
+												strcpy(icon->Script, "AmiTCP:bin/stopnet");
+												if(ptr = FilePart(icon->ImageFile))
+												{
+													*ptr = NULL;
+													AddPart(icon->ImageFile, "Stop", MAXPATHLEN);
+												}
+												CloseLibrary(lib);
+											}
+											else
+											{
+												strcpy(icon->Script, "AmiTCP:bin/startnet");
+												if(ptr = FilePart(icon->ImageFile))
+												{
+													*ptr = NULL;
+													AddPart(icon->ImageFile, "Start", MAXPATHLEN);
+												}
+											}
+										}
 										if(button = NewObject(CL_Button->mcc_Class, NULL,
 											MUIA_NetConnect_Icon, icon,
 											TAG_DONE))
@@ -1441,22 +1466,28 @@ ULONG IconBar_IconBarPrefs(struct IClass *cl, Object *obj, Msg msg)
 {
 	Object *window;
 
-	set(app, MUIA_Application_Sleep, FALSE);
+	set(app, MUIA_Application_Sleep, TRUE);
 	if(window = (Object *)NewObject(CL_IconBarPrefs->mcc_Class, NULL, TAG_DONE))
 	{
+		struct IconBarPrefs_Data *ibp_data = INST_DATA(CL_IconBarPrefs->mcc_Class, window);
+
 		DoMethod(app, OM_ADDMEMBER, window);
+		setslider(ibp_data->SL_Rows, Rows);
 		set(window, MUIA_Window_Open, TRUE);
 	}
 	set(app, MUIA_Application_Sleep, FALSE);
 	set(win, MUIA_Window_Sleep, TRUE);
-	DoMethod(window, MUIM_IconBarPrefs_LoadIcons);
+
+	if(window)
+		DoMethod(window, MUIM_IconBarPrefs_LoadIcons);
 
 	return(NULL);
 }
 
 ULONG IconBar_IconBarPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_IconBar_IconBarPrefs_Finish *msg)
 {
-	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
+	Object *window = msg->window;
+	struct IconBarPrefs_Data *data = INST_DATA(CL_IconBarPrefs->mcc_Class, window);
 	struct Icon *icon;
 	struct IFFHandle	*Handle;
 	LONG i;
@@ -1474,6 +1505,11 @@ ULONG IconBar_IconBarPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_Ic
 					if(!(PushChunk(Handle, ID_NTCN, ID_FORM, IFFSIZE_UNKNOWN)))
 					{
 						LONG pos = 0;
+
+						if(!PushChunk(Handle, ID_NTCN, ID_ROWS, IFFSIZE_UNKNOWN))
+							if(WriteChunkBytes(Handle, &Rows, sizeof(LONG)) == sizeof(LONG))
+								PopChunk(Handle);
+
 						FOREVER
 						{
 							DoMethod(data->LI_ActiveIcons, MUIM_List_GetEntry, pos++, &icon);
@@ -1513,33 +1549,52 @@ ULONG IconBar_IconBarPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_Ic
 	if(msg->level)
 		DoMethod(win, MUIM_IconBar_LoadButtons);
 
-	set(obj, MUIA_Window_Open, FALSE);
+	set(window, MUIA_Window_Open, FALSE);
 	set(win, MUIA_Window_Sleep, FALSE);
-	DoMethod(app, OM_REMMEMBER, obj);
-	MUI_DisposeObject(obj);
+	DoMethod(app, OM_REMMEMBER, window);
+	MUI_DisposeObject(window);
 
 	return(NULL);
 }
 
 ULONG IconBar_AmiTCPPrefs(struct IClass *cl, Object *obj, Msg msg)
 {
-	Object *window;
-
-	set(app, MUIA_Application_Sleep, FALSE);
-	if(window = (Object *)NewObject(CL_AmiTCPPrefs->mcc_Class, NULL, TAG_DONE))
-	{
-		DoMethod(app, OM_ADDMEMBER, window);
-		set(window, MUIA_Window_Open, TRUE);
-	}
-	set(app, MUIA_Application_Sleep, FALSE);
-	set(win, MUIA_Window_Sleep, TRUE);
+	SystemTags("Config",
+		SYS_Input		, NULL,
+		SYS_Output		, NULL,
+		SYS_Asynch		, TRUE,
+		NP_CloseInput	, FALSE,
+		NP_CloseOutput	, FALSE,
+		TAG_DONE);
 
 	return(NULL);
 }
 
-ULONG IconBar_Finish(struct IClass *cl, Object *obj, struct MUIP_IconBar_Finish *msg)
+ULONG IconBar_About(struct IClass *cl, Object *obj, Msg msg)
 {
-	DoMethod((Object *)xget(obj, MUIA_ApplicationObject), MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
+	Object *req;
+
+	set(win, MUIA_Window_Sleep, TRUE);
+	if(req = (APTR)NewObject(CL_About->mcc_Class, NULL, TAG_DONE))
+	{
+		DoMethod(app, OM_ADDMEMBER, req);
+		set(req, MUIA_Window_Open, TRUE);
+	}
+	else
+		set(win, MUIA_Window_Sleep, FALSE);
+
+	return(NULL);
+}
+
+ULONG IconBar_About_Finish(struct IClass *cl, Object *obj, struct MUIP_IconBar_About_Finish *msg)
+{
+	Object *window = msg->window;
+
+	set(window, MUIA_Window_Open, FALSE);
+	set(win, MUIA_Window_Sleep, FALSE);
+	DoMethod(app, OM_REMMEMBER, window);
+	MUI_DisposeObject(window);
+
 	return(NULL);
 }
 
@@ -1552,13 +1607,12 @@ ULONG IconBar_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		MUIA_Window_ID			, MAKE_ID('I','C','O','N'),
 		MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, IconBarMenu,0),
 		WindowContents			, VGroup,
-			Child, tmp.GR_Buttons = HGroup,
-//tmp.GR_Buttons = ColGroup(xget(cp_data->SL_Columns, MUIA_Numeric_Value)),
-				MUIA_Group_Spacing, 0,
-				MUIA_InnerBottom	, 0,
-				MUIA_InnerLeft		, 0,
-				MUIA_InnerTop		, 0,
-				MUIA_InnerRight	, 0,
+			MUIA_Group_Spacing, 0,
+			MUIA_InnerBottom	, 0,
+			MUIA_InnerLeft		, 0,
+			MUIA_InnerTop		, 0,
+			MUIA_InnerRight	, 0,
+			Child, tmp.GR_Buttons = VGroup,
 			End,
 		End,
 		TAG_MORE, msg->ops_AttrList))
@@ -1567,15 +1621,17 @@ ULONG IconBar_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 		*data = tmp;
 
+		DoMethod(obj, MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
+			MUIV_Notify_Application, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
 
-		DoMethod(obj, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, obj, 2, MUIM_IconBar_Finish, 0);
-
+		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_ABOUT)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+			obj, 1, MUIM_IconBar_About);
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_QUIT)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
-			obj, 2, MUIM_IconBar_Finish, 0);
+			MUIV_Notify_Application, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_ICONBAR)	, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
-			obj, 2, MUIM_IconBar_IconBarPrefs);
+			obj, 1, MUIM_IconBar_IconBarPrefs);
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_AMITCP)	, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
-			obj, 2, MUIM_IconBar_AmiTCPPrefs);
+			obj, 1, MUIM_IconBar_AmiTCPPrefs);
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_MUI)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
 			MUIV_Notify_Application, 2, MUIM_Application_OpenConfigWindow, 0);
 	}
@@ -1588,37 +1644,15 @@ SAVEDS ASM ULONG IconBar_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *o
 	switch (msg->MethodID)
 	{
 		case OM_NEW										: return(IconBar_New						(cl, obj, (APTR)msg));
-		case MUIM_IconBar_Finish					: return(IconBar_Finish					(cl, obj, (APTR)msg));
 		case MUIM_IconBar_LoadButtons				: return(IconBar_LoadButtons			(cl, obj, (APTR)msg));
 		case MUIM_IconBar_IconBarPrefs			: return(IconBar_IconBarPrefs			(cl, obj, (APTR)msg));
 		case MUIM_IconBar_IconBarPrefs_Finish	: return(IconBar_IconBarPrefs_Finish(cl, obj, (APTR)msg));
 		case MUIM_IconBar_AmiTCPPrefs				: return(IconBar_AmiTCPPrefs			(cl, obj, (APTR)msg));
+		case MUIM_IconBar_About						: return(IconBar_About					(cl, obj, (APTR)msg));
+		case MUIM_IconBar_About_Finish			: return(IconBar_About_Finish			(cl, obj, (APTR)msg));
 	}
 	return(DoSuperMethodA(cl, obj, msg));
 }
-
-
-
-
-
-
-/*
-	GR_ScriptEditor = VirtgroupObject,
-		VirtualFrame,
-		MUIA_HelpNode, "GR_ScriptEditor",
-		MUIA_Background, MUII_BACKGROUND,
-		MUIA_Frame, MUIV_Frame_InputList,
-	End;
-
-	GR_ScriptEditor = ScrollgroupObject,
-		MUIA_Scrollgroup_Contents, GR_ScriptEditor,
-	End;
-
-	GR_DialScript = GroupObject,
-		MUIA_HelpNode, "GR_DialScript",
-		Child, GR_ScriptEditor,
-	End;
-*/
 
 
 
@@ -1629,19 +1663,18 @@ SAVEDS ASM ULONG IconBar_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *o
 
 VOID exit_classes(VOID)
 {
-	if(CL_IconBarPrefs)	MUI_DeleteCustomClass(CL_IconBarPrefs);
-	if(CL_IconList)		MUI_DeleteCustomClass(CL_IconList);
-	if(CL_Button)			MUI_DeleteCustomClass(CL_Button);
-	if(CL_IconBar)			MUI_DeleteCustomClass(CL_IconBar);
+	if(CL_IconList)				MUI_DeleteCustomClass(CL_IconList);
+	if(CL_IconBarPrefs)			MUI_DeleteCustomClass(CL_IconBarPrefs);
 
-	if(CL_AmiTCPPrefs)	MUI_DeleteCustomClass(CL_AmiTCPPrefs);
-	if(CL_UserPrefs)		MUI_DeleteCustomClass(CL_UserPrefs);
-	if(CL_ServerPrefs)	MUI_DeleteCustomClass(CL_ServerPrefs);
-	if(CL_MiscPrefs)		MUI_DeleteCustomClass(CL_MiscPrefs);
+	if(CL_About)					MUI_DeleteCustomClass(CL_About);
+	if(CL_Button)					MUI_DeleteCustomClass(CL_Button);
+	if(CL_IconBar)					MUI_DeleteCustomClass(CL_IconBar);
 
-	CL_IconBarPrefs	= CL_IconList		= CL_IconBar		=
-	CL_AmiTCPPrefs		= CL_UserPrefs		= CL_ServerPrefs	=
-	CL_MiscPrefs		= CL_Button					= NULL;
+//	TextView_ExitClasses();
+
+	CL_IconBar			= CL_Button				=
+	CL_IconBarPrefs	= CL_IconList			= 
+	CL_About				= NULL;
 }
 
 
@@ -1651,18 +1684,16 @@ VOID exit_classes(VOID)
 
 BOOL init_classes(VOID)
 {
-	CL_IconBarPrefs	= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct IconBarPrefs_Data)	, IconBarPrefs_Dispatcher);
-	CL_IconList			= MUI_CreateCustomClass(NULL, MUIC_List		, NULL, sizeof(struct IconList_Data)		, IconList_Dispatcher);
-	CL_Button			= MUI_CreateCustomClass(NULL, MUIC_Bodychunk	, NULL, sizeof(struct Button_Data)			, Button_Dispatcher);
-	CL_IconBar			= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct IconBar_Data)			, IconBar_Dispatcher);
+	CL_IconBar				= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct IconBar_Data)				, IconBar_Dispatcher);
+	CL_Button				= MUI_CreateCustomClass(NULL, MUIC_Bodychunk	, NULL, sizeof(struct Button_Data)				, Button_Dispatcher);
+	CL_About					= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct About_Data)				, About_Dispatcher);
 
-	CL_AmiTCPPrefs		= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct AmiTCPPrefs_Data)	, AmiTCPPrefs_Dispatcher);
-	CL_UserPrefs		= MUI_CreateCustomClass(NULL, MUIC_Group		, NULL, sizeof(struct UserPrefs_Data)		, UserPrefs_Dispatcher);
-	CL_ServerPrefs		= MUI_CreateCustomClass(NULL, MUIC_Group		, NULL, sizeof(struct ServerPrefs_Data)	, ServerPrefs_Dispatcher);
-	CL_MiscPrefs		= MUI_CreateCustomClass(NULL, MUIC_Group		, NULL, sizeof(struct MiscPrefs_Data)		, MiscPrefs_Dispatcher);
+	CL_IconBarPrefs		= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct IconBarPrefs_Data)		, IconBarPrefs_Dispatcher);
+	CL_IconList				= MUI_CreateCustomClass(NULL, MUIC_List		, NULL, sizeof(struct IconList_Data)			, IconList_Dispatcher);
 
-	if(CL_IconBarPrefs	&& CL_IconBar		&& CL_IconList 	&& CL_Button &&
-		CL_AmiTCPPrefs		&& CL_UserPrefs	&& CL_ServerPrefs	&& CL_MiscPrefs)
+	if(CL_IconBar			&& CL_Button	&& CL_About	&&
+		CL_IconBarPrefs	&& CL_IconList )
+//&& TextView_InitClasses())
 		return(TRUE);
 
 	exit_classes();

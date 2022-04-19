@@ -1,7 +1,8 @@
 #include "globals.c"
 
-extern BOOL init_classes(VOID);
 extern VOID exit_classes(VOID);
+extern BOOL init_classes(VOID);
+
 
 /*
  * close the libraries
@@ -10,7 +11,6 @@ extern VOID exit_classes(VOID);
 VOID exit_libs(VOID)
 {
 	if(cat)					CloseCatalog(cat);
-	if(SoundObject)		DisposeDTObject(SoundObject);
 
 	if(DataTypesBase)		CloseLibrary(DataTypesBase);
 	if(IFFParseBase)		CloseLibrary(IFFParseBase);
@@ -20,7 +20,6 @@ VOID exit_libs(VOID)
 	if(LocaleBase)			CloseLibrary(LocaleBase);
 
 	cat			= NULL;
-	SoundObject	= NULL;
 	IFFParseBase	= IntuitionBase	= UtilityBase		=
 	MUIMasterBase	= LocaleBase		= DataTypesBase	= NULL;
 }
@@ -85,22 +84,22 @@ LONG main(VOID)
 	{
 		if(init_classes())
 		{
-			LocalizeNewMenu(IconBarMenu);
-			LocalizeNewMenu(IconBarPrefsMenu);
-
 			app = ApplicationObject,
 				MUIA_Application_Author			, "Michael Neuweiler",
-				MUIA_Application_Base			, "NetConnect",
-				MUIA_Application_Title			, "NetConnect Controller",
-				MUIA_Application_Version		, "$VER: NetConnect 1.0 (01.06.96)",
+				MUIA_Application_Base			, "NetConnect_Config",
+				MUIA_Application_Title			, "NetConnect Config",
+				MUIA_Application_Version		, "$VER: NetConnect Config 1.0 (13.06.96)",
 				MUIA_Application_Copyright		, GetStr(MSG_AppCopyright),
 				MUIA_Application_Description	, GetStr(MSG_AppDescription),
-				MUIA_Application_Window			, win = NewObject(CL_IconBar->mcc_Class, NULL, TAG_DONE),
+				MUIA_Application_Window			, win = NewObject(CL_AmiTCPPrefs->mcc_Class, NULL, TAG_DONE),
 				End;
 
 			if(app)
 			{
-				DoMethod(win, MUIM_IconBar_LoadButtons);
+				DoMethod(win, MUIM_ServerPrefs_PopList_Update, "AmiTCP:Providers", MUIV_ServerPrefs_PopString_Country);
+				DoMethod(win, MUIM_ServerPrefs_PopList_Update, "AmiTCP:Providers", MUIV_ServerPrefs_PopString_PoP);
+				DoMethod(win, MUIM_AmiTCPPrefs_LoadConfig, "AmiTCP:db/Provider.conf");
+
 				set(win, MUIA_Window_Open, TRUE);
 				while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
 				{

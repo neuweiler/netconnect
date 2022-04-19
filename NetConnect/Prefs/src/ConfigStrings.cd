@@ -67,7 +67,7 @@ Node name :
 MSG_LA_RealName (//)
 Real name :
 MSG_LA_DomainName (//)
-Doman name :
+Domain name :
 MSG_LA_Organisation (//)
 Organisation :
 MSG_LA_Address (//)
@@ -100,6 +100,8 @@ MSG_LA_Netmask (//)
 Netmask :
 MSG_LA_IRCServer (//)
 IRC Server :
+MSG_LA_Gateway (//)
+Gateway :
 MSG_GR_DrawersTitle (//)
 Drawer setup
 MSG_LA_MailIn (//)
@@ -118,8 +120,8 @@ MSG_LA_ModemInit (//)
 Modem Init :
 MSG_LA_SerialUnit (//)
 Serial Unit :
-MSG_LA_DialString (//)
-Dial String :
+MSG_LA_DialPrefix (//)
+Dial Prefix :
 MSG_LA_BaudRate (//)
 Baud Rate (BPS) :
 MSG_BT_Save (//)
