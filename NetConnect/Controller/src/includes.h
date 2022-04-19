@@ -1,0 +1,15 @@
+#include <string.h>
+#include <clib/macros.h>
+#include <libraries/iffparse.h>
+#include <clib/iffparse_protos.h>
+#include <libraries/gadtools.h>
+#include <clib/locale_protos.h>
+#include <libraries/mui.h>
+#include <proto/muimaster.h>
+#include <clib/exec_protos.h>
+#include <exec/memory.h>
+#include <clib/alib_protos.h>
+#include <clib/dos_protos.h>
+#include <datatypes/pictureclass.h>
+#include <stdio.h>
+#include <clib/utility_protos.h>

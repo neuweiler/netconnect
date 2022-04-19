@@ -1,0 +1,56 @@
+###############################################################################
+#
+#	SMakefile
+#
+#	Makefile for the `SMake' utility required to build `NetConnect'
+#
+#	1996 by Michael Neuweiler
+#
+###############################################################################
+
+.c.o:
+	sc $(CFLAGS) $(GST) $(OPTIONS) NOEXTDEF $*.c
+
+.asm.o:
+	ASM -D $*.asm
+
+CPU		= ANY
+#CPU		= 68030
+
+#OPTIMIZE	= OPT OPTTIME NOOPTINLOCAL
+
+OPTIONS	= CPU=$(CPU) $(OPTIMIZE)
+
+GST		= GSTIMM GST=includes.gst
+
+CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS
+#CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS DBG=FULL
+
+#LFLAGS	= SC SD NOICONS
+LFLAGS	= ND SC SD NOICONS
+
+OBJS		= main.o globals.o mui.o
+LIBS		= lib:amiga.lib lib:sc.lib
+
+all:	 includes.gst NetConnectStrings.h NetConnect
+
+includes.gst:	includes.h
+		GST >NIL: UNLOAD $@
+		SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ includes.h
+		GST $@
+
+NetConnectStrings.h: NetConnectStrings.cd
+	cat2h NetConnectStrings.cd NetConnectStrings.h
+
+NetConnect:	$(OBJS)
+   SLINK WITH T:NetConnect.WITH <<!(T:NetConnect.WITH)
+		FROM	lib:c.o $(OBJS)
+		TO		NetConnect
+		LIB	$(LIBS)
+		$(LFLAGS)
+	<
+
+globals.o:	globals.c	NetConnect.h NetConnectStrings.h
+	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
+main.o:		main.c		NetConnect.h NetConnectStrings.h
+mui.o:		mui.c			NetConnect.h NetConnectStrings.h
