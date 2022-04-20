@@ -34,9 +34,9 @@ MSG_BT_SaveScript (//)
 S_ave
 MSG_BT_ClearScript (//)
 Cl_ear
-MSG_LA_Rows (//)
-Rows :
-MSG_CC_Rows (/1/1)
+MSG_LA_Columns (//)
+Columns :
+MSG_CC_Columns (/1/1)
 o
 MSG_LA_Name (//)
 Name :
@@ -116,8 +116,8 @@ MSG_HELP_New (//)
 Create a new icon.
 MSG_HELP_Remove (//)
 Delete the active icon.
-MSG_HELP_Rows (//)
-Determine the number of\nrows the main window will\nuse to display the icons.
+MSG_HELP_Columns (//)
+Determine the number of\ncolumns the main window will\nuse to display the icons.
 MSG_HELP_Name (//)
 A name you can give\nto the button.
 MSG_HELP_Type (//)

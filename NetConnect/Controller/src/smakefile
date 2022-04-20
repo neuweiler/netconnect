@@ -26,10 +26,10 @@ GST		= GSTIMM GST=includes.gst
 CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS
 #CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS DBG=FULL
 
-LFLAGS	= ND SC SD NOICONS
-#LFLAGS	= SC SD NOICONS
+LFLAGS	= ND SC SD NOICONS MAXHUNK 100000
+#LFLAGS	= SC SD NOICONS MAXHUNK 100000
 
-OBJS		= main.o globals.o mui.o amiga.o
+OBJS		= main.o globals.o mui1.o mui2.o amiga.o fixpath.o
 LIBS		= lib:amiga.lib lib:sc.lib
 
 all:	 includes.gst NetConnectStrings.h default_icon.bh logo.bh NetConnect
@@ -50,7 +50,7 @@ logo.bh: logo.iff
 
 NetConnect:	$(OBJS)
    SLINK WITH T:NetConnect.WITH <<!(T:NetConnect.WITH)
-		FROM	lib:c.o $(OBJS)
+		FROM	lib:start.o $(OBJS)
 		TO		NetConnect
 		LIB	$(LIBS)
 		MAP netconnect.map H
@@ -59,6 +59,8 @@ NetConnect:	$(OBJS)
 
 globals.o:	globals.c	NetConnect.h NetConnectStrings.h	logo.bh default_icon.bh
 	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
-main.o:		main.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
-mui.o:		mui.c			NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
-amiga.o:		amiga.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
+main.o:		main.c		NetConnect.h NetConnectStrings.h globals.c
+mui1.o:		mui1.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
+mui2.o:		mui2.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
+amiga.o:		amiga.c		NetConnect.h NetConnectStrings.h globals.c
+fixpath.o:	fixpath.c

@@ -11,6 +11,8 @@
 #define USE_LOGO_COLORS
 #include "logo.bh"
 
+struct	ExecBase					*SysBase			= NULL;
+struct	DosLibrary				*DOSBase			= NULL;
 struct	Library					*IntuitionBase	= NULL;
 struct	Library					*MUIMasterBase	= NULL;
 struct	Library					*UtilityBase	= NULL;
@@ -18,23 +20,25 @@ struct	Library					*LocaleBase		= NULL;
 struct	Library					*IFFParseBase	= NULL; /* this one's for the config-file */
 struct	Library					*DataTypesBase	= NULL;
 struct	Library					*CxBase			= NULL;
+struct	Library					*WorkbenchBase	= NULL;
+struct	Library					*IconBase		= NULL;
 struct	Catalog					*cat				= NULL; /* pointer to our locale catalog */
 
 STATIC LONG Stops[] =			/* IFF ID's for our config file	*/
 {
 	ID_NTCN, ID_AICN,				/* Active ICoN		: Holds a "struct Icon", an icon for the Icon Bar		*/
 	ID_NTCN, ID_IICN,				/* Inactive ICoN	: Holds a "struct Icon", an icon fot the Icon Bank	*/
-	ID_NTCN, ID_ROWS,				/* howmany rows will be used to display the icons */
+	ID_NTCN, ID_COLS,				/* howmany columns will be used to display the icons */
 	ID_NTCN, ID_WINT,				/* type of window: 0=normal, 1=borderless, 2=borderless with dragbar */
 	ID_NTCN, ID_BTTY,				/* how buttons are displayed: 0=text&icon, 1=icon only, 2=text only */
 
 	ID_NTCN, ID_MENU,
-	ID_NTCN, ID_NODE,
-	ID_NTCN, ID_END
+	ID_NTCN, ID_CMND
 };
 
 Object *app						= NULL;	/* our MUI application												*/
 Object *win						= NULL;	/* a global pointer to our main window (the icon bar) 	*/
+Object *menu_win				= NULL;	/* pointer to MenuPrefs window */
 
 struct MUI_CustomClass  *CL_IconBar			= NULL;	/* class for the main (icon bar) window									*/
 struct MUI_CustomClass  *CL_IconBarPrefs	= NULL;	/* icon bar preferences window class										*/
@@ -44,12 +48,26 @@ struct MUI_CustomClass  *CL_IconList		= NULL;	/* list class for the two listview
 struct MUI_CustomClass	*CL_Button			= NULL;
 struct MUI_CustomClass	*CL_About			= NULL;
 struct MUI_CustomClass	*CL_MenuPrefs		= NULL;
+struct MUI_CustomClass	*CL_ProgramList	= NULL;
 
 Object *SoundObject = NULL;
-STRPTR ARR_ProgramTypes[] = { "AmigaDOS", "Workbench", "Script", "ARexx", NULL };
+STRPTR ARR_Asynch[] = { "synch", "asynch", NULL };
+STRPTR ARR_ProgramTypes[] = { "CLI", "Workbench", "Script", "ARexx Script", NULL };
 STRPTR ARR_ButtonTypes[] = { "Icon & Text", "Icon only", "Text only", NULL };
 STRPTR ARR_WindowTypes[] = { "Normal", "Borderless", "Borderless with DragBar", NULL };
-STRPTR STR_GR_Register[3];
+STRPTR STR_GR_Register[4];
+struct MsgPort						*appmenu_port;
+struct MUI_InputHandlerNode	ihnode;
+struct Process						*ThisProcess;
+struct WBStartup					*WBenchMsg;
+BPTR									WBenchLock;
+struct CommandLineInterface	*LocalCLI = NULL;
+STATIC BPTR							OldCLI = NULL;
+
+
+STRPTR default_names[]			= { "Start/Stop"				, "WWW"						, "Telnet"					, "FTP"					, "IRC"					, "Mail"										, "News"												, "Ping"												, "Traceroute"												, "Finger"												, "Search"												, "Docs"												, "Misc"												, NULL };
+STRPTR default_imagefiles[]	= { IMAGE_PATH"Start"		, IMAGE_PATH"WWW"			, IMAGE_PATH"Telnet"		, IMAGE_PATH"FTP"		, IMAGE_PATH"IRC"		, IMAGE_PATH"Mail"		, IMAGE_PATH"News"		, IMAGE_PATH"Ping"		, IMAGE_PATH"Traceroute"		, IMAGE_PATH"Finger"		, IMAGE_PATH"Search"		, IMAGE_PATH"Docs"		, IMAGE_PATH"Misc"		, NULL };
+STRPTR default_programfiles[]	= { "AmiTCP:bin/startnet"	, PROGRAM_PATH"Voyager"	, PROGRAM_PATH"Telnet"	, PROGRAM_PATH"mFTP"	, PROGRAM_PATH"Irc"	, PROGRAM_PATH"Mail", PROGRAM_PATH"News", PROGRAM_PATH"Ping", PROGRAM_PATH"Traceroute", PROGRAM_PATH"Finger", PROGRAM_PATH"Search", PROGRAM_PATH"Docs", PROGRAM_PATH"Misc", NULL };
 
 
 enum { MEN_RESET = 1 , MEN_MUI2 };

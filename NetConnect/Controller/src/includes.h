@@ -10,6 +10,8 @@
 #include <clib/utility_protos.h>
 #include <clib/datatypes_protos.h>
 #include <clib/commodities_protos.h>
+#include <clib/wb_protos.h>
+#include <clib/icon_protos.h>
 
 #include <libraries/iffparse.h>
 #include <libraries/gadtools.h>
@@ -29,5 +31,3 @@
 
 #include <workbench/workbench.h>
 #include <workbench/WBStart.h>
-
-#include <Listtree_mcc.h>

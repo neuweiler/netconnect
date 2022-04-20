@@ -1,5 +1,7 @@
 STRPTR GetStr(STRPTR idstr);
 
+// amiga.c
+
 SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg);
 ULONG __stdargs DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...);
 LONG xget(Object *obj, ULONG attribute);
@@ -22,3 +24,16 @@ BOOL editor_load(STRPTR file, Object *editor);
 BOOL editor_save(STRPTR file, Object *editor);
 BOOL editor_checksave(STRPTR file, Object *editor);
 VOID play_sound(STRPTR file, LONG volume);
+VOID StartProgram(struct Program *program, struct AppMessage *msg);
+
+// mui2.c
+
+SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG ProgramList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg);
+SAVEDS ASM ULONG MenuPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+
+
+// fixpath.c
+
+VOID __regargs DeleteCLI(struct CommandLineInterface *CLI);
+struct CommandLineInterface * __regargs CloneCLI(struct Message *Message);

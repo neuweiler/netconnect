@@ -72,6 +72,12 @@ Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only)
 	return(obj);
 }
 
+/*
+ * loads bitmap image of an icon.
+ * icon->cols, icon->bmhd and icon->body
+ * are beeing allocated
+ */
+
 BOOL load_icon(struct Icon *icon)
 {
 	struct IFFHandle *Handle;
@@ -151,6 +157,13 @@ BOOL load_icon(struct Icon *icon)
 	return(success);
 }
 
+/*
+ * calls load_icon() and generates
+ * a BodychunkObject.
+ * nothing is changed in icon by
+ * this routine (but load_icon does !)
+ */
+
 Object *create_bodychunk(struct Icon *icon, BOOL frame)
 {
 	Object *bodychunk = NULL;
@@ -174,9 +187,27 @@ Object *create_bodychunk(struct Icon *icon, BOOL frame)
 	}
 	if(!bodychunk)
 	{
+		if(!stricmp(&icon->ImageFile[strlen(icon->ImageFile) - 5], ".info"))
+			icon->ImageFile[strlen(icon->ImageFile) - 5] = NULL;
+		if(icon->disk_object = GetDiskObjectNew(icon->ImageFile))
+		{
+			if(!(bodychunk = ImageObject,
+				MUIA_Background		, MUII_ButtonBack,
+				MUIA_Frame				, (frame ? MUIV_Frame_Button : MUIV_Frame_None),
+				MUIA_Image_OldImage	, icon->disk_object->do_Gadget.GadgetRender,
+			End))
+			{
+				FreeDiskObject(icon->disk_object);
+				icon->disk_object = NULL;
+			}
+		}
+	}
+	if(!bodychunk)
+	{
 		icon->body = NULL;
 		icon->bmhd = NULL;
 		icon->cols = NULL;
+		icon->disk_object = NULL;
 		bodychunk = BodychunkObject,
 			MUIA_Background				, MUII_ButtonBack,
 			MUIA_Frame						, (frame ? MUIV_Frame_Button : MUIV_Frame_None),
@@ -198,16 +229,16 @@ Object *create_bodychunk(struct Icon *icon, BOOL frame)
 
 VOID init_icon(struct Icon *icon, Object *list)
 {
-	icon->body		= NULL;
-	icon->list		= NULL;
-	icon->cols		= NULL;
-	icon->bmhd		= NULL;
-	icon->edit_window = NULL;
-	if(icon->bodychunk = create_bodychunk(icon, TRUE))
-	{
-		if(list)
-			icon->list = (APTR)DoMethod(list, MUIM_List_CreateImage, icon->bodychunk, 0);
-	}
+	icon->body			= NULL;
+	icon->list			= NULL;
+	icon->cols			= NULL;
+	icon->bmhd			= NULL;
+	icon->cx_filter	= NULL;
+	icon->edit_window	= NULL;
+	icon->disk_object	= NULL;
+
+	if((icon->bodychunk = create_bodychunk(icon, TRUE)) && list && !icon->disk_object)
+		icon->list = (APTR)DoMethod(list, MUIM_List_CreateImage, icon->bodychunk, 0);
 }
 
 LONG get_file_size(STRPTR file)
@@ -344,16 +375,19 @@ SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
 {
 	struct WBArg *ap;
 	struct AppMessage *amsg = *x;
-	char buf[MAXPATHLEN];
+	STRPTR buf;
 
 	ap = amsg->am_ArgList;
 	if(amsg->am_NumArgs)
 	{
-		NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
-		AddPart(buf, ap->wa_Name, MAXPATHLEN);
-		setstring(obj, buf);
+		if(buf = AllocVec(MAXPATHLEN + 1, MEMF_ANY))
+		{
+			NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
+			AddPart(buf, ap->wa_Name, MAXPATHLEN);
+			setstring(obj, buf);
+			FreeVec(buf);
+		}
 	}
-
 	return(NULL);
 }
 
@@ -361,56 +395,23 @@ SAVEDS ASM LONG Editor_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **
 {
 	struct WBArg *ap;
 	struct AppMessage *amsg = *x;
-	char buf[MAXPATHLEN];
+	STRPTR buf;
+	int i;
 
-	ap = amsg->am_ArgList;
 	if(amsg->am_NumArgs)
 	{
-		NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
-		AddPart(buf, ap->wa_Name, MAXPATHLEN);
-		DoMethod(obj, MUIM_List_InsertSingle, buf, MUIV_List_Insert_Active);
-		set(obj, MUIA_UserData, 1);
-	}
-
-	return(NULL);
-}
-
-SAVEDS ASM LONG Button_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
-{
-	struct Button_Data *data = INST_DATA(CL_Button->mcc_Class, obj);
-	struct WBArg *ap;
-	struct AppMessage *amsg = *x;
-	char buf[MAXPATHLEN], program[MAXPATHLEN];
-	STRPTR ptr;
-	ap = amsg->am_ArgList;
-	if(amsg->am_NumArgs)
-	{
-		NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
-		AddPart(buf, ap->wa_Name, MAXPATHLEN);
-
-		strncpy(program, data->icon->Program, MAXPATHLEN);
-		if(ptr = strstr(program, "%f"))
+		if(buf = AllocVec(MAXPATHLEN + 1, MEMF_ANY))
 		{
-			*ptr = NULL;
-			strncat(program, buf, MAXPATHLEN);
-			if(ptr = strstr(data->icon->Program, "%f"))
+			for(ap = amsg->am_ArgList, i = 0; i < amsg->am_NumArgs; i++, ap++)
 			{
-				ptr += 2;
-				strncat(program, ptr, MAXPATHLEN);
+				NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
+				AddPart(buf, ap->wa_Name, MAXPATHLEN);
+				DoMethod(obj, MUIM_List_InsertSingle, buf, MUIV_List_Insert_Active);
 			}
+			set(obj, MUIA_UserData, 1);
+			FreeVec(buf);
 		}
-		else
-		{
-			strncat(program, " ", MAXPATHLEN);
-			strncat(program, buf, MAXPATHLEN);
-		}
-		strncpy(buf, data->icon->Program, MAXPATHLEN);
-		strncpy(data->icon->Program, program, MAXPATHLEN);
-
-		DoMethod(obj, MUIM_Button_Action);
-		strncpy(data->icon->Program, buf, MAXPATHLEN);
 	}
-
 	return(NULL);
 }
 
@@ -453,7 +454,7 @@ BOOL editor_save(STRPTR file, Object *editor)
 {
 	BPTR fh;
 	STRPTR ptr;
-	LONG i;
+	int i;
 	BOOL success = FALSE;
 
 	if(*file)
@@ -510,4 +511,279 @@ VOID play_sound(STRPTR file, LONG volume)
 			DoMethod(SoundObject, DTM_TRIGGER, NULL, STM_PLAY, NULL);
 		}
 	}
+}
+
+ULONG BuildCommandLine(char *buf, struct Program *program, BPTR curdir, struct AppMessage *msg)
+{
+	ULONG cmdlen;      /* Command line length */
+	STRPTR lp;          /* Pointer to current cmdline pos. */
+	STRPTR com = program->File;
+
+	*buf = NULL;
+	if(program->Type == TYPE_SCRIPT)
+		strcpy(buf, "Execute ");
+	if(program->Type == TYPE_AREXX)
+		strcpy(buf, "SYS:Rexxc/rx ");
+
+	strcat(buf, com);
+
+	if(lp = strchr(buf, '['))
+		*lp = NULL;
+
+	cmdlen = strlen(buf);
+	lp = buf + cmdlen;
+
+	if(msg)
+	{
+		STRPTR dir; /* Buffer for file names */
+
+		if(dir = AllocVec(MAXPATHLEN, MEMF_ANY))
+		{
+			struct WBArg *wa = msg->am_ArgList;		/* Pointer to WBArgs */
+			int i;											/* Counter for WBArgs */
+
+			for(i = msg->am_NumArgs; i; i--, wa++)
+			{
+				char *name, *space;
+				ULONG namelen;
+
+				if(!wa->wa_Lock)
+					continue;
+
+				if(cmdlen > CMDLINELEN - 2)
+					break;
+				*lp++=' ';
+				cmdlen++;
+
+				/* Build parameter from Lock & name */
+				if(*(wa->wa_Name))
+				{
+					if(SameLock(curdir, wa->wa_Lock) == LOCK_SAME)
+						name=wa->wa_Name;
+					else
+					{
+						if(!NameFromLock(wa->wa_Lock, dir, MAXPATHLEN))
+							continue;
+						if(!AddPart(dir, wa->wa_Name, MAXPATHLEN))
+							continue;
+						name = dir;
+					}
+				}
+				else		// no filename => drawer
+				{
+					if(!NameFromLock(wa->wa_Lock, dir, MAXPATHLEN))
+						continue;
+					name = dir;
+				}
+				namelen = strlen(name);
+
+				if(space = strchr(name,' '))
+					namelen += 2;
+
+				if(cmdlen + namelen > CMDLINELEN - 2)
+					break;
+
+				if(space)
+					*lp++ = '"';
+				strcpy(lp, name);
+				lp += namelen;
+				if(space)
+				{
+					lp--;
+					*(lp-1) = '"';
+				}
+				cmdlen += namelen;
+			}
+			FreeVec(dir);
+		}
+	}
+
+	if((com = strchr(com, ']')) && (cmdlen + strlen(++com) < CMDLINELEN - 1))
+	{
+		strcpy(lp, com);
+		lp = lp + strlen(lp);
+	}
+	else
+		*lp = NULL;
+
+	return((ULONG)(lp - buf));
+}
+
+BOOL StartCLIProgram(struct Program *program, struct AppMessage *msg)
+{
+	char *cmd;     /* Buffer for command line */
+	BOOL success = FALSE;
+
+	if(cmd = AllocVec(CMDLINELEN, MEMF_ANY))
+	{
+		BPTR newcd = NULL;
+
+		if(*program->CurrentDir)
+		{
+			newcd = Lock(program->CurrentDir, SHARED_LOCK);
+		}
+		else
+		{
+			STRPTR buf, ptr;
+
+			if(buf = AllocVec(MAXPATHLEN + 1, MEMF_ANY))
+			{
+				strncpy(buf, program->File, MAXPATHLEN);
+				if(ptr = FilePart(buf))
+					*ptr = NULL;
+				newcd = Lock(buf, SHARED_LOCK);
+
+				FreeVec(buf);
+			}
+		}
+		if(!newcd)
+			newcd = Lock("SYS:", SHARED_LOCK);
+		if(newcd)
+		{
+			BPTR ifh, ofh;
+			BPTR oldcd = CurrentDir(newcd);
+
+			BuildCommandLine(cmd, program, newcd, msg);
+
+			if(ofh = Open((*program->OutputFile ? program->OutputFile : "NIL:"), MODE_NEWFILE))
+			{
+				if(ifh = Open("NIL:", MODE_OLDFILE))
+				{
+					if(SystemTags(cmd,
+						SYS_Output		, ofh,
+						SYS_Input		, ifh,
+						SYS_Asynch		, program->Asynch,
+						SYS_UserShell	, TRUE,
+						NP_StackSize	, program->Stack,
+						NP_Priority		, program->Priority,
+						TAG_DONE) != -1)
+							success = TRUE;
+
+					if(!success || !program->Asynch)
+						Close(ifh);
+				}
+				if(!success || !program->Asynch)
+					Close(ofh);
+			}
+			CurrentDir(oldcd);
+			UnLock(newcd);
+		}
+		FreeVec(cmd);
+	}
+	return(success);
+}
+
+BOOL StartWBProgram(struct Program *program, struct AppMessage *msg)
+{
+	struct MsgPort *hp, *mp;
+	struct WBStartMsg wbsm;
+	BOOL success = FALSE;
+
+	if(mp = CreateMsgPort())
+	{
+		if(*program->CurrentDir)
+		{
+			wbsm.wbsm_DirLock = Lock(program->CurrentDir, SHARED_LOCK);
+		}
+		else
+		{
+			STRPTR buf, ptr;
+
+			wbsm.wbsm_DirLock = NULL;
+			if(buf = AllocVec(MAXPATHLEN + 1, MEMF_ANY))
+			{
+				strncpy(buf, program->File, MAXPATHLEN);
+				if(ptr = FilePart(buf))
+					*ptr = NULL;
+				wbsm.wbsm_DirLock = Lock(buf, SHARED_LOCK);
+
+				FreeVec(buf);
+			}
+		}
+
+		wbsm.wbsm_Msg.mn_Node.ln_Pri	= 0;
+		wbsm.wbsm_Msg.mn_ReplyPort		= mp;
+		wbsm.wbsm_Name						= program->File;
+		wbsm.wbsm_Stack					= program->Stack;
+		wbsm.wbsm_Prio						= program->Priority;
+		wbsm.wbsm_NumArgs					= msg ? msg->am_NumArgs : NULL;
+		wbsm.wbsm_ArgList					= msg ? msg->am_ArgList : NULL;
+
+		Forbid();
+		if(hp = FindPort(WBS_PORTNAME))
+			PutMsg(hp, (struct Message *)&wbsm);
+		Permit();
+
+		/* No WBStart-Handler, try to start it! */
+		if(!hp)
+		{
+			BPTR ifh = Open("NIL:", MODE_NEWFILE);
+			BPTR ofh = Open("NIL:", MODE_OLDFILE);
+
+			if(SystemTags(WBS_LOADNAME,
+				SYS_Input		, ifh,
+				SYS_Output		, ofh,
+				SYS_Asynch		, TRUE,
+				SYS_UserShell	, TRUE,
+				NP_ConsoleTask	, NULL,
+				NP_WindowPtr	, NULL,
+				TAG_DONE) != -1)
+			{
+				int i;
+
+				for(i = 0; i < 10; i++)
+				{
+					Forbid();
+					if(hp = FindPort(WBS_PORTNAME))
+						PutMsg(hp, (struct Message *)&wbsm);
+					Permit();
+					if(hp)
+						break;
+					Delay(25);
+				}
+			}
+			else
+			{
+				Close(ofh);
+				Close(ifh);
+			}
+		}
+
+		if(hp)
+		{
+			WaitPort(mp);
+			GetMsg(mp);
+			success = wbsm.wbsm_Stack;		// Has tool been started?
+		}
+
+		if(wbsm.wbsm_DirLock)
+			UnLock(wbsm.wbsm_DirLock);
+		DeleteMsgPort(mp);
+	}
+
+	return(success);
+}
+
+
+VOID StartProgram(struct Program *program, struct AppMessage *msg)
+{
+	struct AppMessage *args = (program->Flags & PRG_Arguments) ? msg : NULL;
+	BOOL success = FALSE;
+
+	set(win, MUIA_Window_Sleep, TRUE);
+	switch(program->Type)
+	{
+		case TYPE_CLI:
+		case TYPE_SCRIPT:
+		case TYPE_AREXX:
+			success = StartCLIProgram(program, args);
+			break;
+		case TYPE_WORKBENCH:
+			success = StartWBProgram(program, args);
+			break;
+	}
+
+	if(!success)
+		DisplayBeep(NULL);
+	set(win, MUIA_Window_Sleep, FALSE);
 }
