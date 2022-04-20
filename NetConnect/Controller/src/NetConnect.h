@@ -14,6 +14,11 @@
 #define ID_ROWS	MAKE_ID('R','O','W','S')
 #define ID_WINT	MAKE_ID('W','I','N','T')	/* window type */
 #define ID_BTTY	MAKE_ID('B','T','T','Y')	/* how buttons are displayed */
+
+#define ID_MENU	MAKE_ID('M','E','N','U')	/* A menu entry */
+#define ID_NODE	MAKE_ID('N','O','D','E')	/* A new node in listtree	*/
+#define ID_END		MAKE_ID('E','N','D','0')	/* End tag. */
+
 #define NUM_STOPS (sizeof(Stops) / (2 * sizeof(ULONG)))
 
 
@@ -35,26 +40,34 @@
 #define MUIM_IconBarPrefs_EditIcon_Finish	(TAGBASE_NETCONNECT | 0x1016)
 #define MUIM_IconBarPrefs_List_Active		(TAGBASE_NETCONNECT | 0x1017)
 
-struct MUIP_IconBarPrefs_EditIcon_Finish	{ ULONG MethodID; Object *obj; struct Icon *icon; Object *list; LONG use; };
+struct MUIP_IconBarPrefs_EditIcon_Finish	{ ULONG MethodID; struct Icon *icon; Object *list; LONG use; };
 struct MUIP_IconBarPrefs_SetStates			{ ULONG MethodID; LONG level; };
 
-#define MUIM_EditIcon_Editor_Active	(TAGBASE_NETCONNECT | 0x1020)
-#define MUIM_EditIcon_ChangeLine		(TAGBASE_NETCONNECT | 0x1021)
-#define MUIM_EditIcon_Type_Active	(TAGBASE_NETCONNECT | 0x1022)
-#define MUIM_EditIcon_PlaySound		(TAGBASE_NETCONNECT | 0x1023)
+#define MUIM_EditIcon_Editor_Active		(TAGBASE_NETCONNECT | 0x1020)
+#define MUIM_EditIcon_ChangeLine			(TAGBASE_NETCONNECT | 0x1021)
+#define MUIM_EditIcon_Type_Active		(TAGBASE_NETCONNECT | 0x1022)
+#define MUIM_EditIcon_Program_Active	(TAGBASE_NETCONNECT | 0x1023)
+#define MUIM_EditIcon_Sound_Active		(TAGBASE_NETCONNECT | 0x1024)
+#define MUIM_EditIcon_PlaySound			(TAGBASE_NETCONNECT | 0x1025)
 
 #define MUIM_IconBar_LoadButtons				(TAGBASE_NETCONNECT | 0x1020)
 #define MUIM_IconBar_IconBarPrefs			(TAGBASE_NETCONNECT | 0x1021)
 #define MUIM_IconBar_IconBarPrefs_Finish	(TAGBASE_NETCONNECT | 0x1022)
-#define MUIM_IconBar_AmiTCPPrefs				(TAGBASE_NETCONNECT | 0x1023)
-#define MUIM_IconBar_About						(TAGBASE_NETCONNECT | 0x1024)
-#define MUIM_IconBar_About_Finish			(TAGBASE_NETCONNECT | 0x1025)
+#define MUIM_IconBar_MenuPrefs				(TAGBASE_NETCONNECT | 0x1023)
+#define MUIM_IconBar_MenuPrefs_Finish		(TAGBASE_NETCONNECT | 0x1024)
+#define MUIM_IconBar_AmiTCPPrefs				(TAGBASE_NETCONNECT | 0x1025)
+#define MUIM_IconBar_About						(TAGBASE_NETCONNECT | 0x1026)
+#define MUIM_IconBar_About_Finish			(TAGBASE_NETCONNECT | 0x1027)
 
 struct MUIP_IconBar_IconBarPrefs_Finish	{ ULONG MethodID; Object *window; LONG level; };
-struct MUIP_IconBar_About_Finish				{ ULONG MethodID; Object *window; };
+struct MUIP_IconBar_MenuPrefs_Finish		{ ULONG MethodID; Object *window; LONG level; };
+struct MUIP_IconBar_About_Finish				{ ULONG MethodID; Object *window; LONG level; };
 
 #define MUIM_Button_Action						(TAGBASE_NETCONNECT | 0x1030)
 
+#define MUIM_MenuPrefs_NewEntry				(TAGBASE_NETCONNECT | 0x1040)
+#define MUIM_MenuPrefs_Listtree_Active		(TAGBASE_NETCONNECT | 0x1041)
+#define MUIM_MenuPrefs_LoadMenus				(TAGBASE_NETCONNECT | 0x1042)
 
 
 struct IconBar_Data
@@ -64,6 +77,27 @@ struct IconBar_Data
 
 	Object *LI_IconBank;		/* list of icon in the bank (struct Icon) */
 	Object *LI_IconBar;		/* list of active icon (struct Icon) */
+};
+
+struct MenuPrefs_Data
+{
+	Object *LV_Menus;
+	Object *LT_Menus;
+	Object *STR_Name;
+	Object *BT_New;
+	Object *BT_Delete;
+
+	Object *STR_Shortcut;
+	Object *LV_Commands;
+	Object *LI_Commands;
+	Object *STR_Command;
+	Object *BT_NewCommand;
+	Object *BT_DeleteCommand;
+	Object *CY_Type;
+
+	Object *BT_Save;
+	Object *BT_Use;
+	Object *BT_Cancel;
 };
 
 struct IconBarPrefs_Data
@@ -148,4 +182,5 @@ struct Icon
 	struct BitMapHeader *bmhd;
 	ULONG *cols;					/* pointer to color array (MUST be ULONG !!) */
 	CxObj *cx_filter;
+	Object *edit_window;
 };

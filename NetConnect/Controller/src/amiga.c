@@ -202,6 +202,7 @@ VOID init_icon(struct Icon *icon, Object *list)
 	icon->list		= NULL;
 	icon->cols		= NULL;
 	icon->bmhd		= NULL;
+	icon->edit_window = NULL;
 	if(icon->bodychunk = create_bodychunk(icon, TRUE))
 	{
 		if(list)
@@ -484,6 +485,7 @@ BOOL editor_checksave(STRPTR file, Object *editor)
 	{
 		if(*file)
 		{
+			DoMethod((Object *)xget(editor, MUIA_WindowObject), MUIM_Window_ToFront);
 			if(MUI_Request(app, (Object *)xget(editor, MUIA_WindowObject), 0, 0, GetStr(MSG_BT_SaveDiscardChanges), GetStr(MSG_LA_ScriptModified)))
 				success = editor_save(file, editor);
 		}

@@ -26,7 +26,11 @@ STATIC LONG Stops[] =			/* IFF ID's for our config file	*/
 	ID_NTCN, ID_IICN,				/* Inactive ICoN	: Holds a "struct Icon", an icon fot the Icon Bank	*/
 	ID_NTCN, ID_ROWS,				/* howmany rows will be used to display the icons */
 	ID_NTCN, ID_WINT,				/* type of window: 0=normal, 1=borderless, 2=borderless with dragbar */
-	ID_NTCN, ID_BTTY				/* how buttons are displayed: 0=text&icon, 1=icon only, 2=text only */
+	ID_NTCN, ID_BTTY,				/* how buttons are displayed: 0=text&icon, 1=icon only, 2=text only */
+
+	ID_NTCN, ID_MENU,
+	ID_NTCN, ID_NODE,
+	ID_NTCN, ID_END
 };
 
 Object *app						= NULL;	/* our MUI application												*/
@@ -39,6 +43,7 @@ struct MUI_CustomClass  *CL_EditIcon		= NULL;	/* window class																	*/
 struct MUI_CustomClass  *CL_IconList		= NULL;	/* list class for the two listviews in the icon bar prefs			*/
 struct MUI_CustomClass	*CL_Button			= NULL;
 struct MUI_CustomClass	*CL_About			= NULL;
+struct MUI_CustomClass	*CL_MenuPrefs		= NULL;
 
 Object *SoundObject = NULL;
 STRPTR ARR_ProgramTypes[] = { "AmigaDOS", "Workbench", "Script", "ARexx", NULL };
@@ -59,7 +64,7 @@ struct NewMenu IconBarPrefsMenu[] =
 
 };
 
-enum { MEN_ABOUT = 1, MEN_QUIT, MEN_ICONBAR, MEN_AMITCP, MEN_TIME, MEN_MUI };
+enum { MEN_ABOUT = 1, MEN_QUIT, MEN_ICONBAR, MEN_MENUS, MEN_AMITCP, MEN_TIMELOG, MEN_NETWATCH, MEN_MUI };
 struct NewMenu IconBarMenu[] =
 {
 	{ NM_TITLE, (STRPTR)MSG_MENU_PROJECT	, 0 , 0, 0, (APTR)0				},
@@ -69,10 +74,13 @@ struct NewMenu IconBarMenu[] =
 
 	{ NM_TITLE, (STRPTR)MSG_MENU_SETTINGS	, 0 , 0, 0, (APTR)0				},
 	{ NM_ITEM , (STRPTR)MSG_MENU_ICONBAR	,"I", 0, 0, (APTR)MEN_ICONBAR	},
+	{ NM_ITEM , (STRPTR)MSG_MENU_MENUS		,"M", 0, 0, (APTR)MEN_MENUS	},
 	{ NM_ITEM , (STRPTR)MSG_MENU_AMITCP		,"A", 0, 0, (APTR)MEN_AMITCP	},
-	{ NM_ITEM , (STRPTR)MSG_MENU_TIME		,"T", 0, 0, (APTR)MEN_TIME		},
+	{ NM_ITEM , (STRPTR)MSG_MENU_MODULES	, 0 , 0, 0, (APTR)0				},
+	{ NM_SUB  , (STRPTR)MSG_MENU_TIMELOG	,"T", 0, 0, (APTR)MEN_TIMELOG	},
+	{ NM_SUB  , (STRPTR)MSG_MENU_NETWATCH	,"N", 0, 0, (APTR)MEN_NETWATCH},
 	{ NM_ITEM , (STRPTR)NM_BARLABEL			, 0 , 0, 0, (APTR)0				},
-	{ NM_ITEM , (STRPTR)MSG_MENU_MUI			,"M", 0, 0, (APTR)MEN_MUI		},
+	{ NM_ITEM , (STRPTR)MSG_MENU_MUI			,"U", 0, 0, (APTR)MEN_MUI		},
 
 	{ NM_END  , NULL								, 0 , 0, 0, (APTR)0				},
 
