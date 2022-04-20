@@ -62,8 +62,8 @@ MSG_RA_Connection1 (//)
 Static
 MSG_GR_UserDetailsTitle (//)
 User Details
-MSG_LA_UserName (//)
-Username :
+MSG_LA_LoginName (//)
+Login name :
 MSG_LA_HostName (//)
 Host name :
 MSG_LA_RealName (//)

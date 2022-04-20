@@ -365,26 +365,79 @@ ULONG Provider_Interface_Active(struct IClass *cl, Object *obj, Msg msg)
 	return(NULL);
 }
 
+
 ULONG Provider_Authentication_Active(struct IClass *cl, Object *obj, Msg msg)
 {
 	struct Provider_Data *data = INST_DATA(cl, obj);
+	STRPTR buf, ptr1, ptr2;
 
 	switch(xget(data->CY_Authentication, MUIA_Cycle_Active))
 	{
 		case 0:
-			set(data->STR_HostID, MUIA_Disabled, TRUE);
-			set(data->STR_YourID, MUIA_Disabled, TRUE);
-			set(data->STR_Password, MUIA_Disabled, TRUE);
+			set(data->STR_HostID, MUIA_Disabled		, TRUE);
+			set(data->STR_YourID, MUIA_Disabled		, TRUE);
+			set(data->STR_Password, MUIA_Disabled	, TRUE);
 			break;
 		case 1:
-			set(data->STR_HostID, MUIA_Disabled, FALSE);
-			set(data->STR_YourID, MUIA_Disabled, FALSE);
-			set(data->STR_Password, MUIA_Disabled, FALSE);
+			set(data->STR_HostID, MUIA_Disabled		, FALSE);
+			set(data->STR_YourID, MUIA_Disabled		, FALSE);
+			set(data->STR_Password, MUIA_Disabled	, FALSE);
+			if(buf = LoadFile("ENV:NetConfig/CHAP"))
+			{
+				if(ptr1 = strchr(buf, ' '))
+				{
+					*ptr1 = NULL;
+					setstring(data->STR_HostID, buf);
+					ptr2 = ptr1 + 1;
+					if(ptr1 = strchr(ptr2, ' '))
+					{
+						*ptr1 = NULL;
+						setstring(data->STR_Password, ptr2);
+						ptr2 = ptr1 + 1;
+						if(ptr1 = strchr(ptr2, '\n'))
+						{
+							*ptr1 = NULL;
+							setstring(data->STR_YourID, ptr2);
+						}
+					}
+				}
+				FreeVec(buf);
+			}
+			else
+			{
+				struct AmiTCPPrefs_Data *xdata = INST_DATA(CL_AmiTCPPrefs->mcc_Class, win);
+				struct User_Data *user_data = INST_DATA(CL_User->mcc_Class, xdata->GR_User);
+
+				setstring(data->STR_Password, xget(user_data->STR_Password, MUIA_String_Contents));
+				setstring(data->STR_YourID, xget(user_data->STR_Password, MUIA_String_Contents));
+			}
 			break;
 		case 2:
 			set(data->STR_HostID, MUIA_Disabled, TRUE);
 			set(data->STR_YourID, MUIA_Disabled, FALSE);
 			set(data->STR_Password, MUIA_Disabled, FALSE);
+			if(buf = LoadFile("ENV:NetConfig/PAP"))
+			{
+				if(ptr1 = strchr(buf, ' '))
+				{
+					*ptr1 = NULL;
+					setstring(data->STR_YourID, buf);
+					ptr2 = ptr1 + 1;
+					if(ptr1 = strchr(ptr2, '\n'))
+					{
+						*ptr1 = NULL;
+						setstring(data->STR_Password, ptr2);
+					}
+				}
+				FreeVec(buf);
+			}
+			else
+			{
+				struct AmiTCPPrefs_Data *xdata = INST_DATA(CL_AmiTCPPrefs->mcc_Class, win);
+				struct User_Data *user_data = INST_DATA(CL_User->mcc_Class, xdata->GR_User);
+				setstring(data->STR_Password, xget(user_data->STR_Password, MUIA_String_Contents));
+				setstring(data->STR_YourID, xget(user_data->STR_Password, MUIA_String_Contents));
+			}
 			break;
 	}
 
@@ -612,7 +665,7 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 					Child, tmp.CY_Header = MakeKeyCycle(STR_CY_Header, "  o"),
 					Child, MakeKeyLabel2("  Authentication :", "  a"),
 					Child, tmp.CY_Authentication = MakeKeyCycle(STR_CY_Authentication, "  a"),
-					Child, MakeKeyLabel2("  His Host-ID :", "  h"),
+					Child, MakeKeyLabel2("  PoP's Host-ID :", "  h"),
 					Child, tmp.STR_HostID = MakeKeyString("", 80, "  h"),
 					Child, MakeKeyLabel2("  Your Host-ID :", "  y"),
 					Child, tmp.STR_YourID = MakeKeyString("", 80, "  y"),
@@ -848,7 +901,7 @@ ULONG User_ChangeDialScript(struct IClass *cl, Object *obj, Msg msg)
 			break;
 		if((STRPTR)strstr(ptr, "YourLogin=") == ptr)
 		{
-			sprintf(string, "YourLogin=\"%ls\"", xget(user_data->STR_UserName, MUIA_String_Contents));
+			sprintf(string, "YourLogin=\"%ls\"", xget(user_data->STR_LoginName, MUIA_String_Contents));
 Printf("replacing %ls with %ls in the dialscript.\n", ptr, string);
 			DoMethod(provider_data->LV_DialScript, MUIM_List_InsertSingle, string, i + 1);
 			DoMethod(provider_data->LV_DialScript, MUIM_List_Remove, i);
@@ -884,8 +937,8 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 				MUIA_HelpNode	, "GR_UserInformation",
 				Child, HVSpace,
 				Child, HVSpace,
-				Child, MakeKeyLabel2(MSG_LA_UserName, "  n"),
-				Child, tmp.STR_UserName = MakeKeyString("", 80, "  n"),
+				Child, MakeKeyLabel2(MSG_LA_LoginName, "  n"),
+				Child, tmp.STR_LoginName = MakeKeyString("", 80, "  n"),
 				Child, MakeKeyLabel2(MSG_LA_Password, "  p"),
 				Child, tmp.STR_Password = StringObject,
 					MUIA_ControlChar		, 'p',
@@ -952,7 +1005,7 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		set(tmp.STR_Line, MUIA_String_AttachedList, tmp.LV_UserStartnet);
 
 
-		set(tmp.STR_UserName		, MUIA_ShortHelp, "Enter your login name here.\nIt will be used during logging in at your provider.");
+		set(tmp.STR_LoginName		, MUIA_ShortHelp, "Enter your login name here.\nIt will be used during logging in at your provider.");
 		set(tmp.STR_Password		, MUIA_ShortHelp, "This is the password that will be used during the login procedure at your provider.");
 		set(tmp.STR_EMail			, MUIA_ShortHelp, "Your EMail address.");
 		set(tmp.STR_RealName		, MUIA_ShortHelp, "Your full name");
@@ -972,7 +1025,7 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		DoMethod(tmp.BT_Delete, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LV_UserStartnet, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
 		DoMethod(tmp.BT_Clear, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LV_UserStartnet, 1, MUIM_List_Clear);
 		DoMethod(tmp.STR_Line, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_User_ChangeLine);
-		DoMethod(tmp.STR_UserName, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_User_ChangeDialScript);
+		DoMethod(tmp.STR_LoginName, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_User_ChangeDialScript);
 		DoMethod(tmp.STR_Password, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_User_ChangeDialScript);
 	}
 	return((ULONG)obj);

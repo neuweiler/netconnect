@@ -39,7 +39,7 @@
 #define MUIV_Users_Modification_NewUser				1
 #define MUIV_Users_Modification_RemoveUser			2
 #define MUIV_Users_Modification_User					3
-#define MUIV_Users_Modification_UserName				4
+#define MUIV_Users_Modification_LoginName				4
 #define MUIV_Users_Modification_HomeDir				5
 #define MUIV_Users_Modification_Shell					6
 #define MUIV_Users_Modification_UserID					7
@@ -141,7 +141,7 @@ struct User_Data
 {
 	Object *GR_Register;
 
-	Object *STR_UserName;
+	Object *STR_LoginName;
 	Object *STR_RealName;
 	Object *STR_Password;
 	Object *STR_EMail;

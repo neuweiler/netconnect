@@ -269,7 +269,7 @@ ULONG Users_Modification(struct IClass *cl, Object *obj, struct MUIP_Users_Modif
 				DoMethod(data->LV_User, MUIM_List_Redraw, MUIV_List_Redraw_Active);
 			}
 			break;
-		case MUIV_Users_Modification_UserName:
+		case MUIV_Users_Modification_LoginName:
 			DoMethod(data->LV_User, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &user);
 			if(user)
 				strcpy(user->Name, (STRPTR)xget(data->STR_Name, MUIA_String_Contents));
@@ -476,7 +476,7 @@ ULONG Users_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		DoMethod(tmp.BT_NewUser		, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_NewUser);
 		DoMethod(tmp.BT_RemoveUser	, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_RemoveUser);
 		DoMethod(tmp.STR_User		, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_User);
-		DoMethod(tmp.STR_Name		, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_UserName);
+		DoMethod(tmp.STR_Name		, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_LoginName);
 		DoMethod(tmp.PA_HomeDir		, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_HomeDir);
 		DoMethod(tmp.STR_Shell		, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_Shell);
 		DoMethod(tmp.STR_UserID		, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_UserID);
@@ -587,62 +587,11 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 			if(!stricmp(pc_data.Argument, "Authentication"))
 			{
 				if(!stricmp(pc_data.Contents, "chap"))
-				{
-					STRPTR buf, ptr1, ptr2;
-
 					setcycle(provider_data->CY_Authentication, 1);
-
-					/*** load the chap passwordfile ***/
-
-					if(buf = LoadFile("ENV:NetConfig/CHAP_Passwordfile"))
-					{
-						if(ptr1 = strchr(buf, ' '))
-						{
-							*ptr1 = NULL;
-							setstring(provider_data->STR_HostID, buf);
-							ptr2 = ptr1 + 1;
-							if(ptr1 = strchr(ptr2, ' '))
-							{
-								*ptr1 = NULL;
-								setstring(provider_data->STR_Password, ptr2);
-								ptr2 = ptr1 + 1;
-								if(ptr1 = strchr(ptr2, '\n'))
-								{
-									*ptr1 = NULL;
-									setstring(provider_data->STR_YourID, ptr2);
-								}
-							}
-						}
-						FreeVec(buf);
-					}
-				}
 				else
 				{
 					if(!stricmp(pc_data.Contents, "pap"))
-					{
-						STRPTR buf, ptr1, ptr2;
-
 						setcycle(provider_data->CY_Authentication, 2);
-
-						/*** load the chap passwordfile ***/
-
-						if(buf = LoadFile("ENV:NetConfig/PAP_Passwordfile"))
-						{
-							if(ptr1 = strchr(buf, ' '))
-							{
-								*ptr1 = NULL;
-								setstring(provider_data->STR_YourID, buf);
-								ptr2 = ptr1 + 1;
-
-								if(ptr1 = strchr(ptr2, '\n'))
-								{
-									*ptr1 = NULL;
-									setstring(provider_data->STR_Password, ptr2);
-								}
-							}
-							FreeVec(buf);
-						}
-					}
 					else
 						setcycle(provider_data->CY_Authentication, 0);
 				}
@@ -717,8 +666,8 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 	{
 		while(ParseNext(&pc_data))
 		{
-			if(!stricmp(pc_data.Argument, "UserName"))
-				setstring(user_data->STR_UserName, pc_data.Contents);
+			if(!stricmp(pc_data.Argument, "LoginName"))
+				setstring(user_data->STR_LoginName, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "Password"))
 				setstring(user_data->STR_Password, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "EMail"))
@@ -903,7 +852,6 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 	struct Paths_Data			*paths_data		= INST_DATA(CL_Paths->mcc_Class		, data->GR_Paths);
 	BPTR fh;
 
-
 	if(msg->level)
 	{
 		if(get_file_size("ENV:NetConfig") != -2)
@@ -965,24 +913,24 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 		}
 		if(fh = Open("ENV:NetConfig/User.conf", MODE_NEWFILE))
 		{
-			FPrintf(fh, "UserName           \"%ls\"\n", xget(user_data->STR_UserName		, MUIA_String_Contents));
+			FPrintf(fh, "LoginName          \"%ls\"\n", xget(user_data->STR_LoginName		, MUIA_String_Contents));
 			FPrintf(fh, "Password           \"%ls\"\n", xget(user_data->STR_Password		, MUIA_String_Contents));
 			FPrintf(fh, "EMail              \"%ls\"\n", xget(user_data->STR_EMail			, MUIA_String_Contents));
 			FPrintf(fh, "RealName           \"%ls\"\n", xget(user_data->STR_RealName		, MUIA_String_Contents));
-			FPrintf(fh, "Organisation       \"%ls\"\n", xget(user_data->STR_Organisation, MUIA_String_Contents));
+			FPrintf(fh, "Organisation       \"%ls\"\n", xget(user_data->STR_Organisation	, MUIA_String_Contents));
 			FPrintf(fh, "HostName           \"%ls\"\n", xget(user_data->STR_HostName		, MUIA_String_Contents));
 
 			FPrintf(fh, "Modem              \"%ls\"\n", xget(modem_data->TX_Modem			, MUIA_Text_Contents));
-			FPrintf(fh, "ModemInit          \"%ls\"\n", xget(modem_data->STR_ModemInit	, MUIA_String_Contents));
-			FPrintf(fh, "DialPrefix         \"%ls\"\n", xget(modem_data->PO_DialPrefix	, MUIA_String_Contents));
+			FPrintf(fh, "ModemInit          \"%ls\"\n", xget(modem_data->STR_ModemInit		, MUIA_String_Contents));
+			FPrintf(fh, "DialPrefix         \"%ls\"\n", xget(modem_data->PO_DialPrefix		, MUIA_String_Contents));
 			FPrintf(fh, "DialSuffix         \"%ls\"\n", xget(modem_data->STR_DialSuffix	, MUIA_String_Contents));
-			FPrintf(fh, "Device             \"%ls\"\n", xget(modem_data->PA_SerialDriver, MUIA_String_Contents));
-			FPrintf(fh, "Unit               %ld\n", xget(modem_data->STR_SerialUnit	, MUIA_String_Integer));
-			FPrintf(fh, "Baud               %ld\n", xget(modem_data->PO_BaudRate		, MUIA_String_Integer));
-			FPrintf(fh, "RedialAttempts     %ld\n", xget(modem_data->SL_RedialAttempts, MUIA_Numeric_Value));
-			FPrintf(fh, "CarrierDetect      %ld\n", xget(modem_data->CH_Carrier		, MUIA_Selected));
-			FPrintf(fh, "7Wire              %ld\n", xget(modem_data->CH_7Wire			, MUIA_Selected));
-			FPrintf(fh, "OwnDevUnit         %ld\n", xget(modem_data->CH_OwnDevUnit	, MUIA_Selected));
+			FPrintf(fh, "Device             \"%ls\"\n", xget(modem_data->PA_SerialDriver	, MUIA_String_Contents));
+			FPrintf(fh, "Unit               %ld\n", xget(modem_data->STR_SerialUnit			, MUIA_String_Integer));
+			FPrintf(fh, "Baud               %ld\n", xget(modem_data->PO_BaudRate				, MUIA_String_Integer));
+			FPrintf(fh, "RedialAttempts     %ld\n", xget(modem_data->SL_RedialAttempts		, MUIA_Numeric_Value));
+			FPrintf(fh, "CarrierDetect      %ld\n", xget(modem_data->CH_Carrier				, MUIA_Selected));
+			FPrintf(fh, "7Wire              %ld\n", xget(modem_data->CH_7Wire					, MUIA_Selected));
+			FPrintf(fh, "OwnDevUnit         %ld\n", xget(modem_data->CH_OwnDevUnit			, MUIA_Selected));
 
 			FPrintf(fh, "MailIn             \"%ls\"\n", xget(paths_data->PA_MailIn		, MUIA_String_Contents));
 			FPrintf(fh, "MailOut            \"%ls\"\n", xget(paths_data->PA_MailOut		, MUIA_String_Contents));
@@ -1000,14 +948,14 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 		switch(xget(provider_data->CY_Authentication, MUIA_Cycle_Active))
 		{
 			case 1:
-				if(fh = Open("ENV:NetConfig/CHAP_Passwordfile", MODE_NEWFILE))
+				if(fh = Open("ENV:NetConfig/CHAP", MODE_NEWFILE))
 				{
 					FPrintf(fh, "%ls %ls %ls\n", xget(provider_data->STR_HostID, MUIA_String_Contents), xget(provider_data->STR_Password, MUIA_String_Contents), xget(provider_data->STR_YourID, MUIA_String_Contents));
 					Close(fh);
 				}
 				break;
 			case 2:
-				if(fh = Open("ENV:NetConfig/PAP_Passwordfile", MODE_NEWFILE))
+				if(fh = Open("ENV:NetConfig/PAP", MODE_NEWFILE))
 				{
 					FPrintf(fh, "%ls %ls\n", xget(provider_data->STR_YourID, MUIA_String_Contents), xget(provider_data->STR_Password, MUIA_String_Contents));
 					Close(fh);
@@ -1039,10 +987,10 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 				switch(xget(provider_data->CY_Authentication, MUIA_Cycle_Active))
 				{
 					case 1:
-						FPrintf(fh, "CHAP=ENV:NetConfig/CHAP_Passwordfile ");
+						FPrintf(fh, "CHAP=ENV:NetConfig/CHAP ");
 						break;
 					case 2:
-						FPrintf(fh, "PAP=ENV:NetConfig/PAP_Passwordfile ");
+						FPrintf(fh, "PAP=ENV:NetConfig/PAP,%ls ", xget(provider_data->STR_YourID, MUIA_String_Contents));
 						break;
 				}
 			}
@@ -1060,13 +1008,13 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 			if(lock = CreateDir("ENVARC:NetConfig"))
 				UnLock(lock);
 		}
-		CopyFile("ENV:NetConfig/Provider.conf"			, "ENVARC:NetConfig/Provider.conf");
-		CopyFile("ENV:NetConfig/AutoInterfaces"		, "ENVARC:NetConfig/AutoInterfaces");
-		CopyFile("ENV:NetConfig/User.conf"				, "ENVARC:NetConfig/User.conf");
-		CopyFile("ENV:NetConfig/DialScript"				, "ENVARC:NetConfig/DialScript");
-		CopyFile("ENV:NetConfig/User-Startnet"			, "ENVARC:NetConfig/User-Startnet");
-		CopyFile("ENV:NetConfig/PAP_Passwordfile"		, "ENVARC:NetConfig/PAP_Passwordfile");
-		CopyFile("ENV:NetConfig/CHAP_Passwordfile"	, "ENVARC:NetConfig/CHAP_Passwordfile");
+		CopyFile("ENV:NetConfig/Provider.conf"	, "ENVARC:NetConfig/Provider.conf");
+		CopyFile("ENV:NetConfig/AutoInterfaces", "ENVARC:NetConfig/AutoInterfaces");
+		CopyFile("ENV:NetConfig/User.conf"		, "ENVARC:NetConfig/User.conf");
+		CopyFile("ENV:NetConfig/DialScript"		, "ENVARC:NetConfig/DialScript");
+		CopyFile("ENV:NetConfig/User-Startnet"	, "ENVARC:NetConfig/User-Startnet");
+		CopyFile("ENV:NetConfig/PAP"				, "ENVARC:NetConfig/PAP");
+		CopyFile("ENV:NetConfig/CHAP"				, "ENVARC:NetConfig/CHAP");
 	}
 
 	DoMethod((Object *)xget(obj, MUIA_ApplicationObject), MUIM_Application_PushMethod, (Object *)xget(obj, MUIA_ApplicationObject), 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
