@@ -23,6 +23,7 @@
 #define MUIM_Provider_Authentication_Active	(TAGBASE_CONFIG | 0x1016)
 #define MUIM_User_UserStartnetList_Active	(TAGBASE_CONFIG | 0x1020)
 #define MUIM_User_ChangeLine				(TAGBASE_CONFIG | 0x1021)
+#define MUIM_User_ChangeDialScript		(TAGBASE_CONFIG | 0x1022)
 #define MUIM_Modem_ModemList_Active		(TAGBASE_CONFIG | 0x1030)
 #define MUIM_Modem_PopString_Close		(TAGBASE_CONFIG | 0x1031)
 #define MUIM_Users_SetUserStates			(TAGBASE_CONFIG | 0x1040)
@@ -55,7 +56,7 @@
 
 
 struct MUIP_AmiTCPPrefs_Finish			{ ULONG MethodID; LONG level; };
-struct MUIP_AmiTCPPrefs_LoadConfig		{ ULONG MethodID; STRPTR file; };
+struct MUIP_AmiTCPPrefs_LoadConfig		{ ULONG MethodID; STRPTR path; };
 struct MUIP_AmiTCPPrefs_About_Finish	{ ULONG MethodID; Object *window; };
 struct MUIP_Provider_PopString_Close	{ ULONG MethodID; LONG flags; };
 struct MUIP_Provider_PopList_Update		{ ULONG MethodID; STRPTR path; LONG flags; };
@@ -75,11 +76,7 @@ struct AmiTCPPrefs_Data
 	Object *GR_Pager;
 	Object *LV_Pager;
 	Object *LI_Pager;
-	Object *CH_ExtraHelp;
 	Object *GR_Active;
-	Object *BL_ExtraHelp;
-	Object *LV_ExtraHelp;
-	Object *FT_ExtraHelp;
 
 	Object *BT_Save;
 	Object *BT_Use;
@@ -127,8 +124,8 @@ struct Provider_Data
 	Object *STR_MailServer;
 	Object *STR_POPServer;
 	Object *STR_NewsServer;
-	Object *STR_IRCServer;
 	Object *STR_WWWServer;
+	Object *STR_FTPServer;
 
 	Object *LV_DialScript;
 	Object *LI_DialScript;
@@ -274,4 +271,10 @@ struct InfoLine
 {
 	char Label[41];
 	char Contents[81];
+};
+
+struct PoP
+{
+	char Name[81];
+	char Phone[81];
 };

@@ -18,10 +18,12 @@ VOID exit_libs(VOID)
 	if(UtilityBase)		CloseLibrary(UtilityBase);
 	if(MUIMasterBase)		CloseLibrary(MUIMasterBase);
 	if(LocaleBase)			CloseLibrary(LocaleBase);
+	if(DOSBase)				CloseLibrary(DOSBase);
 
 	cat			= NULL;
 	IFFParseBase	= IntuitionBase	= UtilityBase		=
-	MUIMasterBase	= LocaleBase		= DataTypesBase	= NULL;
+	MUIMasterBase	= LocaleBase		= DataTypesBase	=
+	DOSBase			= NULL;
 }
 
 
@@ -31,16 +33,18 @@ VOID exit_libs(VOID)
 
 BOOL init_libs(VOID)
 {
+	DOSBase			= (struct DosLibrary *)OpenLibrary("dos.library", 0);
+	IntuitionBase	= OpenLibrary("intuition.library"	, 0);
+
 	if(LocaleBase	= OpenLibrary("locale.library", 38))
-		cat = OpenCatalog(NULL, "AmiTCPConfig.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
+		cat = OpenCatalog(NULL, "AmiTCPPrefs.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
 
 	MUIMasterBase	= OpenLibrary("muimaster.library"	, 11);
-	UtilityBase		= OpenLibrary("utility.library"		, 36);
-	IntuitionBase	= OpenLibrary("intuition.library"	, 36);
+	UtilityBase		= OpenLibrary("utility.library"		, 0);
 	IFFParseBase	= OpenLibrary("iffparse.library"		, 0);
-	DataTypesBase	= OpenLibrary("datatypes.library"	, 39);
+	DataTypesBase	= OpenLibrary("datatypes.library"	, 0);
 
-	if(MUIMasterBase && UtilityBase && IntuitionBase && IFFParseBase)
+	if(DOSBase && MUIMasterBase && UtilityBase && IntuitionBase && IFFParseBase && DataTypesBase)
 		return(TRUE);
 	/* the program will still work without locale.library */
 
@@ -80,17 +84,31 @@ LONG main(VOID)
 {
 	ULONG sigs = NULL;
 
+	ThisProcess = (struct Process *)FindTask(NULL);
+
+	if(!ThisProcess->pr_CLI)
+	{
+		WaitPort(&ThisProcess->pr_MsgPort);
+
+		WBenchMsg = (struct WBStartup *)GetMsg(&ThisProcess->pr_MsgPort);
+	}
+	else
+		WBenchMsg = NULL;
+
 	if(init_libs())
 	{
+		if(!ThisProcess -> pr_CLI)
+			WBenchLock = CurrentDir(WBenchMsg->sm_ArgList->wa_Lock);
+
 		if(init_classes())
 		{
 			LocalizeNewMenu(AmiTCPPrefsMenu);
 
 			app = ApplicationObject,
 				MUIA_Application_Author			, "Michael Neuweiler",
-				MUIA_Application_Base			, "AmiTCPConfig",
-				MUIA_Application_Title			, "AmiTCP Config",
-				MUIA_Application_Version		, "$VER: AmiTCP Config 1.0 (13.06.96)",
+				MUIA_Application_Base			, "AmiTCPPrefs",
+				MUIA_Application_Title			, "AmiTCP Prefs",
+				MUIA_Application_Version		, "$VER: AmiTCP Prefs 0.54 (03.08.96)",
 				MUIA_Application_Copyright		, GetStr(MSG_AppCopyright),
 				MUIA_Application_Description	, GetStr(MSG_AppDescription),
 				MUIA_Application_Window			, win = NewObject(CL_AmiTCPPrefs->mcc_Class, NULL, TAG_DONE),
@@ -104,7 +122,7 @@ LONG main(VOID)
 					DoMethod(win, MUIM_AmiTCPPrefs_LoadConfig, NULL);
 
 					set(win, MUIA_Window_Open, TRUE);
-if(MUI_Request(app, win, 0, 0, "_Yes, I am !|*\33bGosh _no, I'm not !", "\33cThis version of AmiTCP Config is a\n trial version and might only be used\nby NSDI, Active Software and those who\ngot direct permission from either NSDI\nor Active Software !\n\nCopyright © 1996 by Michael Neuweiler\n\n\33bAre you allowed to use this program ?"))
+if(MUI_Request(app, win, 0, 0, "_Yes, I am !|*\33bGosh _no, I'm not !", "\33cThis version of AmiTCP Prefs is a\n trial version and might only be used\nby NSDI, Active Software and those who\ngot direct permission from either NSDI\nor Active Software !\n\nCopyright © 1996 by Michael Neuweiler\n\n\33bAre you allowed to use this program ?"))
 {
 					while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
 					{
@@ -123,10 +141,15 @@ if(MUI_Request(app, win, 0, 0, "_Yes, I am !|*\33bGosh _no, I'm not !", "\33cThi
 			}
 			exit_classes();
 		}
+		if(WBenchMsg)
+			CurrentDir(WBenchLock);
 		exit_libs();
 	}
-	else
-		return(RETURN_FAIL);
+	if(WBenchMsg)
+	{
+		Forbid();
+		ReplyMsg((struct Message *)WBenchMsg);
+	}
 
 	return(RETURN_OK);
 }

@@ -2,7 +2,7 @@
 #
 #	SMakefile
 #
-#	Makefile for the `SMake' utility required to build `AmiTCPConfig'
+#	Makefile for the `SMake' utility required to build `AmiTCP Prefs'
 #
 #	1996 by Michael Neuweiler
 #
@@ -26,13 +26,13 @@ GST		= GSTIMM GST=includes.gst
 CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS
 #CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS DBG=FULL
 
-#LFLAGS	= SC SD NOICONS MAXHUNK 100000
 LFLAGS	= ND SC SD NOICONS MAXHUNK 100000
+#LFLAGS	= SC SD NOICONS MAXHUNK 100000
 
 OBJS		= globals.o main.o mui1.o mui2.o amiga.o
 LIBS		= lib:amiga.lib lib:sc.lib
 
-all:	 includes.gst AmiTCPConfigStrings.h logo.bh AmiTCPConfig
+all:	 includes.gst AmiTCPPrefsStrings.h logo.bh AmiTCPPrefs
 
 includes.gst:	includes.h
 		GST >NIL: UNLOAD $@
@@ -42,21 +42,21 @@ includes.gst:	includes.h
 logo.bh: logo.iff
 	brush2c logo.iff >logo.bh
 
-AmiTCPConfigStrings.h: AmiTCPConfigStrings.cd
-	cat2h AmiTCPConfigStrings.cd AmiTCPConfigStrings.h
+AmiTCPPrefsStrings.h: AmiTCPPrefsStrings.cd
+	cat2h AmiTCPPrefsStrings.cd AmiTCPPrefsStrings.h
 
-AmiTCPConfig:	$(OBJS)
-   SLINK WITH T:AmiTCPConfig.WITH <<!(T:AmiTCPConfig.WITH)
-		FROM	lib:c.o $(OBJS)
-		TO		AmiTCPConfig
+AmiTCPPrefs:	$(OBJS)
+   SLINK WITH T:AmiTCPPrefs.WITH <<!(T:AmiTCPPrefs.WITH)
+		FROM	lib:start.o $(OBJS)
+		TO		AmiTCPPrefs
 		LIB	$(LIBS)
-		MAP	AmiTCPConfig.map H
+		MAP	AmiTCPPrefs.map H
 		$(LFLAGS)
 	<
 
-globals.o:	globals.c	AmiTCPConfig.h AmiTCPConfigStrings.h
+globals.o:	globals.c	AmiTCPPrefs.h AmiTCPPrefsStrings.h
 	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
-main.o:		main.c		AmiTCPConfig.h AmiTCPConfigStrings.h globals.c
-mui1.o:		mui1.c		AmiTCPConfig.h AmiTCPConfigStrings.h globals.c
-mui2.o:		mui2.c		AmiTCPConfig.h AmiTCPConfigStrings.h globals.c
-amiga.o:		amiga.c		AmiTCPConfig.h AmiTCPConfigStrings.h globals.c
+main.o:		main.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c
+mui1.o:		mui1.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c
+mui2.o:		mui2.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c
+amiga.o:		amiga.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c

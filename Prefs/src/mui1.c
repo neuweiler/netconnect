@@ -524,40 +524,29 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 	struct Modem_Data			*modem_data			= INST_DATA(CL_Modem->mcc_Class		, data->GR_Modem);
 	struct Paths_Data			*paths_data			= INST_DATA(CL_Paths->mcc_Class		, data->GR_Paths);
 //	struct Users_Data			*users_data			= INST_DATA(CL_Users->mcc_Class		, data->GR_Users);
-	struct InfoWindow_Data	*infowindow_data	= INST_DATA(CL_InfoWindow->mcc_Class, data->GR_InfoWindow);
+//	struct InfoWindow_Data	*infowindow_data	= INST_DATA(CL_InfoWindow->mcc_Class, data->GR_InfoWindow);
 	struct pc_Data pc_data;
-	STRPTR file;
-	int second;
+	int second = 0;
+	STRPTR path;
+	char file[MAXPATHLEN];
 
-	if(!msg->file)
-	{
-		if(ParseConfig((get_file_size("ENV:NetConfig/resolv.conf") > -1 ? "ENV:NetConfig/resolv.conf" : "AmiTCP:db/resolv.conf"), &pc_data))
-		{
-			second = 0;
-			while(ParseNext(&pc_data))
-			{
-				if(!stricmp(pc_data.Argument, "NAMESERVER"))
-					setstring((second++ ? provider_data->STR_NameServer2 : provider_data->STR_NameServer1), pc_data.Contents);
+	path = (msg->path ? msg->path : (STRPTR)"ENV:NetConfig/");
 
-				if(!stricmp(pc_data.Argument, "DOMAIN"))
-					setstring(provider_data->STR_DomainName, pc_data.Contents);
-			}
-			ParseEnd(&pc_data);
-		}
-	}
+	/**** load provider.conf ****/
 
-	if(msg->file)
-		file = msg->file;
-	else
-		file = (get_file_size("ENV:NetConfig/provider.conf") > -1 ? "ENV:NetConfig/provider.conf" : "AmiTCP:db/provider.conf");
-
-	second = 0;
+	strcpy(file, path);
+	AddPart(file, "provider.conf", MAXPATHLEN);
+	if(get_file_size(file) < 1)
+		strcpy(file, "AmiTCP:db/provider.conf");
 	if(ParseConfig(file, &pc_data))
 	{
 		while(ParseNext(&pc_data))
 		{
 //			if(!stricmp(pc_data.Argument, "Name"))
 //			if(!stricmp(pc_data.Argument, "DialUp"))
+//			if(!stricmp(pc_data.Argument, "NeedSerial"))
+//			if(!stricmp(pc_data.Argument, "DestIP"))
+//			if(!stricmp(pc_data.Argument, "NSDynamic"))
 
 			if(!stricmp(pc_data.Argument, "Interface"))
 					setmutex(provider_data->RA_Interface, (stricmp(pc_data.Contents, "ppp") ? 1 : 0));
@@ -572,17 +561,11 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 					setcycle(provider_data->CY_Header, 0);
 			}
 
-//			if(!stricmp(pc_data.Argument, "NeedSerial"))
-
 			if(!stricmp(pc_data.Argument, "IPDynamic"))
 				setmutex(provider_data->RA_Connection, (atol(pc_data.Contents) ? 0 : 1));
 
 			if(!stricmp(pc_data.Argument, "IPAddr"))
 				setstring(user_data->STR_IP_Address, pc_data.Contents);
-
-//			if(!stricmp(pc_data.Argument, "DestIP"))
-
-//			if(!stricmp(pc_data.Argument, "NSDynamic"))
 
 			if(!stricmp(pc_data.Argument, "NameServer"))
 				setstring((second++ ? provider_data->STR_NameServer2 : provider_data->STR_NameServer1), pc_data.Contents);
@@ -670,73 +653,58 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 				setstring(provider_data->STR_POPServer, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "NewsServer"))
 				setstring(provider_data->STR_NewsServer, pc_data.Contents);
-			if(!stricmp(pc_data.Argument, "IRCServer"))
-				setstring(provider_data->STR_IRCServer, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "WWWServer"))
 				setstring(provider_data->STR_WWWServer, pc_data.Contents);
+			if(!stricmp(pc_data.Argument, "FTPServer"))
+				setstring(provider_data->STR_FTPServer, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "Country"))
 			{
-				char path[MAXPATHLEN];
-
 				nnset(provider_data->PO_Country, MUIA_Text_Contents, pc_data.Contents);
-				strcpy(path, "AmiTCP:Providers");
-				AddPart(path, pc_data.Contents, MAXPATHLEN);
-				DoMethod(data->GR_Provider, MUIM_Provider_PopList_Update, path, MUIV_Provider_PopString_Provider);
+				strcpy(file, "AmiTCP:Providers");
+				AddPart(file, pc_data.Contents, MAXPATHLEN);
+				DoMethod(data->GR_Provider, MUIM_Provider_PopList_Update, file, MUIV_Provider_PopString_Provider);
 				DoMethod(provider_data->LV_PoP, MUIM_List_Clear);
 				set(provider_data->PO_Provider, MUIA_Text_Contents, "");
 				set(provider_data->PO_PoP, MUIA_Text_Contents, "");
 			}
 			if(!stricmp(pc_data.Argument, "Provider"))
 			{
-				char path[MAXPATHLEN];
-
 				nnset(provider_data->PO_Provider, MUIA_Text_Contents, pc_data.Contents);
-				strcpy(path, "AmiTCP:Providers");
-				AddPart(path, (STRPTR)xget(provider_data->PO_Country, MUIA_Text_Contents), MAXPATHLEN);
-				AddPart(path, pc_data.Contents, MAXPATHLEN);
-				DoMethod(data->GR_Provider, MUIM_Provider_PopList_Update, path, MUIV_Provider_PopString_PoP);
+				strcpy(file, "AmiTCP:Providers");
+				AddPart(file, (STRPTR)xget(provider_data->PO_Country, MUIA_Text_Contents), MAXPATHLEN);
+				AddPart(file, pc_data.Contents, MAXPATHLEN);
+				DoMethod(data->GR_Provider, MUIM_Provider_PopList_Update, file, MUIV_Provider_PopString_PoP);
 				set(provider_data->PO_PoP, MUIA_Text_Contents, "");
 			}
 			if(!stricmp(pc_data.Argument, "PoP"))
 				set(provider_data->PO_PoP, MUIA_Text_Contents, pc_data.Contents);
 		}
 		ParseEnd(&pc_data);
-
+	}
 
 
 	/**** load the provider description ****/
-		{
-			char info_file[MAXPATHLEN];
-			STRPTR ptr;
 
-			strcpy(info_file, "AmiTCP:Providers");
-			AddPart(info_file, (STRPTR)xget(provider_data->PO_Country, MUIA_Text_Contents), MAXPATHLEN);
-			AddPart(info_file, (STRPTR)xget(provider_data->PO_Provider, MUIA_Text_Contents), MAXPATHLEN);
-			AddPart(info_file, (STRPTR)xget(provider_data->PO_PoP, MUIA_Text_Contents), MAXPATHLEN);
-			AddPart(info_file, "provider.txt", MAXPATHLEN);
-			DoMethod(data->GR_InfoWindow, MUIM_InfoWindow_LoadFile, info_file);
+	strcpy(file, "AmiTCP:Providers");
+	AddPart(file, (STRPTR)xget(provider_data->PO_Country	, MUIA_Text_Contents), MAXPATHLEN);
+	AddPart(file, (STRPTR)xget(provider_data->PO_Provider	, MUIA_Text_Contents), MAXPATHLEN);
+	AddPart(file, (STRPTR)xget(provider_data->PO_PoP		, MUIA_Text_Contents), MAXPATHLEN);
+	if(get_file_size(file) != -2)
+	{
+		strcpy(file, "AmiTCP:Providers");
+		AddPart(file, (STRPTR)xget(provider_data->PO_Country	, MUIA_Text_Contents), MAXPATHLEN);
+		AddPart(file, (STRPTR)xget(provider_data->PO_Provider	, MUIA_Text_Contents), MAXPATHLEN);
+	}
+	AddPart(file, "provider.txt", MAXPATHLEN);
+	DoMethod(data->GR_InfoWindow, MUIM_InfoWindow_LoadFile, file);
+
 
 	/**** load the dialscript ****/
 
-			if(ptr = FilePart(info_file))
-				*ptr = NULL;
-			AddPart(info_file, "DialScript", MAXPATHLEN);
-			if(msg->file)
-				file = info_file;
-			else
-			{
-				if(get_file_size("ENV:NetConfig/DialScript") > -1)
-					file = "ENV:NetConfig/DialScript";
-				else
-					file = info_file;
-			}
-			editor_load(file, provider_data->LV_DialScript);
-		}
-	}
-	else
-	{
-		DoMethod(infowindow_data->LV_Info, MUIM_List_Clear);
-	}
+	strcpy(file, path);
+	AddPart(file, "DialScript", MAXPATHLEN);
+	editor_load(file, provider_data->LV_DialScript);
+
 
 	/**** load user-startnet ****/
 
@@ -799,7 +767,9 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 				setstring(paths_data->PA_FileOut, pc_data.Contents);
 		}
 		ParseEnd(&pc_data);
+		DoMethod(data->GR_User, MUIM_User_ChangeDialScript);
 	}
+
 
 	/**** load the ModemSettings into the List ****/
 
@@ -942,17 +912,7 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 			if(lock = CreateDir("ENV:NetConfig"))
 				UnLock(lock);
 		}
-/*		if(fh = Open("ENV:NetConfig/Resolv.conf", MODE_NEWFILE))
-		{
-			FPrintf(fh, "; Name servers\n");
-			FPrintf(fh, "NAMESERVER %ls\n", xget(provider_data->STR_NameServer1, MUIA_String_Contents));
-			FPrintf(fh, "NAMESERVER %ls\n", xget(provider_data->STR_NameServer2, MUIA_String_Contents));
-			FPrintf(fh, "; Domain names\n");
-			FPrintf(fh, "DOMAIN %ls\n", xget(provider_data->STR_DomainName, MUIA_String_Contents));
-
-			Close(fh);
-		}
-*/		if(fh = Open("ENV:NetConfig/Provider.conf", MODE_NEWFILE))
+		if(fh = Open("ENV:NetConfig/Provider.conf", MODE_NEWFILE))
 		{
 			FPrintf(fh, "/* Provider Configuration Follows:\n");
 			FPrintf(fh, "Country            \"%ls\"\n", xget(provider_data->PO_Country, MUIA_Text_Contents));
@@ -997,8 +957,8 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 			FPrintf(fh, "MailServer         \"%ls\"\n", xget(provider_data->STR_MailServer	, MUIA_String_Contents));
 			FPrintf(fh, "POPServer          \"%ls\"\n", xget(provider_data->STR_POPServer	, MUIA_String_Contents));
 			FPrintf(fh, "NewsServer         \"%ls\"\n", xget(provider_data->STR_NewsServer	, MUIA_String_Contents));
-			FPrintf(fh, "IRCServer          \"%ls\"\n", xget(provider_data->STR_IRCServer	, MUIA_String_Contents));
 			FPrintf(fh, "WWWServer          \"%ls\"\n", xget(provider_data->STR_WWWServer	, MUIA_String_Contents));
+			FPrintf(fh, "FTPServer          \"%ls\"\n", xget(provider_data->STR_FTPServer	, MUIA_String_Contents));
 			FPrintf(fh, "*/\n");
 
 			Close(fh);
@@ -1054,6 +1014,43 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 				}
 				break;
 		}
+
+		if(fh = Open("ENV:NetConfig/AutoInterfaces", MODE_NEWFILE))
+		{
+			FPrintf(fh, "# This file is generated automatically by 'AmiTCP Prefs'\n");
+			if(xget(provider_data->RA_Interface, MUIA_Radio_Active))
+				FPrintf(fh, "slip DEV=DEVS:Networks/aslip.device UNIT=0 DoOffline ConfigFileName=ENV:Sana2/aslip0.config ");
+			else
+				FPrintf(fh, "ppp DEV=DEVS:Networks/ppp.device UNIT=0 DoOffline ConfigFileName=ENV:Sana2/ppp0.config ");
+
+			FPrintf(fh, "ConfigFileContents=\"");
+			FPrintf(fh, "%ls ", xget(modem_data->PA_SerialDriver, MUIA_String_Contents));
+			FPrintf(fh, "%ld ", xget(modem_data->STR_SerialUnit, MUIA_String_Integer));
+			FPrintf(fh, "%ld ", xget(modem_data->PO_BaudRate, MUIA_String_Integer));
+			FPrintf(fh, "0.0.0.0 ");
+			if(xget(modem_data->CH_Carrier, MUIA_Selected))
+				FPrintf(fh, "CD ");
+			if(xget(modem_data->CH_7Wire, MUIA_Selected))
+				FPrintf(fh, "7Wire ");
+			if(xget(modem_data->CH_OwnDevUnit, MUIA_Selected))
+				FPrintf(fh, "UseODU ");
+			if(!xget(provider_data->RA_Interface, MUIA_Radio_Active))
+			{
+				switch(xget(provider_data->CY_Authentication, MUIA_Cycle_Active))
+				{
+					case 1:
+						FPrintf(fh, "CHAP=ENV:NetConfig/CHAP_Passwordfile ");
+						break;
+					case 2:
+						FPrintf(fh, "PAP=ENV:NetConfig/PAP_Passwordfile ");
+						break;
+				}
+			}
+			FPrintf(fh, "MTU=%ld\"\n", xget(provider_data->SL_MTU, MUIA_Numeric_Value));
+
+			Close(fh);
+		}
+
 	}
 	if(msg->level == 2)
 	{
@@ -1063,16 +1060,14 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 			if(lock = CreateDir("ENVARC:NetConfig"))
 				UnLock(lock);
 		}
-		CopyFile("ENV:NetConfig/Resolv.conf"			, "ENVARC:NetConfig/Resolv.conf");
 		CopyFile("ENV:NetConfig/Provider.conf"			, "ENVARC:NetConfig/Provider.conf");
+		CopyFile("ENV:NetConfig/AutoInterfaces"		, "ENVARC:NetConfig/AutoInterfaces");
 		CopyFile("ENV:NetConfig/User.conf"				, "ENVARC:NetConfig/User.conf");
 		CopyFile("ENV:NetConfig/DialScript"				, "ENVARC:NetConfig/DialScript");
 		CopyFile("ENV:NetConfig/User-Startnet"			, "ENVARC:NetConfig/User-Startnet");
 		CopyFile("ENV:NetConfig/PAP_Passwordfile"		, "ENVARC:NetConfig/PAP_Passwordfile");
 		CopyFile("ENV:NetConfig/CHAP_Passwordfile"	, "ENVARC:NetConfig/CHAP_Passwordfile");
 	}
-
-// write necessary info to env:netconfig/autointerfaces
 
 	DoMethod((Object *)xget(obj, MUIA_ApplicationObject), MUIM_Application_PushMethod, (Object *)xget(obj, MUIA_ApplicationObject), 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
 
@@ -1210,39 +1205,23 @@ ULONG AmiTCPPrefs_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 	return(success);
 }
 
-SAVEDS ASM VOID HelpFunc(REG(a2) Object *help,REG(a1) Object **objptr)
-{
-	if(*objptr)
-	{
-		if(xget(*objptr, MUIA_UserData))
-			set(help, MUIA_Floattext_Text, xget(*objptr, MUIA_UserData));
-	}
-}
-
 ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
-	static struct Hook HelpHook = { {0,0}, (VOID *)HelpFunc, 0, 0 };
 	struct AmiTCPPrefs_Data tmp;
 
 	if(obj = (Object *)DoSuperNew(cl, obj,
 		MUIA_Window_Title	, GetStr(MSG_WI_AmiTCPPrefs),
 		MUIA_Window_ID		, MAKE_ID('A','R','E','F'),
-		MUIA_Window_NeedsMouseObject, TRUE,
 		MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, AmiTCPPrefsMenu,0),
 		WindowContents		, VGroup,
 			Child, tmp.GR_Pager = HGroup,
-				Child, VGroup,
-					Child, tmp.LV_Pager = ListviewObject,
-						MUIA_CycleChain				, 1,
-						MUIA_Listview_DoubleClick	, TRUE,
-						MUIA_Listview_List			, tmp.LI_Pager = ListObject,
-							MUIA_Frame					, MUIV_Frame_InputList,
-							MUIA_List_SourceArray	, ARR_Pages,
-						End,
-					End,
-					Child, HGroup,
-						Child, MakeKeyLabel2("  Extra Help", "  x"),
-						Child, tmp.CH_ExtraHelp = KeyCheckMark(FALSE, 'x'),
+				Child, tmp.LV_Pager = ListviewObject,
+					MUIA_CycleChain				, 1,
+					MUIA_Listview_DoubleClick	, TRUE,
+					MUIA_Listview_List			, tmp.LI_Pager = ListObject,
+						MUIA_Frame					, MUIV_Frame_InputList,
+						MUIA_List_SourceArray	, ARR_Pages,
+						MUIA_List_AdjustWidth	, TRUE,
 					End,
 				End,
 				Child, tmp.GR_Active = tmp.GR_Info = VGroup,
@@ -1265,22 +1244,10 @@ ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 						Child, HVSpace,
 					End,
 					Child, HVSpace,
-					Child, CLabel("AmiTCP Config v0.53 -beta-  (20.07.96)"),
+					Child, CLabel("AmiTCP Prefs v0.54 -beta-  (03.08.96)"),
 					Child, HVSpace,
 					Child, CLabel("\33bTHIS IS A DEMO - DO NOT REDISTRIBUTE !!!"),
 					Child, HVSpace,
-				End,
-			End,
-			Child, tmp.BL_ExtraHelp = BalanceObject,
-				MUIA_ShowMe, FALSE,
-			End,
-			Child, tmp.LV_ExtraHelp = ListviewObject,
-				MUIA_CycleChain		, 1,
-				MUIA_ShowMe				, FALSE,
-				MUIA_Listview_Input	, FALSE,
-				MUIA_Listview_List	, tmp.FT_ExtraHelp = FloattextObject,
-					MUIA_Floattext_Justify	, TRUE,
-					MUIA_Frame					, MUIV_Frame_InputList,
 				End,
 			End,
 			Child, HGroup,
@@ -1300,22 +1267,17 @@ ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		*data = tmp;
 
 		set(tmp.LV_Pager, MUIA_List_Active, MUIV_List_Active_Top);
-		set(tmp.CH_ExtraHelp, MUIA_CycleChain, 1);
 
-		set(tmp.LI_Pager, MUIA_UserData, "Here you can select the page");
-		set(tmp.CH_ExtraHelp, MUIA_UserData, "Show/Hide this information box");
-		set(tmp.BT_Save, MUIA_UserData, "Save all changes permanently");
-		set(tmp.BT_Use, MUIA_UserData, "Save changes temporarely. They will be lost next time you reboot your Amiga.");
-		set(tmp.BT_Cancel, MUIA_UserData, "Abandon all changes");
+		set(tmp.LV_Pager	, MUIA_ShortHelp, "Here you can select the page");
+		set(tmp.BT_Save	, MUIA_ShortHelp, "Save all changes permanently");
+		set(tmp.BT_Use		, MUIA_ShortHelp, "Save changes temporarely. They will be lost next time you reboot your Amiga.");
+		set(tmp.BT_Cancel	, MUIA_ShortHelp, "Abandon all changes");
 
 		DoMethod(obj				, MUIM_Notify, MUIA_Window_CloseRequest, TRUE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 0);
 		DoMethod(tmp.LV_Pager	, MUIM_Notify, MUIA_List_Active, MUIV_EveryTime	, obj, 1, MUIM_AmiTCPPrefs_SetPage);
 		DoMethod(tmp.BT_Cancel	, MUIM_Notify, MUIA_Pressed				, FALSE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 0);
 		DoMethod(tmp.BT_Use		, MUIM_Notify, MUIA_Pressed				, FALSE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 1);
 		DoMethod(tmp.BT_Save		, MUIM_Notify, MUIA_Pressed				, FALSE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 2);
-		DoMethod(tmp.CH_ExtraHelp, MUIM_Notify, MUIA_Selected, MUIV_EveryTime		, tmp.CH_ExtraHelp, 5, MUIM_MultiSet, MUIA_ShowMe, MUIV_TriggerValue, tmp.BL_ExtraHelp, tmp.LV_ExtraHelp);
-
-		DoMethod(obj, MUIM_Notify, MUIA_Window_MouseObject, MUIV_EveryTime, tmp.FT_ExtraHelp, 3, MUIM_CallHook, &HelpHook, MUIV_TriggerValue);
 
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_ABOUT)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
 			obj, 1, MUIM_AmiTCPPrefs_About);

@@ -1,11 +1,13 @@
-#include "AmiTCPConfig.h"
-#include "AmiTCPConfigStrings.h"
+#include "AmiTCPPrefs.h"
+#include "AmiTCPPrefsStrings.h"
 
 #define USE_LOGO_HEADER
 #define USE_LOGO_BODY
 #define USE_LOGO_COLORS
 #include "logo.bh"
 
+struct	ExecBase					*SysBase			= NULL;
+struct	DosLibrary				*DOSBase			= NULL;
 struct	Library					*IntuitionBase	= NULL;
 struct	Library					*MUIMasterBase	= NULL;
 struct	Library					*UtilityBase	= NULL;
@@ -40,7 +42,12 @@ STRPTR STR_CY_Header[4];
 STRPTR ARR_BaudRates[] = { "9600", "14400", "19200", "38400", "57600", "76800", "115200", "230400", "345600", "460800" , NULL };
 STRPTR ARR_DialPrefix[] = { "ATDT", "ATDP", "ATD0w", "ATD0,", NULL };
 STRPTR ARR_Pages[] = { "Info", "Provider", "User", "Modem", "Paths" /*, "Users"*/, NULL };
-STRPTR ARR_DialScript_AddLine[] = { "WaitFor", "SendLn", "SendLn (username)", "SendLn (password)", "ShowConsole", "Set WaitForTimeout", "Set InterCharDelay", "call CheckModemState", "call commandState", NULL };
+STRPTR ARR_DialScript_AddLine[] = { "/* Dialscript */", "YourLogin=\"\"", "YourPassword=\"\"", "ShowConsole", "call CommandState", "call Dial", "WaitFor", "SendLn", "SendLn YourLogin", "SendLn YourPassword", "Set WaitForTimeout", "Set InterCharDelay", NULL };
+
+struct Process		*ThisProcess;
+struct WBStartup	*WBenchMsg;
+BPTR					WBenchLock;
+
 
 enum { MEN_ABOUT = 1, MEN_QUIT, MEN_MUI };
 struct NewMenu AmiTCPPrefsMenu[] =

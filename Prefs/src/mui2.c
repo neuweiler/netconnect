@@ -42,11 +42,11 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 				MUIA_Scrollgroup_Contents, VirtgroupObject,
 					ReadListFrame,
 					Child, TextObject,
-						MUIA_Text_Contents, "\33c\nAmiTCP Config 1.00 (13.6.96)\n© 1996 Michael Neuweiler\n\nAuthors:\nMichael Neuweiler\n...\n\n\n\33bDEMO\33n\n",
+						MUIA_Text_Contents, "\33c\nAmiTCP Prefs 0.54 (03.08.96)\n© 1996 Michael Neuweiler\n\nAuthors:\nMichael Neuweiler\n...\n\n\n\33bDEMO\33n\n",
 					End,
 					Child, MUI_MakeObject(MUIO_HBar, 2),
 					Child, TextObject,
-						MUIA_Text_Contents, "\33c\n\AmiTCP Config uses MUI\nMUI is copyrighted by Stefan Stuntz",
+						MUIA_Text_Contents, "\33c\n\AmiTCP Prefs uses MUI\nMUI is copyrighted by Stefan Stuntz",
 					End,
 				End,
 			End,
@@ -201,8 +201,6 @@ ULONG Provider_PopList_Update(struct IClass *cl, Object *obj, struct MUIP_Provid
 {
 	struct Provider_Data *data = INST_DATA(cl, obj);
 	Object *list;
-	BPTR lock;
-	struct FileInfoBlock *fib;
 
 	switch(msg->flags)
 	{
@@ -218,21 +216,50 @@ ULONG Provider_PopList_Update(struct IClass *cl, Object *obj, struct MUIP_Provid
 	}
 
 	DoMethod(list, MUIM_List_Clear);
-	if(lock = Lock(msg->path, ACCESS_READ))
+	if(msg->flags == MUIV_Provider_PopString_PoP)
 	{
-		if(fib = AllocDosObject(DOS_FIB, NULL))
+		struct pc_Data pc_data;
+		struct PoP *pop;
+		char file[MAXPATHLEN];
+
+		strcpy(file, msg->path);
+		AddPart(file, "PoPList", MAXPATHLEN);
+		if(ParseConfig(file, &pc_data))
 		{
-			if(Examine(lock, fib))
+			if(pop = (struct PoP *)AllocVec(sizeof(struct PoP), MEMF_ANY))
 			{
-				while(ExNext(lock, fib))
+				while(ParseNext(&pc_data))
 				{
-					if(fib->fib_DirEntryType > 0)
-						DoMethod(list, MUIM_List_InsertSingle, fib->fib_FileName, MUIV_List_Insert_Sorted);
+					strncpy(pop->Name, pc_data.Argument, 80);
+					strncpy(pop->Phone, pc_data.Contents, 80);
+					DoMethod(list, MUIM_List_InsertSingle, pop, MUIV_List_Insert_Sorted);
 				}
+				FreeVec(pop);
 			}
-			FreeDosObject(DOS_FIB, fib);
+			ParseEnd(&pc_data);
 		}
-		UnLock(lock);
+	}
+	else
+	{
+		BPTR lock;
+		struct FileInfoBlock *fib;
+
+		if(lock = Lock(msg->path, ACCESS_READ))
+		{
+			if(fib = AllocDosObject(DOS_FIB, NULL))
+			{
+				if(Examine(lock, fib))
+				{
+					while(ExNext(lock, fib))
+					{
+						if(fib->fib_DirEntryType > 0)
+							DoMethod(list, MUIM_List_InsertSingle, fib->fib_FileName, MUIV_List_Insert_Sorted);
+					}
+				}
+				FreeDosObject(DOS_FIB, fib);
+			}
+			UnLock(lock);
+		}
 	}
 	return(NULL);
 }
@@ -292,8 +319,25 @@ ULONG Provider_PopString_Close(struct IClass *cl, Object *obj, struct MUIP_Provi
 			AddPart(path, (STRPTR)xget(data->PO_Country	, MUIA_Text_Contents), MAXPATHLEN);
 			AddPart(path, (STRPTR)xget(data->PO_Provider	, MUIA_Text_Contents), MAXPATHLEN);
 			AddPart(path, (STRPTR)xget(data->PO_PoP		, MUIA_Text_Contents), MAXPATHLEN);
-			AddPart(path, "Provider.conf", MAXPATHLEN);
-			DoMethod(win, MUIM_AmiTCPPrefs_LoadConfig, path);
+			if(get_file_size(path) == -2)
+			{
+				// the pop has got its own directory
+Printf("pop uses its own config files in directory '%ls'.\n", path);
+				DoMethod(win, MUIM_AmiTCPPrefs_LoadConfig, path);
+			}
+			else
+			{
+				struct PoP *pop;
+
+				// the pop uses the provider's standard files
+				strcpy(path, "AmiTCP:Providers");
+				AddPart(path, (STRPTR)xget(data->PO_Country	, MUIA_Text_Contents), MAXPATHLEN);
+				AddPart(path, (STRPTR)xget(data->PO_Provider	, MUIA_Text_Contents), MAXPATHLEN);
+Printf("pop uses the provider's default config files in directory '%ls'.\n", path);
+				DoMethod(win, MUIM_AmiTCPPrefs_LoadConfig, path);
+				pop = (struct PoP *)x;
+				setstring(data->STR_Phone, pop->Phone);
+			}
 			break;
 	}
 
@@ -376,7 +420,7 @@ ULONG Provider_DialScriptPopString_Close(struct IClass *cl, Object *obj, Msg msg
 
 	DoMethod(data->LV_Line, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
 	if(x)
-		DoMethod(data->LV_DialScript, MUIM_List_InsertSingle, x, MUIV_List_Insert_Active);
+		DoMethod(data->LV_DialScript, MUIM_List_InsertSingle, x, (xget(data->LV_Line, MUIA_List_Active) ? MUIV_List_Insert_Active : MUIV_List_Insert_Top));
 
 	DoMethod(data->PO_Line, MUIM_Popstring_Close, TRUE);
 
@@ -401,8 +445,36 @@ ULONG Provider_ChangeLine(struct IClass *cl, Object *obj, Msg msg)
 	return(NULL);
 }
 
+SAVEDS ASM struct PoP *PoP_ConstructFunc(REG(a2) APTR pool, REG(a1) struct PoP *src)
+{
+	struct PoP *new;
+
+	if((new = (struct PoP *)AllocVec(sizeof(struct PoP), MEMF_ANY | MEMF_CLEAR)) && src)
+		memcpy(new, src, sizeof(struct PoP));
+	return(new);
+}
+
+SAVEDS ASM VOID PoP_DestructFunc(REG(a2) APTR pool, REG(a1) struct PoP *pop)
+{
+	if(pop)
+		FreeVec(pop);
+}
+
+SAVEDS ASM LONG PoP_DisplayFunc(REG(a2) char **array, REG(a1) struct PoP *pop)
+{
+	if(pop)
+	{
+		*array++	= pop->Name;
+		*array	= pop->Phone;
+	}
+	return(NULL);
+}
+
 ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
+	static const struct Hook PoP_ConstructHook	= { { 0,0 }, (VOID *)PoP_ConstructFunc	, NULL, NULL };
+	static const struct Hook PoP_DestructHook		= { { 0,0 }, (VOID *)PoP_DestructFunc	, NULL, NULL };
+	static const struct Hook PoP_DisplayHook		= { { 0,0 }, (VOID *)PoP_DisplayFunc	, NULL, NULL };
 	struct Provider_Data tmp;
 
 	STR_GR_ProviderRegister[0] = "Provider";
@@ -452,6 +524,7 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 								MUIA_List_ConstructHook	, MUIV_List_ConstructHook_String,
 								MUIA_List_DestructHook	, MUIV_List_DestructHook_String,
 								MUIA_List_CompareHook	, &sorthook,
+								MUIA_List_AutoVisible	, TRUE,
 							End,
 						End,
 					End,
@@ -467,6 +540,7 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 								MUIA_List_ConstructHook	, MUIV_List_ConstructHook_String,
 								MUIA_List_DestructHook	, MUIV_List_DestructHook_String,
 								MUIA_List_CompareHook	, &sorthook,
+								MUIA_List_AutoVisible	, TRUE,
 							End,
 						End,
 					End,
@@ -479,9 +553,12 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 							MUIA_Listview_DoubleClick	, TRUE,
 							MUIA_Listview_List			, ListObject,
 								MUIA_Frame			, MUIV_Frame_InputList,
-								MUIA_List_ConstructHook	, MUIV_List_ConstructHook_String,
-								MUIA_List_DestructHook	, MUIV_List_DestructHook_String,
+								MUIA_List_ConstructHook	, &PoP_ConstructHook,
+								MUIA_List_DestructHook	, &PoP_DestructHook,
+								MUIA_List_DisplayHook	, &PoP_DisplayHook,
 								MUIA_List_CompareHook	, &sorthook,
+								MUIA_List_Format			, "BAR,",
+								MUIA_List_AutoVisible	, TRUE,
 							End,
 						End,
 					End,
@@ -582,10 +659,10 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 					Child, tmp.STR_POPServer = MakeKeyString("", 80, "  p"),
 					Child, MakeKeyLabel2(MSG_LA_NewsServer, "  n"),
 					Child, tmp.STR_NewsServer = MakeKeyString("", 80, "  n"),
-					Child, MakeKeyLabel2(MSG_LA_IRCServer, "  i"),
-					Child, tmp.STR_IRCServer = MakeKeyString("", 80, "  i"),
 					Child, MakeKeyLabel2("  WWW Server :", "  w"),
 					Child, tmp.STR_WWWServer = MakeKeyString("", 80, "  w"),
+					Child, MakeKeyLabel2("  FTP Server :", "  f"),
+					Child, tmp.STR_FTPServer = MakeKeyString("", 80, "  f"),
 				End,
 				Child, HVSpace,
 			End,
@@ -599,10 +676,11 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 						MUIA_List_ConstructHook	, MUIV_List_ConstructHook_String,
 						MUIA_List_DestructHook	, MUIV_List_DestructHook_String,
 						MUIA_List_DragSortable	, TRUE,
+						MUIA_List_AutoVisible	, TRUE,
 					End,
 				End,
 				Child, tmp.PO_Line = PopobjectObject,
-					MUIA_Popstring_String		, tmp.STR_Line = MakeKeyString("", 80, "   "),
+					MUIA_Popstring_String		, tmp.STR_Line = MakeKeyString("", MAXPATHLEN, "   "),
 					MUIA_Popstring_Button		, PopButton(MUII_PopUp),
 					MUIA_Popobject_Object		, tmp.LV_Line = ListviewObject,
 						MUIA_Listview_DoubleClick	, TRUE,
@@ -640,36 +718,36 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		set(tmp.RA_Interface, MUIA_CycleChain, 1);
 		set(tmp.CH_BOOTP, MUIA_CycleChain, 1);
 
-		set(tmp.TX_Country, MUIA_UserData, "Please select the country you live in.");
-		set(tmp.TX_Provider, MUIA_UserData, "Select the provider you want to use");
-		set(tmp.TX_PoP, MUIA_UserData, "Choose the Point of Presence of your provider");
-		set(tmp.STR_Phone, MUIA_UserData, "Enter the phone number(s) of your provider.\nUse a space to separate phone numbers. i.e. \"2574011 2574012\"");
-		set(tmp.CH_ProviderInfo, MUIA_UserData, "Opens a window which shows information about the Provider/PoP you have chosen");
+		set(tmp.TX_Country		, MUIA_ShortHelp, "Please select the country you live in.");
+		set(tmp.TX_Provider		, MUIA_ShortHelp, "Select the provider you want to use");
+		set(tmp.TX_PoP				, MUIA_ShortHelp, "Choose the Point of Presence of your provider");
+		set(tmp.STR_Phone			, MUIA_ShortHelp, "Enter the phone number(s) of your provider.\nUse a space to separate phone numbers. i.e. \"2574011 2574012\"");
+		set(tmp.CH_ProviderInfo	, MUIA_ShortHelp, "Opens a window which shows information about the Provider/PoP you have chosen");
 
-		set(tmp.RA_Connection, MUIA_UserData, "Is your IP Adress static or dynamic ?\nIf it is static you have to set the IP Address in the \"User\" Page.");
-		set(tmp.RA_Interface, MUIA_UserData, "Do you use ppp or slip as interface ?");
-		set(tmp.CH_BOOTP, MUIA_UserData, "Does your provider offer BOOTP ?");
-		set(tmp.SL_MTU, MUIA_UserData, "Set the Max Transfer Unit");
-		set(tmp.CY_Header, MUIA_UserData, "Does your provider support Header Compression ?\nIf you don't know you could simply choose \"AUTO\"");
-		set(tmp.CY_Authentication, MUIA_UserData, "Does your provider want PAP or CHAP authentication ?");
-		set(tmp.STR_HostID, MUIA_UserData, "Enter the ID of the providers host");
-		set(tmp.STR_YourID, MUIA_UserData, "Enter your ID");
-		set(tmp.STR_Password, MUIA_UserData, "Enter the password required for PAP/CHAP authentication.");
+		set(tmp.RA_Connection	, MUIA_ShortHelp, "Is your IP Adress static or dynamic ?\nIf it is static you have to set the IP Address in the \"User\" Page.");
+		set(tmp.RA_Interface		, MUIA_ShortHelp, "Do you use ppp or slip as interface ?");
+		set(tmp.CH_BOOTP			, MUIA_ShortHelp, "Does your provider offer BOOTP ?");
+		set(tmp.SL_MTU				, MUIA_ShortHelp, "Set the Max Transfer Unit");
+		set(tmp.CY_Header			, MUIA_ShortHelp, "Does your provider support Header Compression ?\nIf you don't know you could simply choose \"AUTO\"");
+		set(tmp.CY_Authentication, MUIA_ShortHelp, "Does your provider want PAP or CHAP authentication ?");
+		set(tmp.STR_HostID		, MUIA_ShortHelp, "Enter the ID of the providers host");
+		set(tmp.STR_YourID		, MUIA_ShortHelp, "Enter your ID");
+		set(tmp.STR_Password		, MUIA_ShortHelp, "Enter the password required for PAP/CHAP authentication.");
 
-		set(tmp.STR_DomainName, MUIA_UserData, "The name of your domain.");
-		set(tmp.STR_NameServer1, MUIA_UserData, "The IP Adress of your primary NameServer");
-		set(tmp.STR_NameServer2, MUIA_UserData, "The IP Adress of your secondary NameServer");
-		set(tmp.STR_MailServer, MUIA_UserData, "Enter the name of your providers Mail-Server");
-		set(tmp.STR_POPServer, MUIA_UserData, "Enter the name of your providers POP3-Server");
-		set(tmp.STR_NewsServer, MUIA_UserData, "Enter the name of your providers News-Server");
-		set(tmp.STR_IRCServer, MUIA_UserData, "Enter the name of your providers IRC-Server");
-		set(tmp.STR_WWWServer, MUIA_UserData, "Enter the name of your providers WWW-Server");
+		set(tmp.STR_DomainName	, MUIA_ShortHelp, "The name of your domain.");
+		set(tmp.STR_NameServer1	, MUIA_ShortHelp, "The IP Adress of your primary NameServer");
+		set(tmp.STR_NameServer2	, MUIA_ShortHelp, "The IP Adress of your secondary NameServer");
+		set(tmp.STR_MailServer	, MUIA_ShortHelp, "Enter the name of your providers Mail-Server");
+		set(tmp.STR_POPServer	, MUIA_ShortHelp, "Enter the name of your providers POP3-Server");
+		set(tmp.STR_NewsServer	, MUIA_ShortHelp, "Enter the name of your providers News-Server");
+		set(tmp.STR_WWWServer	, MUIA_ShortHelp, "Enter the name of your providers WWW-Server");
+		set(tmp.STR_FTPServer	, MUIA_ShortHelp, "Enter the name of your providers FTP-Server");
 
-		set(tmp.LI_DialScript, MUIA_UserData, "This is the AREXX script that will be used to login at your provider.\nYou can use drag & drop to move lines in this list");
-		set(tmp.STR_Line, MUIA_UserData, "Edit the contents of the currently selected line here.\nYou can insert some predefined strings if you click on the button right to this field");
-		set(tmp.BT_New, MUIA_UserData, "Add a new line at the end of the script.\nYou can use drag & drop to move the lines in the list");
-		set(tmp.BT_Delete, MUIA_UserData, "Delete the active line.");
-		set(tmp.BT_Clear, MUIA_UserData, "Clear the entire script.");
+		set(tmp.LV_DialScript	, MUIA_ShortHelp, "This is the AREXX script that will be used to login at your provider.\nYou can use drag & drop to move lines in this list\n\nRemember: ARexx-Scripts DO have to\nstart with a comment in the first line !!");
+		set(tmp.STR_Line			, MUIA_ShortHelp, "Edit the contents of the currently selected line here.\nYou can insert some predefined strings if you click on the button right to this field");
+		set(tmp.BT_New				, MUIA_ShortHelp, "Add a new line at the end of the script.\nYou can use drag & drop to move the lines in the list");
+		set(tmp.BT_Delete			, MUIA_ShortHelp, "Delete the active line.");
+		set(tmp.BT_Clear			, MUIA_ShortHelp, "Clear the entire script.");
 
 
 		DoMethod(tmp.LV_Country	, MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime	, obj, 2, MUIM_Provider_PopString_Close, MUIV_Provider_PopString_Country);
@@ -753,6 +831,40 @@ ULONG User_ChangeLine(struct IClass *cl, Object *obj, Msg msg)
 	return(NULL);
 }
 
+ULONG User_ChangeDialScript(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct AmiTCPPrefs_Data	*data					= INST_DATA(CL_AmiTCPPrefs->mcc_Class	, win);
+	struct Provider_Data		*provider_data		= INST_DATA(CL_Provider->mcc_Class		, data->GR_Provider);
+	struct User_Data			*user_data			= INST_DATA(cl									, obj);
+	int i;
+	STRPTR ptr;
+	char string[101];
+
+	i = 0;
+	FOREVER
+	{
+		DoMethod(provider_data->LV_DialScript, MUIM_List_GetEntry, i, &ptr);
+		if(!ptr)
+			break;
+		if((STRPTR)strstr(ptr, "YourLogin=") == ptr)
+		{
+			sprintf(string, "YourLogin=\"%ls\"", xget(user_data->STR_UserName, MUIA_String_Contents));
+Printf("replacing %ls with %ls in the dialscript.\n", ptr, string);
+			DoMethod(provider_data->LV_DialScript, MUIM_List_InsertSingle, string, i + 1);
+			DoMethod(provider_data->LV_DialScript, MUIM_List_Remove, i);
+		}
+		if((STRPTR)strstr(ptr, "YourPassword=") == ptr)
+		{
+			sprintf(string, "YourPassword=\"%ls\"", xget(user_data->STR_Password, MUIA_String_Contents));
+Printf("replacing %ls with %ls in the dialscript.\n", ptr, string);
+			DoMethod(provider_data->LV_DialScript, MUIM_List_InsertSingle, string, i + 1);
+			DoMethod(provider_data->LV_DialScript, MUIM_List_Remove, i);
+		}
+		i++;
+	}
+	return(NULL);
+}
+
 ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
 	struct User_Data tmp;
@@ -780,6 +892,7 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 					MUIA_CycleChain		, 1,
 					MUIA_Frame				, MUIV_Frame_String,
 					MUIA_String_Secret	, TRUE,
+					MUIA_String_MaxLen	, 80,
 				End,
 				Child, HVSpace,
 				Child, HVSpace,
@@ -815,6 +928,7 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 						MUIA_List_ConstructHook	, MUIV_List_ConstructHook_String,
 						MUIA_List_DestructHook	, MUIV_List_DestructHook_String,
 						MUIA_List_DragSortable	, TRUE,
+						MUIA_List_AutoVisible	, TRUE,
 					End,
 				End,
 				Child, tmp.STR_Line = MakeKeyString("", MAXPATHLEN, "   "),
@@ -838,19 +952,18 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		set(tmp.STR_Line, MUIA_String_AttachedList, tmp.LV_UserStartnet);
 
 
-		set(tmp.STR_UserName, MUIA_UserData, "Enter your login name here.\nIt will be used during logging in at your provider.");
-		set(tmp.STR_Password, MUIA_UserData, "This is the password that will be used during the login procedure at your provider.");
-		set(tmp.STR_EMail, MUIA_UserData, "Your EMail address.");
-		set(tmp.STR_RealName, MUIA_UserData, "Your full name");
-		set(tmp.STR_Organisation, MUIA_UserData, "The name of your organisation or something like \"Private User\"");
-		set(tmp.STR_HostName, MUIA_UserData, "The name of your computer.\nIf you use dynamic IP Adresses your provider probably won't give you a host name.");
-		set(tmp.STR_IP_Address, MUIA_UserData, "If you use a static IP Address you have to enter it here.");
-		set(tmp.LI_UserStartnet, MUIA_UserData, "This is the script that will be executed after the connection to your provider has been established. It can be used to start a httpd server for example.\nYou can use drag & drop to move lines in this list");
-		set(tmp.STR_Line, MUIA_UserData, "Edit the contents of the currently selected line here.");
-		set(tmp.BT_New, MUIA_UserData, "Add a new line at the end of the script.\nYou can use drag & drop to move the lines in the list");
-		set(tmp.BT_Delete, MUIA_UserData, "Delete the active line.");
-		set(tmp.BT_Clear, MUIA_UserData, "Clear the entire script.");
-
+		set(tmp.STR_UserName		, MUIA_ShortHelp, "Enter your login name here.\nIt will be used during logging in at your provider.");
+		set(tmp.STR_Password		, MUIA_ShortHelp, "This is the password that will be used during the login procedure at your provider.");
+		set(tmp.STR_EMail			, MUIA_ShortHelp, "Your EMail address.");
+		set(tmp.STR_RealName		, MUIA_ShortHelp, "Your full name");
+		set(tmp.STR_Organisation, MUIA_ShortHelp, "The name of your organisation or something like \"Private User\"");
+		set(tmp.STR_HostName		, MUIA_ShortHelp, "The name of your computer.\nIf you use dynamic IP Adresses your provider probably won't give you a host name.");
+		set(tmp.STR_IP_Address	, MUIA_ShortHelp, "If you use a static IP Address you have to enter it here.");
+		set(tmp.LV_UserStartnet	, MUIA_ShortHelp, "This is the script that will be executed after the connection to your provider has been established. It can be used to start a httpd server for example.\nYou can use drag & drop to move lines in this list");
+		set(tmp.STR_Line			, MUIA_ShortHelp, "Edit the contents of the currently selected line here.");
+		set(tmp.BT_New				, MUIA_ShortHelp, "Add a new line at the end of the script.\nYou can use drag & drop to move the lines in the list");
+		set(tmp.BT_Delete			, MUIA_ShortHelp, "Delete the active line.");
+		set(tmp.BT_Clear			, MUIA_ShortHelp, "Clear the entire script.");
 
 		DoMethod(tmp.LV_UserStartnet, MUIM_Notify, MUIA_List_Active, MUIV_EveryTime, obj, 1, MUIM_User_UserStartnetList_Active);
 		DoMethod(tmp.BT_New, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LV_UserStartnet, 3, MUIM_List_InsertSingle, "", MUIV_List_Insert_Bottom);
@@ -859,6 +972,8 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		DoMethod(tmp.BT_Delete, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LV_UserStartnet, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
 		DoMethod(tmp.BT_Clear, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LV_UserStartnet, 1, MUIM_List_Clear);
 		DoMethod(tmp.STR_Line, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_User_ChangeLine);
+		DoMethod(tmp.STR_UserName, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_User_ChangeDialScript);
+		DoMethod(tmp.STR_Password, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_User_ChangeDialScript);
 	}
 	return((ULONG)obj);
 }
@@ -870,6 +985,7 @@ SAVEDS ASM ULONG User_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj,
 		case OM_NEW										: return(User_New								(cl, obj, (APTR)msg));
 		case MUIM_User_UserStartnetList_Active	: return(User_UserStartnetList_Active	(cl, obj, (APTR)msg));
 		case MUIM_User_ChangeLine					: return(User_ChangeLine					(cl, obj, (APTR)msg));
+		case MUIM_User_ChangeDialScript			: return(User_ChangeDialScript			(cl, obj, (APTR)msg));
 	}
 	return(DoSuperMethodA(cl, obj, msg));
 }
@@ -1028,6 +1144,7 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
 							MUIA_Listview_List			, ListObject,
 								MUIA_Frame				, MUIV_Frame_InputList,
 								MUIA_List_SourceArray, ARR_BaudRates,
+								MUIA_List_AutoVisible	, TRUE,
 							End,
 						End,
 					End,
@@ -1063,17 +1180,17 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		set(tmp.CH_7Wire, MUIA_CycleChain, 1);
 		set(tmp.CH_OwnDevUnit, MUIA_CycleChain, 1);
 
-		set(tmp.LI_Modem, MUIA_UserData, "Select your modem");
-		set(tmp.STR_ModemInit, MUIA_UserData, "Enter the initialisation string of your modem");
-		set(tmp.STR_DialPrefix, MUIA_UserData, "The dial prefix for your modem");
-		set(tmp.STR_DialSuffix, MUIA_UserData, "The dial suffix for your modem");
-		set(tmp.STR_SerialDriver, MUIA_UserData, "Enter the name of your serial driver. (case sensitive !)");
-		set(tmp.STR_SerialUnit, MUIA_UserData, "Enter the unit number you want to use for your serial driver.");
-		set(tmp.STR_BaudRate, MUIA_UserData, "Enter the transfer speed between your Amiga and your Modem. (should be higher than the modem's max. connection speed)");
-		set(tmp.SL_RedialAttempts, MUIA_UserData, "Howmany times should the dialer try to establish a connection ?");
-		set(tmp.CH_Carrier, MUIA_UserData, "Shall the network be stopped if the modem drops the carrier ?");
-		set(tmp.CH_7Wire, MUIA_UserData, "If you use baud rates higher than 9600 you should set this.");
-		set(tmp.CH_OwnDevUnit, MUIA_UserData, "Use OwnDevUnit to access the serial device.");
+		set(tmp.LV_Modem			, MUIA_ShortHelp, "Select your modem");
+		set(tmp.STR_ModemInit	, MUIA_ShortHelp, "Enter the initialisation string of your modem");
+		set(tmp.STR_DialPrefix	, MUIA_ShortHelp, "The dial prefix for your modem");
+		set(tmp.STR_DialSuffix	, MUIA_ShortHelp, "The dial suffix for your modem");
+		set(tmp.STR_SerialDriver, MUIA_ShortHelp, "Enter the name of your serial driver. (case sensitive !)");
+		set(tmp.STR_SerialUnit	, MUIA_ShortHelp, "Enter the unit number you want to use for your serial driver.");
+		set(tmp.STR_BaudRate		, MUIA_ShortHelp, "Enter the transfer speed between your Amiga and your Modem. (should be higher than the modem's max. connection speed)");
+		set(tmp.SL_RedialAttempts, MUIA_ShortHelp, "Howmany times should the dialer try to establish a connection ?");
+		set(tmp.CH_Carrier		, MUIA_ShortHelp, "Shall the network be stopped if the modem drops the carrier ?");
+		set(tmp.CH_7Wire			, MUIA_ShortHelp, "If you use baud rates higher than 9600 you should set this.");
+		set(tmp.CH_OwnDevUnit	, MUIA_ShortHelp, "Use OwnDevUnit to access the serial device.");
 
 		DoMethod(tmp.LV_Modem		, MUIM_Notify, MUIA_List_Active				, MUIV_EveryTime , obj, 1, MUIM_Modem_ModemList_Active);
 		DoMethod(tmp.LV_BaudRate	, MUIM_Notify, MUIA_Listview_DoubleClick	, MUIV_EveryTime , obj, 2, MUIM_Modem_PopString_Close, MUIV_Modem_PopString_BaudRate);
@@ -1135,12 +1252,12 @@ ULONG Paths_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 		*data = tmp;
 
-		set(tmp.STR_MailIn, MUIA_UserData, "Where does incoming mail go to.");
-		set(tmp.STR_MailOut, MUIA_UserData, "Here we store outgoing mails.");
-		set(tmp.STR_NewsIn, MUIA_UserData, "Where the news go in");
-		set(tmp.STR_NewsOut, MUIA_UserData, "Drawer for outgoing news");
-		set(tmp.STR_FileIn, MUIA_UserData, "Drawer to download files to.");
-		set(tmp.STR_FileOut, MUIA_UserData, "Drawer to upload files from.");
+		set(tmp.STR_MailIn	, MUIA_ShortHelp, "Where does incoming mail go to.");
+		set(tmp.STR_MailOut	, MUIA_ShortHelp, "Here we store outgoing mails.");
+		set(tmp.STR_NewsIn	, MUIA_ShortHelp, "Where the news go in");
+		set(tmp.STR_NewsOut	, MUIA_ShortHelp, "Drawer for outgoing news");
+		set(tmp.STR_FileIn	, MUIA_ShortHelp, "Drawer to download files to.");
+		set(tmp.STR_FileOut	, MUIA_ShortHelp, "Drawer to upload files from.");
 	}
 	return((ULONG)obj);
 }
