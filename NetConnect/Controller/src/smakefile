@@ -17,7 +17,7 @@
 CPU		= ANY
 #CPU		= 68030
 
-OPTIMIZE	= OPT NOOPTINLOCAL
+#OPTIMIZE	= OPT NOOPTINLOCAL
 
 OPTIONS	= CPU=$(CPU) $(OPTIMIZE)
 
@@ -29,7 +29,7 @@ CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST ST
 LFLAGS	= ND SC SD NOICONS
 #LFLAGS	= SC SD NOICONS
 
-OBJS		= main.o globals.o mui.o TextFieldAuto.o
+OBJS		= main.o globals.o mui.o amiga.o
 LIBS		= lib:amiga.lib lib:sc.lib
 
 all:	 includes.gst NetConnectStrings.h default_icon.bh logo.bh NetConnect
@@ -53,12 +53,12 @@ NetConnect:	$(OBJS)
 		FROM	lib:c.o $(OBJS)
 		TO		NetConnect
 		LIB	$(LIBS)
+		MAP netconnect.map H
 		$(LFLAGS)
 	<
 
 globals.o:	globals.c	NetConnect.h NetConnectStrings.h	logo.bh default_icon.bh
 	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
-TextFieldAuto.o: TextFieldAuto.c
-	sc $(CFLAGS) $(GST) $(OPTIONS) TextFieldAuto.c
 main.o:		main.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
 mui.o:		mui.c			NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh
+amiga.o:		amiga.c		NetConnect.h NetConnectStrings.h globals.c logo.bh default_icon.bh

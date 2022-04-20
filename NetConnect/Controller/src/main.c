@@ -80,9 +80,31 @@ VOID LocalizeNewMenu(struct NewMenu *nm)
  * program entry point
  */
 
+BOOL BuildApp(VOID)
+{
+	BOOL success = FALSE;
+
+	if(app = ApplicationObject,
+		MUIA_Application_Author			, "Michael Neuweiler",
+		MUIA_Application_Base			, "NetConnect",
+		MUIA_Application_Title			, "NetConnect Controller",
+		MUIA_Application_Version		, "$VER: NetConnect 1.0 (01.06.96)",
+		MUIA_Application_Copyright		, GetStr(MSG_AppCopyright),
+		MUIA_Application_Description	, GetStr(MSG_AppDescription),
+		MUIA_Application_BrokerHook	, &BrokerHook,
+		MUIA_Application_Window			, win = NewObject(CL_IconBar->mcc_Class, NULL, TAG_DONE),
+		End)
+	{
+		DoMethod(win, MUIM_IconBar_LoadButtons);
+		success = TRUE;
+	}
+	return(success);
+}
+
 LONG main(VOID)
 {
 	ULONG sigs = NULL;
+	BOOL running;
 
 	if(init_libs())
 	{
@@ -91,23 +113,29 @@ LONG main(VOID)
 			LocalizeNewMenu(IconBarMenu);
 			LocalizeNewMenu(IconBarPrefsMenu);
 
-			app = ApplicationObject,
-				MUIA_Application_Author			, "Michael Neuweiler",
-				MUIA_Application_Base			, "NetConnect",
-				MUIA_Application_Title			, "NetConnect Controller",
-				MUIA_Application_Version		, "$VER: NetConnect 1.0 (01.06.96)",
-				MUIA_Application_Copyright		, GetStr(MSG_AppCopyright),
-				MUIA_Application_Description	, GetStr(MSG_AppDescription),
-				MUIA_Application_BrokerHook	, &BrokerHook,
-				MUIA_Application_Window			, win = NewObject(CL_IconBar->mcc_Class, NULL, TAG_DONE),
-				End;
-
-			if(app)
+			if(BuildApp())
 			{
-				DoMethod(win, MUIM_IconBar_LoadButtons);
 				set(win, MUIA_Window_Open, TRUE);
-				while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
+
+if(MUI_Request(app, win, 0, 0, "_Yes, I am !|*\33bGosh _no, I'm not !", "\33cThis version of NetConnect Controller is a\n trial version and might only be used\nby NSDI, Active Software and those who\ngot direct permission from either NSDI\nor Active Software !\n\nCopyright © 1996 by Michael Neuweiler\n\n\33bAre you allowed to use this program ?"))
+{
+				running = TRUE;
+				while(running)
 				{
+					switch(DoMethod(app, MUIM_Application_NewInput, &sigs))
+					{
+						case MUIV_Application_ReturnID_Quit:
+							running = FALSE;
+							break;
+						case ID_REBUILD:
+							set(win, MUIA_Window_Open, FALSE);
+							MUI_DisposeObject(app);
+							if(BuildApp())
+								set(win, MUIA_Window_Open, TRUE);
+							else
+								running = FALSE;
+							break;
+					}
 					if(sigs)
 					{
 						sigs = Wait(sigs | SIGBREAKF_CTRL_C);
@@ -115,6 +143,7 @@ LONG main(VOID)
 							break;
 					}
 				}
+}
 				set(win, MUIA_Window_Open, FALSE);
 				MUI_DisposeObject(app);
 				app = NULL;

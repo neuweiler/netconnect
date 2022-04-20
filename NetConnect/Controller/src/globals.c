@@ -24,7 +24,9 @@ STATIC LONG Stops[] =			/* IFF ID's for our config file	*/
 {
 	ID_NTCN, ID_AICN,				/* Active ICoN		: Holds a "struct Icon", an icon for the Icon Bar		*/
 	ID_NTCN, ID_IICN,				/* Inactive ICoN	: Holds a "struct Icon", an icon fot the Icon Bank	*/
-	ID_NTCN, ID_ROWS
+	ID_NTCN, ID_ROWS,				/* howmany rows will be used to display the icons */
+	ID_NTCN, ID_WINT,				/* type of window: 0=normal, 1=borderless, 2=borderless with dragbar */
+	ID_NTCN, ID_BTTY				/* how buttons are displayed: 0=text&icon, 1=icon only, 2=text only */
 };
 
 Object *app						= NULL;	/* our MUI application												*/
@@ -32,21 +34,26 @@ Object *win						= NULL;	/* a global pointer to our main window (the icon bar) 	
 
 struct MUI_CustomClass  *CL_IconBar			= NULL;	/* class for the main (icon bar) window									*/
 struct MUI_CustomClass  *CL_IconBarPrefs	= NULL;	/* icon bar preferences window class										*/
+struct MUI_CustomClass  *CL_Editor			= NULL;	/* list class																		*/
+struct MUI_CustomClass  *CL_EditIcon		= NULL;	/* window class																	*/
 struct MUI_CustomClass  *CL_IconList		= NULL;	/* list class for the two listviews in the icon bar prefs			*/
 struct MUI_CustomClass	*CL_Button			= NULL;
 struct MUI_CustomClass	*CL_About			= NULL;
 
-LONG Rows = 1;
 Object *SoundObject = NULL;
-struct ClipboardHandle *clip_handle = NULL, *undo_handle = NULL;
 STRPTR ARR_ProgramTypes[] = { "AmigaDOS", "Workbench", "Script", "ARexx", NULL };
+STRPTR ARR_ButtonTypes[] = { "Icon & Text", "Icon only", "Text only", NULL };
+STRPTR ARR_WindowTypes[] = { "Normal", "Borderless", "Borderless with DragBar", NULL };
+STRPTR STR_GR_Register[3];
 
 
-enum { MEN_RESET = 1 };
+enum { MEN_RESET = 1 , MEN_MUI2 };
 struct NewMenu IconBarPrefsMenu[] =
 {
 	{ NM_TITLE, (STRPTR)MSG_MENU_SETTINGS			, 0 , 0, 0, (APTR)0				},
 	{ NM_ITEM , (STRPTR)MSG_MENU_RESET_DEFAULT	,"D", 0, 0, (APTR)MEN_RESET	},
+	{ NM_ITEM , (STRPTR)NM_BARLABEL					, 0 , 0, 0, (APTR)0				},
+	{ NM_ITEM , (STRPTR)MSG_MENU_MUI					,"M", 0, 0, (APTR)MEN_MUI2		},
 
 	{ NM_END  , NULL								, 0 , 0, 0, (APTR)0				},
 

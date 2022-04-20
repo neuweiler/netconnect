@@ -5,7 +5,7 @@ Net Connect
 MSG_AppCopyright (//)
 Michael Neuweiler
 MSG_WI_IconBar (//)
-NetConnect Control Center
+NetConnect Controller
 MSG_WI_IconBarPrefs (//)
 Icon Bar Preferences
 MSG_LV_ButtonBankTitle (//)
@@ -73,13 +73,13 @@ _Overwrite|_Abort
 MSG_LA_ScriptModified (//)
 Script has been modified.
 MSG_BT_SaveDiscardChanges (//)
-Save Changes|Discard Changes
+*_Save Changes|_Discard Changes
 MSG_LA_About (//)
 About
 MSG_TX_About1 (//)
-\33c\nNetConnect Control 1.00 (30.6.96)\n© 1996 Michael Neuweiler\n\nAuthors:\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler\n\n\n\33bDEMO\33n\n\33cDo NOT redistribute !!
+\33c\nNetConnect Controller 1.10 (20.7.96)\n© 1996 Michael Neuweiler\n\nAuthors:\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler\nIcon/Logo Design: Malcolm Lavery\n\n\n\33bDEMO\33n\n\33cDo NOT redistribute !!
 MSG_TX_About2 (//)
-\33c\n\NetConnect uses:\n\nMUI - Copyright © Stefan Stuntz\n\ntextfield.gadget - Copyright © 1995 Mark Thomas
+\33c\n\NetConnect uses:\n\nMUI - Copyright © Stefan Stuntz\n
 MSG_TX_New (//)
 New
 MSG_LA_NoWBStartHandler (//)
@@ -119,7 +119,7 @@ The type of program.\nIt determines how the\nprogram is beeing launched.
 MSG_HELP_Program (//)
 The filename of the program.
 MSG_HELP_Hotkey (//)
-A hotkey to launch\nthe program.\n\n(currently inactive)
+A hotkey to launch\nthe program.
 MSG_HELP_Image (//)
 Name of an IFF file which\nholds the image for the\nbutton.
 MSG_HELP_Sound (//)

@@ -24,13 +24,8 @@
 
 #include <intuition/icclass.h>
 
-#include <gadgets/textfield.h>
-
 #include <datatypes/pictureclass.h>
 #include <datatypes/soundclass.h>
 
 #include <workbench/workbench.h>
 #include <workbench/WBStart.h>
-
-
-//#include <TextField_mcc.h>

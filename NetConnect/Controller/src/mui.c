@@ -1,476 +1,5 @@
 #include "globals.c"
-
-extern STRPTR GetStr(STRPTR idstr);
-extern Class *TextFieldClass;
-
-#define IMAGE_PATH "NetConnect:Images/"
-#define PROGRAM_PATH "NetConnect:Programs/"
-
-
-SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg)
-{
-	if(CxMsgType(msg) == CXM_IEVENT)
-		DoMethod((Object *)CxMsgID(msg), MUIM_Button_Action);
-	return(NULL);
-}
-
-ULONG __stdargs DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...)
-{
-	return(DoSuperMethod(cl, obj, OM_NEW, &tag1, NULL));
-}
-
-LONG xget(Object *obj, ULONG attribute)
-{
-	LONG x;
-	get(obj, attribute, &x);
-	return(x);
-}
-
-Object *MakeKeyLabel2(STRPTR label, STRPTR control_char)
-{
-	return(KeyLabel(GetStr(label), *GetStr(control_char)));
-}
-
-Object *MakeButton(STRPTR string)
-{
-	Object *obj = SimpleButton(GetStr(string));
-	if(obj)
-		set(obj, MUIA_CycleChain, 1);
-	return(obj);
-}
-
-Object *MakeKeyString(STRPTR string, LONG len, STRPTR control_char)
-{
-	Object *obj = KeyString(GetStr(string), len, *(GetStr(control_char)));
-	if(obj)
-		set(obj, MUIA_CycleChain, 1);
-	return(obj);
-}
-
-Object *MakeKeyCycle(STRPTR *array, STRPTR control_char)
-{
-	Object *obj = KeyCycle(array, *(GetStr(control_char)));
-	if(obj)
-		set(obj, MUIA_CycleChain, 1);
-	return(obj);
-}
-
-Object *MakeKeySlider(LONG min, LONG max, LONG level, STRPTR control_char)
-{
-	Object *obj = KeySlider(min, max, level, *(GetStr(control_char)));
-	if(obj)
-		set(obj, MUIA_CycleChain, 1);
-	return(obj);
-}
-
-Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only)
-{
-	Object *obj = PopaslObject,
-		MUIA_Popstring_String, string,
-		MUIA_Popstring_Button, PopButton((drawers_only ? MUII_PopDrawer : MUII_PopFile)),
-		MUIA_Popasl_Type		, ASL_FileRequest,
-		ASLFR_TitleText		, GetStr(title),
-		ASLFR_DrawersOnly		, drawers_only,
-	End;
-	if(obj)
-		set(obj, MUIA_CycleChain, 1);
-	return(obj);
-}
-
-BOOL load_icon(struct Icon *icon)
-{
-	struct IFFHandle *Handle;
-	struct ContextNode *cn;
-	struct StoredProperty *sp;
-	int size, i;
-	UBYTE *src;
-	BOOL success = FALSE;
-
-	if(Handle = AllocIFF())
-	{
-		if(Handle->iff_Stream = Open(icon->ImageFile, MODE_OLDFILE))
-		{
-			InitIFFasDOS(Handle);
-			if(!OpenIFF(Handle, IFFF_READ))
-			{
-				if(!ParseIFF(Handle, IFFPARSE_STEP))
-				{
-					if((cn = CurrentChunk(Handle)) && (cn->cn_ID == ID_FORM))
-					{
-						if(cn->cn_Type == ID_ILBM)
-						{
-							if(!PropChunk(Handle, ID_ILBM, ID_BMHD) &&
-								!PropChunk(Handle, ID_ILBM, ID_CMAP) &&
-								!StopChunk(Handle, ID_ILBM, ID_BODY) &&
-								!StopOnExit(Handle, ID_ILBM, ID_FORM) &&
-								!ParseIFF(Handle, IFFPARSE_SCAN))
-							{
-								if(sp = FindProp(Handle, ID_ILBM, ID_CMAP))
-								{
-									src = sp->sp_Data;
-									if(icon->cols = AllocVec(sizeof(ULONG) * sp->sp_Size, MEMF_ANY))
-									{
-										for (i = 0; i < sp->sp_Size; i++)
-											icon->cols[i] = to32(src[i]);
-									}
-								}
-
-								if(sp = FindProp(Handle, ID_ILBM, ID_BMHD))
-								{
-									size = CurrentChunk(Handle)->cn_Size;
-									if(icon->bmhd = AllocVec(sizeof(struct BitMapHeader), MEMF_ANY))
-									{
-										memcpy(icon->bmhd, sp->sp_Data, sizeof(struct BitMapHeader));
-
-										if(icon->body = AllocVec(size, MEMF_ANY))
-										{
-											if(ReadChunkBytes(Handle, icon->body, size) == size)
-												success = TRUE;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				CloseIFF(Handle);
-			}
-			Close(Handle->iff_Stream);
-		}
-		FreeIFF(Handle);
-	}
-
-	if(!success)
-	{
-		if(icon->cols)
-			FreeVec(icon->cols);
-		icon->cols = NULL;
-		if(icon->bmhd)
-			FreeVec(icon->bmhd);
-		icon->bmhd = NULL;
-		if(icon->body)
-			FreeVec(icon->body);
-		icon->body = NULL;
-	}
-
-	return(success);
-}
-
-Object *create_bodychunk(struct Icon *icon)
-{
-	Object *bodychunk = NULL;
-
-	if(load_icon(icon))
-	{
-		bodychunk = BodychunkObject,
-			ButtonFrame,
-			MUIA_Bitmap_SourceColors	, icon->cols,
-			MUIA_Bitmap_Width				, icon->bmhd->bmh_Width,
-			MUIA_Bitmap_Height			, icon->bmhd->bmh_Height,
-			MUIA_FixWidth					, icon->bmhd->bmh_Width,
-			MUIA_FixHeight					, icon->bmhd->bmh_Height,
-			MUIA_Background				, MUII_ButtonBack,
-			MUIA_InputMode					, MUIV_InputMode_RelVerify,
-			MUIA_Bodychunk_Depth			, icon->bmhd->bmh_Depth,
-			MUIA_Bodychunk_Body			, icon->body,
-			MUIA_Bodychunk_Compression	, icon->bmhd->bmh_Compression,
-			MUIA_Bodychunk_Masking		, icon->bmhd->bmh_Masking,
-			MUIA_Bitmap_Transparent		, 0,
-			End;
-	}
-	if(!bodychunk)
-	{
-		icon->body = NULL;
-		icon->bmhd = NULL;
-		icon->cols = NULL;
-		bodychunk = BodychunkObject,
-			ButtonFrame,
-			MUIA_Bitmap_SourceColors	, (ULONG *)default_icon_colors,
-			MUIA_Bitmap_Width				, DEFAULT_ICON_WIDTH ,
-			MUIA_Bitmap_Height			, DEFAULT_ICON_HEIGHT,
-			MUIA_FixWidth					, DEFAULT_ICON_WIDTH ,
-			MUIA_FixHeight					, DEFAULT_ICON_HEIGHT,
-			MUIA_Background				, MUII_ButtonBack,
-			MUIA_InputMode					, MUIV_InputMode_RelVerify,
-			MUIA_Bodychunk_Depth			, DEFAULT_ICON_DEPTH ,
-			MUIA_Bodychunk_Body			, (UBYTE *)default_icon_body,
-			MUIA_Bodychunk_Compression	, DEFAULT_ICON_COMPRESSION,
-			MUIA_Bodychunk_Masking		, DEFAULT_ICON_MASKING,
-			MUIA_Bitmap_Transparent		, 0,
-		End;
-	}
-
-	return(bodychunk);
-}
-
-VOID init_icon(struct Icon *icon, Object *list)
-{
-	icon->body		= NULL;
-	icon->list		= NULL;
-	icon->cols		= NULL;
-	icon->bmhd		= NULL;
-	if(icon->bodychunk = create_bodychunk(icon))
-	{
-		if(list)
-			icon->list = (APTR)DoMethod(list, MUIM_List_CreateImage, icon->bodychunk, 0);
-	}
-}
-
-LONG get_file_size(STRPTR file)
-{
-	struct FileInfoBlock *fib;
-	BPTR lock;
-	LONG size = 0;
-
-	if(lock = Lock(file, ACCESS_READ))
-	{
-		if(fib = AllocDosObject(DOS_FIB, NULL))
-		{
-			if(Examine(lock, fib))
-				size = (fib->fib_DirEntryType > 0 ? -1 : fib->fib_Size);
-
-			FreeDosObject(DOS_FIB, fib);
-		}
-		UnLock(lock);
-	}
-	return(size);
-}
-
-
-STRPTR LoadFile(STRPTR file)
-{
-	LONG size;
-	STRPTR buf = NULL;
-	BPTR fh;
-	BOOL success = FALSE;
-
-	if((size = get_file_size(file)) > 0)
-	{
-		if(buf = AllocVec(size + 1, MEMF_ANY))
-		{
-			if(fh = Open(file, MODE_OLDFILE))
-			{
-				if(Read(fh, buf, size) == size)
-					success = TRUE;
-				Close(fh);
-			}
-			buf[size] = NULL;		// We need buffers which are terminated by a zero (for the textfield)
-		}
-	}
-
-	if(!success && buf)
-	{
-		FreeVec(buf);
-		buf = NULL;
-	}
-
-	return(buf);
-}
-
-int find_max(VOID)
-{
-	struct Icon *icon;
-	struct BitMapHeader *bmhd;
-	struct IFFHandle *Handle1, *Handle2;
-	struct ContextNode *cn1, *cn2;
-	struct StoredProperty *sp;
-	int max_height = 0;
-
-	if(icon = AllocVec(sizeof(struct Icon), MEMF_ANY | MEMF_CLEAR))
-	{
-		if(Handle1 = AllocIFF())
-		{
-			if(Handle1->iff_Stream = Open("ENV:NetConnectPrefs", MODE_OLDFILE))
-			{
-				InitIFFasDOS(Handle1);
-				if(!(OpenIFF(Handle1, IFFF_READ)))
-				{
-					if(!(StopChunks(Handle1, Stops, NUM_STOPS)))
-					{
-						while(!ParseIFF(Handle1, IFFPARSE_SCAN))
-						{
-							cn1 = CurrentChunk(Handle1);
-							if(cn1->cn_ID == ID_AICN || cn1->cn_ID == ID_IICN)
-							{
-								if(ReadChunkBytes(Handle1, icon, MIN(sizeof(struct Icon), cn1->cn_Size)) == MIN(sizeof(struct Icon), cn1->cn_Size))
-								{
-									if(Handle2=AllocIFF())
-									{
-										if(Handle2->iff_Stream = Open(icon->ImageFile, MODE_OLDFILE))
-										{
-											InitIFFasDOS(Handle2);
-											if(!OpenIFF(Handle2, IFFF_READ))
-											{
-												if(!ParseIFF(Handle2, IFFPARSE_STEP))
-												{
-													if((cn2 = CurrentChunk(Handle2)) && (cn2->cn_ID == ID_FORM))
-													{
-														if(cn2->cn_Type == ID_ILBM)
-														{
-															if(!PropChunk(Handle2, ID_ILBM, ID_BMHD) &&
-																!PropChunk(Handle2, ID_ILBM, ID_CMAP) &&
-																!StopChunk(Handle2, ID_ILBM, ID_BODY) &&
-																!StopOnExit(Handle2, ID_ILBM, ID_FORM) &&
-																!ParseIFF(Handle2, IFFPARSE_SCAN))
-															{
-																if(sp = FindProp(Handle2, ID_ILBM, ID_BMHD))
-																{
-																	bmhd = (struct BitMapHeader *)sp->sp_Data;
-																	max_height = MAX(max_height, bmhd->bmh_Height);
-																}
-															}
-														}
-													}
-												}
-												CloseIFF(Handle2);
-											}
-											Close(Handle2->iff_Stream);
-										}
-										FreeIFF(Handle2);
-									}
-								}
-							}
-						}
-					}
-					CloseIFF(Handle1);
-				}
-				Close(Handle1->iff_Stream);
-			}
-			FreeIFF(Handle1);
-		}
-		FreeVec(icon);
-	}
-
-	if(max_height)
-		return(max_height);
-	else
-		return(40);
-}
-
-
-SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
-{
-	struct WBArg *ap;
-	struct AppMessage *amsg = *x;
-	static char buf[MAXPATHLEN];
-
-	ap = amsg->am_ArgList;
-	if(amsg->am_NumArgs)
-	{
-		NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
-		AddPart(buf, ap->wa_Name, MAXPATHLEN);
-		setstring(obj, buf);
-	}
-
-	return(NULL);
-}
-
-SAVEDS ASM LONG TF_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
-{
-	struct WBArg *ap;
-	struct AppMessage *amsg = *x;
-	static char buf[MAXPATHLEN];
-
-	ap = amsg->am_ArgList;
-	if(amsg->am_NumArgs)
-	{
-		NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
-		AddPart(buf, ap->wa_Name, MAXPATHLEN);
-		set(obj, TEXTFIELD_InsertText, buf);
-	}
-
-	return(NULL);
-}
-
-BOOL editor_load(STRPTR file, Object *editor)
-{
-	STRPTR buf;
-	BOOL success = FALSE;
-
-	if(*file)
-	{
-		if(buf = LoadFile(file))
-		{
-			set(editor, TEXTFIELD_Text, buf);
-			set(editor, TEXTFIELD_Modified, NULL);
-			FreeVec(buf);
-			success = TRUE;
-		}
-	}
-	return(success);
-}
-
-BOOL editor_save(STRPTR file, Object *editor)
-{
-	struct Window *window;
-	struct Gadget *gadget;
-	STRPTR text;
-	ULONG size;
-	BPTR fh;
-	BOOL do_it = TRUE, success = FALSE;
-
-	window = (struct Window *)xget(editor, MUIA_Window);
-	gadget = (struct Gadget *)xget(editor, MUIA_Boopsi_Object);
-	if(window && gadget && *file)
-	{
-		// Set to readonly mode so I can grab the text from the gadget
-		SetGadgetAttrs(gadget, window, NULL, TEXTFIELD_ReadOnly, TRUE, TAG_DONE);
-		size = xget((Object *)gadget, TEXTFIELD_Size);
-		text = (STRPTR)xget((Object *)gadget, TEXTFIELD_Text);
-		if(text && size)
-		{
-			if(get_file_size(file))
-				do_it = MUI_Request(app, (Object *)xget(editor, MUIA_WindowObject), NULL, NULL, GetStr(MSG_BT_OverwriteAbort), GetStr(MSG_LA_FileExists));
-
-			if(do_it)
-			{
-				if(fh = Open(file, MODE_NEWFILE))
-				{
-					Write(fh, text, size);
-					Close(fh);
-					set(editor, TEXTFIELD_Modified, NULL);
-					success = TRUE;
-				}
-			}
-		}
-		SetGadgetAttrs(gadget, window, NULL, TEXTFIELD_ReadOnly, FALSE, TAG_DONE);
-	}
-	return(success);
-}
-
-BOOL editor_checksave(STRPTR file, Object *editor)
-{
-	BOOL success = FALSE;
-
-	if(xget(editor, TEXTFIELD_Modified))
-	{
-		if(*file)
-		{
-			if(MUI_Request(app, (Object *)xget(editor, MUIA_WindowObject), 0, 0, GetStr(MSG_BT_SaveDiscardChanges), GetStr(MSG_LA_ScriptModified)))
-				success = editor_save(file, editor);
-		}
-	}
-	return(success);
-}
-
-VOID play_sound(STRPTR file, LONG volume)
-{
-	if(*file && DataTypesBase)
-	{
-		if(SoundObject)
-			DisposeDTObject(SoundObject);
-
-		if(SoundObject = NewDTObject(file,
-			DTA_SourceType	, DTST_FILE,
-			DTA_GroupID		, GID_SOUND,
-			SDTA_Volume		, volume,
-			SDTA_Cycles		, 1,
-		TAG_DONE))
-		{
-			DoMethod(SoundObject, DTM_TRIGGER, NULL, STM_PLAY, NULL);
-		}
-	}
-}
+#include "protos.h"
 
 /****************************************************************************/
 /* About class                                                              */
@@ -786,6 +315,7 @@ ULONG IconBarPrefs_LoadIcons(struct IClass *cl, Object *obj, Msg msg)
 	struct IFFHandle	*Handle;
 	struct ContextNode *cn;
 	BOOL anything = FALSE;
+	LONG number;
 
 	set(obj, MUIA_Window_Sleep, TRUE);
 	set(data->LI_ActiveIcons	, MUIA_List_Quiet, TRUE);
@@ -806,6 +336,25 @@ ULONG IconBarPrefs_LoadIcons(struct IClass *cl, Object *obj, Msg msg)
 						{
 							cn = CurrentChunk(Handle);
 
+							if(cn->cn_ID == ID_ROWS)
+							{
+								ReadChunkBytes(Handle, &number, MIN(sizeof(LONG), cn->cn_Size));
+								setslider(data->SL_Rows, number);
+							}
+
+							if(cn->cn_ID == ID_BTTY)
+							{
+								ReadChunkBytes(Handle, &number, MIN(sizeof(LONG), cn->cn_Size));
+								setcycle(data->CY_ButtonType, number);
+							}
+
+							if(cn->cn_ID == ID_WINT)
+							{
+								ReadChunkBytes(Handle, &number, MIN(sizeof(LONG), cn->cn_Size));
+								setcycle(data->CY_WindowType, number);
+								set(data->CY_WindowType, MUIA_UserData, number);
+							}
+
 							if(cn->cn_ID == ID_AICN || cn->cn_ID == ID_IICN)
 							{
 								if(ReadChunkBytes(Handle, icon, MIN(sizeof(struct Icon), cn->cn_Size)) == MIN(sizeof(struct Icon), cn->cn_Size))
@@ -823,24 +372,18 @@ ULONG IconBarPrefs_LoadIcons(struct IClass *cl, Object *obj, Msg msg)
 			}
 			FreeIFF(Handle);
 		}
-		if(!anything)
-		{
-			strcpy(icon->Name			, "Start / Stop");
-			strcpy(icon->ImageFile	, IMAGE_PATH"Start");
-			strcpy(icon->Program		, "AmiTCP:bin/startnet");
-			icon->Type	= 2;
-
-			init_icon(icon, data->LI_ActiveIcons);
-			DoMethod(data->LI_ActiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
-		}
 		FreeVec(icon);
 	}
 	set(data->LI_ActiveIcons, MUIA_List_Quiet, FALSE);
 	set(data->LI_InactiveIcons, MUIA_List_Quiet, FALSE);
 
+	number = xget(data->SL_Rows, MUIA_Numeric_Value);
 	set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
-	setslider(data->SL_Rows, Rows);
+	setslider(data->SL_Rows, number);
 	set(obj, MUIA_Window_Sleep, FALSE);
+
+	if(!anything)
+		DoMethod(obj, MUIM_IconBarPrefs_Reset);
 
 	return(NULL);
 }
@@ -884,7 +427,7 @@ ULONG IconBarPrefs_Reset(struct IClass *cl, Object *obj, Msg msg)
 
 		strcpy(icon->Name, "WWW");
 		strcpy(icon->ImageFile, IMAGE_PATH"WWW");
-		strcpy(icon->Program, PROGRAM_PATH"IBrowse");
+		strcpy(icon->Program, PROGRAM_PATH"Voyager");
 		init_icon(icon, data->LI_ActiveIcons);
 		DoMethod(data->LI_ActiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
 		strcpy(icon->Name, "Telnet");
@@ -931,18 +474,18 @@ ULONG IconBarPrefs_Reset(struct IClass *cl, Object *obj, Msg msg)
 		strcpy(icon->ImageFile, IMAGE_PATH"Search");
 		strcpy(icon->Program, PROGRAM_PATH"Search");
 		init_icon(icon, data->LI_ActiveIcons);
-		DoMethod(data->LI_ActiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
+		DoMethod(data->LI_InactiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
 		strcpy(icon->Name, "Docs");
 		strcpy(icon->ImageFile, IMAGE_PATH"Docs");
 		strcpy(icon->Program, PROGRAM_PATH"Docs");
 		init_icon(icon, data->LI_ActiveIcons);
-		DoMethod(data->LI_ActiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
+		DoMethod(data->LI_InactiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
 		strcpy(icon->Name, "Misc");
 		strcpy(icon->ImageFile, IMAGE_PATH"Misc");
 		strcpy(icon->Program, PROGRAM_PATH"Misc");
 		init_icon(icon, data->LI_ActiveIcons);
 		DoMethod(data->LI_InactiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
-		strcpy(icon->Name, "Start / Stop");
+		strcpy(icon->Name, "Start/Stop");
 		strcpy(icon->ImageFile, IMAGE_PATH"Start");
 		strcpy(icon->Program	, "AmiTCP:bin/startnet");
 		icon->Type	= 2;
@@ -955,39 +498,11 @@ ULONG IconBarPrefs_Reset(struct IClass *cl, Object *obj, Msg msg)
 	set(data->LI_ActiveIcons	, MUIA_List_Quiet, FALSE);
 	set(data->LI_InactiveIcons	, MUIA_List_Quiet, FALSE);
 
+	pos = xget(data->SL_Rows, MUIA_Numeric_Value);
 	set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
-	setslider(data->SL_Rows, Rows);
+	setslider(data->SL_Rows, pos);
 	set(obj, MUIA_Window_Sleep, FALSE);
 
-	return(NULL);
-}
-
-ULONG IconBarPrefs_NewIcon(struct IClass *cl, Object *obj, Msg msg)
-{
-	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
-	struct Icon *icon;
-
-	if(icon = AllocVec(sizeof(struct Icon), MEMF_ANY | MEMF_CLEAR))
-	{
-		strcpy(icon->Name, GetStr(MSG_TX_New));
-		strcpy(icon->Program, PROGRAM_PATH);
-		strcpy(icon->ImageFile, IMAGE_PATH);
-		init_icon(icon, data->LI_ActiveIcons);
-		DoMethod(data->LI_InactiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
-		set(data->LI_InactiveIcons, MUIA_List_Active, xget(data->LI_InactiveIcons, MUIA_List_InsertPosition));
-		set(data->LI_ActiveIcons, MUIA_List_Active, MUIV_List_Active_Off);
-
-		FreeVec(icon);
-	}
-
-	return(NULL);
-}
-
-ULONG IconBarPrefs_Rows(struct IClass *cl, Object *obj, Msg msg)
-{
-	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
-
-	Rows = xget(data->SL_Rows, MUIA_Numeric_Value);
 	return(NULL);
 }
 
@@ -1015,206 +530,187 @@ BOOL find_list(struct IconBarPrefs_Data *data, Object **list, struct Icon **icon
 	return(FALSE);
 }
 
-ULONG IconBarPrefs_ModifyIcon(struct IClass *cl, Object *obj, struct MUIP_IconBarPrefs_ModifyIcon *msg)
+ULONG IconBarPrefs_EditIcon(struct IClass *cl, Object *obj, Msg msg)
 {
 	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
+
 	struct Icon *icon;
-	Object *list;
+	Object *list, *window;
 
 	if(find_list(data, &list, &icon))
 	{
-		switch(msg->flags)
+		set(app, MUIA_Application_Sleep, TRUE);
+		if(window = (Object *)NewObject(CL_EditIcon->mcc_Class, NULL,
+			MUIA_NetConnect_Icon, icon,
+			MUIA_NetConnect_List, list,
+			MUIA_NetConnect_Originator, obj,
+			TAG_DONE))
 		{
-			case MUIV_IconBarPrefs_ModifyIcon_Remove:
+			DoMethod(app, OM_ADDMEMBER, window);
+
+			set(window, MUIA_Window_Open, TRUE);
+			set(app, MUIA_Application_Sleep, FALSE);
+			set(obj, MUIA_Window_Sleep, TRUE);
+		}
+		else
+			set(app, MUIA_Application_Sleep, FALSE);
+	}
+
+	return(NULL);
+}
+
+ULONG IconBarPrefs_EditIcon_Finish(struct IClass *cl, Object *obj, struct MUIP_IconBarPrefs_EditIcon_Finish *msg)
+{
+	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
+	struct EditIcon_Data *ei_data = INST_DATA(CL_EditIcon->mcc_Class, msg->obj);
+	struct Icon *icon = msg->icon;
+	Object *list = msg->list;
+
+	editor_checksave(icon->Program, ei_data->LI_Editor);
+
+	if(msg->use)
+	{
+		strcpy(icon->Name		, (STRPTR)xget(ei_data->STR_Name		, MUIA_String_Contents));
+		strcpy(icon->Program	, (STRPTR)xget(ei_data->PA_Program	, MUIA_String_Contents));
+		strcpy(icon->Hotkey	, (STRPTR)xget(ei_data->STR_Hotkey	, MUIA_String_Contents));
+		strcpy(icon->Sound	, (STRPTR)xget(ei_data->PA_Sound		, MUIA_String_Contents));
+		icon->Type		= xget(ei_data->CY_Type		, MUIA_Cycle_Active);
+		icon->Volume	= xget(ei_data->SL_Volume	, MUIA_Numeric_Value);
+
+// the following MUST to be at the end because after that the contents of "icon" are no longer valid !!!
+
+		if(strcmp(icon->ImageFile, (STRPTR)xget(ei_data->PA_Image, MUIA_String_Contents)))
+		{
+			struct Icon *new_icon;
+			LONG position = MUIV_List_Insert_Active;
+
+			if(xget(list, MUIA_List_Entries))
+			{
+				DoMethod(list, MUIM_List_GetEntry, xget(list, MUIA_List_Entries) - 1, &new_icon);
+				if(new_icon == icon)
+					position = MUIV_List_Insert_Bottom;
+			}
+
+			if(new_icon = AllocVec(sizeof(struct Icon), MEMF_ANY))
+			{
+				nnset(list, MUIA_List_Quiet, TRUE);
+				memcpy(new_icon, icon, sizeof(struct Icon));
+				strcpy(new_icon->ImageFile, (STRPTR)xget(ei_data->PA_Image, MUIA_String_Contents));
+
 				if(icon->list)
 					DoMethod(data->LI_ActiveIcons, MUIM_List_DeleteImage, icon->list);
 				icon->list = NULL;
 				DoMethod(list, MUIM_List_Remove, MUIV_List_Remove_Active);
-				set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
-				setslider(data->SL_Rows, Rows);
-				break;
 
-			case MUIV_IconBarPrefs_ModifyIcon_Name:
-				strcpy(icon->Name, (STRPTR)xget(data->STR_Name, MUIA_String_Contents));
-				DoMethod(list, MUIM_List_Redraw, MUIV_List_Redraw_Active);
-				break;
+				init_icon(new_icon, data->LI_ActiveIcons);
+				DoMethod(list, MUIM_List_InsertSingle, new_icon, position);
+				set(list, MUIA_List_Active, xget(list, MUIA_List_InsertPosition));
+				nnset(list, MUIA_List_Quiet, FALSE);
 
-			case MUIV_IconBarPrefs_ModifyIcon_Type:
-				icon->Type = xget(data->CY_Type, MUIA_Cycle_Active);
-				if(icon->Type == 2 || icon->Type == 3)
-				{
-					set(data->GR_Script, MUIA_Disabled, FALSE);
-					editor_load(icon->Program, data->TF_Editor);
-				}
-				else
-				{
-					set(data->TF_Editor, TEXTFIELD_Text, "");
-					set(data->TF_Editor, TEXTFIELD_Modified, NULL);
-					set(data->GR_Script, MUIA_Disabled, TRUE);
-				}
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_Program:
-				strcpy(icon->Program, (STRPTR)xget(data->PA_Program, MUIA_String_Contents));
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_Hotkey:
-				strcpy(icon->Hotkey, (STRPTR)xget(data->STR_Hotkey, MUIA_String_Contents));
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_Image:
-				{
-					struct Icon *new_icon;
-					LONG position = MUIV_List_Insert_Active;
-
-					set(obj, MUIA_Window_Sleep, TRUE);
-					if(xget(list, MUIA_List_Entries))
-					{
-						DoMethod(list, MUIM_List_GetEntry, xget(list, MUIA_List_Entries) - 1, &new_icon);
-						if(new_icon == icon)
-							position = MUIV_List_Insert_Bottom;
-					}
-
-					if(new_icon = AllocVec(sizeof(struct Icon), MEMF_ANY))
-					{
-						nnset(list, MUIA_List_Quiet, TRUE);
-						memcpy(new_icon, icon, sizeof(struct Icon));
-						strcpy(new_icon->ImageFile, (STRPTR)xget(data->PA_Image, MUIA_String_Contents));
-
-						if(icon->list)
-							DoMethod(data->LI_ActiveIcons, MUIM_List_DeleteImage, icon->list);
-						icon->list = NULL;
-						DoMethod(list, MUIM_List_Remove, MUIV_List_Remove_Active);
-
-						init_icon(new_icon, data->LI_ActiveIcons);
-						DoMethod(list, MUIM_List_InsertSingle, new_icon, position);
-						set(list, MUIA_List_Active, xget(list, MUIA_List_InsertPosition));
-						nnset(list, MUIA_List_Quiet, FALSE);
-
-						FreeVec(new_icon);
-					}
-					set(obj, MUIA_Window_Sleep, FALSE);
-				}
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_Sound:
-				strcpy(icon->Sound, (STRPTR)xget(data->PA_Sound, MUIA_String_Contents));
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_PlaySound:
-				play_sound(icon->Sound, icon->Volume);
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_Volume:
-				icon->Volume = xget(data->SL_Volume, MUIA_Numeric_Value);
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_LoadScript:
-				editor_load(icon->Program, data->TF_Editor);
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_SaveScript:
-				editor_save(icon->Program, data->TF_Editor);
-				break;
-
-			case MUIV_IconBarPrefs_ModifyIcon_ClearScript:
-				set(data->TF_Editor, TEXTFIELD_Text, "");
-				break;
+				FreeVec(new_icon);
+			}
+			set(obj, MUIA_Window_Sleep, FALSE);
 		}
+		else
+			DoMethod(list, MUIM_List_Redraw, MUIV_List_Redraw_Active);
 	}
+
+	set(msg->obj, MUIA_Window_Open, FALSE);
+	set(obj, MUIA_Window_Sleep, FALSE);
+	DoMethod(app, OM_REMMEMBER, msg->obj);
+	MUI_DisposeObject(msg->obj);
+
 	return(NULL);
 }
 
-ULONG IconBarPrefs_SetStates(struct IClass *cl, Object *obj, struct MUIP_IconBarPrefs_SetStates *msg)
+ULONG IconBarPrefs_NewIcon(struct IClass *cl, Object *obj, Msg msg)
 {
 	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
 	struct Icon *icon;
-	LONG i;
 
-	i = xget(data->CY_Type, MUIA_Cycle_Active);
-	if(i == 2 || i == 3)
-		editor_checksave((STRPTR)xget(data->PA_Program, MUIA_String_Contents), data->TF_Editor);
-	set(data->TF_Editor, TEXTFIELD_Text, "");
-	set(data->TF_Editor, TEXTFIELD_Modified, NULL);
-
-	set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
-	nnset((msg->level ? data->LI_InactiveIcons : data->LI_ActiveIcons), MUIA_List_Active, MUIV_List_Active_Off);
-	DoMethod((msg->level ? data->LI_InactiveIcons : data->LI_ActiveIcons), MUIM_List_Select, MUIV_List_Select_All, MUIV_List_Select_Off, NULL);
-
-	DoMethod((msg->level ? data->LI_ActiveIcons : data->LI_InactiveIcons), MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &icon);
-	if(icon)
+	if(icon = AllocVec(sizeof(struct Icon), MEMF_ANY | MEMF_CLEAR))
 	{
-		set(data->BT_Remove, MUIA_Disabled, FALSE);
-		set(data->GR_Button, MUIA_Disabled, FALSE);
-
-		nnset(data->STR_Name		, MUIA_String_Contents	, icon->Name);
-		nnset(data->CY_Type		, MUIA_Cycle_Active		, icon->Type);
-		nnset(data->PA_Program	, MUIA_String_Contents	, icon->Program);
-		nnset(data->STR_Hotkey	, MUIA_String_Contents	, icon->Hotkey);
-		nnset(data->PA_Image		, MUIA_String_Contents	, icon->ImageFile);
-		nnset(data->PA_Sound		, MUIA_String_Contents	, icon->Sound);
-		nnset(data->SL_Volume	, MUIA_Numeric_Value		, icon->Volume);
-
-		if(icon->Type == 2 || icon->Type == 3)
-		{
-			set(data->GR_Script, MUIA_Disabled, FALSE);
-			editor_load(icon->Program, data->TF_Editor);
-		}
-		else
-			set(data->GR_Script, MUIA_Disabled, TRUE);
+		strcpy(icon->Name, GetStr(MSG_TX_New));
+		strcpy(icon->Program, PROGRAM_PATH);
+		strcpy(icon->ImageFile, IMAGE_PATH);
+		init_icon(icon, data->LI_ActiveIcons);
+		DoMethod(data->LI_InactiveIcons, MUIM_List_InsertSingle, icon, MUIV_List_Insert_Bottom);
+		set(data->LI_InactiveIcons, MUIA_List_Active, xget(data->LI_InactiveIcons, MUIA_List_InsertPosition));
+		DoMethod(obj, MUIM_IconBarPrefs_EditIcon);
+		FreeVec(icon);
 	}
-	else
-	{
-		set(data->BT_Remove, MUIA_Disabled, TRUE);
-		set(data->GR_Script, MUIA_Disabled, TRUE);
-		set(data->GR_Button, MUIA_Disabled, TRUE);
-
-		nnset(data->STR_Name		, MUIA_String_Contents	, "");
-		nnset(data->CY_Type		, MUIA_Cycle_Active		, 0);
-		nnset(data->PA_Program	, MUIA_String_Contents	, "");
-		nnset(data->STR_Hotkey	, MUIA_String_Contents	, "");
-		nnset(data->PA_Image		, MUIA_String_Contents	, "");
-		nnset(data->PA_Sound		, MUIA_String_Contents	, "");
-		nnset(data->SL_Volume	, MUIA_Numeric_Value		, 0);
-	}
-	if(!CxBase)
-		set(data->STR_Hotkey, MUIA_Disabled, TRUE);
 
 	return(NULL);
 }
 
-ULONG IconBarPrefs_Dispose(struct IClass *cl, Object *obj, struct opSet *msg)
+ULONG IconBarPrefs_DeleteIcon(struct IClass *cl, Object *obj, Msg msg)
 {
-	if(undo_handle)
-		CloseClipboard(undo_handle);
-	undo_handle = NULL;
+	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
+	struct Icon *icon;
+	Object *list;
+	LONG pos;
 
-	if(clip_handle)
-		CloseClipboard(clip_handle);
-	clip_handle = NULL;
+	if(find_list(data, &list, &icon))
+	{
+		if(icon && list)
+		{
+			if(icon->list)
+				DoMethod(data->LI_ActiveIcons, MUIM_List_DeleteImage, icon->list);
+			icon->list = NULL;
+			DoMethod(list, MUIM_List_Remove, MUIV_List_Remove_Active);
+			pos = xget(data->SL_Rows, MUIA_Numeric_Value);
+			set(data->SL_Rows, MUIA_Slider_Max, (xget(data->LI_ActiveIcons, MUIA_List_Entries) > 0 ? xget(data->LI_ActiveIcons, MUIA_List_Entries) : 1));
+			setslider(data->SL_Rows, pos);
+		}
+	}
 
-	return(DoSuperMethodA(cl, obj, msg));
+	return(NULL);
+}
+
+ULONG IconBarPrefs_List_Active(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
+	struct Icon *icon;
+	Object *list;
+	LONG max;
+
+	max = xget(data->LI_ActiveIcons, MUIA_List_Entries);
+	if(max != xget(data->SL_Rows, MUIA_Slider_Max))
+	{
+		LONG pos;
+
+		pos = xget(data->SL_Rows, MUIA_Numeric_Value);
+		set(data->SL_Rows, MUIA_Slider_Max, (max > 0 ? max : 1));
+		setslider(data->SL_Rows, pos);
+	}
+
+	if(find_list(data, &list, &icon))
+	{
+		set(data->BT_Delete, MUIA_Disabled, FALSE);
+		set(data->BT_Edit, MUIA_Disabled, FALSE);
+	}
+	else
+	{
+		set(data->BT_Delete, MUIA_Disabled, TRUE);
+		set(data->BT_Edit, MUIA_Disabled, TRUE);
+	}
+
+	return(NULL);
 }
 
 ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
 	struct IconBarPrefs_Data tmp;
 
-	if(!clip_handle)
-		clip_handle = OpenClipboard(0);
-	if(!undo_handle)
-		undo_handle = OpenClipboard(42);
-
 	if(obj = (Object *)DoSuperNew(cl, obj,
 		MUIA_Window_Title		, GetStr(MSG_WI_IconBarPrefs),
 		MUIA_Window_ID			, MAKE_ID('I','P','R','F'),
-		MUIA_Window_AppWindow, TRUE,
+//		MUIA_Window_AppWindow, TRUE,
 		MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, IconBarPrefsMenu, 0),
 		WindowContents		, VGroup,
 			MUIA_HelpNode, "WI_IconBarPrefs",
 			MUIA_Frame, MUIV_Frame_Group,
 			Child, HGroup,
-				MUIA_HelpNode, "GR_IconBarPrefs_top",
 				Child, VGroup,
 					MUIA_Group_Spacing, 0,
 					Child, tmp.LV_InactiveIcons = ListviewObject,
@@ -1222,97 +718,40 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 						MUIA_FrameTitle				, GetStr(MSG_LV_ButtonBankTitle),
 						MUIA_Listview_MultiSelect	, MUIV_Listview_MultiSelect_Default,
 						MUIA_Listview_DragType		, 1,
+						MUIA_Listview_DoubleClick	, TRUE,
 						MUIA_Listview_List			, tmp.LI_InactiveIcons = NewObject(CL_IconList->mcc_Class, NULL, TAG_DONE),
 					End,
 					Child, HGroup,
 						MUIA_Group_Spacing, 0,
 						Child, tmp.BT_New		= MakeButton(MSG_BT_New),
-						Child, tmp.BT_Remove = MakeButton(MSG_BT_Remove),
+						Child, tmp.BT_Edit	= MakeButton("  _Edit"),
+						Child, tmp.BT_Delete = MakeButton("  _Delete"),
 					End,
 				End,
 				Child, VGroup,
-					MUIA_Group_Spacing, 1,
+					MUIA_Group_Spacing, 0,
 					Child, tmp.LV_ActiveIcons = ListviewObject,
 						MUIA_CycleChain				, 1,
 						MUIA_FrameTitle				, GetStr(MSG_LV_IconBarTitle),
 						MUIA_Listview_MultiSelect	, MUIV_Listview_MultiSelect_Default,
 						MUIA_Listview_DragType		, 1,
+						MUIA_Listview_DoubleClick	, TRUE,
 						MUIA_Listview_List			, tmp.LI_ActiveIcons = NewObject(CL_IconList->mcc_Class, NULL, TAG_DONE),
 					End,
 					Child, HGroup,
 						Child, MakeKeyLabel2(MSG_LA_Rows, MSG_CC_Rows),
-						Child, tmp.SL_Rows = MakeKeySlider(1, 10, Rows, MSG_CC_Rows),
+						Child, tmp.SL_Rows = MakeKeySlider(1, 10, 1, MSG_CC_Rows),
 					End,
 				End,
 			End,
-			Child, HGroup,
-				MUIA_HelpNode, "GR_IconBarPrefs_bottom",
-				Child, tmp.GR_Button = VGroup,
-					MUIA_HelpNode	, "GR_IconConrtol",
-					MUIA_Frame		, MUIV_Frame_Group,
-					MUIA_FrameTitle, GetStr(MSG_GR_ButtonConrtolTitle),
-					Child, ColGroup(2),
-						Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
-						Child, tmp.STR_Name = MakeKeyString(MSG_STR_Empty, 80, MSG_CC_Name),
-						Child, MakeKeyLabel2(MSG_LA_ProgramType, MSG_CC_ProgramType),
-						Child, tmp.CY_Type = MakeKeyCycle(ARR_ProgramTypes, MSG_CC_ProgramType),
-						Child, MakeKeyLabel2(MSG_LA_Program, MSG_CC_Program),
-						Child, tmp.PA_Program = MakePopAsl(MakeKeyString(MSG_STR_Empty, MAXPATHLEN, MSG_CC_Program), MSG_LA_Program, FALSE),
-						Child, MakeKeyLabel2(MSG_LA_Hotkey, MSG_CC_Hotkey),
-						Child, tmp.STR_Hotkey = MakeKeyString(MSG_STR_Empty, 80, MSG_CC_Hotkey),
-						Child, MakeKeyLabel2(MSG_LA_Image, MSG_CC_Image),
-						Child, tmp.PA_Image = MakePopAsl(MakeKeyString(MSG_STR_Empty, MAXPATHLEN, MSG_CC_Image), MSG_LA_Image, FALSE),
-						Child, MakeKeyLabel2(MSG_LA_Sound, MSG_CC_Sound),
-						Child, HGroup,
-							MUIA_Group_Spacing, 0,
-							Child, tmp.PA_Sound = MakePopAsl(MakeKeyString(MSG_STR_Empty, MAXPATHLEN, MSG_CC_Sound), MSG_LA_Sound, FALSE),
-							Child, tmp.BT_PlaySound = ImageObject,
-								ImageButtonFrame,
-								MUIA_CycleChain		, 1,
-								MUIA_InputMode			, MUIV_InputMode_RelVerify,
-								MUIA_Image_Spec		, MUII_TapePlay,
-								MUIA_Image_FreeVert	, TRUE,
-								MUIA_Background		, MUII_ButtonBack,
-							End,
-						End,
-						Child, MakeKeyLabel2(MSG_LA_Volume, MSG_CC_Volume),
-						Child, tmp.SL_Volume = MakeKeySlider(0, 64, 64, MSG_CC_Volume),
-					End,
-				End,
-				Child, BalanceObject, End,
-				Child, tmp.GR_Script = VGroup,
-					MUIA_HelpNode	, "GR_ScriptEdit",
-					MUIA_Frame		, MUIV_Frame_Group,
-					MUIA_FrameTitle, GetStr(MSG_GR_ScriptEditTitle),
-					Child, tmp.GR_Editor = VGroup,
-						MUIA_Group_Spacing, 0,
-						Child, HGroup,
-							MUIA_Group_Spacing, 0,
-							Child, tmp.TF_Editor = BoopsiObject,
-								InputListFrame,
-								MUIA_CycleChain			, 1,
-								MUIA_Boopsi_Class			, TextFieldClass,
-								MUIA_Boopsi_Smart			, TRUE,
-								MUIA_Boopsi_MinWidth		, 40, /* boopsi objects don't know */
-								MUIA_Boopsi_MinHeight	, 40, /* their sizes, so we help   */
-								ICA_TARGET					, ICTARGET_IDCMP, /* needed for notification */
-								TEXTFIELD_Text				, (ULONG)"",
-								TEXTFIELD_ClipStream		, clip_handle,
-								TEXTFIELD_UndoStream		, undo_handle,
-							End,
-							Child, tmp.SB_Editor = ScrollbarObject, End,
-						End,
-						Child, HGroup,
-							MUIA_Group_Spacing, 0,
-							Child, tmp.BT_LoadScript = MakeButton(MSG_BT_LoadScript),
-							Child, tmp.BT_SaveScript = MakeButton(MSG_BT_SaveScript),
-							Child, tmp.BT_ClearScript = MakeButton(MSG_BT_ClearScript),
-						End,
-					End,
-				End,
+			Child, ColGroup(2),
+				Child, Label("Show buttons as :"),
+				Child, tmp.CY_ButtonType = Cycle(ARR_ButtonTypes),
+				Child, Label("Window Type :"),
+				Child, tmp.CY_WindowType = Cycle(ARR_WindowTypes),
 			End,
+			Child, MUI_MakeObject(MUIO_HBar, 2),
 			Child, HGroup,
-				MUIA_HelpNode			, "GR_IconBarPrefsControl",
 				MUIA_Group_SameSize	, TRUE,
 				Child, tmp.BT_Save	= MakeButton(MSG_BT_Save),
 				Child, HSpace(0),
@@ -1324,14 +763,11 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		TAG_MORE, msg->ops_AttrList))
 	{
 		struct IconBarPrefs_Data *data = INST_DATA(cl, obj);
-		static const struct Hook AppMsgHook = { {NULL, NULL}, (VOID *)AppMsgFunc, NULL, NULL };
-		static const struct Hook TF_AppMsgHook = { {NULL, NULL}, (VOID *)TF_AppMsgFunc, NULL, NULL };
 
 		*data = tmp;
 
-		set(tmp.BT_Remove, MUIA_Disabled, TRUE);
-		set(tmp.GR_Script, MUIA_Disabled, TRUE);
-		set(tmp.GR_Button, MUIA_Disabled, TRUE);
+		set(tmp.BT_Delete, MUIA_Disabled, TRUE);
+		set(tmp.BT_Edit, MUIA_Disabled, TRUE);
 
 		set(tmp.LI_InactiveIcons, MUIA_UserData, tmp.LI_ActiveIcons);	/* show the lists from whom they have to accept drag requests */
 		set(tmp.LI_ActiveIcons, MUIA_UserData, tmp.LI_InactiveIcons);
@@ -1339,51 +775,21 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		set(tmp.LV_InactiveIcons, MUIA_ShortHelp, GetStr(MSG_HELP_InactiveIcons));
 		set(tmp.LV_ActiveIcons	, MUIA_ShortHelp, GetStr(MSG_HELP_ActiveIcons));
 		set(tmp.BT_New				, MUIA_ShortHelp, GetStr(MSG_HELP_New));
-		set(tmp.BT_Remove			, MUIA_ShortHelp, GetStr(MSG_HELP_Remove));
+		set(tmp.BT_Delete			, MUIA_ShortHelp, GetStr(MSG_HELP_Remove));
 		set(tmp.SL_Rows			, MUIA_ShortHelp, GetStr(MSG_HELP_Rows));
-		set(tmp.STR_Name			, MUIA_ShortHelp, GetStr(MSG_HELP_Name));
-		set(tmp.CY_Type			, MUIA_ShortHelp, GetStr(MSG_HELP_Type));
-		set(tmp.PA_Program		, MUIA_ShortHelp, GetStr(MSG_HELP_Program));
-		set(tmp.STR_Hotkey		, MUIA_ShortHelp, GetStr(MSG_HELP_Hotkey));
-		set(tmp.PA_Image			, MUIA_ShortHelp, GetStr(MSG_HELP_Image));
-		set(tmp.PA_Sound			, MUIA_ShortHelp, GetStr(MSG_HELP_Sound));
-		set(tmp.BT_PlaySound		, MUIA_ShortHelp, GetStr(MSG_HELP_PlaySound));
-		set(tmp.SL_Volume			, MUIA_ShortHelp, GetStr(MSG_HELP_Volume));
-		set(tmp.TF_Editor			, MUIA_ShortHelp, GetStr(MSG_HELP_Editor));
-		set(tmp.BT_LoadScript	, MUIA_ShortHelp, GetStr(MSG_HELP_LoadScript));
-		set(tmp.BT_SaveScript	, MUIA_ShortHelp, GetStr(MSG_HELP_SaveScript));
-		set(tmp.BT_ClearScript	, MUIA_ShortHelp, GetStr(MSG_HELP_ClearScript));
 		set(tmp.BT_Save			, MUIA_ShortHelp, GetStr(MSG_HELP_Save));
 		set(tmp.BT_Use				, MUIA_ShortHelp, GetStr(MSG_HELP_Use));
 		set(tmp.BT_Cancel			, MUIA_ShortHelp, GetStr(MSG_HELP_Cancel));
 
-		DoMethod(tmp.TF_Editor			, MUIM_Notify, TEXTFIELD_Lines	, MUIV_EveryTime		, tmp.SB_Editor, 3, MUIM_Set			, MUIA_Prop_Entries	, MUIV_TriggerValue);
-		DoMethod(tmp.TF_Editor			, MUIM_Notify, TEXTFIELD_Visible	, MUIV_EveryTime		, tmp.SB_Editor, 3, MUIM_Set			, MUIA_Prop_Visible	, MUIV_TriggerValue);
-		DoMethod(tmp.TF_Editor			, MUIM_Notify, TEXTFIELD_Top		, MUIV_EveryTime		, tmp.SB_Editor, 3, MUIM_NoNotifySet, MUIA_Prop_First		, MUIV_TriggerValue);
-		DoMethod(tmp.SB_Editor			, MUIM_Notify, MUIA_Prop_First	, MUIV_EveryTime		, tmp.TF_Editor, 3, MUIM_NoNotifySet, TEXTFIELD_Top		, MUIV_TriggerValue);
-
-		DoMethod(tmp.STR_Name			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.STR_Name		, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
-		DoMethod(tmp.PA_Program			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.PA_Program	, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
-		DoMethod(tmp.PA_Image			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.PA_Image		, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
-		DoMethod(tmp.PA_Sound			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.PA_Sound		, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
-		DoMethod(tmp.TF_Editor			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.TF_Editor	, 3, MUIM_CallHook	, &TF_AppMsgHook			, MUIV_TriggerValue);
-
-		DoMethod(tmp.LV_ActiveIcons	, MUIM_Notify, MUIA_List_Active		, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_SetStates, 1);
-		DoMethod(tmp.LV_InactiveIcons	, MUIM_Notify, MUIA_List_Active		, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_SetStates, 0);
+		DoMethod(tmp.LV_ActiveIcons	, MUIM_Notify, MUIA_List_Active		, MUIV_EveryTime	, tmp.LV_InactiveIcons	, 3, MUIM_NoNotifySet, MUIA_List_Active, MUIV_List_Active_Off);
+		DoMethod(tmp.LV_InactiveIcons	, MUIM_Notify, MUIA_List_Active		, MUIV_EveryTime	, tmp.LV_ActiveIcons		, 3, MUIM_NoNotifySet, MUIA_List_Active, MUIV_List_Active_Off);
+		DoMethod(tmp.LV_ActiveIcons	, MUIM_Notify, MUIA_List_Active		, MUIV_EveryTime	, obj, 1, MUIM_IconBarPrefs_List_Active);
+		DoMethod(tmp.LV_InactiveIcons	, MUIM_Notify, MUIA_List_Active		, MUIV_EveryTime	, obj, 1, MUIM_IconBarPrefs_List_Active);
+		DoMethod(tmp.LV_ActiveIcons	, MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime, obj, 1, MUIM_IconBarPrefs_EditIcon);
+		DoMethod(tmp.LV_InactiveIcons	, MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime, obj, 1, MUIM_IconBarPrefs_EditIcon);
 		DoMethod(tmp.BT_New				, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 1, MUIM_IconBarPrefs_NewIcon);
-		DoMethod(tmp.BT_Remove			, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Remove);
-		DoMethod(tmp.SL_Rows				, MUIM_Notify, MUIA_Numeric_Value	, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_Rows);
-		DoMethod(tmp.STR_Name			, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Name);
-		DoMethod(tmp.CY_Type				, MUIM_Notify, MUIA_Cycle_Active		, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Type);
-		DoMethod(tmp.PA_Program			, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Program);
-		DoMethod(tmp.STR_Hotkey			, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Hotkey);
-		DoMethod(tmp.PA_Image			, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Image);
-		DoMethod(tmp.PA_Sound			, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Sound);
-		DoMethod(tmp.BT_PlaySound		, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_PlaySound);
-		DoMethod(tmp.SL_Volume			, MUIM_Notify, MUIA_Numeric_Value	, MUIV_EveryTime	, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_Volume);
-		DoMethod(tmp.BT_LoadScript		, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_LoadScript);
-		DoMethod(tmp.BT_SaveScript		, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_SaveScript);
-		DoMethod(tmp.BT_ClearScript	, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 2, MUIM_IconBarPrefs_ModifyIcon, MUIV_IconBarPrefs_ModifyIcon_ClearScript);
+		DoMethod(tmp.BT_Delete			, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 1, MUIM_IconBarPrefs_DeleteIcon);
+		DoMethod(tmp.BT_Edit				, MUIM_Notify, MUIA_Pressed			, FALSE				, obj, 1, MUIM_IconBarPrefs_EditIcon);
 
 		DoMethod(obj						, MUIM_Notify, MUIA_Window_CloseRequest, TRUE			, MUIV_Notify_Application, 6, MUIM_Application_PushMethod, win, 3, MUIM_IconBar_IconBarPrefs_Finish, obj, 0);
 		DoMethod(tmp.BT_Cancel			, MUIM_Notify, MUIA_Pressed			, FALSE				, MUIV_Notify_Application, 6, MUIM_Application_PushMethod, win, 3, MUIM_IconBar_IconBarPrefs_Finish, obj, 0);
@@ -1392,15 +798,8 @@ ULONG IconBarPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_RESET)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
 			obj, 2, MUIM_IconBarPrefs_Reset, 0);
-	}
-	else
-	{
-		if(undo_handle)
-			CloseClipboard(undo_handle);
-		undo_handle = NULL;
-		if(clip_handle)
-			CloseClipboard(clip_handle);
-		clip_handle = NULL;
+		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_MUI2)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+			MUIV_Notify_Application, 2, MUIM_Application_OpenConfigWindow, 0);
 	}
 
 	return((ULONG)obj);
@@ -1410,14 +809,289 @@ SAVEDS ASM ULONG IconBarPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Obje
 {
 	switch (msg->MethodID)
 	{
-		case OM_NEW									: return(IconBarPrefs_New			(cl, obj, (APTR)msg));
-		case OM_DISPOSE							: return(IconBarPrefs_Dispose		(cl, obj, (APTR)msg));
-		case MUIM_IconBarPrefs_LoadIcons		: return(IconBarPrefs_LoadIcons	(cl, obj, (APTR)msg));
-		case MUIM_IconBarPrefs_Reset			: return(IconBarPrefs_Reset		(cl, obj, (APTR)msg));
-		case MUIM_IconBarPrefs_NewIcon		: return(IconBarPrefs_NewIcon		(cl, obj, (APTR)msg));
-		case MUIM_IconBarPrefs_Rows			: return(IconBarPrefs_Rows			(cl, obj, (APTR)msg));
-		case MUIM_IconBarPrefs_ModifyIcon	: return(IconBarPrefs_ModifyIcon	(cl, obj, (APTR)msg));
-		case MUIM_IconBarPrefs_SetStates		: return(IconBarPrefs_SetStates	(cl, obj, (APTR)msg));
+		case OM_NEW										: return(IconBarPrefs_New					(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_LoadIcons			: return(IconBarPrefs_LoadIcons			(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_Reset				: return(IconBarPrefs_Reset				(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_NewIcon			: return(IconBarPrefs_NewIcon				(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_DeleteIcon		: return(IconBarPrefs_DeleteIcon			(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_EditIcon			: return(IconBarPrefs_EditIcon			(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_EditIcon_Finish	: return(IconBarPrefs_EditIcon_Finish	(cl, obj, (APTR)msg));
+		case MUIM_IconBarPrefs_List_Active		: return(IconBarPrefs_List_Active		(cl, obj, (APTR)msg));
+	}
+	return(DoSuperMethodA(cl, obj, msg));
+}
+
+
+
+/****************************************************************************/
+/* Editor Class  (List)                                                     */
+/****************************************************************************/
+
+ULONG Editor_DragQuery(struct IClass *cl, Object *obj, struct MUIP_DragDrop *msg)
+{
+	if(msg->obj == obj)
+		return(DoSuperMethodA(cl, obj, msg));
+	else
+		return(MUIV_DragQuery_Refuse);
+}
+
+ULONG Editor_DragDrop(struct IClass *cl, Object *obj, struct MUIP_DragDrop *msg)
+{
+	if(msg->obj == obj)
+	{
+		set(obj, MUIA_UserData, 1);
+		return(DoSuperMethodA(cl, obj, msg));
+	}
+
+	return(NULL);
+}
+
+
+ULONG Editor_New(struct IClass *cl,Object *obj,struct opSet *msg)
+{
+	obj = (Object *)DoSuperNew(cl, obj,
+		MUIA_Frame					, MUIV_Frame_InputList,
+		MUIA_List_AutoVisible	, TRUE,
+		MUIA_List_DragSortable	, TRUE,
+		MUIA_List_ConstructHook	, MUIV_List_ConstructHook_String,
+		MUIA_List_DestructHook	, MUIV_List_DestructHook_String,
+		TAG_MORE, msg->ops_AttrList);
+
+	return((ULONG)obj);
+}
+
+SAVEDS ASM ULONG Editor_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg)
+{
+	switch(msg->MethodID)
+	{
+		case OM_NEW				: return(Editor_New  	  	(cl, obj, (APTR)msg));
+		case MUIM_DragQuery	: return(Editor_DragQuery	(cl, obj, (APTR)msg));
+		case MUIM_DragDrop	: return(Editor_DragDrop	(cl, obj, (APTR)msg));
+	}
+	return(DoSuperMethodA(cl, obj, msg));
+}
+
+
+
+/****************************************************************************/
+/* Edit Icon Class  (WINDOW                                                 */
+/****************************************************************************/
+
+ULONG EditIcon_Editor_Active(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct EditIcon_Data *data = INST_DATA(cl, obj);
+	STRPTR ptr;
+
+	DoMethod(data->LI_Editor, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &ptr);
+	if(ptr)
+	{
+		set(data->STR_Line, MUIA_Disabled, FALSE);
+		set(data->BT_Delete, MUIA_Disabled, FALSE);
+		setstring(data->STR_Line, ptr);
+	}
+	else
+	{
+		set(data->STR_Line, MUIA_Disabled, TRUE);
+		set(data->BT_Delete, MUIA_Disabled, TRUE);
+		setstring(data->STR_Line, "");
+	}
+
+	return(NULL);
+}
+
+ULONG EditIcon_ChangeLine(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct EditIcon_Data *data = INST_DATA(cl, obj);
+	LONG i;
+
+	i = xget(data->LI_Editor, MUIA_List_Active);
+	if(i != MUIV_List_Active_Off)
+	{
+		set(data->LI_Editor, MUIA_List_Quiet, TRUE);
+		DoMethod(data->LI_Editor, MUIM_List_InsertSingle, xget(data->STR_Line, MUIA_String_Contents), i + 1);
+		DoMethod(data->LI_Editor, MUIM_List_Remove, i);
+		set(data->LI_Editor, MUIA_List_Quiet, FALSE);
+		set((Object *)xget(data->STR_Line, MUIA_WindowObject), MUIA_Window_ActiveObject, data->STR_Line);
+		set(data->LI_Editor, MUIA_UserData, 1);
+	}
+
+	return(NULL);
+}
+
+
+ULONG EditIcon_Type_Active(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct EditIcon_Data *data = INST_DATA(cl, obj);
+	int type;
+
+	type = xget(data->CY_Type, MUIA_Cycle_Active);
+	if(type == 2 || type == 3)
+	{
+		set(data->GR_Script, MUIA_Disabled, FALSE);
+		editor_load((STRPTR)xget(data->PA_Program, MUIA_String_Contents), data->LI_Editor);
+	}
+	else
+	{
+		DoMethod(data->LI_Editor, MUIM_List_Clear);
+		setstring(data->STR_Line, "");
+		set(data->LI_Editor, MUIA_UserData, NULL);
+		set(data->GR_Script, MUIA_Disabled, TRUE);
+	}
+	return(NULL);
+}
+
+ULONG EditIcon_PlaySound(struct IClass *cl, Object *obj, Msg msg)
+{
+	struct EditIcon_Data *data = INST_DATA(cl, obj);
+
+	play_sound((STRPTR)xget(data->PA_Sound, MUIA_String_Contents), xget(data->SL_Volume, MUIA_Numeric_Value));
+	return(NULL);
+}
+
+ULONG EditIcon_New(struct IClass *cl, Object *obj, struct opSet *msg)
+{
+	struct EditIcon_Data tmp;
+	Object *list, *originator;
+	struct Icon *icon;
+
+	STR_GR_Register[0] = GetStr(MSG_GR_ButtonConrtolTitle);
+	STR_GR_Register[1] = GetStr(MSG_GR_ScriptEditTitle);
+	STR_GR_Register[2] = NULL;
+
+	icon = (struct Icon *)GetTagData(MUIA_NetConnect_Icon, (ULONG)"", msg->ops_AttrList);
+	list = (Object *)GetTagData(MUIA_NetConnect_List, (ULONG)"", msg->ops_AttrList);
+	originator = (Object *)GetTagData(MUIA_NetConnect_Originator, (ULONG)"", msg->ops_AttrList);
+
+	if(!icon || !list)
+		return(NULL);
+
+	if(obj = (Object *)DoSuperNew(cl, obj,
+		MUIA_Window_Title		, "Edit Icon",
+		MUIA_Window_ID			, MAKE_ID('I','E','D','I'),
+		MUIA_Window_AppWindow, TRUE,
+		WindowContents		, VGroup,
+			Child, tmp.GR_Register = RegisterObject,
+				MUIA_Background, MUII_RegisterBack,
+				MUIA_Register_Titles, STR_GR_Register,
+				MUIA_CycleChain, 1,
+				Child, tmp.GR_Button = ColGroup(2),
+					MUIA_HelpNode	, "GR_IconConrtol",
+					Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
+					Child, tmp.STR_Name = MakeKeyString(icon->Name, 80, MSG_CC_Name),
+					Child, MakeKeyLabel2(MSG_LA_Hotkey, MSG_CC_Hotkey),
+					Child, tmp.STR_Hotkey = MakeKeyString(icon->Hotkey, 80, MSG_CC_Hotkey),
+					Child, MakeKeyLabel2(MSG_LA_ProgramType, MSG_CC_ProgramType),
+					Child, tmp.CY_Type = MakeKeyCycle(ARR_ProgramTypes, MSG_CC_ProgramType),
+					Child, MakeKeyLabel2(MSG_LA_Program, MSG_CC_Program),
+					Child, tmp.PA_Program = MakePopAsl(MakeKeyString(icon->Program, MAXPATHLEN, MSG_CC_Program), MSG_LA_Program, FALSE),
+					Child, MakeKeyLabel2(MSG_LA_Image, MSG_CC_Image),
+					Child, tmp.PA_Image = MakePopAsl(MakeKeyString(icon->ImageFile, MAXPATHLEN, MSG_CC_Image), MSG_LA_Image, FALSE),
+					Child, MakeKeyLabel2(MSG_LA_Sound, MSG_CC_Sound),
+					Child, HGroup,
+						MUIA_Group_Spacing, 0,
+						Child, tmp.PA_Sound = MakePopAsl(MakeKeyString(icon->Sound, MAXPATHLEN, MSG_CC_Sound), MSG_LA_Sound, FALSE),
+						Child, tmp.BT_PlaySound = ImageObject,
+							ImageButtonFrame,
+							MUIA_CycleChain		, 1,
+							MUIA_InputMode			, MUIV_InputMode_RelVerify,
+							MUIA_Image_Spec		, MUII_TapePlay,
+							MUIA_Image_FreeVert	, TRUE,
+							MUIA_Background		, MUII_ButtonBack,
+						End,
+					End,
+					Child, MakeKeyLabel2(MSG_LA_Volume, MSG_CC_Volume),
+					Child, tmp.SL_Volume = MakeKeySlider(0, 64, icon->Volume, MSG_CC_Volume),
+				End,
+				Child, tmp.GR_Script = VGroup,
+					MUIA_Disabled		, TRUE,
+					MUIA_HelpNode		, "GR_ScriptEdit",
+					MUIA_Group_Spacing, 0,
+					Child, tmp.LV_Editor = ListviewObject,
+						MUIA_CycleChain, 1,
+						MUIA_Listview_DragType		, 1,
+						MUIA_Listview_List			, tmp.LI_Editor = NewObject(CL_Editor->mcc_Class, NULL, TAG_DONE),
+					End,
+					Child, tmp.STR_Line = MakeKeyString("", MAXPATHLEN, "   "),
+					Child, HGroup,
+						MUIA_Group_Spacing, 0,
+						Child, tmp.BT_New		= MakeButton("  _New"),
+						Child, tmp.BT_Delete	= MakeButton("  _Delete"),
+						Child, tmp.BT_Clear	= MakeButton("  C_lear"),
+					End,
+				End,
+			End,
+			Child, HGroup,
+				MUIA_Group_SameSize	, TRUE,
+				Child, tmp.BT_Okay	= MakeButton("  _Okay"),
+				Child, HSpace(0),
+				Child, tmp.BT_Cancel	= MakeButton(MSG_BT_Cancel),
+			End,
+		End,
+		TAG_MORE, msg->ops_AttrList))
+	{
+		struct EditIcon_Data *data = INST_DATA(cl, obj);
+		static const struct Hook AppMsgHook = { {NULL, NULL}, (VOID *)AppMsgFunc, NULL, NULL };
+		static const struct Hook Editor_AppMsgHook = { {NULL, NULL}, (VOID *)Editor_AppMsgFunc, NULL, NULL };
+
+		*data = tmp;
+
+
+		set(tmp.STR_Name			, MUIA_ShortHelp, GetStr(MSG_HELP_Name));
+		set(tmp.CY_Type			, MUIA_ShortHelp, GetStr(MSG_HELP_Type));
+		set(tmp.PA_Program		, MUIA_ShortHelp, GetStr(MSG_HELP_Program));
+		set(tmp.STR_Hotkey		, MUIA_ShortHelp, GetStr(MSG_HELP_Hotkey));
+		set(tmp.PA_Image			, MUIA_ShortHelp, GetStr(MSG_HELP_Image));
+		set(tmp.PA_Sound			, MUIA_ShortHelp, GetStr(MSG_HELP_Sound));
+		set(tmp.BT_PlaySound		, MUIA_ShortHelp, GetStr(MSG_HELP_PlaySound));
+		set(tmp.SL_Volume			, MUIA_ShortHelp, GetStr(MSG_HELP_Volume));
+		set(tmp.LV_Editor			, MUIA_ShortHelp, GetStr(MSG_HELP_Editor));
+		set(tmp.BT_Clear			, MUIA_ShortHelp, GetStr(MSG_HELP_ClearScript));
+
+		set(tmp.STR_Line, MUIA_String_AttachedList, tmp.LV_Editor);
+		set(tmp.STR_Line, MUIA_CycleChain, 1);
+		set(tmp.STR_Line, MUIA_Disabled, TRUE);
+		set(tmp.BT_Delete, MUIA_Disabled, TRUE);
+		set(tmp.STR_Hotkey, MUIA_Disabled, (CxBase ? FALSE : TRUE));
+
+		DoMethod(tmp.LI_Editor, MUIM_Notify, MUIA_List_Active, MUIV_EveryTime, obj, 1, MUIM_EditIcon_Editor_Active);
+		DoMethod(tmp.BT_New, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LI_Editor, 3, MUIM_List_InsertSingle, "", MUIV_List_Insert_Bottom);
+		DoMethod(tmp.BT_New, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LI_Editor, 3, MUIM_Set, MUIA_List_Active, MUIV_List_Active_Bottom);
+		DoMethod(tmp.BT_New, MUIM_Notify, MUIA_Pressed, FALSE, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, tmp.STR_Line);
+		DoMethod(tmp.BT_New, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LI_Editor, 3, MUIM_Set, MUIA_UserData, 1);
+		DoMethod(tmp.BT_Delete, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LI_Editor, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
+		DoMethod(tmp.BT_Delete, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LI_Editor, 3, MUIM_Set, MUIA_UserData, 1);
+		DoMethod(tmp.BT_Clear, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LI_Editor, 1, MUIM_List_Clear);
+		DoMethod(tmp.BT_Clear, MUIM_Notify, MUIA_Pressed, FALSE, tmp.LI_Editor, 3, MUIM_Set, MUIA_UserData, 1);
+		DoMethod(tmp.STR_Line, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, obj, 1, MUIM_EditIcon_ChangeLine);
+
+		DoMethod(tmp.STR_Name			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.STR_Name		, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
+		DoMethod(tmp.PA_Program			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.PA_Program	, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
+		DoMethod(tmp.PA_Image			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.PA_Image		, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
+		DoMethod(tmp.PA_Sound			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.PA_Sound		, 3, MUIM_CallHook	, &AppMsgHook			, MUIV_TriggerValue);
+		DoMethod(tmp.LV_Editor			, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime		, tmp.LI_Editor	, 3, MUIM_CallHook	, &Editor_AppMsgHook	, MUIV_TriggerValue);
+
+		DoMethod(tmp.CY_Type				, MUIM_Notify, MUIA_Cycle_Active	, MUIV_EveryTime		, obj, 2, MUIM_EditIcon_Type_Active, icon);
+		DoMethod(tmp.BT_PlaySound		, MUIM_Notify, MUIA_Pressed		, FALSE					, obj, 2, MUIM_EditIcon_PlaySound);
+
+		DoMethod(obj						, MUIM_Notify, MUIA_Window_CloseRequest, TRUE			, MUIV_Notify_Application, 8, MUIM_Application_PushMethod, originator, 5, MUIM_IconBarPrefs_EditIcon_Finish, obj, icon, list, 0);
+		DoMethod(tmp.BT_Cancel			, MUIM_Notify, MUIA_Pressed			, FALSE				, MUIV_Notify_Application, 8, MUIM_Application_PushMethod, originator, 5, MUIM_IconBarPrefs_EditIcon_Finish, obj, icon, list, 0);
+		DoMethod(tmp.BT_Okay				, MUIM_Notify, MUIA_Pressed			, FALSE				, MUIV_Notify_Application, 8, MUIM_Application_PushMethod, originator, 5, MUIM_IconBarPrefs_EditIcon_Finish, obj, icon, list, 1);
+
+		set(tmp.CY_Type, MUIA_Cycle_Active, icon->Type);
+	}
+
+	return((ULONG)obj);
+}
+
+SAVEDS ASM ULONG EditIcon_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+{
+	switch (msg->MethodID)
+	{
+		case OM_NEW								: return(EditIcon_New				(cl, obj, (APTR)msg));
+		case MUIM_EditIcon_Editor_Active	: return(EditIcon_Editor_Active	(cl, obj, (APTR)msg));
+		case MUIM_EditIcon_ChangeLine		: return(EditIcon_ChangeLine		(cl, obj, (APTR)msg));
+		case MUIM_EditIcon_Type_Active	: return(EditIcon_Type_Active		(cl, obj, (APTR)msg));
+		case MUIM_EditIcon_PlaySound		: return(EditIcon_PlaySound		(cl, obj, (APTR)msg));
 	}
 	return(DoSuperMethodA(cl, obj, msg));
 }
@@ -1574,65 +1248,33 @@ ULONG Button_Dispose(struct IClass *cl, Object *obj, Msg msg)
 
 ULONG Button_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
+	static const struct Hook Button_AppMsgHook = { {NULL, NULL}, (VOID *)Button_AppMsgFunc, NULL, NULL };
 	struct Button_Data tmp;
 	struct Icon *icon;
-	Object *bodychunk = NULL;
 
 	if(icon = (struct Icon *)GetTagData(MUIA_NetConnect_Icon, (ULONG)"", msg->ops_AttrList))
 	{
-		if(load_icon(icon))
+		if(obj = (Object *)DoSuperNew(cl, obj,
+			ButtonFrame,
+			MUIA_Group_Spacing, 0,
+			MUIA_InnerBottom	, 0,
+			MUIA_InnerLeft		, 0,
+			MUIA_InnerTop		, 0,
+			MUIA_InnerRight	, 0,
+			MUIA_CycleChain	, 1,
+			MUIA_Background	, MUII_ButtonBack,
+			MUIA_InputMode		, MUIV_InputMode_RelVerify,
+			TAG_MORE, msg->ops_AttrList))
 		{
-			bodychunk = (Object *)DoSuperNew(cl, obj,
-				ButtonFrame,
-				MUIA_CycleChain				, 1,
-				MUIA_Bitmap_SourceColors	, (ULONG *)icon->cols,
-				MUIA_Bitmap_Width				, icon->bmhd->bmh_Width,
-				MUIA_Bitmap_Height			, icon->bmhd->bmh_Height,
-				MUIA_FixWidth					, icon->bmhd->bmh_Width,
-				MUIA_FixHeight					, icon->bmhd->bmh_Height,
-				MUIA_Background				, MUII_ButtonBack,
-				MUIA_InputMode					, MUIV_InputMode_RelVerify,
-				MUIA_Bodychunk_Depth			, icon->bmhd->bmh_Depth,
-				MUIA_Bodychunk_Body			, icon->body,
-				MUIA_Bodychunk_Compression	, icon->bmhd->bmh_Compression,
-				MUIA_Bodychunk_Masking		, icon->bmhd->bmh_Masking,
-				MUIA_Bitmap_Transparent		, 0,
-				TAG_MORE, msg->ops_AttrList);
-		}
-
-		if(!bodychunk)
-		{
-			icon->body = NULL;		/* so it doesn't get free'ed */
-			icon->bmhd = NULL;
-			icon->cols = NULL;
-			bodychunk = (Object *)DoSuperNew(cl, obj,
-				ButtonFrame,
-				MUIA_CycleChain				, 1,
-				MUIA_Bitmap_SourceColors	, (ULONG *)default_icon_colors,
-				MUIA_Bitmap_Width				, DEFAULT_ICON_WIDTH ,
-				MUIA_Bitmap_Height			, DEFAULT_ICON_HEIGHT,
-				MUIA_FixWidth					, DEFAULT_ICON_WIDTH ,
-				MUIA_FixHeight					, DEFAULT_ICON_HEIGHT,
-				MUIA_Background				, MUII_ButtonBack,
-				MUIA_InputMode					, MUIV_InputMode_RelVerify,
-				MUIA_Bodychunk_Depth			, DEFAULT_ICON_DEPTH ,
-				MUIA_Bodychunk_Body			, (UBYTE *)default_icon_body,
-				MUIA_Bodychunk_Compression	, DEFAULT_ICON_COMPRESSION,
-				MUIA_Bodychunk_Masking		, DEFAULT_ICON_MASKING,
-				MUIA_Bitmap_Transparent		, 0,
-				TAG_MORE, msg->ops_AttrList);
-		}
-
-		if(bodychunk)
-		{
-			struct Button_Data *data = INST_DATA(cl, bodychunk);
+			struct Button_Data *data = INST_DATA(cl, obj);
 
 			if(tmp.icon = AllocVec(sizeof(struct Icon), MEMF_ANY))
 			{
 				memcpy(tmp.icon, icon, sizeof(struct Icon));
 
-				set(bodychunk, MUIA_ShortHelp, tmp.icon->Name);
-				DoMethod(bodychunk, MUIM_Notify, MUIA_Pressed, FALSE, bodychunk, 1, MUIM_Button_Action);
+				set(obj, MUIA_ShortHelp, tmp.icon->Name);
+				DoMethod(obj, MUIM_Notify, MUIA_Pressed		, FALSE				, obj, 1, MUIM_Button_Action);
+				DoMethod(obj, MUIM_Notify, MUIA_AppMessage	, MUIV_EveryTime	, obj, 3, MUIM_CallHook, &Button_AppMsgHook, MUIV_TriggerValue);
 
 				tmp.icon->cx_filter = NULL;
 				if(*tmp.icon->Hotkey && CxBase && xget(app, MUIA_Application_Broker) && xget(app, MUIA_Application_BrokerPort))
@@ -1644,7 +1286,7 @@ ULONG Button_New(struct IClass *cl, Object *obj, struct opSet *msg)
 						CxObj *translator;
 
 						AttachCxObj((CxObj *)xget(app, MUIA_Application_Broker), tmp.icon->cx_filter);
-						if(sender = CxSender(xget(app, MUIA_Application_BrokerPort), bodychunk))
+						if(sender = CxSender(xget(app, MUIA_Application_BrokerPort), obj))
 						{
 							AttachCxObj(tmp.icon->cx_filter, sender);
 							if(translator = CxTranslate(NULL))
@@ -1666,16 +1308,16 @@ ULONG Button_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		}
 	}
 
-	return((ULONG)bodychunk);
+	return((ULONG)obj);
 }
 
 SAVEDS ASM ULONG Button_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
 {
 	switch (msg->MethodID)
 	{
-		case OM_NEW									: return(Button_New				(cl, obj, (APTR)msg));
-		case OM_DISPOSE							: return(Button_Dispose			(cl, obj, (APTR)msg));
-		case MUIM_Button_Action					: return(Button_Action			(cl, obj, (APTR)msg));
+		case OM_NEW					: return(Button_New		(cl, obj, (APTR)msg));
+		case OM_DISPOSE			: return(Button_Dispose	(cl, obj, (APTR)msg));
+		case MUIM_Button_Action	: return(Button_Action	(cl, obj, (APTR)msg));
 	}
 	return(DoSuperMethodA(cl, obj, msg));
 }
@@ -1693,8 +1335,9 @@ ULONG IconBar_LoadButtons(struct IClass *cl, Object *obj, struct MUIP_IconBar_Lo
 	BOOL anything = FALSE;
 	struct IFFHandle *Handle;
 	struct ContextNode *cn;
+	LONG button_type = 0, rows = 1, window_type = 0;
 
-	if(group = RowGroup(Rows),
+	if(group = RowGroup(rows),
 		MUIA_Group_Spacing, 0,
 		MUIA_InnerBottom	, 0,
 		MUIA_InnerLeft		, 0,
@@ -1720,9 +1363,15 @@ ULONG IconBar_LoadButtons(struct IClass *cl, Object *obj, struct MUIP_IconBar_Lo
 
 								if(cn->cn_ID == ID_ROWS)
 								{
-									ReadChunkBytes(Handle, &Rows, MIN(sizeof(LONG), cn->cn_Size));
-									set(group, MUIA_Group_Rows, Rows);
+									ReadChunkBytes(Handle, &rows, MIN(sizeof(LONG), cn->cn_Size));
+									set(group, MUIA_Group_Rows, rows);
 								}
+
+								if(cn->cn_ID == ID_BTTY)
+									ReadChunkBytes(Handle, &button_type, MIN(sizeof(LONG), cn->cn_Size));
+
+								if(cn->cn_ID == ID_WINT)
+									ReadChunkBytes(Handle, &window_type, MIN(sizeof(LONG), cn->cn_Size));
 
 								if(cn->cn_ID == ID_AICN)
 								{
@@ -1766,9 +1415,36 @@ ULONG IconBar_LoadButtons(struct IClass *cl, Object *obj, struct MUIP_IconBar_Lo
 												}
 											}
 										}
-										if(button = NewObject(CL_Button->mcc_Class, NULL,
-											MUIA_NetConnect_Icon, icon,
-											TAG_DONE))
+										switch(button_type)
+										{
+											case 1:
+												button = NewObject(CL_Button->mcc_Class, NULL,
+													MUIA_NetConnect_Icon, icon,
+													Child, create_bodychunk(icon, FALSE),
+													TAG_DONE);
+												break;
+											case 2:
+												button = NewObject(CL_Button->mcc_Class, NULL,
+													MUIA_NetConnect_Icon, icon,
+													Child, TextObject,
+														MUIA_Text_PreParse, "\33c",
+														MUIA_Text_Contents, icon->Name,
+													End,
+													TAG_DONE);
+												break;
+											default:
+												button = NewObject(CL_Button->mcc_Class, NULL,
+													MUIA_NetConnect_Icon, icon,
+													Child, create_bodychunk(icon, FALSE),
+													Child, TextObject,
+														MUIA_Font, MUIV_Font_Tiny,
+														MUIA_Text_PreParse, "\33c",
+														MUIA_Text_Contents, icon->Name,
+													End,
+													TAG_DONE);
+												break;
+										}
+										if(button)
 										{
 											DoMethod(group, OM_ADDMEMBER, button);
 											anything = TRUE;
@@ -1785,14 +1461,34 @@ ULONG IconBar_LoadButtons(struct IClass *cl, Object *obj, struct MUIP_IconBar_Lo
 			}
 			if(!anything)
 			{
+				struct Library *lib;
+
 				/* there's nothing in both lists => create at least the start/stop icon */
-				strcpy(icon->Name		, "Start / Stop");
-				strcpy(icon->ImageFile, IMAGE_PATH"Start");
-				strcpy(icon->Program	, "AmiTCP:bin/startnet");
+
+				if(lib = OpenLibrary("bsdsocket.library", NULL))
+				{
+					strcpy(icon->ImageFile, IMAGE_PATH"Stop");
+					strcpy(icon->Program	, "AmiTCP:bin/stopnet");
+
+					CloseLibrary(lib);
+				}
+				else
+				{
+					strcpy(icon->ImageFile, IMAGE_PATH"Start");
+					strcpy(icon->Program	, "AmiTCP:bin/startnet");
+				}
+
+				strcpy(icon->Name		, "Start/Stop");
 				icon->Type	= 2;
 
 				if(button = NewObject(CL_Button->mcc_Class, NULL,
 					MUIA_NetConnect_Icon, icon,
+					Child, create_bodychunk(icon, FALSE),
+					Child, TextObject,
+						MUIA_Font, MUIV_Font_Tiny,
+						MUIA_Text_PreParse, "\33c",
+						MUIA_Text_Contents, icon->Name,
+					End,
 					TAG_DONE))
 				{
 					DoMethod(group, OM_ADDMEMBER, button);
@@ -1824,10 +1520,7 @@ ULONG IconBar_IconBarPrefs(struct IClass *cl, Object *obj, Msg msg)
 	set(app, MUIA_Application_Sleep, TRUE);
 	if(window = (Object *)NewObject(CL_IconBarPrefs->mcc_Class, NULL, TAG_DONE))
 	{
-		struct IconBarPrefs_Data *ibp_data = INST_DATA(CL_IconBarPrefs->mcc_Class, window);
-
 		DoMethod(app, OM_ADDMEMBER, window);
-		setslider(ibp_data->SL_Rows, Rows);
 
 		set(window, MUIA_Window_Open, TRUE);
 		set(app, MUIA_Application_Sleep, FALSE);
@@ -1848,7 +1541,11 @@ ULONG IconBar_IconBarPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_Ic
 	struct IconBarPrefs_Data *data = INST_DATA(CL_IconBarPrefs->mcc_Class, window);
 	struct Icon *icon;
 	struct IFFHandle	*Handle;
-	LONG i;
+	LONG i, button_type, window_type, rows;
+
+	button_type = xget(data->CY_ButtonType, MUIA_Cycle_Active);
+	window_type = xget(data->CY_WindowType, MUIA_Cycle_Active);
+	rows = xget(data->SL_Rows, MUIA_Numeric_Value);
 
 	i = msg->level;
 	while(i > 0)
@@ -1864,8 +1561,14 @@ ULONG IconBar_IconBarPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_Ic
 					{
 						LONG pos = 0;
 
+						if(!PushChunk(Handle, ID_NTCN, ID_BTTY, IFFSIZE_UNKNOWN))
+							if(WriteChunkBytes(Handle, &button_type, sizeof(LONG)) == sizeof(LONG))
+								PopChunk(Handle);
+						if(!PushChunk(Handle, ID_NTCN, ID_WINT, IFFSIZE_UNKNOWN))
+							if(WriteChunkBytes(Handle, &window_type, sizeof(LONG)) == sizeof(LONG))
+								PopChunk(Handle);
 						if(!PushChunk(Handle, ID_NTCN, ID_ROWS, IFFSIZE_UNKNOWN))
-							if(WriteChunkBytes(Handle, &Rows, sizeof(LONG)) == sizeof(LONG))
+							if(WriteChunkBytes(Handle, &rows, sizeof(LONG)) == sizeof(LONG))
 								PopChunk(Handle);
 
 						FOREVER
@@ -1905,7 +1608,12 @@ ULONG IconBar_IconBarPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_Ic
 	}
 
 	if(msg->level)
-		DoMethod(win, MUIM_IconBar_LoadButtons);
+	{
+		if(xget(data->CY_WindowType, MUIA_Cycle_Active) == xget(data->CY_WindowType, MUIA_UserData))
+			DoMethod(win, MUIM_IconBar_LoadButtons);
+		else
+			DoMethod(app, MUIM_Application_ReturnID, ID_REBUILD);
+	}
 
 	set(window, MUIA_Window_Open, FALSE);
 	set(win, MUIA_Window_Sleep, FALSE);
@@ -1961,18 +1669,52 @@ ULONG IconBar_About_Finish(struct IClass *cl, Object *obj, struct MUIP_IconBar_A
 ULONG IconBar_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
 	struct IconBar_Data tmp;
+	struct IFFHandle	*Handle;
+	struct ContextNode *cn;
+	LONG window_type, rows;
+
+	if(Handle = AllocIFF())
+	{
+		if(Handle->iff_Stream = Open("ENV:NetConnectPrefs", MODE_OLDFILE))
+		{
+			InitIFFasDOS(Handle);
+			if(!(OpenIFF(Handle, IFFF_READ)))
+			{
+				if(!(StopChunks(Handle, Stops, NUM_STOPS)))
+				{
+					while(!ParseIFF(Handle, IFFPARSE_SCAN))
+					{
+						cn = CurrentChunk(Handle);
+						if(cn->cn_ID == ID_ROWS)
+							ReadChunkBytes(Handle, &rows, MIN(sizeof(LONG), cn->cn_Size));
+						if(cn->cn_ID == ID_WINT)
+							ReadChunkBytes(Handle, &window_type, MIN(sizeof(LONG), cn->cn_Size));
+					}
+				}
+				CloseIFF(Handle);
+			}
+			Close(Handle->iff_Stream);
+		}
+		FreeIFF(Handle);
+	}
 
 	if(obj = (Object *)DoSuperNew(cl, obj,
-		MUIA_Window_Title		, GetStr(MSG_WI_IconBar),
-		MUIA_Window_ID			, MAKE_ID('I','C','O','N'),
-		MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, IconBarMenu,0),
+		MUIA_Window_ID				, MAKE_ID('I','C','O','N'),
+		MUIA_Window_Menustrip	, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, IconBarMenu,0),
+		MUIA_Window_AppWindow	, TRUE,
+		MUIA_Window_Title			, (window_type != 1 ? GetStr(MSG_WI_IconBar) : NULL),
+		MUIA_Window_Borderless	, window_type,
+		MUIA_Window_DepthGadget	, !window_type,
+		MUIA_Window_DragBar		, (window_type != 1),
+		MUIA_Window_CloseGadget	, !window_type,
+		MUIA_Window_SizeGadget	, !window_type,
 		WindowContents			, VGroup,
 			MUIA_Group_Spacing, 0,
 			MUIA_InnerBottom	, 0,
 			MUIA_InnerLeft		, 0,
 			MUIA_InnerTop		, 0,
 			MUIA_InnerRight	, 0,
-			Child, tmp.GR_Buttons = VGroup,
+			Child, tmp.GR_Buttons = ColGroup(rows),
 			End,
 		End,
 		TAG_MORE, msg->ops_AttrList))
@@ -2023,16 +1765,19 @@ SAVEDS ASM ULONG IconBar_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *o
 
 VOID exit_classes(VOID)
 {
-	if(CL_IconList)				MUI_DeleteCustomClass(CL_IconList);
-	if(CL_IconBarPrefs)			MUI_DeleteCustomClass(CL_IconBarPrefs);
+	if(CL_IconList)		MUI_DeleteCustomClass(CL_IconList);
+	if(CL_IconBarPrefs)	MUI_DeleteCustomClass(CL_IconBarPrefs);
+	if(CL_EditIcon)		MUI_DeleteCustomClass(CL_EditIcon);
+	if(CL_Editor)			MUI_DeleteCustomClass(CL_Editor);
 
-	if(CL_About)					MUI_DeleteCustomClass(CL_About);
-	if(CL_Button)					MUI_DeleteCustomClass(CL_Button);
-	if(CL_IconBar)					MUI_DeleteCustomClass(CL_IconBar);
+	if(CL_About)			MUI_DeleteCustomClass(CL_About);
+	if(CL_Button)			MUI_DeleteCustomClass(CL_Button);
+	if(CL_IconBar)			MUI_DeleteCustomClass(CL_IconBar);
 
-	CL_IconBar			= CL_Button				=
-	CL_IconBarPrefs	= CL_IconList			= 
-	CL_About				= NULL;
+	CL_IconBar			= CL_Button		=
+	CL_IconBarPrefs	= CL_IconList	= 
+	CL_About				= CL_EditIcon	=
+	CL_Editor			= NULL;
 }
 
 
@@ -2042,15 +1787,18 @@ VOID exit_classes(VOID)
 
 BOOL init_classes(VOID)
 {
-	CL_IconBar				= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct IconBar_Data)				, IconBar_Dispatcher);
-	CL_Button				= MUI_CreateCustomClass(NULL, MUIC_Bodychunk	, NULL, sizeof(struct Button_Data)				, Button_Dispatcher);
-	CL_About					= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct About_Data)				, About_Dispatcher);
+	CL_Button			= MUI_CreateCustomClass(NULL, MUIC_Group	, NULL, sizeof(struct Button_Data)			, Button_Dispatcher);
+	CL_IconBar			= MUI_CreateCustomClass(NULL, MUIC_Window	, NULL, sizeof(struct IconBar_Data)			, IconBar_Dispatcher);
+	CL_About				= MUI_CreateCustomClass(NULL, MUIC_Window	, NULL, sizeof(struct About_Data)			, About_Dispatcher);
 
-	CL_IconBarPrefs		= MUI_CreateCustomClass(NULL, MUIC_Window		, NULL, sizeof(struct IconBarPrefs_Data)		, IconBarPrefs_Dispatcher);
-	CL_IconList				= MUI_CreateCustomClass(NULL, MUIC_List		, NULL, sizeof(struct IconList_Data)			, IconList_Dispatcher);
+	CL_Editor			= MUI_CreateCustomClass(NULL, MUIC_List	, NULL, sizeof(struct Editor_Data)			, Editor_Dispatcher);
+	CL_EditIcon			= MUI_CreateCustomClass(NULL, MUIC_Window	, NULL, sizeof(struct EditIcon_Data)		, EditIcon_Dispatcher);
+	CL_IconList			= MUI_CreateCustomClass(NULL, MUIC_List	, NULL, sizeof(struct IconList_Data)		, IconList_Dispatcher);
+	CL_IconBarPrefs	= MUI_CreateCustomClass(NULL, MUIC_Window	, NULL, sizeof(struct IconBarPrefs_Data)	, IconBarPrefs_Dispatcher);
 
-	if(CL_IconBar			&& CL_Button	&& CL_About	&&
-		CL_IconBarPrefs	&& CL_IconList )
+	if(CL_IconBar			&& CL_Button	&& CL_About		&&
+		CL_IconBarPrefs	&& CL_IconList && CL_EditIcon	&&
+		CL_Editor)
 		return(TRUE);
 
 	exit_classes();

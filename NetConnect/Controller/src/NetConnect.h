@@ -5,43 +5,43 @@
 #define to32(c) (((c)<<24)|((c)<<16)|((c)<<8)|(c))
 #define MAXPATHLEN 256
 
+#define IMAGE_PATH "NetConnect:Images/"
+#define PROGRAM_PATH "NetConnect:Programs/"
 
 #define ID_NTCN	MAKE_ID('N','T','C','N')	/* `NetConnect' data chunk. */
 #define ID_AICN	MAKE_ID('A','I','C','N')	/* An active icon (struct Icon; in IconBar) */
 #define ID_IICN	MAKE_ID('I','I','C','N')	/* An inactive icon (struct Icon; in IconBank) */
 #define ID_ROWS	MAKE_ID('R','O','W','S')
-
+#define ID_WINT	MAKE_ID('W','I','N','T')	/* window type */
+#define ID_BTTY	MAKE_ID('B','T','T','Y')	/* how buttons are displayed */
 #define NUM_STOPS (sizeof(Stops) / (2 * sizeof(ULONG)))
 
 
 #define MUISERIALNR_NETCONNECT 1
 #define TAGBASE_NETCONNECT (TAG_USER | (MUISERIALNR_NETCONNECT << 16))
 
+#define ID_REBUILD										(TAGBASE_NETCONNECT | 0x0fff)
+
 #define MUIA_NetConnect_Icon							(TAGBASE_NETCONNECT | 0x1000)
+#define MUIA_NetConnect_List							(TAGBASE_NETCONNECT | 0x1001)
+#define MUIA_NetConnect_Originator					(TAGBASE_NETCONNECT | 0x1002)
 
 #define MUIM_IconBarPrefs_LoadIcons			(TAGBASE_NETCONNECT | 0x1010)
 #define MUIM_IconBarPrefs_Reset				(TAGBASE_NETCONNECT | 0x1011)
-#define MUIM_IconBarPrefs_NewIcon			(TAGBASE_NETCONNECT | 0x1012)
-#define MUIM_IconBarPrefs_Rows				(TAGBASE_NETCONNECT | 0x1013)
-#define MUIM_IconBarPrefs_ModifyIcon		(TAGBASE_NETCONNECT | 0x1014)
-#define MUIM_IconBarPrefs_SetStates			(TAGBASE_NETCONNECT | 0x1015)
+#define MUIM_IconBarPrefs_Rows				(TAGBASE_NETCONNECT | 0x1012)
+#define MUIM_IconBarPrefs_NewIcon			(TAGBASE_NETCONNECT | 0x1013)
+#define MUIM_IconBarPrefs_DeleteIcon		(TAGBASE_NETCONNECT | 0x1014)
+#define MUIM_IconBarPrefs_EditIcon			(TAGBASE_NETCONNECT | 0x1015)
+#define MUIM_IconBarPrefs_EditIcon_Finish	(TAGBASE_NETCONNECT | 0x1016)
+#define MUIM_IconBarPrefs_List_Active		(TAGBASE_NETCONNECT | 0x1017)
 
-#define MUIV_IconBarPrefs_ModifyIcon_Remove			1
-#define MUIV_IconBarPrefs_ModifyIcon_Name				2
-#define MUIV_IconBarPrefs_ModifyIcon_Type				3
-#define MUIV_IconBarPrefs_ModifyIcon_Program			4
-#define MUIV_IconBarPrefs_ModifyIcon_Hotkey			5
-#define MUIV_IconBarPrefs_ModifyIcon_Image			6
-#define MUIV_IconBarPrefs_ModifyIcon_Sound			7
-#define MUIV_IconBarPrefs_ModifyIcon_PlaySound		8
-#define MUIV_IconBarPrefs_ModifyIcon_Volume			9
-#define MUIV_IconBarPrefs_ModifyIcon_LoadScript		10
-#define MUIV_IconBarPrefs_ModifyIcon_SaveScript		11
-#define MUIV_IconBarPrefs_ModifyIcon_ClearScript	12
-
-struct MUIP_IconBarPrefs_ModifyIcon			{ ULONG MethodID; LONG flags; };
+struct MUIP_IconBarPrefs_EditIcon_Finish	{ ULONG MethodID; Object *obj; struct Icon *icon; Object *list; LONG use; };
 struct MUIP_IconBarPrefs_SetStates			{ ULONG MethodID; LONG level; };
 
+#define MUIM_EditIcon_Editor_Active	(TAGBASE_NETCONNECT | 0x1020)
+#define MUIM_EditIcon_ChangeLine		(TAGBASE_NETCONNECT | 0x1021)
+#define MUIM_EditIcon_Type_Active	(TAGBASE_NETCONNECT | 0x1022)
+#define MUIM_EditIcon_PlaySound		(TAGBASE_NETCONNECT | 0x1023)
 
 #define MUIM_IconBar_LoadButtons				(TAGBASE_NETCONNECT | 0x1020)
 #define MUIM_IconBar_IconBarPrefs			(TAGBASE_NETCONNECT | 0x1021)
@@ -72,11 +72,24 @@ struct IconBarPrefs_Data
 	Object *LV_InactiveIcons;
 	Object *LI_InactiveIcons;
 	Object *BT_New;
-	Object *BT_Remove;
+	Object *BT_Edit;
+	Object *BT_Delete;
 	Object *LV_ActiveIcons;
 	Object *LI_ActiveIcons;
-	Object *GR_Button;
 	Object *SL_Rows;
+	Object *CY_ButtonType;
+	Object *CY_WindowType;
+
+	Object *BT_Save;
+	Object *BT_Use;
+	Object *BT_Cancel;
+};
+
+struct EditIcon_Data
+{
+	Object *GR_Register;
+
+	Object *GR_Button;
 	Object *STR_Name;
 	Object *PA_Program;
 	Object *STR_Hotkey;
@@ -85,17 +98,22 @@ struct IconBarPrefs_Data
 	Object *BT_PlaySound;
 	Object *CY_Type;
 	Object *SL_Volume;
-	Object *GR_Script;
-	Object *GR_Editor;
-	Object *TF_Editor;
-	Object *SB_Editor;
-	Object *BT_LoadScript;
-	Object *BT_SaveScript;
-	Object *BT_ClearScript;
 
-	Object *BT_Save;
-	Object *BT_Use;
+	Object *GR_Script;
+	Object *LV_Editor;
+	Object *LI_Editor;
+	Object *STR_Line;
+	Object *BT_New;
+	Object *BT_Delete;
+	Object *BT_Clear;
+
+	Object *BT_Okay;
 	Object *BT_Cancel;
+};
+
+struct Editor_Data
+{
+	Object *dummy;
 };
 
 struct IconList_Data
