@@ -1,6 +1,7 @@
 #include "globals.c"
 #include "protos.h"
 
+
 static struct Hook sorthook = { {NULL, NULL}, (VOID *)sortfunc, NULL, NULL};
 static struct Hook strobjhook = { {NULL, NULL}, (VOID *)strobjfunc, NULL, NULL};
 static struct Hook txtobjhook = { {NULL, NULL}, (VOID *)txtobjfunc, NULL, NULL};
@@ -482,7 +483,7 @@ ULONG Users_New(struct IClass *cl, Object *obj, struct opSet *msg)
 		DoMethod(tmp.STR_UserID		, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_UserID);
 		DoMethod(tmp.STR_GroupID	, MUIM_Notify, MUIA_String_Contents	, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_GroupID);
 		DoMethod(tmp.CH_Disabled	, MUIM_Notify, MUIA_Selected			, MUIV_EveryTime	, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_Disable);
-		DoMethod(tmp.CH_Disabled	, MUIM_Notify, MUIA_Selected			, MUIV_EveryTime	, tmp.CH_Disabled, 5, MUIM_MultiSet, MUIA_Disabled, MUIV_TriggerValue, tmp.BT_ChangePassword, tmp.BT_RemovePassword);
+		DoMethod(tmp.CH_Disabled	, MUIM_Notify, MUIA_Selected			, MUIV_EveryTime	, tmp.CH_Disabled, 6, MUIM_MultiSet, MUIA_Disabled, MUIV_TriggerValue, tmp.BT_ChangePassword, tmp.BT_RemovePassword, NULL);
 		DoMethod(tmp.BT_ChangePassword, MUIM_Notify, MUIA_Pressed		, FALSE				, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_ChangePassword);
 		DoMethod(tmp.BT_RemovePassword, MUIM_Notify, MUIA_Pressed		, FALSE				, obj, 2, MUIM_Users_Modification, MUIV_Users_Modification_RemovePassword);
 
@@ -529,6 +530,9 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 	int second = 0;
 	STRPTR path;
 	char file[MAXPATHLEN];
+	struct IFFHandle		*Handle;
+	struct ContextNode	*Chunk;
+	struct LocalePrefs	*lp;
 
 	path = (msg->path ? msg->path : (STRPTR)"ENV:NetConfig/");
 
@@ -570,6 +574,9 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 			if(!stricmp(pc_data.Argument, "NameServer"))
 				setstring((second++ ? provider_data->STR_NameServer2 : provider_data->STR_NameServer1), pc_data.Contents);
 
+			if(!stricmp(pc_data.Argument, "HostName"))
+				setstring(user_data->STR_HostName, pc_data.Contents);
+
 			if(!stricmp(pc_data.Argument, "DomainName"))
 				setstring(provider_data->STR_DomainName, pc_data.Contents);
 
@@ -609,44 +616,65 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 			if(!stricmp(pc_data.Argument, "Country"))
 			{
 				nnset(provider_data->PO_Country, MUIA_Text_Contents, pc_data.Contents);
-				strcpy(file, "AmiTCP:Providers");
+				strcpy(file, "NetConnect:Data/Providers");
 				AddPart(file, pc_data.Contents, MAXPATHLEN);
 				DoMethod(data->GR_Provider, MUIM_Provider_PopList_Update, file, MUIV_Provider_PopString_Provider);
-				DoMethod(provider_data->LV_PoP, MUIM_List_Clear);
-				set(provider_data->PO_Provider, MUIA_Text_Contents, "");
-				set(provider_data->PO_PoP, MUIA_Text_Contents, "");
 			}
 			if(!stricmp(pc_data.Argument, "Provider"))
 			{
 				nnset(provider_data->PO_Provider, MUIA_Text_Contents, pc_data.Contents);
-				strcpy(file, "AmiTCP:Providers");
+				strcpy(file, "NetConnect:Data/Providers");
 				AddPart(file, (STRPTR)xget(provider_data->PO_Country, MUIA_Text_Contents), MAXPATHLEN);
 				AddPart(file, pc_data.Contents, MAXPATHLEN);
 				DoMethod(data->GR_Provider, MUIM_Provider_PopList_Update, file, MUIV_Provider_PopString_PoP);
-				set(provider_data->PO_PoP, MUIA_Text_Contents, "");
 			}
 			if(!stricmp(pc_data.Argument, "PoP"))
 				set(provider_data->PO_PoP, MUIA_Text_Contents, pc_data.Contents);
 		}
 		ParseEnd(&pc_data);
 	}
-
-
-	/**** load the provider description ****/
-
-	strcpy(file, "AmiTCP:Providers");
-	AddPart(file, (STRPTR)xget(provider_data->PO_Country	, MUIA_Text_Contents), MAXPATHLEN);
-	AddPart(file, (STRPTR)xget(provider_data->PO_Provider	, MUIA_Text_Contents), MAXPATHLEN);
-	AddPart(file, (STRPTR)xget(provider_data->PO_PoP		, MUIA_Text_Contents), MAXPATHLEN);
-	if(get_file_size(file) != -2)
+	else
 	{
-		strcpy(file, "AmiTCP:Providers");
-		AddPart(file, (STRPTR)xget(provider_data->PO_Country	, MUIA_Text_Contents), MAXPATHLEN);
-		AddPart(file, (STRPTR)xget(provider_data->PO_Provider	, MUIA_Text_Contents), MAXPATHLEN);
-	}
-	AddPart(file, "provider.txt", MAXPATHLEN);
-	DoMethod(data->GR_InfoWindow, MUIM_InfoWindow_LoadFile, file);
+		/** find out in which country we live **/
 
+		if(lp = AllocVec(sizeof(struct LocalePrefs), MEMF_ANY))
+		{
+			if(Handle = AllocIFF())
+			{
+				if(Handle->iff_Stream = Open("ENV:Sys/Locale.prefs", MODE_OLDFILE))
+				{
+					InitIFFasDOS(Handle);
+					if(!(OpenIFF(Handle, IFFF_READ)))
+					{
+						if(!(StopChunk(Handle, ID_PREF, ID_LCLE)))
+						{
+							while(!ParseIFF(Handle, IFFPARSE_SCAN))
+							{
+								Chunk = CurrentChunk(Handle);
+		
+								if(Chunk->cn_ID == ID_LCLE)
+								{
+									if(ReadChunkBytes(Handle, lp, MIN(sizeof(struct LocalePrefs), Chunk->cn_Size)) == MIN(sizeof(struct LocalePrefs), Chunk->cn_Size))
+									{
+										lp->lp_CountryName[0] = toupper(lp->lp_CountryName[0]);
+										nnset(provider_data->PO_Country, MUIA_Text_Contents, lp->lp_CountryName);
+										strcpy(file, "NetConnect:Data/Providers");
+										AddPart(file, lp->lp_CountryName, MAXPATHLEN);
+										DoMethod(data->GR_Provider, MUIM_Provider_PopList_Update, file, MUIV_Provider_PopString_Provider);
+										set(provider_data->PO_Provider, MUIA_Text_Contents, GetStr(MSG_TX_SelectProvider));
+									}
+								}
+							}
+						}
+						CloseIFF(Handle);
+					}
+					Close(Handle->iff_Stream);
+				}
+				FreeIFF(Handle);
+			}
+			FreeVec(lp);
+		}
+	}
 
 	/**** load the dialscript ****/
 
@@ -667,17 +695,21 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 		while(ParseNext(&pc_data))
 		{
 			if(!stricmp(pc_data.Argument, "LoginName"))
-				setstring(user_data->STR_LoginName, pc_data.Contents);
+				setstring(user_data->STR_LoginName		, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "Password"))
-				setstring(user_data->STR_Password, pc_data.Contents);
+				setstring(user_data->STR_Password		, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "EMail"))
-				setstring(user_data->STR_EMail, pc_data.Contents);
+				setstring(user_data->STR_EMail			, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "RealName"))
-				setstring(user_data->STR_RealName, pc_data.Contents);
+				setstring(user_data->STR_RealName		, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "Organisation"))
-				setstring(user_data->STR_Organisation, pc_data.Contents);
-			if(!stricmp(pc_data.Argument, "HostName"))
-				setstring(user_data->STR_HostName, pc_data.Contents);
+				setstring(user_data->STR_Organisation	, pc_data.Contents);
+			if(!stricmp(pc_data.Argument, "AuthServerID"))
+				setstring(provider_data->STR_HostID		, pc_data.Contents);
+			if(!stricmp(pc_data.Argument, "AuthLocalID"))
+				setstring(provider_data->STR_YourID		, pc_data.Contents);
+			if(!stricmp(pc_data.Argument, "AuthPassword"))
+				setstring(provider_data->STR_Password	, pc_data.Contents);
 
 			if(!stricmp(pc_data.Argument, "Modem"))
 				set(modem_data->TX_Modem, MUIA_Text_Contents, pc_data.Contents);
@@ -685,16 +717,16 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 				setstring(modem_data->STR_ModemInit, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "DialPrefix"))						// is in ENV:ModemDialPrefix
 				setstring(modem_data->PO_DialPrefix, pc_data.Contents);
-			if(!stricmp(pc_data.Argument, "DialSuffix"))
-				setstring(modem_data->STR_DialSuffix, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "Device"))
-				setstring(modem_data->PA_SerialDriver, pc_data.Contents);
+				setstring(modem_data->PO_SerialDriver, pc_data.Contents);
 			if(!stricmp(pc_data.Argument, "Unit"))
 				set(modem_data->STR_SerialUnit, MUIA_String_Integer, atol(pc_data.Contents));
 			if(!stricmp(pc_data.Argument, "Baud"))
 				set(modem_data->PO_BaudRate, MUIA_String_Integer, atol(pc_data.Contents));
 			if(!stricmp(pc_data.Argument, "RedialAttempts"))
 				setslider(modem_data->SL_RedialAttempts, atol(pc_data.Contents));
+			if(!stricmp(pc_data.Argument, "RedialDelay"))
+				setslider(modem_data->SL_RedialDelay, atol(pc_data.Contents));
 			if(!stricmp(pc_data.Argument, "CarrierDetect"))
 				setcheckmark(modem_data->CH_Carrier, atol(pc_data.Contents));
 			if(!stricmp(pc_data.Argument, "7Wire"))
@@ -728,7 +760,6 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 
 		if(modem = (struct Modem *)AllocVec(sizeof(struct Modem), MEMF_ANY))
 		{
-			set(modem_data->LV_Modem, MUIA_List_Quiet, TRUE);
 			DoMethod(modem_data->LV_Modem, MUIM_List_Clear);
 			while(ParseNext(&pc_data))
 			{
@@ -736,7 +767,6 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 				strncpy(modem->InitString, pc_data.Contents, 80);
 				DoMethod(modem_data->LV_Modem, MUIM_List_InsertSingle, modem, MUIV_List_Insert_Sorted);
 			}
-			set(modem_data->LV_Modem, MUIA_List_Quiet, FALSE);
 			FreeVec(modem);
 		}
 		ParseEnd(&pc_data);
@@ -839,6 +869,30 @@ ULONG AmiTCPPrefs_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_AmiTCPP
 	}
 	DoMethod(data->GR_Users, MUIM_Users_SetGroupStates);
 */
+	/** put devices into device list of modem page **/
+
+	{
+		BPTR lock;
+		struct FileInfoBlock *fib;
+
+		if(lock = Lock("DEVS:", ACCESS_READ))
+		{
+			if(fib = AllocDosObject(DOS_FIB, NULL))
+			{
+				if(Examine(lock, fib))
+				{
+					while(ExNext(lock, fib))
+					{
+						if((fib->fib_DirEntryType < 0) && strstr(fib->fib_FileName, ".device"))
+							DoMethod(modem_data->LV_Devices, MUIM_List_InsertSingle, fib->fib_FileName, MUIV_List_Insert_Sorted);
+					}
+				}
+				FreeDosObject(DOS_FIB, fib);
+			}
+			UnLock(lock);
+		}
+	}
+
 
 	return(NULL);
 }
@@ -886,6 +940,7 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 			FPrintf(fh, "NSDynamic          1\n");
 			FPrintf(fh, "NameServer         %ls\n", xget(provider_data->STR_NameServer1, MUIA_String_Contents));
 			FPrintf(fh, "NameServer         %ls\n", xget(provider_data->STR_NameServer2, MUIA_String_Contents));
+			FPrintf(fh, "HostName           \"%ls\"\n", xget(user_data->STR_HostName		, MUIA_String_Contents));
 			FPrintf(fh, "DomainName         \"%ls\"\n", xget(provider_data->STR_DomainName, MUIA_String_Contents));
 			FPrintf(fh, "UseBootP           %ld\n", (xget(provider_data->CH_BOOTP				, MUIA_Selected) ? 1 : 0));
 			FPrintf(fh, "MTU                %ld\n", xget(provider_data->SL_MTU			, MUIA_Numeric_Value));
@@ -918,16 +973,18 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 			FPrintf(fh, "EMail              \"%ls\"\n", xget(user_data->STR_EMail			, MUIA_String_Contents));
 			FPrintf(fh, "RealName           \"%ls\"\n", xget(user_data->STR_RealName		, MUIA_String_Contents));
 			FPrintf(fh, "Organisation       \"%ls\"\n", xget(user_data->STR_Organisation	, MUIA_String_Contents));
-			FPrintf(fh, "HostName           \"%ls\"\n", xget(user_data->STR_HostName		, MUIA_String_Contents));
+			FPrintf(fh, "AuthServerID       \"%ls\"\n", xget(provider_data->STR_HostID		, MUIA_String_Contents));
+			FPrintf(fh, "AuthLocalID        \"%ls\"\n", xget(provider_data->STR_YourID		, MUIA_String_Contents));
+			FPrintf(fh, "AuthPassword       \"%ls\"\n", xget(provider_data->STR_Password	, MUIA_String_Contents));
 
 			FPrintf(fh, "Modem              \"%ls\"\n", xget(modem_data->TX_Modem			, MUIA_Text_Contents));
 			FPrintf(fh, "ModemInit          \"%ls\"\n", xget(modem_data->STR_ModemInit		, MUIA_String_Contents));
 			FPrintf(fh, "DialPrefix         \"%ls\"\n", xget(modem_data->PO_DialPrefix		, MUIA_String_Contents));
-			FPrintf(fh, "DialSuffix         \"%ls\"\n", xget(modem_data->STR_DialSuffix	, MUIA_String_Contents));
-			FPrintf(fh, "Device             \"%ls\"\n", xget(modem_data->PA_SerialDriver	, MUIA_String_Contents));
+			FPrintf(fh, "Device             \"%ls\"\n", xget(modem_data->PO_SerialDriver	, MUIA_String_Contents));
 			FPrintf(fh, "Unit               %ld\n", xget(modem_data->STR_SerialUnit			, MUIA_String_Integer));
 			FPrintf(fh, "Baud               %ld\n", xget(modem_data->PO_BaudRate				, MUIA_String_Integer));
 			FPrintf(fh, "RedialAttempts     %ld\n", xget(modem_data->SL_RedialAttempts		, MUIA_Numeric_Value));
+			FPrintf(fh, "RedialDelay        %ld\n", xget(modem_data->SL_RedialDelay			, MUIA_Numeric_Value));
 			FPrintf(fh, "CarrierDetect      %ld\n", xget(modem_data->CH_Carrier				, MUIA_Selected));
 			FPrintf(fh, "7Wire              %ld\n", xget(modem_data->CH_7Wire					, MUIA_Selected));
 			FPrintf(fh, "OwnDevUnit         %ld\n", xget(modem_data->CH_OwnDevUnit			, MUIA_Selected));
@@ -942,6 +999,7 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 			Close(fh);
 		}
 
+		DoMethod(data->GR_User, MUIM_User_ChangeDialScript);
 		editor_save("ENV:NetConfig/DialScript", provider_data->LV_DialScript);
 		editor_save("ENV:NetConfig/User-Startnet", user_data->LV_UserStartnet);
 
@@ -967,12 +1025,12 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 		{
 			FPrintf(fh, "# This file is generated automatically by 'AmiTCP Prefs'\n");
 			if(xget(provider_data->RA_Interface, MUIA_Radio_Active))
-				FPrintf(fh, "slip DEV=DEVS:Networks/aslip.device UNIT=0 DoOffline ConfigFileName=ENV:Sana2/aslip0.config ");
+				FPrintf(fh, "slip DEV=DEVS:Networks/aslip.device UNIT=0 DoOffline Shared ConfigFileName=ENV:Sana2/aslip0.config ");
 			else
-				FPrintf(fh, "ppp DEV=DEVS:Networks/ppp.device UNIT=0 DoOffline ConfigFileName=ENV:Sana2/ppp0.config ");
+				FPrintf(fh, "ppp DEV=DEVS:Networks/ppp.device UNIT=0 DoOffline Shared ConfigFileName=ENV:Sana2/ppp0.config ");
 
 			FPrintf(fh, "ConfigFileContents=\"");
-			FPrintf(fh, "%ls ", xget(modem_data->PA_SerialDriver, MUIA_String_Contents));
+			FPrintf(fh, "%ls ", xget(modem_data->PO_SerialDriver, MUIA_String_Contents));
 			FPrintf(fh, "%ld ", xget(modem_data->STR_SerialUnit, MUIA_String_Integer));
 			FPrintf(fh, "%ld ", xget(modem_data->PO_BaudRate, MUIA_String_Integer));
 			FPrintf(fh, "0.0.0.0 ");
@@ -990,12 +1048,36 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 						FPrintf(fh, "CHAP=ENV:NetConfig/CHAP ");
 						break;
 					case 2:
-						FPrintf(fh, "PAP=ENV:NetConfig/PAP,%ls ", xget(provider_data->STR_YourID, MUIA_String_Contents));
+						FPrintf(fh, "PAP=ENV:NetConfig/PAP,%ls ", xget(provider_data->STR_HostID, MUIA_String_Contents));
 						break;
 				}
 			}
-			FPrintf(fh, "MTU=%ld\"\n", xget(provider_data->SL_MTU, MUIA_Numeric_Value));
+			FPrintf(fh, "MTU=%ld\"\n", (xget(provider_data->RA_Interface, MUIA_Radio_Active) ? 1524 : xget(provider_data->SL_MTU, MUIA_Numeric_Value)));
 
+			Close(fh);
+		}
+
+		if(fh = Open("ENV:NetConfig/ModemInitString", MODE_NEWFILE))
+		{
+			FPrintf(fh, "%ls", xget(modem_data->STR_ModemInit, MUIA_String_Contents));
+			Close(fh);
+		}
+
+		if(fh = Open("ENV:NetConfig/ModemDialPrefix", MODE_NEWFILE))
+		{
+			FPrintf(fh, "%ls", xget(modem_data->STR_DialPrefix, MUIA_String_Contents));
+			Close(fh);
+		}
+
+		if(fh = Open("ENV:NetConfig/ModemDialAttempts", MODE_NEWFILE))
+		{
+			FPrintf(fh, "%ld", xget(modem_data->SL_RedialAttempts, MUIA_Numeric_Value));
+			Close(fh);
+		}
+
+		if(fh = Open("ENV:NetConfig/ModemDialDelay", MODE_NEWFILE))
+		{
+			FPrintf(fh, "%ld", xget(modem_data->SL_RedialDelay, MUIA_Numeric_Value));
 			Close(fh);
 		}
 
@@ -1015,6 +1097,10 @@ ULONG AmiTCPPrefs_Finish(struct IClass *cl, Object *obj, struct MUIP_AmiTCPPrefs
 		CopyFile("ENV:NetConfig/User-Startnet"	, "ENVARC:NetConfig/User-Startnet");
 		CopyFile("ENV:NetConfig/PAP"				, "ENVARC:NetConfig/PAP");
 		CopyFile("ENV:NetConfig/CHAP"				, "ENVARC:NetConfig/CHAP");
+		CopyFile("ENV:NetConfig/ModemInitString", "ENVARC:NetConfig/ModemInitString");
+		CopyFile("ENV:NetConfig/ModemDialPrefix", "ENVARC:NetConfig/ModemDialPrefix");
+		CopyFile("ENV:NetConfig/ModemDialAttempts", "ENVARC:NetConfig/ModemDialAttempts");
+		CopyFile("ENV:NetConfig/ModemDialDelay", "ENVARC:NetConfig/ModemDialDelay");
 	}
 
 	DoMethod((Object *)xget(obj, MUIA_ApplicationObject), MUIM_Application_PushMethod, (Object *)xget(obj, MUIA_ApplicationObject), 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
@@ -1087,16 +1173,16 @@ ULONG AmiTCPPrefs_SetPage(struct IClass *cl, Object *obj, Msg msg)
 		if(new)
 		{
 			DoMethod(data->GR_Pager, MUIM_Group_InitChange);
-			DoMethod(data->GR_Temp, MUIM_Group_InitChange);
+			DoMethod(group, MUIM_Group_InitChange);
 
 			DoMethod(data->GR_Pager, OM_REMMEMBER, data->GR_Active);
-			DoMethod(data->GR_Temp, OM_ADDMEMBER, data->GR_Active);
-			DoMethod(data->GR_Temp, OM_REMMEMBER, new);
+			DoMethod(group, OM_ADDMEMBER, data->GR_Active);
+			DoMethod(group, OM_REMMEMBER, new);
 			DoMethod(data->GR_Pager, OM_ADDMEMBER, new);
 			data->GR_Active = new;
 
 			DoMethod(data->GR_Pager, MUIM_Group_ExitChange);
-			DoMethod(data->GR_Temp, MUIM_Group_ExitChange);
+			DoMethod(group, MUIM_Group_ExitChange);
 		}
 	}
 
@@ -1113,41 +1199,36 @@ ULONG AmiTCPPrefs_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 	NULL;
 //	data->GR_Users	= NULL;
 
-	if(data->GR_Temp = GroupObject, End)
-	{
-		DoMethod(app, OM_ADDMEMBER, data->GR_Temp);
-		
-		if(data->GR_Provider		= NewObject(CL_Provider->mcc_Class	, NULL, TAG_DONE))
-			DoMethod(data->GR_Temp, OM_ADDMEMBER, data->GR_Provider);
-		if(data->GR_User			= NewObject(CL_User->mcc_Class		, NULL, TAG_DONE))
-			DoMethod(data->GR_Temp, OM_ADDMEMBER, data->GR_User);
-		if(data->GR_Modem			= NewObject(CL_Modem->mcc_Class		, NULL, TAG_DONE))
-			DoMethod(data->GR_Temp, OM_ADDMEMBER, data->GR_Modem);
-		if(data->GR_Paths			= NewObject(CL_Paths->mcc_Class		, NULL, TAG_DONE))
-			DoMethod(data->GR_Temp, OM_ADDMEMBER, data->GR_Paths);
+	if(data->GR_Provider		= NewObject(CL_Provider->mcc_Class	, NULL, TAG_DONE))
+		DoMethod(group, OM_ADDMEMBER, data->GR_Provider);
+	if(data->GR_User			= NewObject(CL_User->mcc_Class		, NULL, TAG_DONE))
+		DoMethod(group, OM_ADDMEMBER, data->GR_User);
+	if(data->GR_Modem			= NewObject(CL_Modem->mcc_Class		, NULL, TAG_DONE))
+		DoMethod(group, OM_ADDMEMBER, data->GR_Modem);
+	if(data->GR_Paths			= NewObject(CL_Paths->mcc_Class		, NULL, TAG_DONE))
+		DoMethod(group, OM_ADDMEMBER, data->GR_Paths);
 //		if(data->GR_Users			= NewObject(CL_Users->mcc_Class		, NULL, TAG_DONE))
-//			DoMethod(data->GR_Temp, OM_ADDMEMBER, data->GR_Users);
-		if(data->GR_InfoWindow	= NewObject(CL_InfoWindow->mcc_Class, NULL, TAG_DONE))
-			DoMethod(app, OM_ADDMEMBER, data->GR_InfoWindow);
+//			DoMethod(group, OM_ADDMEMBER, data->GR_Users);
+	if(data->GR_InfoWindow	= NewObject(CL_InfoWindow->mcc_Class, NULL, TAG_DONE))
+		DoMethod(app, OM_ADDMEMBER, data->GR_InfoWindow);
 
-		if(data->GR_Provider	&& data->GR_User	&& data->GR_Modem &&
-			data->GR_Paths		/* && data->GR_Users */)
-		{
-			struct Provider_Data		*provider_data		= INST_DATA(CL_Provider->mcc_Class	, data->GR_Provider);
-			struct User_Data			*user_data			= INST_DATA(CL_User->mcc_Class		, data->GR_User);
-//			struct Modem_Data			*modem_data			= INST_DATA(CL_Modem->mcc_Class		, data->GR_Modem);
-//			struct Paths_Data			*paths_data			= INST_DATA(CL_Paths->mcc_Class		, data->GR_Paths);
-//			struct Users_Data			*users_data			= INST_DATA(CL_Users->mcc_Class		, data->GR_Users);
-//			struct InfoWindow_Data	*infowindow_data	= INST_DATA(CL_InfoWindow->mcc_Class, data->GR_InfoWindow);
+	if(data->GR_Provider	&& data->GR_User	&& data->GR_Modem &&
+		data->GR_Paths		/* && data->GR_Users */)
+	{
+		struct Provider_Data		*provider_data		= INST_DATA(CL_Provider->mcc_Class	, data->GR_Provider);
+		struct User_Data			*user_data			= INST_DATA(CL_User->mcc_Class		, data->GR_User);
+//		struct Modem_Data			*modem_data			= INST_DATA(CL_Modem->mcc_Class		, data->GR_Modem);
+//		struct Paths_Data			*paths_data			= INST_DATA(CL_Paths->mcc_Class		, data->GR_Paths);
+//		struct Users_Data			*users_data			= INST_DATA(CL_Users->mcc_Class		, data->GR_Users);
+//		struct InfoWindow_Data	*infowindow_data	= INST_DATA(CL_InfoWindow->mcc_Class, data->GR_InfoWindow);
 
-			success = TRUE;
+		success = TRUE;
 
 // Set the notification between the groups
 
-			DoMethod(provider_data->RA_Connection, MUIM_Notify, MUIA_Radio_Active, MUIV_EveryTime , user_data->STR_IP_Address, 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
-			DoMethod(data->GR_InfoWindow, MUIM_Notify, MUIA_Window_CloseRequest, TRUE , provider_data->CH_ProviderInfo, 3, MUIM_Set, MUIA_Selected, FALSE);
-			DoMethod(provider_data->CH_ProviderInfo, MUIM_Notify, MUIA_Selected, MUIV_EveryTime, data->GR_InfoWindow, 3, MUIM_Set, MUIA_Window_Open, MUIV_TriggerValue);
-		}
+		DoMethod(provider_data->RA_Connection, MUIM_Notify, MUIA_Radio_Active, MUIV_EveryTime , user_data->STR_IP_Address, 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
+		DoMethod(data->GR_InfoWindow, MUIM_Notify, MUIA_Window_CloseRequest, TRUE , provider_data->CH_ProviderInfo, 3, MUIM_Set, MUIA_Selected, FALSE);
+		DoMethod(provider_data->CH_ProviderInfo, MUIM_Notify, MUIA_Selected, MUIV_EveryTime, data->GR_InfoWindow, 3, MUIM_Set, MUIA_Window_Open, MUIV_TriggerValue);
 	}
 
 	return(success);
@@ -1156,9 +1237,17 @@ ULONG AmiTCPPrefs_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
 	struct AmiTCPPrefs_Data tmp;
+	static STRPTR ARR_Pages[6];
+
+	ARR_Pages[0] = GetStr(MSG_Pages1);
+	ARR_Pages[1] = GetStr(MSG_Pages2);
+	ARR_Pages[2] = GetStr(MSG_Pages3);
+	ARR_Pages[3] = GetStr(MSG_Pages4);
+	ARR_Pages[4] = GetStr(MSG_Pages5);
+	ARR_Pages[5] = NULL;
 
 	if(obj = (Object *)DoSuperNew(cl, obj,
-		MUIA_Window_Title	, GetStr(MSG_WI_AmiTCPPrefs),
+		MUIA_Window_Title	, VERS,
 		MUIA_Window_ID		, MAKE_ID('A','R','E','F'),
 		MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, AmiTCPPrefsMenu,0),
 		WindowContents		, VGroup,
@@ -1192,14 +1281,15 @@ ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 						Child, HVSpace,
 					End,
 					Child, HVSpace,
-					Child, CLabel("AmiTCP Prefs v0.54 -beta-  (03.08.96)"),
+					Child, CLabel(VERS),
 					Child, HVSpace,
-					Child, CLabel("\33bTHIS IS A DEMO - DO NOT REDISTRIBUTE !!!"),
+#ifdef DEMO
+					Child, CLabel("\33bTHIS IS A DEMO VERSION !"),
 					Child, HVSpace,
+#endif
 				End,
 			End,
 			Child, HGroup,
-				MUIA_HelpNode			, "GR_PrefsControl",
 				MUIA_Group_SameSize	, TRUE,
 				Child, tmp.BT_Save	= MakeButton(MSG_BT_Save),
 				Child, HSpace(0),
@@ -1216,10 +1306,10 @@ ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 		set(tmp.LV_Pager, MUIA_List_Active, MUIV_List_Active_Top);
 
-		set(tmp.LV_Pager	, MUIA_ShortHelp, "Here you can select the page");
-		set(tmp.BT_Save	, MUIA_ShortHelp, "Save all changes permanently");
-		set(tmp.BT_Use		, MUIA_ShortHelp, "Save changes temporarely. They will be lost next time you reboot your Amiga.");
-		set(tmp.BT_Cancel	, MUIA_ShortHelp, "Abandon all changes");
+		set(tmp.LV_Pager	, MUIA_ShortHelp, GetStr(MSG_Help_Pager));
+		set(tmp.BT_Save	, MUIA_ShortHelp, GetStr(MSG_Help_Save));
+		set(tmp.BT_Use		, MUIA_ShortHelp, GetStr(MSG_Help_Use));
+		set(tmp.BT_Cancel	, MUIA_ShortHelp, GetStr(MSG_Help_Cancel));
 
 		DoMethod(obj				, MUIM_Notify, MUIA_Window_CloseRequest, TRUE	, obj, 2, MUIM_AmiTCPPrefs_Finish, 0);
 		DoMethod(tmp.LV_Pager	, MUIM_Notify, MUIA_List_Active, MUIV_EveryTime	, obj, 1, MUIM_AmiTCPPrefs_SetPage);
@@ -1233,6 +1323,8 @@ ULONG AmiTCPPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
 			MUIV_Notify_Application, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
 		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_MUI)		, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
 			MUIV_Notify_Application, 2, MUIM_Application_OpenConfigWindow, 0);
+		DoMethod((Object *)DoMethod(tmp.MN_Strip, MUIM_FindUData, MEN_HELP_AMITCP)	, MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+			MUIV_Notify_Application, 5, MUIM_Application_ShowHelp, obj, "NetConnect:Docs/AmiTCP.guide", NULL, NULL);
 	}
 
 	return((ULONG)obj);
@@ -1254,6 +1346,11 @@ SAVEDS ASM ULONG AmiTCPPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Objec
 		{
 			struct AmiTCPPrefs_Data *data = INST_DATA(cl, obj);
 		 	return(DoMethodA(data->GR_Provider, msg));
+		}
+		case MUIM_InfoWindow_LoadFile	:
+		{
+			struct AmiTCPPrefs_Data *data = INST_DATA(cl, obj);
+		 	return(DoMethodA(data->GR_InfoWindow, msg));
 		}
 	}
 	return(DoSuperMethodA(cl, obj, msg));

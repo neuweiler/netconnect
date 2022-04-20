@@ -1,0 +1,580 @@
+#language english
+#version 1
+#lengthbytes 0
+;
+;
+; general stuff
+;
+;
+MSG_AppDescription (//)
+Preferences Program for AmiTCP
+;
+MSG_AppCopyright (//)
+Michael Neuweiler
+;
+MSG_TX_About1 (//)
+\033c\n© 1996 Michael Neuweiler & Active Software\n\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler
+;
+MSG_TX_About2 (//)
+\033cAmiTCP Prefs uses:\nMUI - Copyright © Stefan Stuntz
+;
+MSG_Pages1 (//)
+Info
+;
+MSG_Pages2 (//)
+Provider
+;
+MSG_Pages3 (//)
+User
+;
+MSG_Pages4 (//)
+Modem
+;
+MSG_Pages5 (//)
+Paths
+;
+MSG_BT_Save (//)
+_Save
+;
+MSG_BT_Use (//)
+_Use
+;
+MSG_BT_Cancel (//)
+_Cancel
+;
+MSG_BT_Okay (//)
+_Okay
+;
+MSG_BT_New (//)
+_New
+;
+MSG_BT_Delete (//)
+_Delete
+;
+MSG_BT_Clear (//)
+C_lear
+;
+;
+; Provider page
+;
+;
+MSG_WI_ProviderInfo (//)
+Provider Information
+;
+MSG_TX_SelectCountry (//)
+\033c- select a country -
+;
+MSG_TX_SelectProvider (//)
+\033c- select a provider -
+;
+MSG_TX_SelectPoP (//)
+\033c- select a PoP -
+;
+MSG_ProviderRegister1 (//)
+Provider
+;
+MSG_ProviderRegister2 (//)
+Protocol
+;
+MSG_ProviderRegister3 (//)
+Services
+;
+MSG_ProviderRegister4 (//)
+Dialscript
+;
+MSG_RA_Connection0 (//)
+Dynamic
+;
+MSG_RA_Connection1 (//)
+Static
+;
+MSG_CY_Authentication1 (//)
+None - Use PPP normally
+;
+MSG_CY_Authentication2 (//)
+CHAP - Use PPP with CHAP
+;
+MSG_CY_Authentication3 (//)
+PAP - Use PPP with PAP
+;
+MSG_CY_Header1 (//)
+AUTO Header Compression
+;
+MSG_CY_Header2 (//)
+Header Compression ON
+;
+MSG_CY_Header3 (//)
+Header Compression OFF
+;
+MSG_LA_Country (//)
+Choose your Country :
+;
+MSG_LA_Provider (//)
+Choose a Provider :
+;
+MSG_LA_PoP (//)
+Choose a PoP :
+;
+MSG_LA_Phone (//)
+PoP Phone Number(s) :
+;
+MSG_CC_Phone (/1/1)
+p
+;
+MSG_LA_ShowProviderInfo (//)
+Show Provider Info :
+;
+MSG_CC_ShowProviderInfo (/1/1)
+i
+;
+MSG_GR_ConnectionTitle (//)
+Connection
+;
+MSG_LA_BOOTP (//)
+BOOTP
+;
+MSG_CC_BOOTP (/1/1)
+b
+;
+MSG_LA_MTU (//)
+MTU
+;
+MSG_CC_MTU (/1/1)
+t
+;
+MSG_TX_InterfaceOptions (//)
+Interface Options
+;
+MSG_LA_Compression (//)
+Compression :
+;
+MSG_CC_Compression (/1/1)
+o
+;
+MSG_LA_Authentication (//)
+Authentication :
+;
+MSG_CC_Authentication (/1/1)
+a
+;
+MSG_LA_ISPHostID (//)
+ISP's Host-ID :
+;
+MSG_CC_ISPHostID (/1/1)
+h
+;
+MSG_LA_YourHostID (//)
+Your Host-ID :
+;
+MSG_CC_YourHostID (/1/1)
+y
+;
+MSG_LA_Password (//)
+Password :
+;
+MSG_CC_Password (/1/1)
+w
+;
+MSG_LA_DomainName (//)
+Domain name :
+;
+MSG_CC_DomainName (/1/1)
+d
+;
+MSG_LA_NameServer1 (//)
+Nameserver 1 :
+;
+MSG_CC_NameServer1 (/1/1)
+1
+;
+MSG_LA_NameServer2 (//)
+Nameserver 2 :
+;
+MSG_CC_NameServer2 (/1/1)
+2
+;
+MSG_LA_MailServer (//)
+Mail Server :
+;
+MSG_CC_MailServer (//)
+m
+;
+MSG_LA_POP3Server (//)
+POP3 Server :
+;
+MSG_CC_POP3Server (/1/1)
+p
+;
+MSG_LA_NewsServer (//)
+News Server :
+;
+MSG_CC_NewsServer (/1/1)
+n
+;
+MSG_LA_WWWServer (//)
+WWW Server :
+;
+MSG_CC_WWWServer (/1/1)
+w
+;
+MSG_LA_FTPServer (//)
+FTP Server :
+;
+MSG_CC_FTPServer (/1/1)
+f
+;
+; User page
+;
+;
+MSG_UserRegister1 (//)
+User Information
+;
+MSG_UserRegister2 (//)
+User StartNet
+;
+MSG_LA_LoginName (//)
+Login name :
+;
+MSG_CC_LoginName (/1/1)
+n
+;
+MSG_LA_EMail (//)
+EMail address :
+;
+MSG_CC_EMail (/1/1)
+e
+;
+MSG_LA_RealName (//)
+Real name :
+;
+MSG_CC_RealName (/1/1)
+r
+;
+MSG_LA_Organisation (//)
+Organisation :
+;
+MSG_CC_Organisation (/1/1)
+o
+;
+MSG_LA_HostName (//)
+Host name :
+;
+MSG_CC_HostName (/1/1)
+h
+;
+MSG_LA_Address (//)
+IP Address :
+;
+MSG_CC_Address (/1/1)
+a
+;
+;
+; Modem page
+;
+;
+MSG_ModemRegister1 (//)
+Modem Settings
+;
+MSG_ModemRegister2 (//)
+Serial Settings
+;
+MSG_LA_ModemType (//)
+Modem Type :
+;
+MSG_LA_ModemInit (//)
+Modem Init :
+;
+MSG_CC_ModemInit (/1/1)
+i
+;
+MSG_LA_DialPrefix (//)
+Dial Prefix :
+;
+MSG_CC_DialPrefix (/1/1)
+p
+;
+MSG_LA_Device (//)
+Device :
+;
+MSG_CC_Device (/1/1)
+d
+;
+MSG_LA_Unit (//)
+Unit :
+;
+MSG_CC_Unit (/1/1)
+n
+;
+MSG_LA_BaudRate (//)
+Baud Rate :
+;
+MSG_CC_BaudRate (/1/1)
+b
+;
+MSG_LA_RedialAttempts (//)
+Redial Attempts :
+;
+MSG_CC_RedialAttempts (/1/1)
+r
+;
+MSG_LA_RedialDelay (//)
+Redial Delay :
+;
+MSG_CC_RedialDelay (/1/1)
+d
+;
+MSG_LA_CarrierDetect (//)
+Carrier Detect
+;
+MSG_CC_CarrierDetect (/1/1)
+a
+;
+MSG_LA_HardwareHandshake (//)
+Hardware handshake (RTS/CTS)
+;
+MSG_CC_HardwareHandshake (/1/1)
+h
+;
+MSG_LA_OwnDevUnit (//)
+Use OwnDevUnit
+;
+MSG_CC_OwnDevUnit (/1/1)
+o
+;
+;
+; Paths page
+;
+;
+MSG_LA_MailIn (//)
+Mail IN :
+;
+MSG_CC_MailIn (/1/1)
+m
+;
+MSG_LA_MailOut (//)
+Mail OUT :
+;
+MSG_CC_MailOut (/1/1)
+a
+;
+MSG_LA_NewsIn (//)
+News IN :
+;
+MSG_CC_NewsIn (/1/1)
+n
+;
+MSG_LA_NewsOut (//)
+News OUT :
+;
+MSG_CC_NewsOut (/1/1)
+e
+;
+MSG_LA_FilesIn (//)
+Files IN :
+;
+MSG_CC_FilesIn (/1/1)
+f
+;
+MSG_LA_FilesOut (//)
+Files OUT :
+;
+MSG_CC_FilesOut (/1/1)
+i
+;
+;
+; Menus
+;
+;
+MSG_MENU_PROJECT (//)
+Project
+;
+MSG_MENU_ABOUT (//)
+About
+;
+MSG_MENU_QUIT (//)
+Quit
+;
+MSG_MENU_SETTINGS (//)
+Settings
+;
+MSG_MENU_MUI (//)
+MUI...
+;
+MSG_MENU_HELP (//)
+Help
+;
+MSG_MENU_HELP_AMITCP (//)
+AmiTCP
+;
+;
+; Bubble help
+;
+;
+MSG_Help_Pager (//)
+Select which page\nyou want to be displayed
+;
+MSG_Help_Save (//)
+Save all changes permanently
+;
+MSG_Help_Use (//)
+Save changes temporarily.\nThey will be lost next time\nyou reboot your Amiga.
+;
+MSG_Help_Cancel (//)
+Abandon all changes.
+;
+MSG_Help_Country (//)
+Please select the\ncountry you live in.
+;
+MSG_Help_Provider (//)
+Select the provider\nyou want to use.
+;
+MSG_Help_PoP (//)
+Choose the Point of Presence\nof your provider.
+;
+MSG_Help_Phone (//)
+Enter the phone number(s) of your provider.\nUse a space to separate phone numbers.\ni.e. \"2574011 2574012\"
+;
+MSG_Help_ProviderInfo (//)
+Opens a window which shows\ndetailed information about the\nProvider/PoP you have chosen.
+;
+MSG_Help_Connection (//)
+Is your IP Address static or dynamic ?\nIf it is static you have to set the\nIP Address in the \"User\" Page.
+;
+MSG_Help_Interface (//)
+Do you use ppp or\nslip as interface ?
+;
+MSG_Help_BOOTP (//)
+Does your provider\noffer BOOTP ?
+;
+MSG_Help_MTU (//)
+Set the Max\nTransfer Unit
+;
+MSG_Help_Header (//)
+Does your provider support Header Compression ?\nIf you don't know you could simply choose \"AUTO\"
+;
+MSG_Help_Authentication (//)
+Does your provider want\nPAP or CHAP authentication ?
+;
+MSG_Help_HostID (//)
+Enter the ID of\nthe providers host
+;
+MSG_Help_YourID (//)
+Enter the ID of\nyour host
+;
+MSG_Help_AuthPassword (//)
+Enter the password\nrequired for PAP/CHAP\nauthentication.
+;
+MSG_Help_DomainName (//)
+The name of\nyour domain.
+;
+MSG_Help_NameServer1 (//)
+The IP Adress of your\nprimary NameServer
+;
+MSG_Help_NameServer2 (//)
+The IP Adress of your\nsecondary NameServer
+;
+MSG_Help_MailServer (//)
+Enter the name of your\nproviders Mail-Server
+;
+MSG_Help_POPServer (//)
+Enter the name of your\nproviders POP3-Server
+;
+MSG_Help_NewsServer (//)
+Enter the name of your\nproviders News-Server
+;
+MSG_Help_WWWServer (//)
+Enter the name of your\nproviders WWW-Server
+;
+MSG_Help_FTPServer (//)
+Enter the name of your\nproviders FTP-Server
+;
+MSG_Help_DialScript (//)
+This is the AREXX script that will\nbe used to login at your provider.\nYou can use drag & drop to move\nlines in this list\n\nRemember: ARexx-Scripts DO have to\nstart with a comment in the first line !!
+;
+MSG_Help_New (//)
+Add a new line at the end of the script.\nYou can use drag & drop to move the lines in the list
+;
+MSG_Help_Delete (//)
+Delete the active line.
+;
+MSG_Help_Clear (//)
+Clear the entire script.
+;
+MSG_Help_LoginName (//)
+Enter your login name here.\nThis is the name you chose when you\nfirst contacted your provider.\nFor instance our login name is \"active\".
+;
+MSG_Help_Password (//)
+This is the password that will be\nused during the login procedure\nat your provider.\nThis password will have been chosen by\nyou when you first contacted your provider.
+;
+MSG_Help_EMail (//)
+Your EMail address.\nThis can be left blank, but if filled\ncould be useful for configuration\nof email programs.
+;
+MSG_Help_RealName (//)
+Your full name
+;
+MSG_Help_Organisation (//)
+The name of your organisation\nor something like \"Private User\"
+;
+MSG_Help_HostName (//)
+The name of your computer.\nIf you use dynamic IP Adresses\nyour provider probably won't\ngive you a host name.
+;
+MSG_Help_IP_Address (//)
+If you use a static IP Address,\nyou have to enter it here.\nThis will be something similar to\n151.52.3.62 - four sets of digits\nwith full stop separators.
+;
+MSG_Help_UserStartnet (//)
+This is the script that will be executed\nafter the connection to your provider\nhas been established.\nIt can be used to start a httpd server\nfor example.\nYou can use drag & drop to move\nlines in this list
+;
+MSG_Help_Line (//)
+Edit the contents of the\ncurrently selected line here.
+;
+MSG_Help_Modem (//)
+Select your modem.\nIf your modem is not listed, then just\ninsert the correct initialisation string\n(as found in your modem handbook)\nin the \"Modem Init\" box below.
+;
+MSG_Help_ModemInit (//)
+Enter the initialisation\nstring of your modem
+;
+MSG_Help_DialPrefix (//)
+The dial prefix\nfor your modem
+;
+MSG_Help_SerialDriver (//)
+Enter the name of\nyour serial driver.\n(case sensitive !)
+;
+MSG_Help_SerialUnit (//)
+Enter the unit number\nyou want to use for\nyour serial driver.
+;
+MSG_Help_BaudRate (//)
+Enter the transfer speed between\nyour Amiga and your Modem.\n(should be higher than the modem's\nmax. connection speed)
+;
+MSG_Help_RedialAttempts (//)
+How many times should the dialer\ntry to establish a connection ?
+;
+MSG_Help_RedialDelay (//)
+Time in seconds until\nthe next dial attempt.
+;
+MSG_Help_Carrier (//)
+Shall the network be stopped\nif the modem drops the carrier ?
+;
+MSG_Help_7Wire (//)
+If you use baud rates higher\nthan 9600 you should set this.
+;
+MSG_Help_OwnDevUnit (//)
+Use OwnDevUnit to access\nthe serial device.
+;
+MSG_Help_MailIn (//)
+Where does incoming mail go to.
+;
+MSG_Help_MailOut (//)
+Here we store outgoing mails.
+;
+MSG_Help_NewsIn (//)
+Where the news go in
+;
+MSG_Help_NewsOut (//)
+Drawer for outgoing news
+;
+MSG_Help_FileIn (//)
+Drawer to download files to.
+;
+MSG_Help_FileOut (//)
+Drawer to upload files from.
+;

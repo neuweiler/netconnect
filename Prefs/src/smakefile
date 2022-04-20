@@ -16,23 +16,23 @@
 
 CPU		= ANY
 #CPU		= 68030
-
-#OPTIMIZE	= OPT OPTTIME NOOPTINLOCAL
+DEMO		= DEF=DEMO
+#BETA		= DEF=BETA
+#DEBUG	= DBG=LINE
+OPTIMIZE	= OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS	= CPU=$(CPU) $(OPTIMIZE)
-
 GST		= GSTIMM GST=includes.gst
 
-CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS
-#CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS DBG=FULL
+CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG)
 
 LFLAGS	= ND SC SD NOICONS MAXHUNK 100000
 #LFLAGS	= SC SD NOICONS MAXHUNK 100000
 
-OBJS		= globals.o main.o mui1.o mui2.o amiga.o
+OBJS		= globals.o main.o Stackcall.o mui1.o mui2.o amiga.o
 LIBS		= lib:amiga.lib lib:sc.lib
 
-all:	 includes.gst AmiTCPPrefsStrings.h logo.bh AmiTCPPrefs
+all:	 includes.gst locale/Strings.h locale/empty.ct locale:catalogs/deutsch/AmiTCPPrefs.catalog logo.bh AmiTCPPrefs
 
 includes.gst:	includes.h
 		GST >NIL: UNLOAD $@
@@ -42,8 +42,13 @@ includes.gst:	includes.h
 logo.bh: logo.iff
 	brush2c logo.iff >logo.bh
 
-AmiTCPPrefsStrings.h: AmiTCPPrefsStrings.cd
-	cat2h AmiTCPPrefsStrings.cd AmiTCPPrefsStrings.h
+locale/Strings.h: locale/Strings.cd
+	cat2h locale/Strings.cd locale/Strings.h
+locale/empty.ct : locale/Strings.cd
+	sc:c/FlexCat locale/Strings.cd NEWCTFILE locale/empty.ct
+locale:catalogs/deutsch/AmiTCPPrefs.catalog : locale/deutsch.ct
+	sc:c/FlexCat locale/Strings.cd locale/deutsch.ct CATALOG locale:catalogs/deutsch/AmiTCPPrefs.catalog
+	c:avail >nil: flush
 
 AmiTCPPrefs:	$(OBJS)
    SLINK WITH T:AmiTCPPrefs.WITH <<!(T:AmiTCPPrefs.WITH)
@@ -54,9 +59,9 @@ AmiTCPPrefs:	$(OBJS)
 		$(LFLAGS)
 	<
 
-globals.o:	globals.c	AmiTCPPrefs.h AmiTCPPrefsStrings.h
+globals.o:	globals.c	mui.h rev.h AmiTCPPrefs.h locale/Strings.h
 	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
-main.o:		main.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c
-mui1.o:		mui1.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c
-mui2.o:		mui2.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c
-amiga.o:		amiga.c		AmiTCPPrefs.h AmiTCPPrefsStrings.h globals.c
+main.o:		main.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
+mui1.o:		mui1.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
+mui2.o:		mui2.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
+amiga.o:		amiga.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c

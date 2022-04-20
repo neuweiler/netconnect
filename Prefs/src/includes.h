@@ -31,3 +31,6 @@
 
 #include <workbench/workbench.h>
 #include <workbench/WBStart.h>
+
+#include <prefs/locale.h>
+#include <prefs/prefhdr.h>

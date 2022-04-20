@@ -1,4 +1,5 @@
 #include "globals.c"
+#include "protos.h"
 
 extern VOID exit_classes(VOID);
 extern BOOL init_classes(VOID);
@@ -46,7 +47,7 @@ BOOL init_libs(VOID)
 
 	if(DOSBase && MUIMasterBase && UtilityBase && IntuitionBase && IFFParseBase && DataTypesBase)
 		return(TRUE);
-	/* the program will still work without locale.library */
+	/* the program will even work without locale.library */
 
 	exit_libs();
 	return(FALSE);
@@ -76,14 +77,81 @@ VOID LocalizeNewMenu(struct NewMenu *nm)
 			nm->nm_Label = GetStr(nm->nm_Label);
 }
 
+
+#ifdef DEMO
+#include <resources/battclock.h>
+#include <clib/battclock_protos.h>
+BOOL check_date(VOID)
+{
+	if(BattClockBase = OpenResource("battclock.resource"))
+	{
+		if(ReadBattClock() > 594345603)
+			return(FALSE);
+	}
+	return(TRUE);
+}
+#endif
+
+VOID __saveds Handler(VOID)
+{
+	ULONG sigs = NULL;
+
+	app = ApplicationObject,
+		MUIA_Application_Author			, "Michael Neuweiler",
+		MUIA_Application_Base			, "AmiTCPPrefs",
+		MUIA_Application_Title			, "AmiTCP Prefs",
+		MUIA_Application_Version		, VERSTAG,
+		MUIA_Application_Copyright		, GetStr(MSG_AppCopyright),
+		MUIA_Application_Description	, GetStr(MSG_AppDescription),
+		MUIA_Application_HelpFile		, "PROGDIR:Docs/AmiTCPPrefs.guide",
+		MUIA_Application_Window			, WindowObject,
+			WindowContents		, group = VGroup,
+				Child, HVSpace,
+			End,
+		End,
+	End;
+
+	if(app)
+	{
+		if(win = NewObject(CL_AmiTCPPrefs->mcc_Class, NULL, TAG_DONE))
+		{
+			DoMethod(app, OM_ADDMEMBER, win);
+			if(DoMethod(win, MUIM_AmiTCPPrefs_InitGroups, NULL))
+			{
+				set(win, MUIA_Window_Open, TRUE);
+				DoMethod(win, MUIM_Provider_PopList_Update, "NetConnect:Data/Providers", MUIV_Provider_PopString_Country);
+				DoMethod(win, MUIM_AmiTCPPrefs_LoadConfig, NULL);
+				DoMethod(win, MUIM_InfoWindow_LoadFile);
+
+#ifdef DEMO
+				DoMethod(win, MUIM_AmiTCPPrefs_About);
+				if(!check_date())
+					MUI_Request(app, win, 0, 0, "*_Snif..", "Sorry, program has become invalid !");
+				else
+#endif
+				while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
+				{
+					if(sigs)
+					{
+						sigs = Wait(sigs | SIGBREAKF_CTRL_C);
+						if(sigs & SIGBREAKF_CTRL_C)
+							break;
+					}
+				}
+				set(win, MUIA_Window_Open, FALSE);
+			}
+		}
+		MUI_DisposeObject(app);
+		app = NULL;
+	}
+}
+
 /*
  * program entry point
  */
 
 LONG main(VOID)
 {
-	ULONG sigs = NULL;
-
 	ThisProcess = (struct Process *)FindTask(NULL);
 
 	if(!ThisProcess->pr_CLI)
@@ -104,41 +172,14 @@ LONG main(VOID)
 		{
 			LocalizeNewMenu(AmiTCPPrefsMenu);
 
-			app = ApplicationObject,
-				MUIA_Application_Author			, "Michael Neuweiler",
-				MUIA_Application_Base			, "AmiTCPPrefs",
-				MUIA_Application_Title			, "AmiTCP Prefs",
-				MUIA_Application_Version		, "$VER: AmiTCP Prefs 0.54 (03.08.96)",
-				MUIA_Application_Copyright		, GetStr(MSG_AppCopyright),
-				MUIA_Application_Description	, GetStr(MSG_AppDescription),
-				MUIA_Application_Window			, win = NewObject(CL_AmiTCPPrefs->mcc_Class, NULL, TAG_DONE),
-				End;
-
-			if(app)
+			if(StackSize(NULL) < 16384)
 			{
-				if(DoMethod(win, MUIM_AmiTCPPrefs_InitGroups, NULL))
-				{
-					DoMethod(win, MUIM_Provider_PopList_Update, "AmiTCP:Providers", MUIV_Provider_PopString_Country);
-					DoMethod(win, MUIM_AmiTCPPrefs_LoadConfig, NULL);
-
-					set(win, MUIA_Window_Open, TRUE);
-if(MUI_Request(app, win, 0, 0, "_Yes, I am !|*\33bGosh _no, I'm not !", "\33cThis version of AmiTCP Prefs is a\n trial version and might only be used\nby NSDI, Active Software and those who\ngot direct permission from either NSDI\nor Active Software !\n\nCopyright © 1996 by Michael Neuweiler\n\n\33bAre you allowed to use this program ?"))
-{
-					while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
-					{
-						if(sigs)
-						{
-							sigs = Wait(sigs | SIGBREAKF_CTRL_C);
-							if(sigs & SIGBREAKF_CTRL_C)
-								break;
-						}
-					}
-}
-					set(win, MUIA_Window_Open, FALSE);
-				}
-				MUI_DisposeObject(app);
-				app = NULL;
+				LONG success;
+				StackCall(&success,16384,0,(LONG (* __stdargs)())Handler);
 			}
+			else
+				Handler();
+
 			exit_classes();
 		}
 		if(WBenchMsg)
