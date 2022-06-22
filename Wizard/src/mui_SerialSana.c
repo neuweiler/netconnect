@@ -9,7 +9,6 @@
 
 #include "images/setup_page1.h"
 ///
-
 /// external variables
 extern BOOL no_picture;
 

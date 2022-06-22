@@ -11,12 +11,13 @@
 
 #include "images/setup_page6.h"
 ///
-
 /// external variables
-extern Object *win, *app, *li_script;
+extern Object *win, *app;
 extern int addr_assign, dst_assign, dns_assign, domainname_assign;
-extern char ip[], dest[], dns1[], dns2[], mask[];
-extern struct config Config;
+extern struct Hook deshook;
+extern struct Config Config;
+extern struct ISP ISP;
+extern struct Interface Iface;
 extern BOOL no_picture;
 
 extern ULONG setup_page6_colors[];
@@ -24,6 +25,39 @@ extern UBYTE setup_page6_body[];
 
 ///
 
+/// ScriptList_ConstructFunc
+struct ScriptLine * SAVEDS ScriptList_ConstructFunc(register __a2 APTR pool, register __a1 struct ScriptLine *src)
+{
+   struct ScriptLine *new;
+
+   if((new = (struct ScriptLine *)AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR)) && src && (src != (APTR)-1))
+      memcpy(new, src, sizeof(struct ScriptLine));
+   else if(new)
+      new->sl_command = SL_Send;
+
+   return(new);
+}
+static const struct Hook ScriptList_ConstructHook= { { 0,0 }, (VOID *)ScriptList_ConstructFunc , NULL, NULL };
+
+///
+/// ScriptList_DisplayFunc
+SAVEDS LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 struct ScriptLine *script_line)
+{
+   if(script_line)
+   {
+      *array++ = script_commands[script_line->sl_command];
+      *array = script_line->sl_contents;
+   }
+   else
+   {
+      *array++ = GetStr("  \033bCommand");
+      *array   = GetStr("  \033bString");
+   }
+   return(NULL);
+}
+static const struct Hook ScriptList_DisplayHook= { { 0,0 }, (VOID *)ScriptList_DisplayFunc , NULL, NULL };
+
+///
 /// Finished_ShowConfig
 ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
 {
@@ -32,51 +66,39 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
    char ip_info[41], dest_info[41], dns1_info[41], dns2_info[41], device_info[81];
 
    if(addr_assign == CNF_Assign_Static)
-      sprintf(ip_info, "%ls (%ls)", ip, GetStr(MSG_TX_Static));
+      sprintf(ip_info, "%ls (%ls)", Iface.if_addr, GetStr(MSG_TX_Static));
    else
    {
-      if(addr_assign == CNF_Assign_BootP)
-         sprintf(ip_info, "%ls (BOOTP)", GetStr(MSG_TX_Dynamic));
-      else
-         sprintf(ip_info, "%ls (ICPC)", GetStr(MSG_TX_Dynamic));
+      strcpy(ip_info, GetStr(MSG_TX_Dynamic));
+      strcat(ip_info, (addr_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
    }
 
-   if(*dest)
-   {
-      if(dst_assign == CNF_Assign_BootP)
-         sprintf(dest_info, "%ls (BOOTP)", dest);
-      else
-         sprintf(dest_info, "%ls (ICPC)", dest);
-   }
+   if(dst_assign == CNF_Assign_Static)
+      sprintf(dest_info, "%ls (%ls)", Iface.if_dst, GetStr(MSG_TX_Static));
    else
-      strcpy(dest_info, GetStr(MSG_TX_Undefined));
-
-   if(*dns1)
    {
-      if(dns_assign == CNF_Assign_BootP)
-         sprintf(dns1_info, "%ls (BOOTP)", dns1);
-      else if(dns_assign == CNF_Assign_Root)
-         sprintf(dns1_info, "%ls (ROOT)", dns1);
-      else
-         sprintf(dns1_info, "%ls (MSDNS)", dns1);
+      strcpy(dest_info, GetStr(MSG_TX_Dynamic));
+      strcat(dest_info, (dst_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
+   }
+/*
+   if(*ISP.isp_dns1)
+   {
+      strcpy(dns1_info, ISP.isp_dns1);
+      strcat(dns1_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
    }
    else
       strcpy(dns1_info, GetStr(MSG_TX_Undefined));
 
-   if(*dns2)
+   if(*ISP.isp_dns2)
    {
-      if(dns_assign == CNF_Assign_BootP)
-         sprintf(dns2_info, "%ls (BOOTP)", dns2);
-      else if(dns_assign == CNF_Assign_Root)
-         sprintf(dns2_info, "%ls (ROOT)", dns2);
-      else
-         sprintf(dns2_info, "%ls (MSDNS)", dns2);
+      strcpy(dns2_info, ISP.isp_dns2);
+      strcat(dns2_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
    }
    else
       strcpy(dns2_info, GetStr(MSG_TX_Undefined));
-
-   if(strcmp(Config.cnf_ifname, "ppp") && strcmp(Config.cnf_ifname, "slip"))
-      sprintf(device_info, "%ls, unit %ld", FilePart(Config.cnf_sana2device), Config.cnf_sana2unit);
+*/
+   if(strcmp(Iface.if_name, "ppp") && strcmp(Iface.if_name, "slip"))
+      sprintf(device_info, "%ls, unit %ld", FilePart(Iface.if_sana2device), Iface.if_sana2unit);
    else
       sprintf(device_info, "%ls, unit %ld", Config.cnf_serialdevice, Config.cnf_serialunit);
 
@@ -94,9 +116,9 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
                Child, Label(GetStr(MSG_BLA_Modem)),
                Child, MakeText(Config.cnf_modemname),
                Child, Label(GetStr(MSG_BLA_Phone)),
-               Child, MakeText(Config.cnf_phonenumber),
+               Child, MakeText(ISP.isp_phonenumber),
                Child, Label(GetStr(MSG_BLA_LoginName)),
-               Child, MakeText(Config.cnf_loginname),
+               Child, MakeText(ISP.isp_login),
             End,
             Child, ColGroup(2),
                GroupFrame,
@@ -118,7 +140,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
                Child, Label(GetStr(MSG_BLA_RemoteIPAddr)),
                Child, MakeText(dest_info),
                Child, Label(GetStr(MSG_BLA_Netmask)),
-               Child, MakeText((*mask ? (STRPTR)mask : GetStr(MSG_TX_Undefined))),
+               Child, MakeText((*Iface.if_netmask ? (STRPTR)Iface.if_netmask : GetStr(MSG_TX_Undefined))),
             End,
             Child, ColGroup(2),
                GroupFrame,
@@ -128,38 +150,43 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
                Child, Label(GetStr(MSG_BLA_DNS2IPAddr)),
                Child, MakeText(dns2_info),
                Child, Label(GetStr(MSG_BLA_DomainName)),
-               Child, MakeText(Config.cnf_domainname),
+Child, HVSpace,
+//               Child, MakeText(ISP.isp_domainname),
             End,
          End,
          Child, script = ListviewObject,
-            MUIA_ShowMe    , (!strcmp(Config.cnf_ifname, "ppp") || !strcmp(Config.cnf_ifname, "slip")),
+            MUIA_ShowMe    , (!strcmp(Iface.if_name, "ppp") || !strcmp(Iface.if_name, "slip")),
             MUIA_FrameTitle, GetStr(MSG_LA_LoginScript_List),
             MUIA_Listview_Input, FALSE,
             MUIA_Listview_List, ListObject,
                ReadListFrame,
-               MUIA_List_ConstructHook, MUIV_List_ConstructHook_String,
-               MUIA_List_DestructHook, MUIV_List_DestructHook_String,
+               MUIA_List_ConstructHook, &ScriptList_ConstructHook,
+               MUIA_List_DisplayHook  , &ScriptList_DisplayHook,
+               MUIA_List_DestructHook , &deshook,
+               MUIA_List_Format       , "BAR,",
+               MUIA_List_Title        , TRUE,
             End,
          End,
       End,
    End)
    {
-      STRPTR ptr;
-      LONG pos;
-
       DoMethod(window, MUIM_Notify, MUIA_Window_CloseRequest, TRUE ,
          MUIV_Notify_Application, 5, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, window);
 
       set(app, MUIA_Application_Sleep, TRUE);
       DoMethod(app, OM_ADDMEMBER, window);
 
-      pos = 0;
-      FOREVER
+
+      if(ISP.isp_loginscript.mlh_TailPred != (struct MinNode *)&ISP.isp_loginscript)
       {
-         DoMethod(li_script, MUIM_List_GetEntry, pos++, &ptr);
-         if(!ptr)
-            break;
-         DoMethod(script, MUIM_List_InsertSingle, ptr, MUIV_List_Insert_Bottom);
+         struct ScriptLine *script_line;
+
+         script_line = (struct ScriptLine *)ISP.isp_loginscript.mlh_Head;
+         while(script_line->sl_node.mln_Succ)
+         {
+            DoMethod(script, MUIM_List_InsertSingle, script_line, MUIV_List_Insert_Bottom);
+            script_line = (struct ScriptLine *)script_line->sl_node.mln_Succ;
+         }
       }
 
       set(window, MUIA_Window_Open, TRUE);
@@ -200,13 +227,13 @@ ULONG Finished_New(struct IClass *cl, Object *obj, struct opSet *msg)
          Child, MakeText(GetStr(MSG_TX_InfoSaveConfig)),
          Child, HGroup,
             Child, tmp.CH_Config = CheckMark(TRUE),
-            Child, MakePopAsl(tmp.STR_Config = MakeString("AmiTCP:config/GenesisWizard.config", MAXPATHLEN), MSG_TX_SaveConfiguration, FALSE),
+            Child, MakePopAsl(tmp.STR_Config = MakeString(DEFAULT_CONFIGFILE, MAXPATHLEN), MSG_TX_SaveConfiguration, FALSE),
          End,
          Child, HVSpace,
          Child, MakeText(GetStr(MSG_TX_InfoSaveInfo)),
          Child, HGroup,
             Child, tmp.CH_Info = CheckMark(TRUE),
-            Child, MakePopAsl(tmp.STR_Info = MakeString("PROGDIR:GenesisWizard.log", MAXPATHLEN), MSG_TX_SaveInformation, FALSE),
+            Child, MakePopAsl(tmp.STR_Info = MakeString("AmiTCP:log/GenesisWizard.log", MAXPATHLEN), MSG_TX_SaveInformation, FALSE),
          End,
          Child, HVSpace,
          Child, MakeText(GetStr(MSG_TX_InfoPrint)),

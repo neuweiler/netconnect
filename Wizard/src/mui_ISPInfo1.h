@@ -1,4 +1,4 @@
-struct ISPInfo_Data
+struct ISPInfo1_Data
 {
    Object *GR_Picture;
    Object *STR_IPAddress;

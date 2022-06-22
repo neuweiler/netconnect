@@ -4,6 +4,9 @@
 
 #include "Strings.h"
 #include "/Genesis.h"
+#include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/genesis_lib.h"
 #include "mui.h"
 #include "mui_ModemStrings.h"
 #include "mui_MainWindow.h"
@@ -15,7 +18,7 @@
 /// external variables
 extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct config Config;
+extern struct Config Config;
 extern BOOL no_picture;
 
 extern ULONG setup_page2_colors[];

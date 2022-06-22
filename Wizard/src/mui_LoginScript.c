@@ -13,8 +13,8 @@
 #include "images/setup_page5.h"
 ///
 /// external variables
-extern Object *app, *win, *li_script, *status_win;
-extern struct config Config;
+extern Object *app, *win, *status_win;
+extern struct Config Config;
 extern struct MUI_CustomClass  *CL_Online;
 extern int dialing_try, dial_number;
 extern BOOL keyboard_input;
@@ -25,6 +25,7 @@ extern WORD ser_buf_pos, key_buf_pos;
 extern struct   MsgPort        *SerReadPort;
 extern struct   IOExtSer       *SerReadReq, *SerWriteReq;
 extern BOOL no_picture;
+extern struct ISP ISP;
 
 extern ULONG setup_page5_colors[];
 extern struct BitMapHeader setup_page5_header[];
@@ -32,15 +33,27 @@ extern UBYTE setup_page5_body[];
 
 ///
 
+/// add_sl
+VOID add_sl(LONG command, STRPTR contents)
+{
+   struct ScriptLine *sl;
+
+   if(sl = AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR))
+   {
+      sl->sl_command = command;
+      if(contents)
+         strncpy(sl->sl_contents, contents, sizeof(sl->sl_contents));
+      AddTail((struct List *)&ISP.isp_loginscript, (struct Node *)sl);
+   }
+}
+
+///
 /// do_keyboard
 VOID do_keyboard(VOID)
 {
    if(keyboard_input)
    {
-      char buffer[100];
-
-      sprintf(buffer, "Send \"%ls\"", keyboard_buffer);
-      DoMethod(li_script, MUIM_List_InsertSingle, buffer, MUIV_List_Insert_Bottom);
+      add_sl(SL_Send, keyboard_buffer);
       keyboard_input = FALSE;
       keyboard_buffer[0] = NULL;
       key_buf_pos = 0;
@@ -51,10 +64,7 @@ VOID do_keyboard(VOID)
 /// do_serial
 VOID do_serial(VOID)
 {
-   char buffer[101];
-
-   sprintf(buffer, "WaitFor \"%ls\"", (*serial_buffer ? serial_buffer : (*serial_buffer_old1 ? serial_buffer_old1 : serial_buffer_old2)));
-   DoMethod(li_script, MUIM_List_InsertSingle, buffer, MUIV_List_Insert_Bottom);
+   add_sl(SL_WaitFor, (*serial_buffer ? serial_buffer : (*serial_buffer_old1 ? serial_buffer_old1 : serial_buffer_old2)));
    serial_buffer[0] = serial_buffer_old1[0] = serial_buffer_old2[0] = NULL;
    ser_buf_pos = 0;
 }
@@ -242,8 +252,8 @@ ULONG LoginScript_Dial(struct IClass *cl, Object *obj, struct MUIP_LoginScript_D
       dialing_try = 1;
       dial_number = 0;
       do_keyboard();
-      DoMethod(li_script, MUIM_List_Clear);
-      DoMethod(li_script, MUIM_List_InsertSingle, "Dial", MUIV_List_Insert_Bottom);
+      clear_list(&ISP.isp_loginscript);
+      add_sl(SL_Dial, NULL);
    }
 
    if(!dialing_try)
@@ -252,7 +262,7 @@ ULONG LoginScript_Dial(struct IClass *cl, Object *obj, struct MUIP_LoginScript_D
    FOREVER
    {
       i = dial_number;
-      ptr = Config.cnf_phonenumber;
+      ptr = ISP.isp_phonenumber;
       while(i-- > 0 && ptr)
       {
          ptr++;
@@ -318,7 +328,7 @@ ULONG LoginScript_GoOnline(struct IClass *cl, Object *obj, Msg msg)
 
    dialing_try = 0;
    do_keyboard();
-   DoMethod(li_script, MUIM_List_InsertSingle, "GoOnline", MUIV_List_Insert_Bottom);
+   add_sl(SL_GoOnline, NULL);
 
    set(app, MUIA_Application_Sleep, TRUE);
    if(status_win = NewObject(CL_Online->mcc_Class, NULL, TAG_DONE))
@@ -359,9 +369,9 @@ ULONG LoginScript_SendLogin(struct IClass *cl, Object *obj, Msg msg)
    dialing_try = 0;
    do_keyboard();
    do_serial();
-   DoMethod(li_script, MUIM_List_InsertSingle, "SendLogin", MUIV_List_Insert_Bottom);
+   add_sl(SL_SendLogin, NULL);
 
-   sprintf(buffer, "%ls\r", Config.cnf_loginname);
+   sprintf(buffer, "%ls\r", ISP.isp_login);
    serial_send(buffer, -1);
 
    return(NULL);
@@ -377,9 +387,9 @@ ULONG LoginScript_SendPassword(struct IClass *cl, Object *obj, Msg msg)
    dialing_try = 0;
    do_keyboard();
    do_serial();
-   DoMethod(li_script, MUIM_List_InsertSingle, "SendPassword", MUIV_List_Insert_Bottom);
+   add_sl(SL_SendPassword, NULL);
 
-   sprintf(buffer, "%ls\r", Config.cnf_password);
+   sprintf(buffer, "%ls\r", ISP.isp_password);
    serial_send(buffer, -1);
 
    return(NULL);
@@ -392,7 +402,7 @@ ULONG LoginScript_SendBreak(struct IClass *cl, Object *obj, Msg msg)
    dialing_try = 0;
    do_keyboard();
    do_serial();
-   DoMethod(li_script, MUIM_List_InsertSingle, "SendBreak", MUIV_List_Insert_Bottom);
+   add_sl(SL_SendBreak, NULL);
    SerWriteReq->IOSer.io_Command = SDCMD_BREAK;
    DoIO((struct IORequest *)SerWriteReq);
 

@@ -1,19 +1,19 @@
-/// Includes & Defines
+/// Includes
 #include "/includes.h"
 #pragma header
 
-#include "rev.h"
+#define USE_SCRIPT_COMMANDS 1
+
 #include "Strings.h"
 #include "/Genesis.h"
 #include "mui.h"
 #include "protos.h"
 
-#define SIG_SER   (1L << ReadPortSER->mp_SigBit)
-
 ///
 
 /// Libraries
 struct   Library   *MUIMasterBase = NULL;
+struct   Library   *GenesisBase   = NULL;
 struct   Library   *SocketBase    = NULL;
 
 #ifdef DEMO
@@ -22,7 +22,12 @@ struct   Library   *BattClockBase = NULL;
 
 ///
 /// Other data
-struct config  Config;
+struct Config  Config;
+struct ISP     ISP;
+struct Interface Iface;
+
+struct Process *proc;
+struct StackSwapStruct StackSwapper;
 
 struct Catalog       *cat           = NULL;   /* pointer to our locale catalog */
 struct IOExtSer      *SerReadReq    = NULL;   /* Serial IORequest */
@@ -32,17 +37,13 @@ struct MsgPort       *SerWritePort  = NULL;   /* Serial reply port */
 struct MsgPort       *MainPort  = NULL;   /* port to comunicate with mainProcess */
 
 ULONG sigs = NULL;
-
 const char AmiTCP_PortName[] = "AMITCP";
 
-int dialing_try = 0;
-int dial_number = 0;
 int addr_assign = 0, dst_assign = 0, dns_assign = 0, domainname_assign = 0;
-char ip[21], dest[21], dns1[21], dns2[21], mask[21];
 char sana2configtext[1024];
-BOOL no_picture;
 
 int h_errno;
+int dialing_try, dial_number;
 
 char serial_in[10];
 char serial_buffer[81], keyboard_buffer[81];
@@ -50,7 +51,7 @@ char serial_buffer_old1[81];
 char serial_buffer_old2[81];
 WORD ser_buf_pos, key_buf_pos;
 BOOL keyboard_input = FALSE;
-BOOL use_loginscript, use_modem;
+BOOL use_loginscript, use_modem, no_picture, easy_ppp, dialup = FALSE;
 
 ///
 /// MainMenu
@@ -76,7 +77,9 @@ struct MUI_CustomClass  *CL_ModemDetect         = NULL;
 struct MUI_CustomClass  *CL_Online              = NULL;
 
 struct MUI_CustomClass  *CL_Finished            = NULL;
-struct MUI_CustomClass  *CL_ISPInfo             = NULL;
+struct MUI_CustomClass  *CL_Advanced            = NULL;
+struct MUI_CustomClass  *CL_ISPInfo1            = NULL;
+struct MUI_CustomClass  *CL_ISPInfo2            = NULL;
 struct MUI_CustomClass  *CL_LoginScript         = NULL;
 struct MUI_CustomClass  *CL_ModemStrings        = NULL;
 struct MUI_CustomClass  *CL_Sana2               = NULL;
@@ -90,8 +93,6 @@ struct MUI_CustomClass  *CL_Welcome             = NULL;
 Object   *app     = NULL;
 Object   *win     = NULL;
 Object   *status_win = NULL;
-Object   *group   = NULL;
-Object   *li_script = NULL;
 
 struct Hook deshook           = {{NULL, NULL}, (VOID *)desfunc          , NULL, NULL};
 struct Hook sorthook          = {{NULL, NULL}, (VOID *)sortfunc         , NULL, NULL};

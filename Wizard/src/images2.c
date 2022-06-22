@@ -23,9 +23,9 @@
 #define USE_SETUP_PAGE6_COLORS
 #include "images/setup_page6.h"
 
-//#define USE_SETUP_PAGE7_HEADER
-//#define USE_SETUP_PAGE7_BODY
-//#define USE_SETUP_PAGE7_COLORS
-//#include "images/setup_page7.h"
+#define USE_SETUP_PAGE7_HEADER
+#define USE_SETUP_PAGE7_BODY
+#define USE_SETUP_PAGE7_COLORS
+#include "images/setup_page7.h"
 
 ///

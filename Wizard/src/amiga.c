@@ -3,7 +3,6 @@
 #pragma header
 
 #include "/Genesis.h"
-#include "rev.h"
 #include "Strings.h"
 #include "mui.h"
 #include "mui_MainWindow.h"
@@ -21,10 +20,8 @@ extern struct IOExtSer         *ReadSER;
 extern char serial_in[];
 extern BOOL ReadQueued;
 extern Object *win;
-extern Object *li_script;
-extern struct config Config;
+extern struct Config Config;
 extern int addr_assign, dst_assign, dns_assign, domainname_assign;
-extern char ip[21], dest[21], dns1[21], dns2[21], mask[21];
 extern const char AmiTCP_PortName[];
 
 ///
@@ -35,13 +32,6 @@ LONG xget(Object *obj,ULONG attribute)
    LONG x;
    get(obj,attribute,&x);
    return(x);
-}
-
-///
-/// xgetstr
-char *xgetstr(Object *obj)
-{
-   return((char *)xget(obj,MUIA_String_Contents));
 }
 
 ///
@@ -72,18 +62,6 @@ Object *MakeText(STRPTR string)
    End;
 
    return(obj);
-}
-
-///
-/// MakeFloatText
-Object *MakeFloatText(STRPTR string)
-{
-   return(FloattextObject,
-      MUIA_Background         , MUII_TextBack,
-      MUIA_Floattext_Text     , string,
-      MUIA_Floattext_TabSize  , 4,
-      MUIA_Floattext_Justify  , TRUE,
-   End);
 }
 
 ///
@@ -120,106 +98,6 @@ Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only)
 }
 
 ///
-/// desfunc
-VOID SAVEDS desfunc(register __a2 APTR pool, register __a1 APTR *entry)
-{
-   if(entry)
-      FreeVec(entry);
-}
-
-///
-/// sortfunc
-SAVEDS LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
-{
-   return(stricmp(str1, str2));
-}
-
-///
-/// strobjfunc
-SAVEDS LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
-{
-   char *x, *s;
-   int i;
-
-   get(str, MUIA_String_Contents, &s);
-
-   i = 0;
-   FOREVER
-   {
-      DoMethod(list, MUIM_List_GetEntry, i, &x);
-      if(!x)
-      {
-         nnset(list, MUIA_List_Active, MUIV_List_Active_Off);
-         break;
-      }
-      else
-      {
-         if(!stricmp(x, s))
-         {
-            nnset(list, MUIA_List_Active, i);
-            break;
-         }
-      }
-
-      i++;
-   }
-   return(TRUE);
-}
-
-///
-/// txtobjfunc
-SAVEDS LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt)
-{
-   char *x, *s;
-   int i;
-
-   get(txt, MUIA_Text_Contents, &s);
-   i = 0;
-   FOREVER
-   {
-      DoMethod(list, MUIM_List_GetEntry, i, &x);
-      if(!x)
-      {
-         nnset(list, MUIA_List_Active, MUIV_List_Active_Off);
-         break;
-      }
-      else
-      {
-         if(!stricmp(x, s))
-         {
-            nnset(list, MUIA_List_Active, i);
-            break;
-         }
-      }
-
-      i++;
-   }
-   return(TRUE);
-}
-
-///
-/// objstrfunc
-VOID SAVEDS objstrfunc(register __a2 Object *list,register __a1 Object *str)
-{
-   char *x;
-
-   DoMethod(list, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
-   if(x)
-      set(str, MUIA_String_Contents, x);
-}
-
-///
-/// objtxtfunc
-VOID SAVEDS objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
-{
-   char *x;
-
-   DoMethod(list, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
-   if(x)
-      set(txt, MUIA_Text_Contents, x);
-}
-
-///
 /// GetStr
 STRPTR GetStr(STRPTR idstr)
 {
@@ -252,134 +130,6 @@ LONG GetEnvDOS(STRPTR name, STRPTR buffer, LONG max_len)
          buffer[size] = NULL;
    }
    return((LONG)strlen(buffer));
-}
-
-///
-/// get_file_size
-LONG get_file_size(STRPTR file)
-{
-   struct FileInfoBlock *fib;
-   BPTR lock;
-   LONG size = -1;
-
-   if(lock = Lock(file, ACCESS_READ))
-   {
-      if(fib = AllocDosObject(DOS_FIB, NULL))
-      {
-         if(Examine(lock, fib))
-            size = (fib->fib_DirEntryType > 0 ? -2 : fib->fib_Size);
-
-         FreeDosObject(DOS_FIB, fib);
-      }
-      UnLock(lock);
-   }
-   return(size);
-}
-
-///
-/// ParseConfig
-BOOL ParseConfig(STRPTR file, struct pc_Data *pc_data)
-{
-   LONG size;
-   STRPTR buf = NULL;
-   BPTR fh;
-   BOOL success = FALSE;
-
-   if((size = get_file_size(file)) > -1)
-   {
-      if(buf = AllocVec(size, MEMF_ANY))
-      {
-         if(fh = Open(file, MODE_OLDFILE))
-         {
-            if(Read(fh, buf, size) == size)
-            {
-               success = TRUE;
-
-               pc_data->Buffer   = buf;
-               pc_data->Size     = size;
-               pc_data->Current  = buf;
-
-               pc_data->Argument = NULL;
-               pc_data->Contents = NULL;
-            }
-
-            Close(fh);
-         }
-      }
-   }
-
-   return(success);
-}
-
-///
-/// ParseNext
-BOOL ParseNext(struct pc_Data *pc_data)
-{
-   BOOL success = FALSE;
-   STRPTR ptr_eol, ptr_tmp;
-
-   if(pc_data->Current && pc_data->Current < pc_data->Buffer + pc_data->Size)
-   {
-      if(ptr_eol = strchr(pc_data->Current, '\n'))
-      {
-         *ptr_eol = NULL;
-
-         if(pc_data->Contents = strchr(pc_data->Current, 34))              /* is the content between ""'s ? */
-         {
-            pc_data->Contents++;
-            if(ptr_tmp = strchr(pc_data->Contents, 34))  /* find the ending '"' */
-               *ptr_tmp = NULL;
-
-            ptr_tmp = pc_data->Contents - 2;
-            while(((*ptr_tmp == ' ') || (*ptr_tmp == 9)) && ptr_tmp >= pc_data->Current)
-               ptr_tmp--;
-
-            ptr_tmp++;
-            *ptr_tmp = NULL;
-         }
-         else
-         {
-            pc_data->Contents = strchr(pc_data->Current, ' ');                   /* a space  */
-            ptr_tmp           = strchr(pc_data->Current, 9);                     /* or a TAB */
-
-            if((ptr_tmp < pc_data->Contents && ptr_tmp) || !pc_data->Contents)   /* which one comes first ? */
-               pc_data->Contents = ptr_tmp;
-            if(pc_data->Contents)
-            {
-               *pc_data->Contents++ = NULL;
-               while((*pc_data->Contents == ' ') || (*pc_data->Contents == 9))
-                  pc_data->Contents++;
-
-               if(ptr_tmp = strchr(pc_data->Contents, ';')) /* cut out the comment */
-                  *ptr_tmp = NULL;
-            }
-            else
-               pc_data->Contents = "";
-         }
-
-         pc_data->Argument = pc_data->Current;
-         pc_data->Current  = ptr_eol + 1;
-         success = TRUE;
-      }
-      else
-         pc_data->Current = NULL;
-   }
-   return(success);
-}
-
-///
-/// ParseEnd
-VOID ParseEnd(struct pc_Data *pc_data)
-{
-   if(pc_data->Buffer)
-      FreeVec(pc_data->Buffer);
-
-   pc_data->Buffer   = NULL;
-   pc_data->Size     = NULL;
-   pc_data->Current  = NULL;
-
-   pc_data->Argument = NULL;
-   pc_data->Contents = NULL;
 }
 
 ///
@@ -480,6 +230,429 @@ VOID EscapeString(STRPTR buffer, STRPTR str)
       len--;
    }
    buffer[offs] = '\0';
+}
+
+///
+/// DoMainMethod
+ULONG DoMainMethod(Object *obj, LONG MethodID, APTR data1, APTR data2, APTR data3)
+{
+   struct MainMessage *message, *reply_message;
+   struct MsgPort *reply_port;
+   ULONG ret = NULL;
+   BOOL finished = FALSE;
+   ULONG sig;
+
+   if(reply_port = CreateMsgPort())
+   {
+      if(message = AllocVec(sizeof(struct MainMessage), MEMF_ANY | MEMF_CLEAR))
+      {
+         message->msg.mn_ReplyPort  = reply_port;
+         message->msg.mn_Length     = sizeof(struct MainMessage);
+
+         message->obj      = obj;
+         message->MethodID = MethodID;
+         message->data1    = data1;
+         message->data2    = data2;
+         message->data3    = data3;
+
+         PutMsg(MainPort, (struct Message *)message);
+
+         while(!finished)
+         {
+            sig = Wait(1L << reply_port->mp_SigBit);  // must not be interuptable by ctrl_c because HandleMainMethod() needs the reply_port and the message to be still alive when it does a ReplyMsg()
+
+            if(sig & (1L << reply_port->mp_SigBit))
+            {
+               while(reply_message = (struct MainMessage *)GetMsg(reply_port))
+               {
+                  if(reply_message->MethodID == MUIM_Genesis_Handshake)
+                  {
+                     ret = reply_message->result;
+                     finished = TRUE;
+                  }
+               }
+            }
+         }
+         FreeVec(message);
+      }
+      DeleteMsgPort(reply_port);
+   }
+   return(ret);
+}
+
+///
+
+/// clear_list
+VOID clear_list(struct MinList *list)
+{
+   if((struct MinList *)list->mlh_TailPred != list)
+   {
+      struct MinNode *entry1, *entry2;
+
+      entry1 = (struct MinNode *)list->mlh_Head;
+      while(entry2 = entry1->mln_Succ)
+      {
+         Remove((struct Node *)entry1);
+         FreeVec(entry1);
+         entry1 = entry2;
+      }
+   }
+}
+
+///
+/// add_server
+struct ServerEntry *add_server(struct MinList *list, STRPTR name)
+{
+   struct ServerEntry *server;
+
+   if(!name || !*name || !strcmp(name, "0.0.0.0"))
+      return(NULL);
+
+   if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
+   {
+      strncpy(server->se_name, name, sizeof(server->se_name) - 1);
+      AddTail((struct List *)list, (struct Node *)server);
+   }
+   return(server);
+}
+
+///
+/// find_server_by_name
+struct ServerEntry *find_server_by_name(struct MinList *list, STRPTR name)
+{
+   struct ServerEntry *server;
+
+   if(list->mlh_TailPred != (struct MinNode *)list)
+   {
+      server = (struct ServerEntry *)list->mlh_Head;
+      while(server->se_node.mln_Succ)
+      {
+         if(!strcmp(server->se_name, name))
+            return(server);
+         server = (struct ServerEntry *)server->se_node.mln_Succ;
+      }
+   }
+   return(NULL);
+}
+
+///
+
+#define ENCODE(c) (c ? (c & 0x3F) + 0x20 : 0x60)
+/// encrypt
+VOID encrypt(STRPTR in, STRPTR out)
+{
+   LONG n, i;
+   UBYTE c;
+   STRPTR s, t;
+
+   n = strlen(in);
+   if (n > 0)
+   {
+      s = out;
+      *s++ = ENCODE(n);
+
+      for (i = 0; i < n; i += 3)
+      {
+         t = &in[i];
+
+         c = t[0] >> 2;
+         *s++ = ENCODE(c);
+         c = (t[0] << 4) & 0x30 | (t[1] >> 4) & 0x0F;
+         *s++ = ENCODE(c);
+         c = (t[1] << 2) & 0x3C | (t[2] >> 6) & 0x03;
+         *s++ = ENCODE(c);
+         c = t[2] & 0x3F;
+         *s++ = ENCODE(c);
+      }
+      *s = NULL;
+   }
+}
+
+///
+/// save_config
+BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct Config *config)
+{
+   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
+   BPTR fh;
+   STRPTR ptr;
+   char buff[110];
+
+   if(!isp)
+      return(FALSE);
+
+   if(fh = Open(file, MODE_READWRITE))
+   {
+      Seek(fh, 0, OFFSET_END);
+      FPrintf(fh, "## This config was generated by Genesis Wizard\n##\n\n");
+
+      FPrintf(fh, "SerialDevice    %ls\n", config->cnf_serialdevice);
+      FPrintf(fh, "SerialUnit      %ls\n", config->cnf_serialunit);
+      FPrintf(fh, "BaudRate        38400\n");
+      FPrintf(fh, "SerBufLen       16384\n\n");
+
+      FPrintf(fh, "Modem           %ls\n", config->cnf_modemname);
+      FPrintf(fh, "InitString      %ls\n", config->cnf_initstring);
+      FPrintf(fh, "DialPrefix      %ls\n", config->cnf_dialprefix);
+      FPrintf(fh, "RedialAttempts  10\n");
+      FPrintf(fh, "RedialDelay     5\n\n");
+      FPrintf(fh, "IgnoreDSR       %ls\n", (config->cnf_flags & CFL_IgnoreDSR ? "yes" : "no"));
+      FPrintf(fh, "7Wire           yes\n");
+      FPrintf(fh, "RadBoogie       no\n");
+
+      FPrintf(fh, "## User, isp and interface configuration\n##\n\n");
+
+      FPrintf(fh, "\nISP\n");
+      FPrintf(fh, "Name            %ls\n", isp->isp_name);
+      if(*isp->isp_comment)
+         FPrintf(fh, "Comment         %ls\n", isp->isp_comment);
+      if(*isp->isp_login)
+         FPrintf(fh, "Login           %ls\n", isp->isp_login);
+      if(*isp->isp_password)
+      {
+         encrypt(isp->isp_password, buff);
+         FPrintf(fh, "Password        \"%ls\"\n", buff);
+      }
+      if(*isp->isp_phonenumber)
+         FPrintf(fh, "Phone           %ls\n", isp->isp_phonenumber);
+      if(*isp->isp_organisation)
+         FPrintf(fh, "Organisation    %ls\n", isp->isp_organisation);
+
+      if(*isp->isp_bootp)
+         FPrintf(fh, "BOOTPServer     %ls\n", isp->isp_bootp);
+      if(isp->isp_flags & ISF_UseBootp)
+         FPrintf(fh, "UseBOOTP           yes\n");
+      if(isp->isp_flags & ISF_DontQueryHostname)
+         FPrintf(fh, "DontQueryHostname  yes\n");
+
+if(*isp->isp_hostname)
+   FPrintf(fh, "HostName        %ls\n", isp->isp_hostname);
+
+      if(isp->isp_nameservers.mlh_TailPred != (struct MinNode *)&isp->isp_nameservers)
+      {
+         struct ServerEntry *server;
+
+         server = (struct ServerEntry *)isp->isp_nameservers.mlh_Head;
+         while(server->se_node.mln_Succ)
+         {
+            FPrintf(fh, "NameServer         %ls\n", server->se_name);
+            server = (struct ServerEntry *)server->se_node.mln_Succ;
+         }
+      }
+      if(isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&isp->isp_domainnames)
+      {
+         struct ServerEntry *server;
+
+         server = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
+         while(server->se_node.mln_Succ)
+         {
+            FPrintf(fh, "DomainName         %ls\n", server->se_name);
+            server = (struct ServerEntry *)server->se_node.mln_Succ;
+         }
+      }
+
+      // interfaces (only one => don't use ISP's list)
+
+      FPrintf(fh, "\nINTERFACE\n");
+      FPrintf(fh, "IfName          %ls\n", iface->if_name);
+      FPrintf(fh, "Sana2Device     %ls\n", iface->if_sana2device);
+      FPrintf(fh, "Sana2Config     %ls\n", iface->if_sana2config);
+
+      if(iface->if_flags & IFL_PPP)
+      {
+         FPrintf(fh, "Sana2ConfigText    sername %ls\\nserunit %ld\\nserbaud 38400\\nlocalipaddress %%a\\ncd yes\\n", config->cnf_serialdevice, config->cnf_serialunit);
+         if(*isp->isp_login)
+            FPrintf(fh, "user %%u\\n");
+         if(*isp->isp_password)
+            FPrintf(fh, "secret %%p\\n");
+         FPrintf(fh, "\n");
+         FPrintf(fh, "DefaultPPP\n");
+      }
+      else if(iface->if_flags & IFL_SLIP)
+      {
+         FPrintf(fh, "Sana2ConfigText    %ls %ld %ld Shared %%a MTU=%ld CD",
+            config->cnf_serialdevice, config->cnf_serialunit, iface->if_MTU);
+         if(config->cnf_flags & CFL_7Wire)
+            FPrintf(fh, " 7Wire");
+         FPrintf(fh, "\n");
+         FPrintf(fh, "DefaultSLIP\n");
+      }
+      else if(iface->if_sana2configtext && *iface->if_sana2configtext)
+      {
+         FPrintf(fh, "Sana2ConfigText    ");
+
+         ptr = iface->if_sana2configtext;
+         while(*ptr)
+         {
+            if(*ptr == '\n')
+               FPrintf(fh, "\\n");
+            else
+               FPrintf(fh, "%lc", *ptr);
+            ptr++;
+         }
+         FPrintf(fh, "\n");
+      }
+      if(iface->if_configparams && *iface->if_configparams)
+         FPrintf(fh, "IfConfigParams  %ls\n", iface->if_configparams);
+      FPrintf(fh, "MTU             %ld\n", iface->if_MTU);
+      FPrintf(fh, "CarrierDetect   yes\n");
+if(*iface->if_addr)
+   FPrintf(fh, "IPAddr          %ls\n", iface->if_addr);
+if(*iface->if_dst)
+   FPrintf(fh, "DestIP          %ls\n", iface->if_dst);
+if(*iface->if_gateway)
+   FPrintf(fh, "Gateway         %ls\n", iface->if_gateway);
+if(*iface->if_netmask)
+   FPrintf(fh, "Netmask         %ls\n", iface->if_netmask);
+
+      if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
+      {
+         struct ScriptLine *script_line;
+
+         FPrintf(fh, "\nLOGINSCRIPT\n");
+         script_line = (struct ScriptLine *)isp->isp_loginscript.mlh_Head;
+         while(script_line->sl_node.mln_Succ)
+         {
+            if(*script_line->sl_contents)
+               FPrintf(fh, "%ls \"%ls\"\n", script_commands[script_line->sl_command], script_line->sl_contents);
+            else
+               FPrintf(fh, "%ls\n", script_commands[script_line->sl_command]);
+            script_line = (struct ScriptLine *)script_line->sl_node.mln_Succ;
+         }
+      }
+
+      FPrintf(fh, "\nUSER\n");
+      if(*isp->isp_login)
+         FPrintf(fh, "Name         %ls\n", isp->isp_login);
+      FPrintf(fh, "RealName     Genesis Wizard\n");
+      Close(fh);
+   }
+   else
+      return(FALSE);
+
+   return(TRUE);
+}
+
+///
+/// print_config
+VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Config *config)
+{
+   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
+
+   FPrintf(fh, GetStr(MSG_TX_InfoTitle));
+
+   FPrintf(fh, "%ls %ls, unit %ld (38'400 baud)\n\n", GetStr(MSG_LA_Device), config->cnf_serialdevice, config->cnf_serialunit);
+
+   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_Modem), config->cnf_modemname);
+   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_InitString), config->cnf_initstring);
+   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_DialPrefix), config->cnf_dialprefix);
+
+   FPrintf(fh, "%ls %ls\n\n", GetStr(MSG_LA_Phone), isp->isp_phonenumber);
+
+   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_LoginName), isp->isp_login);
+
+   FPrintf(fh, "%ls %ls\n\n\n", GetStr(MSG_LA_Protocol), iface->if_name);
+
+   if(addr_assign = CNF_Assign_Static)
+      FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_IPAddress), iface->if_addr);
+   else
+      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_IPAddress), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (addr_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
+   if(dst_assign = CNF_Assign_Static)
+      FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_RemoteIPAddress), iface->if_dst);
+   else
+      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_RemoteIPAddress), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (dst_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
+   FPrintf(fh, "%ls %ls\n\n", GetStr(MSG_LA_Netmask), iface->if_netmask);
+
+/*
+   FPrintf(fh, "%ls %ls (%ls %ls)\n\n", GetStr(MSG_LA_DomainName), isp->isp_domainname, GetStr(MSG_TX_ObtainedBy), (domainname_assign == CNF_Assign_BootP ? "BOOTP" : "DNSQuery"));
+
+   if(dns_assign == CNF_Assign_Root)
+   {
+      FPrintf(fh, "%ls %ls (Root DNS)\n", GetStr(MSG_LA_DNS1IPAddr), isp->isp_dns1);
+      FPrintf(fh, "%ls %ls (Root DNS)\n", GetStr(MSG_LA_DNS2IPAddr), isp->isp_dns2);
+   }
+   else
+   {
+      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNS1IPAddr), isp->isp_dns1, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
+      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNS2IPAddr), isp->isp_dns2, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
+   }
+*/
+
+   if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
+   {
+      struct ScriptLine *script_line;
+
+      FPrintf(fh, "\n\n%ls\n\n", GetStr(MSG_LA_LoginScript));
+      script_line = (struct ScriptLine *)isp->isp_loginscript.mlh_Head;
+      while(script_line->sl_node.mln_Succ)
+      {
+         if(*script_line->sl_contents)
+            FPrintf(fh, "%ls \"%ls\"\n", script_commands[script_line->sl_command], script_line->sl_contents);
+         else
+            FPrintf(fh, "%ls\n", script_commands[script_line->sl_command]);
+         script_line = (struct ScriptLine *)script_line->sl_node.mln_Succ;
+      }
+   }
+}
+
+///
+/// run_async
+BOOL run_async(STRPTR file)
+{
+   BPTR ofh = NULL, ifh = NULL;
+   BOOL success = FALSE;
+
+   if(ofh = Open("NIL:", MODE_NEWFILE))
+   {
+      if(ifh = Open("NIL:", MODE_OLDFILE))
+      {
+         if(SystemTags(file,
+            SYS_Output     , ofh,
+            SYS_Input      , ifh,
+            SYS_Asynch     , TRUE,
+            SYS_UserShell  , TRUE,
+            NP_StackSize   , 8192,
+            TAG_DONE) != -1)
+               success = TRUE;
+
+         if(!success)
+            Close(ifh);
+      }
+      if(!success)
+         Close(ofh);
+   }
+   return(success);
+}
+
+///
+/// launch_amitcp
+BOOL launch_amitcp(VOID)
+{
+   int i;
+
+   if(!FindPort((STRPTR)AmiTCP_PortName))
+      run_async("AmiTCP:kernel/AmiTCP");
+
+   /* wait until AmiTCP is running */
+   i = 0;
+   while(!FindPort((STRPTR)AmiTCP_PortName) && i++ < 30)
+      Delay(25);
+
+   if(FindPort((STRPTR)AmiTCP_PortName))
+      return(TRUE);
+
+   return(FALSE);
+}
+
+///
+/// syslog_AmiTCP
+VOID syslog_AmiTCP(ULONG level, const STRPTR format, ...)
+{
+   va_list va;
+
+   va_start(va, format);
+   if(SocketBase)
+      vsyslog(level, format, (LONG *)va);
+   va_end(va);
 }
 
 ///
@@ -597,241 +770,147 @@ BOOL have_ppp_frame(UBYTE *data, ULONG count)
    return(have_frame);
 }
 ///
-/// save_config
-BOOL save_config(STRPTR file)
+/// amirexx_do_command
+LONG amirexx_do_command(const char *fmt, ...)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-   BPTR fh;
-   LONG pos;
-   STRPTR ptr;
+   char buf[256];
+   struct MsgPort *port; /* our reply port */
+   struct MsgPort *AmiTCP_Port;
+   struct RexxMsg *rmsg;
+   LONG rc = 20;         /* fail */
 
-   if(fh = Open(file, MODE_NEWFILE))
+   vsprintf(buf, fmt, (va_list)(&fmt + (va_list)1));
+   if(port = CreateMsgPort())
    {
-      FPrintf(fh, "# GENESiS configuration file\n# Created by GENESiS Wizard, © 1997 Michael Neuweiler\n\n");
-
-      FPrintf(fh, "LoginName        \"%ls\"\n", Config.cnf_loginname);
-      FPrintf(fh, "Password         \"%ls\"\n", Config.cnf_password);
-
-      FPrintf(fh, "Phone            \"%ls\"\n\n", Config.cnf_phonenumber);
-
-      FPrintf(fh, "SerialDevice     \"%ls\"\n", Config.cnf_serialdevice);
-      FPrintf(fh, "SerialUnit       %ld\n", Config.cnf_serialunit);
-      FPrintf(fh, "BaudRate         38400\n");
-      FPrintf(fh, "CarrierDetect    1\n");
-      FPrintf(fh, "7Wire            1\n");
-      FPrintf(fh, "SerBufLen        16384\n\n");
-
-      FPrintf(fh, "Modem            \"%ls\"\n", Config.cnf_modemname);
-      FPrintf(fh, "InitString       \"%ls\"\n", Config.cnf_initstring);
-      FPrintf(fh, "DialPrefix       \"%ls\"\n", Config.cnf_dialprefix);
-      FPrintf(fh, "RedialAttempts   10\n");
-      FPrintf(fh, "RedialDelay      5\n");
-
-      FPrintf(fh, "Sana2Device      \"%ls\"\n", Config.cnf_sana2device);
-      FPrintf(fh, "Sana2Unit        %ld\n", Config.cnf_sana2unit);
-      FPrintf(fh, "Sana2Config      \"%ls\"\n", Config.cnf_sana2config);
-      if(strchr(Config.cnf_sana2configtext, '\n'))
+      port->mp_Node.ln_Name = "BOOTPCONFIG";
+      if(rmsg = CreateRexxMsg(port, NULL, (STRPTR)AmiTCP_PortName))
       {
-         STRPTR ptr2;
-
-         FPrintf(fh, "Sana2ConfigText ");
-
-         ptr = Config.cnf_sana2configtext;   // this will alter cnf_sana2configtext, but who cares ? prg will be terminated anyway
-         FOREVER
+         rmsg->rm_Action = RXCOMM;
+         rmsg->rm_Args[0] = (STRPTR)buf;
+         if(FillRexxMsg(rmsg, 1, 0))
          {
-            if(ptr2 = strchr(ptr, '\n'))
-               *ptr2 = NULL;
-            FPrintf(fh, "%ls", ptr);
-            if(ptr2)
-               FPrintf(fh, "\\n");
+            Forbid();
+            if(AmiTCP_Port = FindPort((STRPTR)AmiTCP_PortName))
+            {
+               PutMsg(AmiTCP_Port, (struct Message *)rmsg);
+               Permit();
+               do
+               {
+                  WaitPort(port);
+               } while(GetMsg(port) != (struct Message *)rmsg);
+               rc = rmsg->rm_Result1;
+            }
             else
-               break;
-            ptr = ptr2 + 1;
+               Permit();
+
+            ClearRexxMsg(rmsg, 1);
          }
-         FPrintf(fh, "\n");
+         DeleteRexxMsg(rmsg);
       }
-      else
-         FPrintf(fh, "Sana2ConfigText  \"%ls\"\n", Config.cnf_sana2configtext);
-      FPrintf(fh, "Interface        %ls\n", Config.cnf_ifname);
-      FPrintf(fh, "UseBootP         %ld\n", ((addr_assign == CNF_Assign_BootP || dns_assign == CNF_Assign_BootP || dst_assign == CNF_Assign_BootP) ? 1 : 0));
-      FPrintf(fh, "MTU              %ld\n", Config.cnf_MTU);
-      if(addr_assign == CNF_Assign_Static)
-      {
-         FPrintf(fh, "IPAddr           %ls\n", ip);
-         if(*Config.cnf_hostname)
-            FPrintf(fh, "HostName         %ls\n", Config.cnf_hostname);
-      }
-      if(*Config.cnf_domainname)
-         FPrintf(fh, "DomainName       %ls\n", Config.cnf_domainname);
-      if(Config.cnf_dns1 != INADDR_ANY)
-         FPrintf(fh, "NameServer       %ls\n", dns1);
-      if(Config.cnf_dns2 != INADDR_ANY)
-         FPrintf(fh, "NameServer       %ls\n\n", dns2);
-
-      FPrintf(fh, "LoginScript\n");
-      pos = 0;
-      FOREVER
-      {
-         DoMethod(li_script, MUIM_List_GetEntry, pos++, &ptr);
-         if(!ptr)
-            break;
-         FPrintf(fh, "%ls\n", ptr);
-      }
-      FPrintf(fh, "EOS\n");
-
-      Close(fh);
-
-      return(TRUE);
+      DeleteMsgPort(port);
    }
-   return(FALSE);
+   return(rc);
 }
 
 ///
-/// print_config
-VOID print_config(BPTR fh)
+
+/// strobjfunc
+SAVEDS LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-   STRPTR ptr;
-   LONG pos;
-
-   FPrintf(fh, GetStr(MSG_TX_InfoTitle));
-
-   FPrintf(fh, "%ls %ls, unit %ld (38'400 baud)\n\n", GetStr(MSG_LA_Device), Config.cnf_serialdevice, Config.cnf_serialunit);
-
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_Modem), Config.cnf_modemname);
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_InitString), Config.cnf_initstring);
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_DialPrefix), Config.cnf_dialprefix);
-
-   FPrintf(fh, "%ls %ls\n\n", GetStr(MSG_LA_Phone), Config.cnf_phonenumber);
-
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_LoginName), Config.cnf_loginname);
-   FPrintf(fh, "%ls ------\n\n", GetStr(MSG_LA_Password));
-
-   FPrintf(fh, "%ls %ls\n\n\n", GetStr(MSG_LA_Protocol), Config.cnf_ifname);
-
-   if(addr_assign = CNF_Assign_Static)
-      FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_IPAddress), ip);
-   else
-      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_IPAddress), ip, GetStr(MSG_TX_ObtainedBy), (addr_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
-   FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_RemoteIPAddress), dest, GetStr(MSG_TX_ObtainedBy), (dst_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
-   FPrintf(fh, "%ls %ls\n\n", GetStr(MSG_LA_Netmask), mask);
-
-   FPrintf(fh, "%ls %ls (%ls %ls)\n\n", GetStr(MSG_LA_DomainName), Config.cnf_domainname, GetStr(MSG_TX_ObtainedBy), (domainname_assign == CNF_Assign_BootP ? "BOOTP" : "DNSQuery"));
-
-   if(dns_assign == CNF_Assign_Root)
-   {
-      FPrintf(fh, "%ls %ls (Root DNS)\n", GetStr(MSG_LA_DNS1IPAddr), dns1);
-      FPrintf(fh, "%ls %ls (Root DNS)\n", GetStr(MSG_LA_DNS2IPAddr), dns2);
-   }
-   else
-   {
-      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNS1IPAddr), dns1, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
-      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNS2IPAddr), dns2, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
-   }
-
-   FPrintf(fh, "\n\n%ls\n\n", GetStr(MSG_LA_LoginScript));
-   pos = 0;
-   FOREVER
-   {
-      DoMethod(li_script, MUIM_List_GetEntry, pos++, &ptr);
-      if(!ptr)
-         break;
-      FPrintf(fh, "%ls\n", ptr);
-   }
-}
-
-///
-/// launch_async
-BOOL launch_async(STRPTR cmd)
-{
-   BPTR ifh, ofh;
-
-   if(ofh = Open("NIL:", MODE_OLDFILE))
-   {
-      if(ifh = Open("NIL:", MODE_OLDFILE))
-      {
-         if(SystemTags(cmd,
-            SYS_Output,     ofh,
-            SYS_Input,      ifh,
-            SYS_Asynch,     TRUE,
-            SYS_UserShell,  TRUE,
-            NP_StackSize,   8192,
-            TAG_DONE) != -1)
-            return(TRUE);
-
-         Close(ifh);
-      }
-      Close(ofh);
-   }
-   return(FALSE);
-}
-
-///
-/// launch_amitcp
-BOOL launch_amitcp(VOID)
-{
+   char *x, *s;
    int i;
 
-   if(!FindPort((STRPTR)AmiTCP_PortName))
-      launch_async("AmiTCP:bin/AmiTCP.kernel");
+   get(str, MUIA_String_Contents, &s);
 
-   /* wait until AmiTCP is running */
    i = 0;
-   while(!FindPort((STRPTR)AmiTCP_PortName) && i++ < 20)
-      Delay(25);
+   FOREVER
+   {
+      DoMethod(list, MUIM_List_GetEntry, i, &x);
+      if(!x)
+      {
+         nnset(list, MUIA_List_Active, MUIV_List_Active_Off);
+         break;
+      }
+      else
+      {
+         if(!stricmp(x, s))
+         {
+            nnset(list, MUIA_List_Active, i);
+            break;
+         }
+      }
 
-   if(FindPort((STRPTR)AmiTCP_PortName))
-      return(TRUE);
-
-   return(FALSE);
+      i++;
+   }
+   return(TRUE);
 }
 
 ///
-/// DoMainMethod
-ULONG DoMainMethod(Object *obj, LONG MethodID, APTR data1, APTR data2, APTR data3)
+/// txtobjfunc
+SAVEDS LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt)
 {
-   struct MainMessage *message, *reply_message;
-   struct MsgPort *reply_port;
-   ULONG ret = NULL;
-   BOOL finished = FALSE;
-   ULONG sig;
+   char *x, *s;
+   int i;
 
-   if(reply_port = CreateMsgPort())
+   get(txt, MUIA_Text_Contents, &s);
+   i = 0;
+   FOREVER
    {
-      if(message = AllocVec(sizeof(struct MainMessage), MEMF_ANY | MEMF_CLEAR))
+      DoMethod(list, MUIM_List_GetEntry, i, &x);
+      if(!x)
       {
-         message->msg.mn_ReplyPort  = reply_port;
-         message->msg.mn_Length     = sizeof(struct MainMessage);
-
-         message->obj      = obj;
-         message->MethodID = MethodID;
-         message->data1    = data1;
-         message->data2    = data2;
-         message->data3    = data3;
-
-         PutMsg(MainPort, (struct Message *)message);
-
-         while(!finished)
-         {
-            sig = Wait(1L << reply_port->mp_SigBit);  // must not be interuptable by ctrl_c because HandleMainMethod() needs the reply_port and the message to be still alive when it does a ReplyMsg()
-
-            if(sig & (1L << reply_port->mp_SigBit))
-            {
-               while(reply_message = (struct MainMessage *)GetMsg(reply_port))
-               {
-                  if(reply_message->MethodID == MUIM_Genesis_Handshake)
-                  {
-                     ret = reply_message->result;
-                     finished = TRUE;
-                  }
-               }
-            }
-         }
-         FreeVec(message);
+         nnset(list, MUIA_List_Active, MUIV_List_Active_Off);
+         break;
       }
-      DeleteMsgPort(reply_port);
+      else
+      {
+         if(!stricmp(x, s))
+         {
+            nnset(list, MUIA_List_Active, i);
+            break;
+         }
+      }
+
+      i++;
    }
-   return(ret);
+   return(TRUE);
+}
+
+///
+/// objstrfunc
+VOID SAVEDS objstrfunc(register __a2 Object *list,register __a1 Object *str)
+{
+   char *x;
+
+   DoMethod(list, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
+   if(x)
+      set(str, MUIA_String_Contents, x);
+}
+
+///
+/// objtxtfunc
+VOID SAVEDS objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
+{
+   char *x;
+
+   DoMethod(list, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
+   if(x)
+      set(txt, MUIA_Text_Contents, x);
+}
+
+///
+/// desfunc
+VOID SAVEDS desfunc(register __a2 APTR pool, register __a1 APTR *entry)
+{
+   if(entry)
+      FreeVec(entry);
+}
+
+///
+/// sortfunc
+SAVEDS LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
+{
+   return(stricmp(str1, str2));
 }
 
 ///

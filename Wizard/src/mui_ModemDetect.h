@@ -1,5 +1,5 @@
 #define MUIM_ModemDetect_FindModem              (TAGBASE_WIZARD | 0x10b0)
-#define MUIM_ModemDetect_Abort                  (TAGBASE_WIZARD | 0x10b1)
+
 
 struct ModemDetect_Data
 {

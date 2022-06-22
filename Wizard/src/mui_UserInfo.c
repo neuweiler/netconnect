@@ -14,8 +14,9 @@
 /// external variables
 extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct config Config;
+extern struct Config Config;
 extern BOOL no_picture;
+extern struct ISP ISP;
 
 extern ULONG setup_page3_colors[];
 extern UBYTE setup_page3_body[];
@@ -35,11 +36,11 @@ ULONG UserInfo_AddPhone(struct IClass *cl, Object *obj, struct MUIP_UserInfo_Add
       {
          if(*ptr)
          {
-            strcpy(Config.cnf_phonenumber, (STRPTR)xget(data->STR_PhoneNumber, MUIA_String_Contents));
-            if(*Config.cnf_phonenumber)
-               strncat(Config.cnf_phonenumber, " | ", sizeof(Config.cnf_phonenumber));
-            strncat(Config.cnf_phonenumber, ptr, sizeof(Config.cnf_phonenumber));
-            set(data->STR_PhoneNumber, MUIA_String_Contents, Config.cnf_phonenumber);
+            strcpy(ISP.isp_phonenumber, (STRPTR)xget(data->STR_PhoneNumber, MUIA_String_Contents));
+            if(*ISP.isp_phonenumber)
+               strncat(ISP.isp_phonenumber, " | ", sizeof(ISP.isp_phonenumber));
+            strncat(ISP.isp_phonenumber, ptr, sizeof(ISP.isp_phonenumber));
+            set(data->STR_PhoneNumber, MUIA_String_Contents, ISP.isp_phonenumber);
          }
       }
    }
@@ -80,16 +81,15 @@ ULONG UserInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
          MUIA_Background, MUII_TextBack,
          Child, HVSpace,
          Child, MakeText(GetStr(MSG_TX_InfoLoginName)),
-         Child, tmp.STR_LoginName = MakeString(Config.cnf_loginname, 80),
+         Child, tmp.STR_LoginName = MakeString(ISP.isp_login, 80),
          Child, HVSpace,
          Child, MakeText(GetStr(MSG_TX_InfoPassword)),
          Child, tmp.STR_Password = StringObject,
             MUIA_CycleChain      , 1,
             MUIA_Frame           , MUIV_Frame_String,
             MUIA_String_Secret   , TRUE,
-//            MUIA_Textinput_Multiline, FALSE,
             MUIA_String_MaxLen   , 80,
-            MUIA_String_Contents , Config.cnf_password,
+            MUIA_String_Contents , ISP.isp_password,
          End,
          Child, HVSpace,
          Child, MakeText(GetStr(MSG_TX_InfoPhoneNumber)),
@@ -98,9 +98,8 @@ ULONG UserInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
                MUIA_CycleChain      , 1,
                StringFrame,
                MUIA_String_MaxLen   , 80,
-               MUIA_String_Contents , Config.cnf_phonenumber,
+               MUIA_String_Contents , ISP.isp_phonenumber,
                MUIA_String_Accept, "1234567890 |",
-//               MUIA_Textinput_Multiline, FALSE,
             End,
             MUIA_Popstring_Button      , PopButton(MUII_PopUp),
             MUIA_Popobject_Object      , VGroup,

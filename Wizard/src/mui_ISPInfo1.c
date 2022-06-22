@@ -4,20 +4,19 @@
 
 #include "Strings.h"
 #include "/Genesis.h"
-#include "mui_ISPInfo.h"
+#include "mui_ISPInfo1.h"
 #include "mui_MainWindow.h"
 #include "protos.h"
 
 #include "images/setup_page4.h"
 ///
-
 /// external variables
 extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct config Config;
-extern char ip[];
+extern struct Config Config;
 extern BOOL use_loginscript, no_picture;
 extern int addr_assign;
+extern struct Interface Iface;
 
 extern ULONG setup_page4_colors[];
 extern struct BitMapHeader setup_page4_header[];
@@ -25,10 +24,10 @@ extern UBYTE setup_page4_body[];
 
 ///
 
-/// ISPInfo_New
-ULONG ISPInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
+/// ISPInfo1_New
+ULONG ISPInfo1_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
-   struct ISPInfo_Data tmp;
+   struct ISPInfo1_Data tmp;
    static STRPTR ARR_CY_Protocol[3], ARR_CY_IPAddress[3], ARR_CY_Script[3];
 
    ARR_CY_Protocol[0] = "ppp";
@@ -73,9 +72,8 @@ ULONG ISPInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
                MUIA_CycleChain      , 1,
                StringFrame,
                MUIA_String_MaxLen   , 20,
-               MUIA_String_Contents , ip,
+               MUIA_String_Contents , Iface.if_addr,
                MUIA_String_Accept, "1234567890.",
-//               MUIA_Textinput_Multiline, FALSE,
             End,
          End,
          Child, HVSpace,
@@ -88,7 +86,7 @@ ULONG ISPInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
       End,
       TAG_MORE, msg->ops_AttrList))
    {
-      struct ISPInfo_Data *data = INST_DATA(cl, obj);
+      struct ISPInfo1_Data *data = INST_DATA(cl, obj);
       struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
 
       *data = tmp;
@@ -97,8 +95,8 @@ ULONG ISPInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->CY_IPAddress, MUIA_CycleChain, 1);
       set(data->CY_Protocol , MUIA_CycleChain, 1);
       set(data->CY_Script   , MUIA_CycleChain, 1);
-      set(data->CY_IPAddress, MUIA_Cycle_Active, ((strcmp(ip, "0.0.0.0") && *ip && addr_assign == CNF_Assign_Static) ? 1 : 0));
-      set(data->CY_Protocol , MUIA_Cycle_Active, (strcmp(Config.cnf_ifname, "ppp") ? 1 : 0));
+      set(data->CY_IPAddress, MUIA_Cycle_Active, (addr_assign == CNF_Assign_Static ? 1 : 0));
+      set(data->CY_Protocol , MUIA_Cycle_Active, (strcmp(Iface.if_name, "slip") ? 0 : 1));
       set(data->CY_Script   , MUIA_Cycle_Active, (use_loginscript ? 0 : 1));
       set(data->STR_IPAddress, MUIA_Disabled, !xget(data->CY_IPAddress, MUIA_Cycle_Active));
 
@@ -114,11 +112,11 @@ ULONG ISPInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
 }
 
 ///
-/// ISPInfo_Dispatcher
-SAVEDS ULONG ISPInfo_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+/// ISPInfo1_Dispatcher
+SAVEDS ULONG ISPInfo1_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    if(msg->MethodID == OM_NEW)
-      return(ISPInfo_New         (cl, obj, (APTR)msg));
+      return(ISPInfo1_New         (cl, obj, (APTR)msg));
 
    return(DoSuperMethodA(cl, obj, msg));
 }

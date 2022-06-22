@@ -10,20 +10,21 @@
 #include "mui_ModemDetect.h"
 #include "protos.h"
 ///
-
-#define SIG_SER   (1L << SerReadPort->mp_SigBit)
-
 /// external variables
 extern struct   IOExtSer       *SerReadReq;
 extern struct   MsgPort        *SerReadPort;
+extern struct MsgPort *MainPort;
 extern char serial_in[], serial_buffer[];
 extern WORD ser_buf_pos;
-extern struct config Config;
+extern struct Config Config;
 extern Object *app;
 extern Object *win, *status_win;
 extern struct MUI_CustomClass  *CL_MainWindow;
 extern struct MUI_CustomClass  *CL_ModemDetect;
 ///
+
+#define SIG_SER   (1L << SerReadPort->mp_SigBit)
+
 
 /// serial devices
 
@@ -164,7 +165,6 @@ VOID SAVEDS ModemHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
       goto abort;
 
    // find device
-
    found_modem = FALSE;
    device_nr = 0;
    while(dev_list[device_nr] && !found_modem && !data->abort)
@@ -175,17 +175,26 @@ VOID SAVEDS ModemHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
          if(serial_create(dev_list[device_nr], unit_nr))
          {
             Delay(10);  // to allow the modem to wake up .. (don't remove this !!)
-            serial_send("\r", -1);
-            Delay(10);
-            serial_clear();
-            serial_send("AAT\r", -1);
 
-            if(data->abort)   goto abort;
+            if(serial_dsr())
+            {
+               if(data->abort)   goto abort;
+               serial_send("\r", -1);
+               Delay(10);
+               if(data->abort)   goto abort;
+               serial_clear();
+               if(data->abort)   goto abort;
+               serial_send("AAT\r", -1);
 
-            if(!(waitfor(data, "OK", 0, 25)))
-               serial_delete();
+               if(data->abort)   goto abort;
+
+               if(!(waitfor(data, "OK", 0, 25)))
+                  serial_delete();
+               else
+                  found_modem = TRUE;
+            }
             else
-               found_modem = TRUE;
+               serial_delete();
          }
          if(!found_modem)
             unit_nr++;
@@ -197,12 +206,10 @@ VOID SAVEDS ModemHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
    if(data->abort)   goto abort;
 
    if(!found_modem)
-   {
-      DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_ModemNotFound), NULL);
       goto abort;
-   }
 
    sprintf(buffer, GetStr(MSG_TX_FoundModem), dev_list[device_nr], unit_nr);
+   if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buffer, NULL);
    strncpy(Config.cnf_serialdevice, dev_list[device_nr], sizeof(Config.cnf_serialdevice));
    Config.cnf_serialunit = unit_nr;
@@ -217,7 +224,9 @@ VOID SAVEDS ModemHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
    {
       serial_clear();
       sprintf(buffer, "ATI%ld\r", ati_nr);
+      if(data->abort)   goto abort;
       serial_send(buffer, -1);
+      if(data->abort)   goto abort;
       waitfor(data, NULL, 0, 25);
 
       strncpy(ATI[ati_nr], serial_buffer, 80);
@@ -253,14 +262,18 @@ VOID SAVEDS ModemHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
    if(!found_type)
    {
       serial_clear();
+      if(data->abort)   goto abort;
       serial_send("AT#MFR?\r", -1);
+      if(data->abort)   goto abort;
       waitfor(data, NULL, 0, 25);
       strncpy(MFR, serial_buffer, 80);
 
       if(data->abort)   goto abort;
 
       serial_clear();
+      if(data->abort)   goto abort;
       serial_send("AT+FMI?\r", -1);
+      if(data->abort)   goto abort;
       waitfor(data, NULL, 0, 25);
       strncpy(FMI, serial_buffer, 80);
 
@@ -313,11 +326,12 @@ VOID SAVEDS ModemHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
 
    if(found_type)
       strncpy(Config.cnf_modemname, modem_detect[pos].ModemName, sizeof(Config.cnf_modemname));
-   else
-      DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_UnknownModemType), NULL);
 
 abort:
 
+// **********************************************************************
+// NO DoMainMethod() beyond this point !! other wise abort will block !!!
+// **********************************************************************
    if(data->time_req)
    {
       CloseDevice((struct IORequest *)data->time_req);
@@ -330,12 +344,12 @@ abort:
 
 mw_data->Page = 2;
 //   mw_data->Page++;
-   DoMainMethod(win, MUIM_MainWindow_SetPage, NULL, NULL, NULL);
+   DoMethod(app, MUIM_Application_PushMethod, win, 1, MUIM_MainWindow_SetPage);
 
    Forbid();
    data->Handler = NULL;
-   DoMethod(app, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, status_win);
-   status_win = NULL;
+   if(!data->abort)
+      DoMethod(app, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, status_win);
 }
 
 ///
@@ -362,22 +376,26 @@ NP_Output, Open("CON:0/0/200/100/GenesisWizard modemdetect/AUTO/WAIT/CLOSE", MOD
    return(FALSE);
 }
 ///
-/// ModemDetect_Abort
-ULONG ModemDetect_Abort(struct IClass *cl, Object *obj, Msg msg)
+
+/// ModemDetect_Dispose
+ULONG ModemDetect_Dispose(struct IClass *cl, Object *obj, Msg msg)
 {
    struct ModemDetect_Data *data = INST_DATA(cl, obj);
 
    data->abort = TRUE;
-   Forbid();
-   if(data->Handler)
-      Signal((struct Task *)data->Handler, SIGBREAKF_CTRL_C);
-   Permit();
-
-   return(NULL);
+   while(data->Handler)
+   {
+      Forbid();
+      if(data->Handler)
+         Signal((struct Task *)data->Handler, SIGBREAKF_CTRL_C);
+      Permit();
+      HandleMainMethod(MainPort);
+      Delay(20);
+   }
+   return(DoSuperMethodA(cl, obj, msg));
 }
 
 ///
-
 /// ModemDetect_New
 ULONG ModemDetect_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
@@ -408,7 +426,7 @@ ULONG ModemDetect_New(struct IClass *cl, Object *obj, struct opSet *msg)
       data->abort       = FALSE;
       ser_buf_pos       = 0;
 
-      DoMethod(data->BT_Abort, MUIM_Notify, MUIA_Pressed, FALSE, obj, 1, MUIM_ModemDetect_Abort);
+      DoMethod(data->BT_Abort    , MUIM_Notify, MUIA_Pressed   , FALSE,          MUIV_Notify_Application, 5, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, obj);
    }
    return((ULONG)obj);
 }
@@ -420,8 +438,8 @@ SAVEDS ULONG ModemDetect_Dispatcher(register __a0 struct IClass *cl, register __
    switch((ULONG)msg->MethodID)
    {
       case OM_NEW                      : return(ModemDetect_New         (cl, obj, (APTR)msg));
+      case OM_DISPOSE                  : return(ModemDetect_Dispose     (cl, obj, (APTR)msg));
       case MUIM_ModemDetect_FindModem  : return(ModemDetect_FindModem   (cl, obj, (APTR)msg));
-      case MUIM_ModemDetect_Abort      : return(ModemDetect_Abort       (cl, obj, (APTR)msg));
    }
 
    return(DoSuperMethodA(cl, obj, msg));

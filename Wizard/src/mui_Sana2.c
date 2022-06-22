@@ -10,11 +10,10 @@
 
 #include "images/setup_page7.h"
 ///
-
 /// external variables
 extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct config Config;
+extern struct Config Config;
 extern BOOL no_picture;
 
 extern ULONG setup_page7_colors[];

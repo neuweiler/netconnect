@@ -27,9 +27,9 @@ struct bootpc {
 
 struct bootpc *bootpc_create(void);
 void bootpc_delete(struct bootpc *);
-int bootpc_do(struct bootpc *bpc, struct iface *ifc, struct config *conf);
+int bootpc_do(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp);
 int bootpc_send(struct bootpc *bpc, int fd, struct sockaddr_in * to);
-int bootpc_examine(struct bootpc *bpc, struct iface *ifc, struct config *conf);
+int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp);
 
 #endif /* !BOOTPC_H */
 

@@ -5,6 +5,7 @@
 #include "/Genesis.h"
 #include "Strings.h"
 #include "mui.h"
+#include "mui_Online.h"
 #include "protos.h"
 
 #define SERIAL_BUFSIZE 16384  /* default size */
@@ -12,12 +13,11 @@
 /// external variables
 extern struct IOExtSer      *SerReadReq, *SerWriteReq;
 extern struct MsgPort       *SerReadPort, *SerWritePort;
-extern Object *app;
-extern Object *win;
-extern Object *status_win;
-extern struct config Config;
-extern struct ExecBase *SysBase;
+extern Object *app, *win, *status_win;
+extern struct Config Config;
 extern struct MUI_CustomClass  *CL_Online;
+extern struct ExecBase *SysBase;
+
 ///
 
 /// serial_stopread
@@ -65,6 +65,91 @@ VOID serial_send(STRPTR cmd, LONG len)
 }
 
 ///
+/// serial_waitfor
+int serial_waitfor(STRPTR string1, STRPTR string2, STRPTR string3, int secs)
+{
+   struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
+   ULONG sig;
+   struct timerequest *time_req; // have to open our own timer, global one is for main task. won't work if used in different task
+   struct MsgPort *time_port;
+   char ser_buf[5], buffer[1024];
+   int buf_pos = 0, found = 0;
+   BOOL timer_running = FALSE;
+
+   if(time_port = CreateMsgPort())
+   {
+      if(time_req = (struct timerequest *)CreateIORequest(time_port, sizeof(struct timerequest)))
+      {
+         if(!(OpenDevice("timer.device", UNIT_VBLANK, (struct IORequest *)time_req, 0)))
+         {
+            time_req->tr_node.io_Command   = TR_ADDREQUEST;
+            time_req->tr_time.tv_secs      = secs;
+            time_req->tr_time.tv_micro     = NULL;
+            SetSignal(0, 1L << time_port->mp_SigBit);
+            SendIO((struct IORequest *)time_req);
+            timer_running = TRUE;
+
+            serial_startread(ser_buf, 1);
+            while(!data->abort)
+            {
+               sig = Wait((1L << SerReadPort->mp_SigBit) | (1L<< time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
+               if(sig & (1L << SerReadPort->mp_SigBit))
+               {
+                  if(CheckIO((struct IORequest *)SerReadReq))
+                  {
+                     WaitIO((struct IORequest *)SerReadReq);
+
+                     buffer[buf_pos++] = ser_buf[0];
+                     buffer[buf_pos] = NULL;
+
+//                     if(!data->abort)
+//                        DoMainMethod(data->TR_Terminal, TCM_WRITE, ser_buf, (APTR)1, NULL);
+
+                     if(string1)
+                        if(strstr(buffer, string1))
+                           found = 1;
+                     if(string2)
+                        if(strstr(buffer, string2))
+                           found = 2;
+                     if(string3)
+                        if(strstr(buffer, string3))
+                           found = 3;
+                     if(found)
+                        break;
+                     serial_startread(ser_buf, 1);
+                  }
+               }
+               if(sig & (1L << time_port->mp_SigBit))
+               {
+                  if(CheckIO((struct IORequest *)time_req))
+                  {
+                     WaitIO((struct IORequest *)time_req);
+                     timer_running = FALSE;
+                     break;
+                  }
+               }
+               if(sig & SIGBREAKF_CTRL_C)
+                  break;
+            }
+            serial_stopread();
+
+            if(timer_running)
+            {
+               if(!CheckIO((struct IORequest *)time_req))
+                  AbortIO((struct IORequest *)time_req);
+               WaitIO((struct IORequest *)time_req);
+               timer_running = FALSE;
+            }
+            CloseDevice((struct IORequest *)time_req);
+         }
+         DeleteIORequest((struct IORequest *)time_req);
+      }
+      DeleteMsgPort(time_port);
+   }
+   return(found);
+}
+
+///
 /// serial_carrier
 BOOL serial_carrier(VOID)
 {
@@ -75,6 +160,19 @@ BOOL serial_carrier(VOID)
    SerWriteReq->IOSer.io_Command = SDCMD_QUERY;
    DoIO((struct IORequest *)SerWriteReq);
    return((BOOL)(CD & SerWriteReq->io_Status ? FALSE : TRUE));
+}
+
+///
+/// serial_dsr
+BOOL serial_dsr(VOID)
+{
+   ULONG DSR = 1<<3;
+
+   if(!SerWriteReq)
+      return(FALSE);
+   SerWriteReq->IOSer.io_Command = SDCMD_QUERY;
+   DoIO((struct IORequest *)SerWriteReq);
+   return((BOOL)(DSR & SerWriteReq->io_Status ? FALSE : TRUE));
 }
 
 ///
@@ -91,6 +189,25 @@ VOID serial_clear(VOID)
 }
 
 ///
+/// serial_hangup
+VOID serial_hangup(VOID)
+{
+   if(serial_carrier())
+   {
+      serial_send("+", 1);
+      Delay(20);
+      serial_send("+", 1);
+      Delay(20);
+      serial_send("+", 1);
+      Delay(20);
+      serial_send("ATH0\r", -1);
+   }
+   else
+      serial_send("\r", 1);
+}
+
+///
+
 /// serial_delete
 VOID serial_delete(VOID)
 {
@@ -122,9 +239,11 @@ VOID serial_delete(VOID)
 
 ///
 /// serial_create
-BOOL serial_create(STRPTR device, ULONG unit)
+BOOL serial_create(STRPTR device, LONG unit)
 {
-   ULONG flags = SERF_XDISABLED | SERF_RAD_BOOGIE | SERF_QUEUEDBRK | SERF_SHARED | SERF_7WIRE;
+   ULONG flags;
+
+   flags = SERF_XDISABLED | SERF_SHARED | SERF_7WIRE;
 
    SerReadPort = CreateMsgPort();
    SerWritePort = CreateMsgPort();
@@ -138,7 +257,7 @@ BOOL serial_create(STRPTR device, ULONG unit)
       {
          /* set flags before OpenDevice() */
          SerWriteReq->io_SerFlags = flags;
-   
+
          if(!OpenDevice(device, unit, (struct IORequest *)SerWriteReq, 0))
          {
             /* Set up our serial parameters */
@@ -160,31 +279,8 @@ BOOL serial_create(STRPTR device, ULONG unit)
          }
       }
    }
-
    serial_delete();
    return(FALSE);
-}
-
-///
-/// serial_hangup
-VOID serial_hangup(VOID)
-{
-   serial_delete();
-   Delay(70);
-   serial_create(Config.cnf_serialdevice, Config.cnf_serialunit);
-
-   if(serial_carrier())
-   {
-      serial_send("+", 1);
-      Delay(20);
-      serial_send("+", 1);
-      Delay(20);
-      serial_send("+", 1);
-      Delay(20);
-      serial_send("ATH0\r", -1);
-   }
-   else
-      serial_send("\r", 1);
 }
 
 ///

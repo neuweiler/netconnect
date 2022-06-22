@@ -3,6 +3,7 @@
 #pragma header
 
 #include "/Genesis.h"
+#include "iface.h"
 #include "sana.h"
 ///
 
@@ -19,24 +20,22 @@ static ULONG SanaTags[] = {
 };
 ///
 /// sana2_create
-struct sana2 *sana2_create(struct config *conf)
+struct sana2 *sana2_create(STRPTR device, LONG unit)
 {
    struct sana2 * s2;
 
    if(s2 = AllocVec(sizeof(*s2), MEMF_ANY | MEMF_CLEAR))
    {
       s2->s2_openerr = 1;
-      s2->s2_name = conf->cnf_sana2device;
-      s2->s2_unit = conf->cnf_sana2unit;
+      strncpy(s2->s2_name, device, MAXPATHLEN);
+      s2->s2_unit = unit;
 
       if(s2->s2_port = CreateMsgPort())
       {
          if(s2->s2_req = CreateIORequest(s2->s2_port, sizeof(*s2->s2_req)))
          {
             s2->s2_req->ios2_BufferManagement = SanaTags;
-            if(s2->s2_openerr = OpenDevice(s2->s2_name, s2->s2_unit, (struct IORequest *)s2->s2_req, 0L))
-               Printf("Could not open sana2 device: %ls, unit %ld", s2->s2_name, s2->s2_unit);
-            else
+            if(!(s2->s2_openerr = OpenDevice(s2->s2_name, s2->s2_unit, (struct IORequest *)s2->s2_req, 0L)))
                return(s2);
          }
       }
@@ -50,20 +49,25 @@ struct sana2 *sana2_create(struct config *conf)
 /// sana2_delete
 VOID sana2_delete(struct sana2 *s2)
 {
-   if(!s2->s2_openerr)
-      CloseDevice((struct IORequest*)s2->s2_req);
-   if(s2->s2_req)
-      DeleteIORequest((struct IORequest *)s2->s2_req);
-   if(s2->s2_port)
-      DeleteMsgPort(s2->s2_port);
+   if(s2)
+   {
+      if(!s2->s2_openerr)
+         CloseDevice((struct IORequest*)s2->s2_req);
+      if(s2->s2_req)
+         DeleteIORequest((struct IORequest *)s2->s2_req);
+      if(s2->s2_port)
+         DeleteMsgPort(s2->s2_port);
 
-   FreeVec(s2);
+      FreeVec(s2);
+   }
 }
 
 ///
 /// sana2_getaddresses
-BOOL sana2_getaddresses(struct sana2 *s2, struct config *conf)
+BOOL sana2_getaddresses(struct sana2 *s2, struct Interface *iface)
 {
+   ULONG tmp_addr;
+
    if(!(s2->s2_hwtype == S2WireType_PPP
       || s2->s2_hwtype == S2WireType_SLIP
       || s2->s2_hwtype == S2WireType_CSLIP))
@@ -73,25 +77,24 @@ BOOL sana2_getaddresses(struct sana2 *s2, struct config *conf)
    DoIO((struct IORequest *)s2->s2_req);
    if(s2->s2_req->ios2_Req.io_Error)
    {
-      Printf("Could not get sana2 station address from device %ls, unit %ld.\n", s2->s2_name, s2->s2_unit);
-      SetIoErr(s2->s2_req->ios2_Req.io_Error); /* Set secondary error also */
+      SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
       return(FALSE);
    }
 
-   if(conf->cnf_addr == INADDR_ANY)
+   if(!*iface->if_addr && (s2->s2_req->ios2_SrcAddr != INADDR_ANY))
    {
-      memcpy(&conf->cnf_addr, s2->s2_req->ios2_SrcAddr, sizeof(conf->cnf_addr));
-      if(conf->cnf_addr != INADDR_ANY)
-Printf("Using IP address %s from Sana2 device configuration.\n", Inet_NtoA(conf->cnf_addr));
+      memcpy(&tmp_addr, s2->s2_req->ios2_SrcAddr, sizeof(tmp_addr));
+      strcpy(iface->if_addr, Inet_NtoA(tmp_addr));
+      syslog(LOG_DEBUG, "sana2_getaddresses: using IP address %ls from Sana2 device configuration.", iface->if_addr);
    }
    if(s2->s2_hwtype == S2WireType_PPP)
    {
-      if(conf->cnf_dst == INADDR_ANY)
+      if(!*iface->if_dst && (s2->s2_req->ios2_DstAddr != INADDR_ANY))
       {
-         /* check the destination address */
-         memcpy(&conf->cnf_dst, s2->s2_req->ios2_DstAddr, sizeof(conf->cnf_addr));
-         if(conf->cnf_dst != INADDR_ANY)
-Printf("Using destination IP address %s from Sana2 device configuration.", Inet_NtoA(conf->cnf_dst));
+         // check the destination address
+         memcpy(&tmp_addr, s2->s2_req->ios2_DstAddr, sizeof(tmp_addr));
+         strcpy(iface->if_dst, Inet_NtoA(tmp_addr));
+         syslog(LOG_DEBUG, "sana2_getaddresses: using destination IP address %s from Sana2 device configuration.", iface->if_dst);
       }
    }
    return(TRUE);
@@ -107,8 +110,8 @@ BOOL sana2_online(struct sana2 *s2)
    {
       if(s2->s2_req->ios2_Req.io_Error != S2ERR_BAD_STATE)
       {
-         Printf("Could not put %ls, unit %ld online.\n", s2->s2_name, s2->s2_unit);
-         SetIoErr(s2->s2_req->ios2_Req.io_Error); /* Set secondary error also */
+         syslog(LOG_ERR, "sana2_online: could not put %ls, unit %ld online.", s2->s2_name, s2->s2_unit);
+         SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
          return(FALSE);
       }
    }
@@ -125,8 +128,8 @@ BOOL sana2_offline(struct sana2 *s2)
    {
       if(s2->s2_req->ios2_Req.io_Error != S2ERR_BAD_STATE)
       {
-         Printf("Could not put %ls, unit %ld offline.\n", s2->s2_name, s2->s2_unit);
-         SetIoErr(s2->s2_req->ios2_Req.io_Error); /* Set secondary error also */
+         syslog(LOG_ERR, "sana2_offline: could not put %ls, unit %ld offline.", s2->s2_name, s2->s2_unit);
+         SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
          return(FALSE);
       }
    }
@@ -148,8 +151,7 @@ BOOL sana2_devicequery(struct sana2 *s2)
    DoIO((struct IORequest *)s2->s2_req);
    if(s2->s2_req->ios2_Req.io_Error)
    {
-      Printf("Could not do a device-query on %ls, unit %ld.\n", s2->s2_name, s2->s2_unit);
-      SetIoErr(s2->s2_req->ios2_Req.io_Error); /* Set secondary error also */
+      SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
       return(FALSE);
    }
    s2->s2_hwtype     = devicequery.HardwareType;

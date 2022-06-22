@@ -1,8 +1,14 @@
+/*
+   1) iface_init puts iface online
+   2) sana_getaddresses gets ip addr into iface->if_addr (if ppp or configured in sana2config)
+   3) iface_config sets ip addr from iface->if_addr
+      iface_data->ifd_addr is only used to delete previous config and in bootp stuff
+*/
+
 /// includes
 #include "/includes.h"
 #pragma header
 
-#include "rev.h"
 #include "Strings.h"
 #include "/Genesis.h"
 #include "mui.h"
@@ -19,70 +25,179 @@
 extern struct MUI_CustomClass  *CL_MainWindow;
 extern struct MUI_CustomClass  *CL_Online;
 extern struct Library *SocketBase;
-extern struct config Config;
+extern struct Config Config;
 extern int errno;
 extern int addr_assign, dst_assign, dns_assign, domainname_assign;
-extern char ip[], dest[], dns1[], dns2[], mask[];
-extern Object *win, *status_win;
-extern Object *app;
+extern struct MsgPort *MainPort;
+extern Object *win, *status_win, *app;
 extern char serial_in[], serial_buffer[];
 extern WORD ser_buf_pos;
+extern BOOL easy_ppp, dialup;
 extern const char AmiTCP_PortName[];
+extern struct Interface Iface;
+extern struct ISP ISP;
 
 ///
 
-/// amirexx_do_command
-LONG amirexx_do_command(const char *fmt, ...)
+/// netmask_check
+BOOL netmask_check(ULONG netmask, ULONG ipaddr)
 {
-   char buf[256];
-   struct MsgPort *port; /* our reply port */
-   struct MsgPort *AmiTCP_Port;
-   struct RexxMsg *rmsg;
-   LONG rc = 20;         /* fail */
-
-   vsprintf(buf, fmt, (va_list)(&fmt + (va_list)1));
-   if(port = CreateMsgPort())
+   // Check that given netmask is contiguous and on a valid range
+   if(netmask != INADDR_ANY)
    {
-      port->mp_Node.ln_Name = "BOOTPCONFIG";
-      if(rmsg = CreateRexxMsg(port, NULL, (STRPTR)AmiTCP_PortName))
-      {
-         rmsg->rm_Action = RXCOMM;
-         rmsg->rm_Args[0] = (STRPTR)buf;
-         if(FillRexxMsg(rmsg, 1, 0))
-         {
-            Forbid();
-            if(AmiTCP_Port = FindPort((STRPTR)AmiTCP_PortName))
-            {
-               PutMsg(AmiTCP_Port, (struct Message *)rmsg);
-               Permit();
-               do
-               {
-                  WaitPort(port);
-               } while(GetMsg(port) != (struct Message *)rmsg);
-               rc = rmsg->rm_Result1;
-            }
-            else
-               Permit();
+      ULONG mask     = 0xfffffffc;
+      ULONG lastmask = IN_CLASSA_NET;
 
-            ClearRexxMsg(rmsg, 1);
-         }
-         DeleteRexxMsg(rmsg);
+      // restrict the range if IP address is known
+      if(ipaddr != INADDR_ANY)
+      {
+         if(IN_CLASSB(ipaddr))
+            lastmask = IN_CLASSB_NET;
+         else if(IN_CLASSC(ipaddr))
+            lastmask = IN_CLASSC_NET;
       }
-      DeleteMsgPort(port);
+      for(; mask >= lastmask; mask <<= 1)
+      {
+         if(netmask == mask)
+            return(TRUE);
+      }
+      return(FALSE); // mask was not on the valid range
    }
-   return(rc);
+   return(TRUE);
 }
 
 ///
+/// config_complete
+BOOL config_complete(struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp)
+{
+   char *tmpstr;
 
+   // Special checks for point-to-point interfaces
+   if(!dialup && iface_data->ifd_flags & IFF_POINTOPOINT)
+   {
+      // try to find destination IP for a p-to-p link if not given
+      if(!*iface->if_dst)
+      {
+         if(*iface->if_gateway)
+         {
+            syslog(LOG_DEBUG, "Using the default gateway address as destination address.");
+            strcpy(iface->if_dst, iface->if_gateway);
+         }
+         // Use a fake IP address for the destination IP address if nothing else is available.
+         else
+         {
+            syslog(LOG_DEBUG, "Using a 'fake' IP address 0.1.2.3 as the destination address.");
+            strcpy(iface->if_dst, "0.1.2.3");
+         }
+      }
+      // use destination as default gateway if not given
+      if(!*iface->if_gateway)
+      {
+         if(*iface->if_dst)
+         {
+            syslog(LOG_DEBUG, "Using the destination address as default gateway address.");
+            strcpy(iface->if_gateway, iface->if_dst);
+         }
+         // could try existing destination, existing gateway etc.
+      }
+   }
+
+   // broadcast address will be set to default by AmiTCP
+
+   // netmask will be set to default by AmiTCP if not present at all
+   // warn if default netmask will be used on a broadcast interface
+   if(!*iface->if_netmask && iface_data->ifd_flags & IFF_BROADCAST)
+      syslog(LOG_DEBUG, "Note: Default netmask will be used for the interface %ls", iface->if_name);
+
+   // One additional validity test for the netmask we might now have the IP
+   if(!netmask_check(inet_addr(iface->if_netmask), inet_addr(iface->if_addr)))
+   {
+      syslog(LOG_ERR, "Invalid netmask value (%ls). Reverting to default.", iface->if_netmask);
+      *iface->if_netmask = NULL;
+   }
+
+   // Checks for host name and domain name:
+   // 1. If hostname is not set, try to get it from an environment variable
+   // 2. If host name contains the domain part, check if domain name is not set, and set it.
+   // 3. If host name does not contain the domain part, check if we can complete the name from the domain name.
+   if((tmpstr = strchr(isp->isp_hostname, '.')) != NULL)
+   {
+      if(isp->isp_domainnames.mlh_TailPred == (struct MinNode *)&isp->isp_domainnames)
+         add_server(&isp->isp_domainnames, tmpstr+1);
+   }
+   else // dot NOT present on the host name
+   {
+      if((isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&isp->isp_domainnames) && *isp->isp_hostname)
+      {
+         struct ServerEntry *server;
+
+         server = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
+         if(server->se_node.mln_Succ)
+         {
+            size_t hostnamelen = strlen(isp->isp_hostname);
+
+            // Concatenate "." and domain name to the host name
+            if(sizeof(isp->isp_hostname) > strlen(server->se_name) + hostnamelen + 1)
+               isp->isp_hostname[hostnamelen++] = '.';
+            strcpy(isp->isp_hostname + hostnamelen, server->se_name);
+         }
+      }
+   }
+   return(TRUE);
+}
+
+///
 /// TCPHandler
 VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
 {
    struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
    struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
-   struct iface *iface = NULL;
+   struct Interface_Data *iface_data = NULL;
    struct bootpc *bpc;
+   struct ServerEntry *server;
    BPTR fh;
+   BOOL success = FALSE, kill_serial = FALSE;
+   char buffer[81];
+
+   if(easy_ppp)
+   {
+      STRPTR ptr;
+
+      if(serial_create(Config.cnf_serialdevice, Config.cnf_serialunit))
+      {
+         kill_serial = TRUE;
+
+         DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Dialing provider", NULL);
+         serial_send("\r", -1);
+         EscapeString(buffer, Config.cnf_initstring);
+         strcat(buffer, "\r");
+         serial_send(buffer, -1);
+         if(data->abort)   goto abort;
+         Delay(50);
+         if(data->abort)   goto abort;
+
+         EscapeString(buffer, Config.cnf_dialprefix);
+         strcat(buffer, ISP.isp_phonenumber);
+         if(ptr = strchr(buffer, '|'))
+            *ptr = NULL;
+         strcat(buffer, "\r");
+         serial_send(buffer, -1);
+         if(data->abort)   goto abort;
+
+         if(serial_waitfor("CONNECT", "BUSY", "NO CARRIER", 60) != 1)
+            goto abort;
+
+         if(data->abort)   goto abort;
+         DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Connected", NULL);
+
+         clear_list(&ISP.isp_loginscript);
+         add_sl(SL_Dial, NULL);
+         add_sl(SL_GoOnline, NULL);
+      }
+      else
+         goto abort;
+   }
+   if(data->abort)   goto abort;
 
    if(fh = Open("AmiTCP:db/resolv.conf", MODE_NEWFILE))
    {
@@ -90,37 +205,41 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
       Close(fh);
    }
 
-   /* launch AmiTCP if it isn't already running */
+   // launch AmiTCP if it isn't already running
    if(!FindPort((STRPTR)AmiTCP_PortName))
    {
       if(!launch_amitcp())
       {
-         DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorLaunchAmiTCP), NULL);
+         DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorLaunchAmiTCP));
          goto abort;
       }
    }
    if(data->abort)   goto abort;
 
-   /* open bsdsocket.library and ifconfig.library */
+   // open bsdsocket.library and ifconfig.library
    if(!(SocketBase = OpenLibrary("bsdsocket.library", 0)))
    {
-      DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorBsdsocketLib), NULL);
+      DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorBsdsocketLib));
       goto abort;
    }
 
    if(SocketBaseTags(SBTM_SETVAL(SBTC_ERRNOPTR(sizeof(errno))), &errno, SBTM_SETVAL(SBTC_HERRNOLONGPTR), &h_errno, TAG_END))
       Printf("WARINING: Could not set errno ptr.");
+   if((*(BYTE *)((struct Library *)SocketBase + 1)) & 0x04)
+      dialup = 1;
 
    if(data->abort)   goto abort;
 
+   DeleteFile("ENV:APPdns1");
+   DeleteFile("ENV:APPdns2");
    if(fh = CreateDir("ENV:NetConfig"))
       UnLock(fh);
 
    if(fh = Open("ENV:NetConfig/AutoInterfaces", MODE_NEWFILE))
    {
-      FPrintf(fh, "%ls DEV=%ls UNIT=%ld", Config.cnf_ifname, Config.cnf_sana2device, Config.cnf_sana2unit);
-      if(Config.cnf_ifconfigparams)
-         FPrintf(fh, " %ls", Config.cnf_ifconfigparams);
+      FPrintf(fh, "%ls DEV=%ls UNIT=%ld", Iface.if_name, Iface.if_sana2device, Iface.if_sana2unit);
+      if(Iface.if_configparams)
+         FPrintf(fh, " %ls", Iface.if_configparams);
 
       Close(fh);
    }
@@ -130,18 +249,15 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
       goto abort;
    }
 
-   DeleteFile("ENV:APPdns1");
-   DeleteFile("ENV:APPdns2");
-
    if(data->abort)   goto abort;
 
-   Config.cnf_netmask   = inet_addr("255.255.255.0");
-   Config.cnf_addr      = inet_addr(ip);
-   Config.cnf_MTU       = 1500;
-   if(Config.cnf_addr != INADDR_ANY && !addr_assign)
+   if(amirexx_do_command("RESET RESOLV") != RETURN_OK)
+      Printf("ERROR: Could not reset resolv database.\n");
+
+   if(*Iface.if_addr && !addr_assign)
       addr_assign  = CNF_Assign_Static;
 
-   if(!(iface = iface_alloc()))
+   if(!(iface_data = iface_alloc()))
    {
       DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorIfaceAlloc), NULL);
       goto abort;
@@ -149,86 +265,90 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
 
    if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_InitDevice), NULL);
+   if(data->abort)   goto abort;
 
-   if(!(iface_init(iface, &Config)))
-   {
-      DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Abort), GetStr(MSG_TX_ErrorIfaceInit), NULL);
+   if(!(iface_init(iface_data, &Iface, &ISP, &Config)))
       goto abort;
-   }
 
-   /* get appp.device's ms-dns addresses */
-   if(GetEnvDOS("APPPdns1", dns1, 20))
-   {
-      if(strcmp(dns1, "0.0.0.0") && Config.cnf_dns1 == INADDR_ANY)
-         Config.cnf_dns1 = inet_addr(dns1);
-      Printf("MS-DNS1: %ls\n", dns1);
-   }
-   if(GetEnvDOS("APPPdns2", dns2, 20))
-   {
-      if(strcmp(dns2, "0.0.0.0") && Config.cnf_dns2 == INADDR_ANY)
-         Config.cnf_dns2 = inet_addr(dns2);
-      Printf("MS-DNS2: %ls\n", dns2);
-   }
+   // get appp.device's ms-dns addresses
+   GetEnvDOS("APPPdns1", buffer, 20);
+   if(!find_server_by_name(&ISP.isp_nameservers, buffer))
+      add_server(&ISP.isp_nameservers, buffer);
+   GetEnvDOS("APPPdns2", buffer, 20);
+   if(!find_server_by_name(&ISP.isp_nameservers, buffer))
+      add_server(&ISP.isp_nameservers, buffer);
 
-   if(Config.cnf_addr != INADDR_ANY && !addr_assign)
+   if(*Iface.if_addr && !addr_assign)
       addr_assign = CNF_Assign_IFace;
-   if(Config.cnf_dst != INADDR_ANY && !dst_assign)
+   if(*Iface.if_dst && !dst_assign)
       dst_assign = CNF_Assign_IFace;
-   if((Config.cnf_dns1 != INADDR_ANY || Config.cnf_dns2 != INADDR_ANY) && !dns_assign)
+   if((ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers) && !dns_assign)
       dns_assign = CNF_Assign_IFace;
 
    if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_SendingBOOTP), NULL);
+   if(data->abort)   goto abort;
 
-   iface_prepare_bootp(iface, &Config);
+   iface_prepare_bootp(iface_data, &Iface, &Config);
    if(bpc = bootpc_create())
    {
-      if(bootpc_do(bpc, iface, &Config))
+      if(bootpc_do(bpc, iface_data, &Iface, &ISP))
       {
          Printf("BOOTP failed to have an answer.\n");
+         if(data->abort)   goto abort;
          DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_NoBOOTP), NULL);
+         ISP.isp_flags &= ~ISF_UseBootp;
       }
       else
+      {
+         if(data->abort)   goto abort;
          DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_GotBOOTP), NULL);
-
+         ISP.isp_flags |= ISF_UseBootp;
+      }
       bootpc_delete(bpc);
    }
    else
       Printf("WARNING: No memory for bootp request !\n");
-   iface_cleanup_bootp(iface, &Config);
+   iface_cleanup_bootp(iface_data, &Config);
 
-   if(Config.cnf_addr != INADDR_ANY && !addr_assign)
+   if(data->abort)   goto abort;
+
+   if(*Iface.if_addr && !addr_assign)
       addr_assign = CNF_Assign_BootP;
-   if(Config.cnf_dst != INADDR_ANY && !dst_assign)
+   if(*Iface.if_dst && !dst_assign)
       dst_assign = CNF_Assign_BootP;
-   if((Config.cnf_dns1 != INADDR_ANY || Config.cnf_dns2 != INADDR_ANY) && !dns_assign)
+   if((ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers) && !dns_assign)
       dns_assign = CNF_Assign_BootP;
-   if(*Config.cnf_domainname && !domainname_assign)
+   if((ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames) && !domainname_assign)
       domainname_assign = CNF_Assign_BootP;
 
    if(data->abort)   goto abort;
 
-   if(Config.cnf_addr == INADDR_ANY)
+   if(!*Iface.if_addr)
    {
 // popup reuester here
    }
 
    if(data->abort)   goto abort;
 
-   if(Config.cnf_addr == INADDR_ANY)
+   if(!*Iface.if_addr && !data->abort)
    {
-      if(!data->abort)
-         DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorNoIP), NULL);
+      DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorNoIP), NULL);
       goto abort;
    }
 
-   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringAmiTCP), NULL);
-
-   if(!(iface_config(iface, &Config)))
+   if(!config_complete(iface_data, &Iface, &ISP))
    {
-      char buffer[81];
+      syslog(LOG_CRIT, "Not enough information to configure '%ls'.", Iface.if_name);
+      goto abort;
+   }
+   if(data->abort)   goto abort;
+   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringAmiTCP), NULL);
+   if(data->abort)   goto abort;
 
-      sprintf(buffer, GetStr(MSG_TX_ErrorConfigIface), iface->iface_name);
+   if(!(iface_config(iface_data, &Iface, &Config)))
+   {
+      sprintf(buffer, GetStr(MSG_TX_ErrorConfigIface), Iface.if_name);
       if(!data->abort)
          DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), buffer, NULL);
       goto abort;
@@ -236,135 +356,157 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
 
    if(data->abort)   goto abort;
 
-   if(amirexx_do_command("RESET RESOLV") != RETURN_OK)
-      Printf("ERROR: Could not reset resolv database.\n");
+   if(!dialup)
+   {
+      if(!*Iface.if_gateway)
+         syslog(LOG_WARNING, "Default gateway information not found.");
+      else
+         route_add(iface_data->ifd_fd, RTF_UP|RTF_GATEWAY, INADDR_ANY, inet_addr(Iface.if_gateway), TRUE /* force */);
+   }
 
    if(data->abort)   goto abort;
 
-   if(Config.cnf_dns1 == INADDR_ANY && Config.cnf_dns2 == INADDR_ANY)
+   iface_deinit(iface_data);
+   iface_free(iface_data);
+   iface_data = NULL;
+
+   if(ISP.isp_nameservers.mlh_TailPred == (struct MinNode *)&ISP.isp_nameservers)
    {
       DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Okay), (APTR)GetStr(MSG_TX_WarningNoDNS), NULL);
-      Config.cnf_dns1 = inet_addr("198.41.0.4");
-      Config.cnf_dns2 = inet_addr("128.9.0.107");
+      add_server(&ISP.isp_nameservers, "198.41.0.4");
+      add_server(&ISP.isp_nameservers, "128.9.0.107");
+      ISP.isp_flags |= ISF_DontQueryHostname;
       dns_assign = CNF_Assign_Root;
    }
 
-   /* add in reverse order since each entry is added to top of list */
-   if(Config.cnf_dns2 != INADDR_ANY)
+   // add in reverse order since each entry is added to top of list
+   if(ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)
    {
-      if(amirexx_do_command("ADD START NAMESERVER %ls", Inet_NtoA(Config.cnf_dns2)) != RETURN_OK)
-         Printf(GetStr(MSG_TX_ErrorSetDNS), Inet_NtoA(Config.cnf_dns2));
-   }
-   if(Config.cnf_dns1 != INADDR_ANY)
-   {
-      if(amirexx_do_command("ADD START NAMESERVER %ls", Inet_NtoA(Config.cnf_dns1)) != RETURN_OK)
+      server = (struct ServerEntry *)ISP.isp_nameservers.mlh_TailPred;
+      while(server->se_node.mln_Pred)
       {
-         char buffer[81];
-
-         sprintf(buffer, GetStr(MSG_TX_ErrorSetDNS), Inet_NtoA(Config.cnf_dns1));
-         DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), buffer, NULL);
-         goto abort;
+         if(amirexx_do_command("ADD START NAMESERVER %ls", server->se_name) != RETURN_OK)
+            syslog_AmiTCP(LOG_ERR, GetStr(MSG_TX_ErrorSetDNS), server->se_name);
+         server = (struct ServerEntry *)server->se_node.mln_Pred;
+         if(data->abort)   goto abort;
       }
    }
 
    if(data->abort)   goto abort;
 
-   /* is hostname or domainname missing but got rest ? */
-   if((Config.cnf_addr != INADDR_ANY && (Config.cnf_dns1 != INADDR_ANY || Config.cnf_dns2 != INADDR_ANY)) &&
-      (!*Config.cnf_hostname || !*Config.cnf_domainname))
+   // is hostname or domainname missing but got rest ?
+   if((*Iface.if_addr && (ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)) &&
+      (!*ISP.isp_hostname || ISP.isp_domainnames.mlh_TailPred == (struct MinNode *)&ISP.isp_domainnames))
    {
       DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_GetDomain), NULL);
+      if(data->abort)   goto abort;
 
-      if(!*Config.cnf_hostname)
+      if(!*ISP.isp_hostname)
       {
-         if(gethostname(Config.cnf_hostname, sizeof(Config.cnf_hostname)) || !*Config.cnf_hostname)
+         if(gethostname(ISP.isp_hostname, sizeof(ISP.isp_hostname)) || !*ISP.isp_hostname)
          {
             if(!data->abort)
                DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Okay), GetStr(MSG_TX_WarningNoHostname), NULL);
          }
       }
-      if(!*Config.cnf_domainname && *Config.cnf_hostname)
+      if(ISP.isp_domainnames.mlh_TailPred == (struct MinNode *)&ISP.isp_domainnames && *ISP.isp_hostname)
       {
          STRPTR ptr;
 
-         if(ptr = strchr(Config.cnf_hostname, '.'))
+         if(ptr = strchr(ISP.isp_hostname, '.'))
          {
             ptr++;
-            strcpy(Config.cnf_domainname, ptr);
+            add_server(&ISP.isp_domainnames, ptr);
          }
       }
    }
-
-   if(*Config.cnf_domainname && !domainname_assign)
-      domainname_assign = CNF_Assign_DNSQuery;
-
    if(data->abort)   goto abort;
 
-   if(!*Config.cnf_domainname)
+
+   if(ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames)
+   {
+      if(!domainname_assign)
+         domainname_assign = CNF_Assign_DNSQuery;
+
+      server = (struct ServerEntry *)ISP.isp_domainnames.mlh_TailPred;
+      while(server->se_node.mln_Pred)
+      {
+         if(amirexx_do_command("ADD START DOMAIN %ls", server->se_name) != RETURN_OK)
+            Printf(GetStr(MSG_TX_WarningSetDomain), server->se_name);
+         server = (struct ServerEntry *)server->se_node.mln_Pred;
+         if(data->abort)   goto abort;
+      }
+   }
+   else
       DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Okay), GetStr(MSG_TX_WarningNoDomain), NULL);
-   else
-   {
-      if(amirexx_do_command("ADD START DOMAIN %ls", Config.cnf_domainname) != RETURN_OK)
-         Printf(GetStr(MSG_TX_WarningSetDomain), Config.cnf_domainname);
-   }
 
    if(data->abort)   goto abort;
 
-   if(!*Config.cnf_hostname)
-      Printf("WARNING: Got no hostname !\n");
-   else
+   if(*ISP.isp_hostname)
    {
-      if(amirexx_do_command("ADD START HOST %ls %ls", Inet_NtoA(Config.cnf_addr), Config.cnf_hostname) != RETURN_OK)
-         Printf(GetStr(MSG_TX_WarningSetHostname), Config.cnf_hostname);
+      if(amirexx_do_command("ADD START HOST %ls %ls", Iface.if_addr, ISP.isp_hostname) != RETURN_OK)
+         Printf(GetStr(MSG_TX_WarningSetHostname), ISP.isp_hostname);
    }
+   else
+      Printf("WARNING: Got no hostname !\n");
+
+   if(data->abort)   goto abort;
 
    if(fh = Open("AmiTCP:db/resolv.conf", MODE_NEWFILE))
    {
       FPrintf(fh, "; This file is built dynamically - do not edit\n");
       FPrintf(fh, "; Name Servers\n");
-      if(Config.cnf_dns1 != INADDR_ANY)
-         FPrintf(fh, "NAMESERVER %ls\n", Inet_NtoA(Config.cnf_dns1));
-      if(Config.cnf_dns2 != INADDR_ANY)
-         FPrintf(fh, "NAMESERVER %ls\n", Inet_NtoA(Config.cnf_dns2));
-      FPrintf(fh, "; Search domain\n");
-      FPrintf(fh, "DOMAIN %ls\n", (*Config.cnf_domainname ? Config.cnf_domainname : "unknown.domain"));
+      if(ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)
+      {
+         server = (struct ServerEntry *)ISP.isp_nameservers.mlh_Head;
+         while(server->se_node.mln_Succ)
+         {
+            FPrintf(fh, "NAMESERVER %ls\n", server->se_name);
+            server = (struct ServerEntry *)server->se_node.mln_Succ;
+         }
+      }
+      FPrintf(fh, "; Search domains\n");
+      if(ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames)
+      {
+         server = (struct ServerEntry *)ISP.isp_domainnames.mlh_Head;
+         while(server->se_node.mln_Succ)
+         {
+            FPrintf(fh, "DOMAIN %ls\n", server->se_name);
+            server = (struct ServerEntry *)server->se_node.mln_Succ;
+         }
+      }
       Close(fh);
    }
 
-   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_Finished), NULL);
-DoMainMethod(win, MUIM_MainWindow_MUIRequest, "ok", "interface is configured. you should have access to the net now.\n(this requester will disappear in the final version.)", NULL);
-
    if(data->abort)   goto abort;
-
+   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_Finished), NULL);
+   if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ClosingConnection), NULL);
-
-   mw_data->Page = 7;
-
-   /* set global variables for ShowConfig (cause AmiTCP won't run there anymore ! */
-
-   *ip = *dest = *dns1 = *dns2 = *mask = NULL;
-   strcpy(ip, Inet_NtoA(Config.cnf_addr));
-   if(Config.cnf_dst != INADDR_ANY)
-      strcpy(dest, Inet_NtoA(Config.cnf_dst));
-   if(Config.cnf_dns1 != INADDR_ANY)
-      strcpy(dns1, Inet_NtoA(Config.cnf_dns1));
-   if(Config.cnf_dns2 != INADDR_ANY)
-      strcpy(dns2, Inet_NtoA(Config.cnf_dns2));
-   if(Config.cnf_netmask != INADDR_ANY)
-      strcpy(mask, Inet_NtoA(Config.cnf_netmask));
+   success = TRUE;
+DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Okay), "try to access the net now\nthis req won't appear in the final version", NULL);
 
 abort:
 
-   if(iface)
+// **********************************************************************
+// NO DoMainMethod() beyond this point !! other wise abort will block !!!
+// **********************************************************************
+   if(iface_data)
    {
-      if(!iface->iface_s2)    // put sana2 offline
-         iface->iface_s2 = sana2_create(&Config);
-      if(iface->iface_s2)
-         iface_offline(iface);
+      if(iface_data->ifd_s2)
+         sana2_offline(iface_data->ifd_s2);
+      iface_deinit(iface_data);
+      iface_free(iface_data);
+      iface_data = NULL;
+   }
+   else
+   {
+      struct sana2 *s2;
 
-      iface_deinit(iface);
-      iface_free(iface);
-      iface = NULL;
+      if(s2 = sana2_create(Iface.if_sana2device, Iface.if_sana2unit))
+      {
+         sana2_offline(s2);
+         sana2_delete(s2);
+      }
    }
 
    if(SocketBase)
@@ -373,19 +515,33 @@ abort:
 
    amirexx_do_command("KILL");
 
-   if(serial_carrier())
-      serial_hangup();
+   if(kill_serial)
+      serial_delete();
 
    // go to next page or start serial reading and add inputhandler by misusing setpage
-   DoMainMethod(win, MUIM_MainWindow_SetPage, NULL, NULL, NULL);
+   if(success)
+      mw_data->Page = 9;
+   else
+   {
+      if(mw_data->Page == 5 && !data->abort) // was this a try for easy_ppp ?
+      {
+         if(!DoMainMethod(win, MUIM_MainWindow_MUIRequest, "*_Next|_Stay", "Was unable to connect.\nEither more information is required\nor some information you have entered until\nnow is not entirely correct.\n\nWould you like to stay on this page to make\ncorrections or move to the next page to\nenter edditional information ?", NULL))
+         {
+            mw_data->Page = 6;
+            easy_ppp = FALSE; // otherwise tcphandler will try to dial again in advanced section
+         }
+      }
+   }
+   DoMethod(app, MUIM_Application_PushMethod, win, 1, MUIM_MainWindow_SetPage);
 
    Forbid();
    data->TCPHandler = NULL;
-   DoMethod(app, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, status_win);
-   status_win = NULL;
+   if(!data->abort)
+      DoMethod(app, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, status_win);
 }
 
 ///
+
 /// Online_GoOnline
 ULONG Online_GoOnline(struct IClass *cl, Object *obj, Msg msg)
 {
@@ -402,7 +558,7 @@ ULONG Online_GoOnline(struct IClass *cl, Object *obj, Msg msg)
       NP_StackSize   , 16384,
       NP_WindowPtr   , -1,
       NP_CloseOutput , TRUE,
-      NP_Output      , Open("RAM:GenesisWizard.log", MODE_NEWFILE),
+      NP_Output      , Open("AmiTCP:log/GenesisWizard.log", MODE_NEWFILE),
 //NP_Output, Open("CON:/300/640/200/GenesisWizard netconfig/AUTO/WAIT/CLOSE", MODE_NEWFILE),
       TAG_END))
    {
@@ -417,22 +573,25 @@ ULONG Online_GoOnline(struct IClass *cl, Object *obj, Msg msg)
 }
 
 ///
-/// Online_Abort
-ULONG Online_Abort(struct IClass *cl, Object *obj, Msg msg)
+/// Online_Dispose
+ULONG Online_Dispose(struct IClass *cl, Object *obj, Msg msg)
 {
    struct Online_Data *data = INST_DATA(cl, obj);
 
    data->abort = TRUE;
-   Forbid();
-   if(data->TCPHandler)
-      Signal((struct Task *)data->TCPHandler, SIGBREAKF_CTRL_C);
-   Permit();
-
-   return(NULL);
+   while(data->TCPHandler)
+   {
+      Forbid();
+      if(data->TCPHandler)
+         Signal((struct Task *)data->TCPHandler, SIGBREAKF_CTRL_C);
+      Permit();
+      HandleMainMethod(MainPort);
+      Delay(20);
+   }
+   return(DoSuperMethodA(cl, obj, msg));
 }
 
 ///
-
 /// Online_New
 ULONG Online_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
@@ -463,7 +622,7 @@ ULONG Online_New(struct IClass *cl, Object *obj, struct opSet *msg)
       data->TCPHandler  = NULL;
       data->abort       = FALSE;
 
-      DoMethod(data->BT_Abort, MUIM_Notify, MUIA_Pressed, FALSE, obj, 1, MUIM_Online_Abort);
+      DoMethod(data->BT_Abort    , MUIM_Notify, MUIA_Pressed   , FALSE,          MUIV_Notify_Application, 5, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, obj);
    }
 
    return((ULONG)obj);
@@ -476,8 +635,8 @@ SAVEDS ULONG Online_Dispatcher(register __a0 struct IClass *cl, register __a2 Ob
    switch((ULONG)msg->MethodID)
    {
       case OM_NEW               : return(Online_New         (cl, obj, (APTR)msg));
+      case OM_DISPOSE           : return(Online_Dispose     (cl, obj, (APTR)msg));
       case MUIM_Online_GoOnline : return(Online_GoOnline    (cl, obj, (APTR)msg));
-      case MUIM_Online_Abort    : return(Online_Abort       (cl, obj, (APTR)msg));
    }
 
    return(DoSuperMethodA(cl, obj, msg));

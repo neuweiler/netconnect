@@ -1,16 +1,7 @@
-#define VERSION   "1"
-#define REVISION  "00"
-#ifdef BETA
-#define BETAVERS  " -BETA-"
-#else
-#define BETAVERS  ""
-#endif
-
-#define VSTRING   VERSION"."REVISION
-#ifdef _M68030
-#define VERS      "GenesisWizard "VSTRING" ("__DATE__") (68030)"BETAVERS
-#define VERSTAG   "$VER: GenesisWizard "VSTRING" ("__DATE__") 68030/040/060 version"
-#else
-#define VERS      "GenesisWizard "VSTRING" ("__DATE__")"BETAVERS
-#define VERSTAG   "$VER: GenesisWizard "VSTRING" ("__DATE__") Generic 68'000 version"
-#endif
+#define VERSIONSTRING "2.0.2"
+#define VERSION 2
+#define REVISION 0
+#define COMPILEREV 2
+#define REVDATE "(08.04.98)"
+#define VERTAG "2.0.2 (8.4.98)"
+#define VERHEXID 0x20000

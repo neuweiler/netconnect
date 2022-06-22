@@ -7,6 +7,8 @@ enum { MEN_ABOUT=1, MEN_ABOUT_MUI, MEN_QUIT, MEN_MUI };
 
 #define MUIM_Genesis_Handshake                 (TAGBASE_WIZARD | 0x1000)
 #define MUIM_Genesis_Get                       (TAGBASE_WIZARD | 0x1001)
+#define MUIM_Serial_Send                       (TAGBASE_WIZARD | 0x1002)
+#define MUIM_Serial_WaitFor                    (TAGBASE_WIZARD | 0x1003)
 
 struct MainMessage
 {
@@ -33,6 +35,7 @@ LoginScript : 8
 Finished    : 9
 Sana2       : a
 ModemDetect : b
+Advanced    : c
 
 */
 
