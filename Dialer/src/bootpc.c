@@ -5,6 +5,7 @@
 #include "/Genesis.h"
 #include "bootpc.h"
 #include "iface.h"
+#include "protos.h"
 
 ///
 
@@ -71,18 +72,18 @@ static char * opt_names[] =
   "EXTEN_FILE",
 };
 
-int bootpc_examine(struct bootpc *bpc, struct iface *ifc, struct config *conf)
+int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp)
 {
    struct bootp *bp = bpc->bpc_rcv_packet;
 
-   /* Check our own IP */
-   if(conf->cnf_addr == INADDR_ANY && bp->bp_yiaddr.s_addr != INADDR_ANY)
+   // Check our own IP
+   if(iface_data->ifd_addr == INADDR_ANY && bp->bp_yiaddr.s_addr != INADDR_ANY)
    {
-      conf->cnf_addr = bp->bp_yiaddr.s_addr;
-      syslog(LOG_DEBUG, "bootpc_examine: got IP address %ls from BOOTP reply.", Inet_NtoA(conf->cnf_addr));
+      iface_data->ifd_addr = bp->bp_yiaddr.s_addr;
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: got IP address %ls from BOOTP reply.", Inet_NtoA(iface_data->ifd_addr));
    }
 
-   /* Check RFC options */
+   // Check RFC options
    if(memcmp(bp->bp_vend, vm_rfc1048, sizeof(vm_rfc1048)) == 0)
    {
       u_char option;
@@ -92,9 +93,9 @@ int bootpc_examine(struct bootpc *bpc, struct iface *ifc, struct config *conf)
       int    optcount = 0;
       int    tmplen;
 
-      syslog(LOG_DEBUG, "bootpc_examine: received valid BOOTP reply.");
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: received valid BOOTP reply.");
 
-      while(opt_ptr < opt_end - 1)  /* have to have at least two bytes */
+      while(opt_ptr < opt_end - 1)  // have to have at least two bytes
       {
          if((option = *opt_ptr++) == BPTAG_END)
             break;
@@ -102,59 +103,67 @@ int bootpc_examine(struct bootpc *bpc, struct iface *ifc, struct config *conf)
             continue;
 
          opt_len = *opt_ptr++;
-         if(opt_ptr + opt_len > opt_end) /* have space for the option? */
-            break;         /* no */
+         if(opt_ptr + opt_len > opt_end) // have space for the option?
+            break;         // no
 
          if(option <= TAG_EXTEN_FILE)
-            syslog(LOG_DEBUG, "bootpc_examine: option: %ls, value: %ls", opt_names[option], my_link_ntoa(opt_len, opt_ptr));
+            syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: option: %ls, value: %ld", opt_names[option], (ULONG)*opt_ptr);
          else
-            syslog(LOG_DEBUG, "bootpc_examine: option: %ld, value: %ls", option, my_link_ntoa(opt_len, opt_ptr));
+            syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: option: %ld, value: %ld", option, (ULONG)*opt_ptr);
 
          optcount++;
 
          if(option == TAG_SUBNET_MASK)
          {
-            if(conf->cnf_netmask == INADDR_ANY && opt_len == 4)
-               memcpy(&conf->cnf_netmask, opt_ptr, 4);
+            if(iface_data->ifd_netmask == INADDR_ANY && opt_len == 4)
+               memcpy(&iface_data->ifd_netmask, opt_ptr, 4);
          }
-         else if(option == TAG_GATEWAY)    /* using only first gateway */
+         else if(option == TAG_GATEWAY)    // using only first gateway
          {
-            if(conf->cnf_gateway == INADDR_ANY && opt_len >= 4)
-               memcpy(&conf->cnf_gateway, opt_ptr, 4);
+            if(iface_data->ifd_gateway == INADDR_ANY && opt_len >= 4)
+               memcpy(&iface_data->ifd_gateway, opt_ptr, 4);
          }
          else if(option == TAG_DOMAIN_SERVER)
          {
+            ULONG tmp_addr;
+
             for(tmplen = 0; tmplen + 4 <= opt_len; tmplen += 4)
             {
-               if(conf->cnf_dns1 == INADDR_ANY)
-                  memcpy(&conf->cnf_dns1, &opt_ptr[tmplen], 4);
-               else if(conf->cnf_dns2 == INADDR_ANY)
-                  memcpy(&conf->cnf_dns2, &opt_ptr[tmplen], 4);
+               memcpy(&tmp_addr, &opt_ptr[tmplen], 4);
+
+               if(!find_server_by_name(&isp->isp_nameservers, Inet_NtoA(tmp_addr)))
+                  add_server(&isp->isp_nameservers, Inet_NtoA(tmp_addr));
             }
          }
          else if(option == TAG_HOST_NAME)
          {
-            tmplen = MIN(opt_len, sizeof(conf->cnf_hostname)-1);
-            memcpy(conf->cnf_hostname, opt_ptr, tmplen);
-            conf->cnf_hostname[tmplen] = '\0';
+            tmplen = MIN(opt_len, sizeof(isp->isp_hostname)-1);
+            memcpy(isp->isp_hostname, opt_ptr, tmplen);
+            isp->isp_hostname[tmplen] = '\0';
          }
          else if(option == TAG_DOMAIN_NAME)
          {
-            tmplen = MIN(opt_len, sizeof(conf->cnf_domainname)-1);
-            memcpy(conf->cnf_domainname, opt_ptr, tmplen);
-            conf->cnf_domainname[tmplen] = '\0';
+            char buf[41];
+
+            tmplen = MIN(opt_len, sizeof(buf) - 1);
+            memcpy(buf, opt_ptr, tmplen);
+            buf[tmplen] = '\0';
+
+            if(!find_server_by_name(&isp->isp_nameservers, buf))
+               add_server(&isp->isp_domainnames, buf);
          }
 
          opt_ptr += opt_len;
       }
    }
 
-   /* Additional test to get some working destination address */
-   if(ifc->iface_flags & IFF_POINTOPOINT && conf->cnf_dst == INADDR_ANY && conf->cnf_gateway == INADDR_ANY && bp->bp_siaddr.s_addr != INADDR_ANY)
+   // Additional test to get some working destination address
+   if(iface_data->ifd_flags & IFF_POINTOPOINT && iface_data->ifd_dst == INADDR_ANY && iface_data->ifd_gateway == INADDR_ANY && bp->bp_siaddr.s_addr != INADDR_ANY)
    {
-      conf->cnf_dst = bp->bp_siaddr.s_addr;
-      syslog(LOG_DEBUG, "bootpc_examine: using BOOTP server address %ls as destination addr.", Inet_NtoA(conf->cnf_dst));
+      iface_data->ifd_dst = bp->bp_siaddr.s_addr;
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: using BOOTP server address %ls as destination addr.", Inet_NtoA(iface_data->ifd_dst));
    }
+
    return(0);
 }
 
@@ -172,10 +181,10 @@ int bootpc_send(struct bootpc *bpc, int fd, struct sockaddr_in *to)
           * not being able to send the datagrams at all, but they are not
           * dropped either.
           */
-         syslog(LOG_WARNING, "bootpc_send: network is unable to deliver packets (check connection).");
+         syslog_AmiTCP(LOG_WARNING, "bootpc_send: network is unable to deliver packets (check connection).");
       }
       else
-         syslog(LOG_ERR, "bootpc_send: sendto");
+         syslog_AmiTCP(LOG_ERR, "bootpc_send: sendto");
       return(errno);
    }
    return(0);
@@ -183,70 +192,70 @@ int bootpc_send(struct bootpc *bpc, int fd, struct sockaddr_in *to)
 
 ///
 /// bootpc_do
-int bootpc_do(struct bootpc *bpc, struct iface *ifc, struct config *conf)
+int bootpc_do(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp)
 {
-   int fd = ifc->iface_fd;
+   int fd = iface_data->ifd_fd;
    short secs;
    int   retries;
    int32 xid;
    struct bootp *bp;
    int error, n;
    long fromlen;
-   struct sockaddr_in sin_server; /* where to send requests */
-   struct sockaddr_in sin_client; /* for bind and listen */
-   struct sockaddr_in sin_from;      /* Packet source */
+   struct sockaddr_in sin_server; // where to send requests
+   struct sockaddr_in sin_client; // for bind and listen
+   struct sockaddr_in sin_from;      // Packet source
 
-   /* Set up server socket address (for send) */
+   // Set up server socket address (for send)
    bzero(&sin_server, sizeof(sin_server));
    sin_server.sin_len = sizeof(sin_server);;
    sin_server.sin_family = AF_INET;
    sin_server.sin_port = htons(bpc->bpc_s_port);
    sin_server.sin_addr.s_addr = bpc->bpc_s_addr;
 
-   /* Set up client socket address (for listen) */
+   // Set up client socket address (for listen)
    bzero(&sin_client, sizeof(sin_client));
    sin_client.sin_len = sizeof(sin_client);;
    sin_client.sin_family = AF_INET;
    sin_client.sin_port = htons(bpc->bpc_c_port);
    sin_client.sin_addr.s_addr = INADDR_ANY;
 
-   /* Bind client socket to BOOTPC port. */
+   // Bind client socket to BOOTPC port.
    if(bind(fd, (struct sockaddr *)&sin_client, sizeof(sin_client)) < 0)
    {
-      syslog(LOG_ERR, "bind BOOTPC port: %m");
+      syslog_AmiTCP(LOG_ERR, "bind BOOTPC port: %m");
       if(errno == EACCES)
-         syslog(LOG_DEBUG, "bootpc_do: you need to run this as root");
+         syslog_AmiTCP(LOG_DEBUG, "bootpc_do: you need to run this as root");
       return(errno);
    }
 
-   /* Build a request. */
+   // Build a request.
    bp = bpc->bpc_snd_packet;
    bzero(bp, sizeof(*bp));
    bp->bp_op = BOOTREQUEST;
    xid = (int32)FindTask(NULL);
    bp->bp_xid = (u_int32)htonl(xid);
 
-   /* Fill in the hardware address, if appropriate (not for ppp, slip, etc) */
-   if(conf->cnf_use_hwtype)
+   // Fill in the hardware address, if appropriate (not for ppp, slip, etc)
+   if(iface_data->ifd_use_hwtype)
    {
-      syslog(LOG_DEBUG, "bootpc_do: using hardware address in BOOTP request.");
-      /* Copy hardware address into request packet. */
-      bp->bp_htype   = ifc->iface_sanatype;
-      bp->bp_hlen    = ifc->iface_hlen;
-      memmove(bp->bp_chaddr, ifc->iface_haddr, bp->bp_hlen);
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_do: using hardware address in BOOTP request.");
+      // Copy hardware address into request packet.
+      bp->bp_htype   = iface_data->ifd_sanatype;
+      bp->bp_hlen    = iface_data->ifd_hlen;
+      memmove(bp->bp_chaddr, iface_data->ifd_haddr, bp->bp_hlen);
    }
 
-  /* Fill in the client IP address. */
-   if(conf->cnf_addr != INADDR_ANY)
+  // Fill in the client IP address.
+   if(iface_data->ifd_addr != INADDR_ANY)
    {
-      syslog(LOG_DEBUG, "bootpc_do: using IP addr %ls in BOOTP request.", Inet_NtoA(conf->cnf_addr));
-      bp->bp_ciaddr.s_addr = conf->cnf_addr;
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_do: using IP addr %ls in BOOTP request.", Inet_NtoA(iface_data->ifd_addr));
+      bp->bp_ciaddr.s_addr = iface_data->ifd_addr;
    }
   
-   memcpy(bp->bp_vend, vm_rfc1048, sizeof(vm_rfc1048)); /* copy default verdor data */
+   memcpy(bp->bp_vend, vm_rfc1048, sizeof(vm_rfc1048)); // copy default verdor data
    bp->bp_vend[4] = BPTAG_END;
 
-   bpc->bpc_snd_len = sizeof(*bp); /* total length of the request */
+   bpc->bpc_snd_len = sizeof(*bp); // total length of the request
 
    secs = 2;
 
@@ -255,7 +264,7 @@ int bootpc_do(struct bootpc *bpc, struct iface *ifc, struct config *conf)
       struct timeval tv;
       int readfds;
 
-      syslog(LOG_DEBUG, "bootpc_do: sending BOOTP request to %ls.", Inet_NtoA(bpc->bpc_s_addr));
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_do: sending BOOTP request to %ls.", Inet_NtoA(bpc->bpc_s_addr));
       bp->bp_secs = htons(secs);
       if(error = bootpc_send(bpc, fd, &sin_server))
          return(error);
@@ -269,38 +278,39 @@ int bootpc_do(struct bootpc *bpc, struct iface *ifc, struct config *conf)
       if(n < 0)
       {
          if(errno == EINTR)
-            syslog(LOG_NOTICE, "bootpc_do: BOOTP request cancelled.");
+            syslog_AmiTCP(LOG_NOTICE, "bootpc_do: BOOTP request cancelled.");
          else
-            syslog(LOG_ERR, "bootpc_do: BOOTP select");
+            syslog_AmiTCP(LOG_ERR, "bootpc_do: BOOTP select");
          break;
       }
-      if(n == 0)  /* We have not received a response since the last send. */
+      if(n == 0)  // We have not received a response since the last send.
          continue;
 
       fromlen = sizeof(sin_from);
       n = recvfrom(fd, (char *)bpc->bpc_rcv_packet, BPC_BUFLEN, 0, (struct sockaddr *)&sin_from, &fromlen);
       if(n <= 0)
-         continue;         /* send again if any error */
+         continue;         // send again if any error
       if(n < sizeof(struct bootp))
       {
-         syslog(LOG_DEBUG, "bootpc_do: received BOOTP packet was too short.");
+         syslog_AmiTCP(LOG_DEBUG, "bootpc_do: received BOOTP packet was too short.");
          continue;
       }
 
-      /* check the packet opcode & transaction ID */
+      // check the packet opcode & transaction ID
       if(bpc->bpc_rcv_packet->bp_op != BOOTREPLY || bpc->bpc_rcv_packet->bp_xid != (u_int32) htonl(xid))
       {
-         syslog(LOG_DEBUG, "bootpc_do: discarding a BOOTP reply because of wrong op (%ld) or wrong transaction id (%lx != %lx).", bpc->bpc_rcv_packet->bp_op, bpc->bpc_rcv_packet->bp_xid, (u_int32) htonl(xid));
+         syslog_AmiTCP(LOG_DEBUG, "bootpc_do: discarding a BOOTP reply because of wrong op (%ld) or wrong transaction id (%lx != %lx).", bpc->bpc_rcv_packet->bp_op, bpc->bpc_rcv_packet->bp_xid, (u_int32) htonl(xid));
             continue;
       }
 
-      bpc->bpc_rcv_len = n;  /* store the actual length of the reply */
+      bpc->bpc_rcv_len = n;  // store the actual length of the reply
 
-      syslog(LOG_DEBUG, "bootpc_do: received BOOTP reply from %ls:%ld", Inet_NtoA(sin_from.sin_addr.s_addr), sin_from.sin_port);
-      return(bootpc_examine(bpc, ifc, conf));
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_do: received BOOTP reply from %ls:%ld", Inet_NtoA(sin_from.sin_addr.s_addr), sin_from.sin_port);
+      return(bootpc_examine(bpc, iface_data, iface, isp));
    }
 
-   syslog(LOG_WARNING, "bootpc_do: no response to BOOTP request...");
+   syslog_AmiTCP(LOG_WARNING, "bootpc_do: no response to BOOTP request...");
+
    return(ENOENT);
 }
 ///

@@ -23,17 +23,17 @@ struct sana2 {
   struct MsgPort    *s2_port; /* message port for Sana2 requests */
   struct IOSana2Req *s2_req;  /* A Sana2 request to use */
   long               s2_openerr; /* Error from OpenDevice() */
-  char              *s2_name; /* name of the Sana2 device */
+  char               s2_name[MAXPATHLEN]; /* name of the Sana2 device */
   unsigned long      s2_unit; /* Sana2 device unit number */
 /* Sana2 device information */
   ULONG              s2_hwtype;  /* Sana2 hardware type */
   UWORD              s2_addrbits;/* size of the hw address in bits */
 };
 
-struct sana2 * sana2_create(struct config *conf);
+struct sana2 * sana2_create(STRPTR device, LONG unit);
 void sana2_delete(struct sana2 *s2);
 void sana2_print(struct sana2 *s2);
-BOOL    sana2_getaddresses(struct sana2 *s2, struct config * conf);
+BOOL    sana2_getaddresses(struct sana2 *s2, struct Interface *iface);
 BOOL    sana2_online(struct sana2 *s2);
 BOOL    sana2_offline(struct sana2 *s2);
 BOOL    sana2_devicequery(struct sana2 *s2);

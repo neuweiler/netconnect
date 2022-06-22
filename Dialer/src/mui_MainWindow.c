@@ -1,102 +1,72 @@
+// do not call any bsdsocket.lib func unless SocketBase != 0 !!!
+
 /// includes
 #include "/includes.h"
 #pragma header
 
 #include "/Genesis.h"
+#include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/genesis_lib.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
+#include "mui_IfaceReq.h"
+#include "mui_Led.h"
 #include "protos.h"
 #include "sana.h"
 
 ///
-/// eternal variables
+/// external variables
 extern int errno;
-extern struct config Config;
-extern struct MinList dialscript;
-extern struct MinList user_startnet;
-extern struct MinList user_stopnet;
-extern Object *app;
-extern Object *win;
-extern Object *status_win;
-extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct MUI_CustomClass  *CL_Online;
+extern struct Config Config;
+extern Object *app, *win, *status_win;
+extern struct MUI_CustomClass  *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led;
 extern struct NewMenu MainMenu[];
-extern struct Hook des_hook;
+extern struct Hook des_hook, txtobj_hook, objtxt_hook;
+extern char connectspeed[];
+extern char config_file[];
+extern struct Library *SocketBase, *LockSocketBase;
 
 ///
 
-/// inet_getaddr
-int inet_getaddr(const char *s, const char *name, u_long *addr)
-{
-   struct hostent *hp;
-   struct netent *np;
+enum { type_ISP=1, type_User, type_Iface, type_LoginScript };
+struct Library *UserGroupBase;
 
-   if(!SocketBase)
-      return(-1);
-
-   if(hp = gethostbyname(s))
-      memmove((char *)addr, hp->h_addr, hp->h_length);
-   else if(np = getnetbyname(s))
-      *addr = Inet_MakeAddr(np->n_net, INADDR_ANY);
-   else
-   {
-      syslog(LOG_WARNING, "inet_getaddr: invalid value for argument \"%s\": %s.", name, s);
-      return(-1);
-   }
-   return(0);
-}
-
-///
 /// MainWindow_LoadConfig
-ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWindow_LoadConfig *msg)
+ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data = INST_DATA(cl, obj);
    struct pc_Data pc_data;
-   STRPTR ptr;
-   LONG value;
-   BOOL success = FALSE;
+   BOOL success = FALSE, user = FALSE, first_user = TRUE, first_provider = TRUE;
 
    clear_config(&Config);
+   DoMethod(data->LI_Users    , MUIM_List_Clear);
+   DoMethod(data->LI_Providers, MUIM_List_Clear);
 
-   if(SocketBase) // in this case it was opened by the other process => no good with bsdsocket.lib
-   {
-      MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Abort), "Cannot load configuration while we are online\nor a connection iss beeing set up.");
-      return(FALSE);
-   }
-      
-   if(!(SocketBase = OpenLibrary("bsdsocket.library", 0)))
-   {
-      MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Abort), "Could not open bsdsocket.libary.\nAmiTCP kernel is not running.");
-      return(FALSE);
-   }
-
-   if(ParseConfig(msg->file, &pc_data))
+   if(ParseConfig(config_file, &pc_data))
    {
       while(ParseNext(&pc_data))
       {
-         if(!stricmp(pc_data.Argument, "LoginName"))
-            strncpy(Config.cnf_loginname  , pc_data.Contents, sizeof(Config.cnf_loginname));
-         else if(!stricmp(pc_data.Argument, "Password"))
-            strncpy(Config.cnf_password   , pc_data.Contents, sizeof(Config.cnf_password));
-         else if(!stricmp(pc_data.Argument, "RealName"))
-            strncpy(Config.cnf_realname   , pc_data.Contents, sizeof(Config.cnf_realname));
-
-         else if(!stricmp(pc_data.Argument, "Phone"))
-            strncpy(Config.cnf_phonenumber, pc_data.Contents, sizeof(Config.cnf_phonenumber));
-
-         else if(!stricmp(pc_data.Argument, "SerialDevice"))
+         if(!stricmp(pc_data.Argument, "SerialDevice"))
             strncpy(Config.cnf_serialdevice, pc_data.Contents, sizeof(Config.cnf_serialdevice));
          else if(!stricmp(pc_data.Argument, "SerialUnit"))
             Config.cnf_serialunit = atol(pc_data.Contents);
          else if(!stricmp(pc_data.Argument, "BaudRate"))
             Config.cnf_baudrate = atol(pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "CarrierDetect"))
-            Config.cnf_carrierdetect = !stricmp(pc_data.Contents, "yes");
+         else if(!stricmp(pc_data.Argument, "IgnoreDSR"))
+            Config.cnf_flags |= CFL_IgnoreDSR;
          else if(!stricmp(pc_data.Argument, "7Wire"))
-            Config.cnf_7wire = !stricmp(pc_data.Contents, "yes");
+            Config.cnf_flags |= CFL_7Wire;
+         else if(!stricmp(pc_data.Argument, "RadBoogie"))
+            Config.cnf_flags |= CFL_RadBoogie;
+         else if(!stricmp(pc_data.Argument, "XonXoff"))
+            Config.cnf_flags |= CFL_IgnoreDSR;
+         else if(!stricmp(pc_data.Argument, "OwnDevUnit"))
+            Config.cnf_flags |= CFL_OwnDevUnit;
          else if(!stricmp(pc_data.Argument, "SerBufLen"))
             Config.cnf_serbuflen = atol(pc_data.Contents);
+
          else if(!stricmp(pc_data.Argument, "Modem"))
             strncpy(Config.cnf_modemname  , pc_data.Contents, sizeof(Config.cnf_modemname));
          else if(!stricmp(pc_data.Argument, "InitString"))
@@ -109,135 +79,36 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
             Config.cnf_redialattempts = atol(pc_data.Contents);
          else if(!stricmp(pc_data.Argument, "RedialDelay"))
             Config.cnf_redialdelay = atol(pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "Sana2Device"))
-            strncpy(Config.cnf_sana2device, pc_data.Contents, sizeof(Config.cnf_sana2device));
-         else if(!stricmp(pc_data.Argument, "Sana2Unit"))
-            Config.cnf_sana2unit = atol(pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "Sana2Config"))
-            strncpy(Config.cnf_sana2config, pc_data.Contents, sizeof(Config.cnf_sana2config));
-         else if(!stricmp(pc_data.Argument, "Sana2ConfigText") && !Config.cnf_sana2configtext)
-         {
-            int i;
 
-            if(Config.cnf_sana2configtext = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
-            {
-               i = 0;
-               ptr = pc_data.Contents;
-               while(*ptr)
-               {
-                  if(ptr[0] == '\\' && ptr[1] == 'n')
-                  {
-                     Config.cnf_sana2configtext[i++] = '\n';
-                     ptr++;
-                  }
-                  else
-                     Config.cnf_sana2configtext[i++] = *ptr;
-                  ptr++;
-               }
-               Config.cnf_sana2configtext[i] = NULL;
-            }
-         }
-         else if(!stricmp(pc_data.Argument, "Interface"))
-         {
-            strncpy(Config.cnf_ifname, pc_data.Contents, sizeof(Config.cnf_ifname));
-            strlwr(Config.cnf_ifname);
-         }
-         else if(!stricmp(pc_data.Argument, "IfConfigParams") && !Config.cnf_ifconfigparams)
-         {
-            if(Config.cnf_ifconfigparams = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
-               strcpy(Config.cnf_ifconfigparams, pc_data.Contents);
-         }
-         else if(!stricmp(pc_data.Argument, "MTU"))
-         {
-            if((value = atol(pc_data.Contents)) >= 2)
-               Config.cnf_MTU = value;
-         }
-         else if(!stricmp(pc_data.Argument, "KeepAlive"))
-            Config.cnf_keepalive = atol(pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "PingInterval"))
-            Config.cnf_pinginterval = atol(pc_data.Contents);
-
-         else if(!stricmp(pc_data.Argument, "IPAddr"))
-         {
-            if(inet_getaddr(pc_data.Contents, "Config file, IP", (ULONG *)&value) == 0)
-               Config.cnf_addr = value;
-         }
-         else if(!stricmp(pc_data.Argument, "HostName"))
-            strncpy(Config.cnf_hostname, pc_data.Contents, sizeof(Config.cnf_hostname));
-         else if(!stricmp(pc_data.Argument, "DestIP"))
-         {
-            if(inet_getaddr(pc_data.Contents, "Config file, DestIP", (ULONG *)&value) == 0)
-               Config.cnf_dst = value;
-         }
-         else if(!stricmp(pc_data.Argument, "Gateway"))
-         {
-            if(inet_getaddr(pc_data.Contents, "Config file, Gateway", (ULONG *)&value) == 0)
-               Config.cnf_gateway = value;
-         }
-         else if(!stricmp(pc_data.Argument, "Netmask"))
-         {
-            if(inet_getaddr(pc_data.Contents, "Config file, Netmask", (ULONG *)&value) == 0)
-               Config.cnf_netmask = value;
-         }
-         else if(!stricmp(pc_data.Argument, "DomainName"))
-            strncpy(Config.cnf_domainname, pc_data.Contents, sizeof(Config.cnf_domainname));
-         if(!stricmp(pc_data.Argument, "NameServer"))
-         {
-            if(inet_getaddr(pc_data.Contents, "Config file, NameServer", (ULONG *)&value) == 0)
-            {
-               if(Config.cnf_dns1 == INADDR_ANY)
-                  Config.cnf_dns1 = value;
-               else if(Config.cnf_dns2 == INADDR_ANY)
-                  Config.cnf_dns2 = value;
-            }
-         }
-         else if(!stricmp(pc_data.Argument, "BOOTPServer"))
-         {
-            if(inet_getaddr(pc_data.Contents, "Config file, BOOTPServer", (ULONG *)&value) == 0)
-               Config.cnf_bootpserver = value;
-         }
-         else if(!stricmp(pc_data.Argument, "UseBootP"))
-            Config.cnf_use_bootp = !stricmp(pc_data.Contents, "yes");
-         else if(!stricmp(pc_data.Argument, "TimeServer"))
-            strncpy(Config.cnf_timename, pc_data.Contents, sizeof(Config.cnf_timename));
-
-         else if(!stricmp(pc_data.Argument, "AutoLogin"))
-            Config.cnf_autologin = !stricmp(pc_data.Contents, "yes");
-         else if(!stricmp(pc_data.Argument, "OnlineOnStartup"))
-            Config.cnf_onlineonstartup = !stricmp(pc_data.Contents, "yes");
          else if(!stricmp(pc_data.Argument, "QuickReconnect"))
-            Config.cnf_quickreconnect = !stricmp(pc_data.Contents, "yes");
-         else if(!stricmp(pc_data.Argument, "SynClock"))
-            Config.cnf_synclock = !stricmp(pc_data.Contents, "yes");
-         else if(!stricmp(pc_data.Argument, "ShowStatus"))
-            Config.cnf_showstatus = !stricmp(pc_data.Contents, "yes");
-         else if(!stricmp(pc_data.Argument, "ShowSpeed"))
-            Config.cnf_showspeed = !stricmp(pc_data.Contents, "yes");
-         else if(!stricmp(pc_data.Argument, "ShowOnline"))
-            Config.cnf_showonlinetime = !stricmp(pc_data.Contents, "yes");
+            Config.cnf_flags |= CFL_QuickReconnect;
+         else if(!stricmp(pc_data.Argument, "Debug"))
+            Config.cnf_flags |= CFL_Debug;
+         else if(!stricmp(pc_data.Argument, "ConfirmOffline"))
+            Config.cnf_flags |= CFL_ConfirmOffline;
+         else if(!stricmp(pc_data.Argument, "ShowLog"))
+            Config.cnf_flags |= CFL_ShowLog;
+         else if(!stricmp(pc_data.Argument, "ShowLamps"))
+            Config.cnf_flags |= CFL_ShowLamps;
+         else if(!stricmp(pc_data.Argument, "ShowConnect"))
+            Config.cnf_flags |= CFL_ShowConnect;
+         else if(!stricmp(pc_data.Argument, "ShowOnlineTime"))
+            Config.cnf_flags |= CFL_ShowOnlineTime;
          else if(!stricmp(pc_data.Argument, "ShowButtons"))
-            Config.cnf_showbuttons = !stricmp(pc_data.Contents, "yes");
+            Config.cnf_flags |= CFL_ShowButtons;
+         else if(!stricmp(pc_data.Argument, "ShowNetwork"))
+            Config.cnf_flags |= CFL_ShowNetwork;
+         else if(!stricmp(pc_data.Argument, "ShowUser"))
+            Config.cnf_flags |= CFL_ShowUser;
+         else if(!stricmp(pc_data.Argument, "ShowStatusWin"))
+            Config.cnf_flags |= CFL_ShowStatusWin;
+         else if(!stricmp(pc_data.Argument, "ShowSerialInput"))
+            Config.cnf_flags |= CFL_ShowSerialInput;
+         else if(!stricmp(pc_data.Argument, "StartupOpenWin"))
+            Config.cnf_flags |= CFL_StartupOpenWin;
+         else if(!stricmp(pc_data.Argument, "StartupIconify"))
+            Config.cnf_flags |= CFL_StartupIconify;
 
-         else if(!stricmp(pc_data.Argument, "Online") && !Config.cnf_online)
-         {
-            if(Config.cnf_online = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
-               strcpy(Config.cnf_online, pc_data.Contents);
-         }
-         else if(!stricmp(pc_data.Argument, "OnlineFail") && !Config.cnf_onlinefail)
-         {
-            if(Config.cnf_onlinefail = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
-               strcpy(Config.cnf_onlinefail, pc_data.Contents);
-         }
-         else if(!stricmp(pc_data.Argument, "OfflineActive") && !Config.cnf_offlineactive)
-         {
-            if(Config.cnf_offlineactive = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
-               strcpy(Config.cnf_offlineactive, pc_data.Contents);
-         }
-         else if(!stricmp(pc_data.Argument, "OfflinePassive") && !Config.cnf_offlinepassive)
-         {
-            if(Config.cnf_offlinepassive = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
-               strcpy(Config.cnf_offlinepassive, pc_data.Contents);
-         }
          else if(!stricmp(pc_data.Argument, "Startup") && !Config.cnf_startup)
          {
             if(Config.cnf_startup = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
@@ -249,112 +120,402 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                strcpy(Config.cnf_shutdown, pc_data.Contents);
          }
 
-         else if(!stricmp(pc_data.Argument, "WinOnline"))
-            Config.cnf_winonline = (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0));
-         else if(!stricmp(pc_data.Argument, "WinOnlineFail"))
-            Config.cnf_winonlinefail = (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0));
-         else if(!stricmp(pc_data.Argument, "WinOfflineActive"))
-            Config.cnf_winofflineactive = (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0));
-         else if(!stricmp(pc_data.Argument, "WinOfflinePassive"))
-            Config.cnf_winofflinepassive = (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0));
-         else if(!stricmp(pc_data.Argument, "WinStartup"))
-            Config.cnf_winstartup = (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0));
-
-         else if(!stricmp(pc_data.Argument, "LoginScript"))
+         if(!stricmp(pc_data.Argument, "ISP"))
+            user = FALSE;
+         else if(!stricmp(pc_data.Argument, "USER"))
+            user = TRUE;
+         else if(!stricmp(pc_data.Argument, "Name"))
          {
-            struct ScriptLine *script_line;
-
-            while(ParseNext(&pc_data))
+            DoMethod((user ? data->LI_Users : data->LI_Providers), MUIM_List_InsertSingle, pc_data.Contents, MUIV_List_Insert_Bottom);
+            if(first_user && user)
             {
-               if(!stricmp(pc_data.Argument, "EOS"))
-                  break;
-
-               if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR))
-               {
-                  if(!stricmp(pc_data.Argument, script_commands[SL_Send]))
-                     script_line->sl_command = SL_Send;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_WaitFor]))
-                     script_line->sl_command = SL_WaitFor;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_Dial]))
-                     script_line->sl_command = SL_Dial;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_GoOnline]))
-                     script_line->sl_command = SL_GoOnline;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendLogin]))
-                     script_line->sl_command = SL_SendLogin;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendPassword]))
-                     script_line->sl_command = SL_SendPassword;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendBreak]))
-                     script_line->sl_command = SL_SendBreak;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_Exec]))
-                     script_line->sl_command = SL_Exec;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_Pause]))
-                     script_line->sl_command = SL_Pause;
-                  else
-                     script_line->sl_command = -1;
-
-                  if(script_line->sl_command != -1)
-                  {
-                     strncpy(script_line->sl_contents, pc_data.Contents, sizeof(script_line->sl_contents));
-                     AddTail((struct List *)&dialscript, (struct Node *)&script_line->sl_node);
-                  }
-                  else
-                     FreeVec(script_line);
-               }
+               set(data->TX_User, MUIA_Text_Contents, pc_data.Contents);
+               first_user = FALSE;
             }
-         }
-         else if(!stricmp(pc_data.Argument, "UserStartNet"))
-         {
-            struct ScriptLine *script_line;
-
-            while(ParseNextLine(&pc_data))
+            if(first_provider && !user)
             {
-               if(!stricmp(pc_data.Contents, "EOS"))
-                  break;
-               if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR))
-               {
-                  script_line->sl_command = SL_Exec;
-                  strncpy(script_line->sl_contents, pc_data.Contents, sizeof(script_line->sl_contents));
-                  AddTail((struct List *)&user_startnet, (struct Node *)script_line);
-               }
-            }
-         }
-         else if(!stricmp(pc_data.Argument, "UserStopNet"))
-         {
-            struct ScriptLine *script_line;
-
-            while(ParseNextLine(&pc_data))
-            {
-               if(!stricmp(pc_data.Contents, "EOS"))
-                  break;
-
-               if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR))
-               {
-                  script_line->sl_command = SL_Exec;
-                  strncpy(script_line->sl_contents, pc_data.Contents, sizeof(script_line->sl_contents));
-                  AddTail((struct List *)&user_stopnet, (struct Node *)script_line);
-               }
+               set(data->TX_Provider, MUIA_Text_Contents, pc_data.Contents);
+               first_provider = FALSE;
             }
          }
       }
       ParseEnd(&pc_data);
 
-      set(data->GR_Log        , MUIA_ShowMe, Config.cnf_showstatus);
-      set(data->GR_Speed      , MUIA_ShowMe, Config.cnf_showspeed);
-      set(data->GR_Online     , MUIA_ShowMe, Config.cnf_showonlinetime);
-      set(data->GR_Buttons    , MUIA_ShowMe, Config.cnf_showbuttons);
+      set(data->GR_Log         , MUIA_ShowMe, Config.cnf_flags & CFL_ShowLog);
+      set(data->GR_Speed       , MUIA_ShowMe, Config.cnf_flags & CFL_ShowConnect);
+      set(data->GR_Online      , MUIA_ShowMe, Config.cnf_flags & CFL_ShowOnlineTime);
+      set(data->GR_Buttons     , MUIA_ShowMe, Config.cnf_flags & CFL_ShowButtons);
+      set(data->PO_Provider    , MUIA_ShowMe, Config.cnf_flags & CFL_ShowNetwork);
+      set(data->PO_User        , MUIA_ShowMe, Config.cnf_flags & CFL_ShowUser);
+      set(data->BO_ProviderUser, MUIA_ShowMe, ((Config.cnf_flags & CFL_ShowNetwork) && (Config.cnf_flags & CFL_ShowUser)));
 
       success = TRUE;
    }
    else
-      MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), "Could not load config file '%ls'", msg->file);
-
-   CloseLibrary(SocketBase);
-   SocketBase = NULL;
+      MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), "Could not load config file '%ls'", config_file);
 
    return((ULONG)success);
 }
 ///
+/// MainWindow_ChangeProvider
+ULONG MainWindow_ChangeProvider(struct IClass *cl, Object *obj, struct MUIP_MainWindow_ChangeProvider *msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+   struct pc_Data pc_data;
+   struct Interface *iface = NULL;
+   int current_type = 0, nr_ifaces;
+   BOOL isp_ok = FALSE;
+   BPTR fh;
 
+   if(is_one_online(&data->isp.isp_ifaces))
+   {
+      set(win, MUIA_Window_Open, TRUE);
+      if(!MUI_Request(app, win, NULL, NULL, "*\033b_Stay online|_Go offline and change", "At least one interface is still online. Shall all interfaces\nbe put offline and the new configuration be loaded or would you\nlike to stay online and ignore the new settings for now?"))
+      {
+         iterate_ifacelist(&data->isp.isp_ifaces, 0);
+         DoMethod(win, MUIM_MainWindow_PutOffline);
+      }
+      else
+      {
+         char buffer[41];
+
+         *buffer = NULL;
+         GetEnvDOS("LOGNAME", buffer, 40);
+         nnset(data->TX_Provider, MUIA_Text_Contents, data->isp.isp_name);
+         if(*buffer)
+            nnset(data->TX_User , MUIA_Text_Contents, buffer);
+         return(NULL);
+      }
+   }
+
+   set(app, MUIA_Application_Sleep, TRUE);
+   if(ParseConfig(config_file, &pc_data))
+   {
+      clear_isp(&data->isp);
+
+      while(ParseNext(&pc_data))
+      {
+         if(!stricmp(pc_data.Argument, "ISP"))
+         {
+            if(isp_ok)
+               break;
+            current_type = type_ISP;
+         }
+         else if(!stricmp(pc_data.Argument, "LOGINSCRIPT") && isp_ok)
+            current_type = type_LoginScript;
+         else if(!stricmp(pc_data.Argument, "INTERFACE") && isp_ok)
+         {
+            if(iface = AllocVec(sizeof(struct Interface), MEMF_ANY | MEMF_CLEAR))
+            {
+               strcpy(iface->if_netmask, "255.255.255.0");
+               iface->if_MTU             = 1500;
+               NewList((struct List *)&iface->if_events);
+
+               AddTail((struct List *)&data->isp.isp_ifaces, (struct Node *)iface);
+               current_type = type_Iface;
+            }
+            else
+               current_type = NULL;
+         }
+
+         if(!current_type)
+            continue;
+
+         switch(current_type)
+         {
+            case type_ISP:
+               if(!stricmp(pc_data.Argument, "Name"))
+               {
+                  if(strcmp(pc_data.Contents, (STRPTR)xget(data->TX_Provider, MUIA_Text_Contents)))
+                  {
+                     current_type = NULL;
+                     continue;
+                  }
+                  isp_ok = TRUE;
+                  strncpy(data->isp.isp_name, pc_data.Contents, sizeof(data->isp.isp_name));
+               }
+               else if(!stricmp(pc_data.Argument, "Login"))
+                  strncpy(data->isp.isp_login, pc_data.Contents, sizeof(data->isp.isp_login));
+               else if(!stricmp(pc_data.Argument, "Password"))
+                  decrypt(pc_data.Contents, data->isp.isp_password);
+               if(!stricmp(pc_data.Argument, "Phone"))
+                  strncpy(data->isp.isp_phonenumber, pc_data.Contents, sizeof(data->isp.isp_phonenumber));
+               else if(!stricmp(pc_data.Argument, "NameServer"))
+                  add_server(&data->isp.isp_nameservers, pc_data.Contents);
+               else if(!stricmp(pc_data.Argument, "DomainName"))
+                  add_server(&data->isp.isp_domainnames, pc_data.Contents);
+               else if(!stricmp(pc_data.Argument, "BOOTPServer"))
+                  strncpy(data->isp.isp_bootp, pc_data.Contents, sizeof(data->isp.isp_bootp));
+               else if(!stricmp(pc_data.Argument, "UseBootP"))
+                  data->isp.isp_flags |= ISF_UseBootp;
+               else if(!stricmp(pc_data.Argument, "HostName"))
+                  strncpy(data->isp.isp_hostname, pc_data.Contents, sizeof(data->isp.isp_hostname));
+               else if(!stricmp(pc_data.Argument, "DontQueryHostname"))
+                  data->isp.isp_flags |= ISF_DontQueryHostname;
+               else if(!stricmp(pc_data.Argument, "GetTime"))
+                  data->isp.isp_flags |= ISF_GetTime;
+               else if(!stricmp(pc_data.Argument, "SaveTime"))
+                  data->isp.isp_flags |= ISF_SaveTime;
+               else if(!stricmp(pc_data.Argument, "TimeServer"))
+                  strncpy(data->isp.isp_timename, pc_data.Contents, sizeof(data->isp.isp_timename));
+               break;
+
+            case type_Iface:
+               if(iface)
+               {
+                  if(!stricmp(pc_data.Argument, "IfName"))
+                     strncpy(iface->if_name, pc_data.Contents, sizeof(iface->if_name));
+                  else if(!stricmp(pc_data.Argument, "Sana2Device"))
+                     strncpy(iface->if_sana2device, pc_data.Contents, sizeof(iface->if_sana2device));
+                  else if(!stricmp(pc_data.Argument, "Sana2Unit"))
+                     iface->if_sana2unit = atol(pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Sana2Config"))
+                     strncpy(iface->if_sana2config, pc_data.Contents, sizeof(iface->if_sana2config));
+                  else if(!stricmp(pc_data.Argument, "Sana2ConfigText") && !iface->if_sana2configtext)
+                  {
+                     if(iface->if_sana2configtext = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY | MEMF_CLEAR))
+                     {
+                        if(strstr(pc_data.Contents, "\\n"))
+                        {
+                           STRPTR ptr, ptr2;
+
+                           ptr = pc_data.Contents;
+                           FOREVER
+                           {
+                              if(ptr2 = strstr(ptr, "\\n"))
+                                 *ptr2 = NULL;
+                              strcat(iface->if_sana2configtext, ptr);
+                              if(ptr2)
+                                 strcat(iface->if_sana2configtext, "\n");
+                              else
+                                 break;
+
+                              ptr = ptr2 + 2;
+                           }
+                        }
+                        else
+                           strcpy(iface->if_sana2configtext, pc_data.Contents);
+                     }
+                  }
+                  else if(!stricmp(pc_data.Argument, "IfConfigParams") && !iface->if_configparams)
+                  {
+                     if(iface->if_configparams = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY))
+                        strcpy(iface->if_configparams, pc_data.Contents);
+                  }
+                  else if(!stricmp(pc_data.Argument, "MTU"))
+                     iface->if_MTU = atol(pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "IPAddr") && strcmp(pc_data.Contents, "0.0.0.0"))
+                     strncpy(iface->if_addr, pc_data.Contents, sizeof(iface->if_addr));
+                  else if(!stricmp(pc_data.Argument, "DestIP") && strcmp(pc_data.Contents, "0.0.0.0"))
+                     strncpy(iface->if_dst, pc_data.Contents, sizeof(iface->if_dst));
+                  else if(!stricmp(pc_data.Argument, "Gateway") && strcmp(pc_data.Contents, "0.0.0.0"))
+                     strncpy(iface->if_gateway, pc_data.Contents, sizeof(iface->if_gateway));
+                  else if(!stricmp(pc_data.Argument, "Netmask"))
+                     strncpy(iface->if_netmask, pc_data.Contents, sizeof(iface->if_netmask));
+                  else if(!stricmp(pc_data.Argument, "KeepAlive"))
+                     iface->if_keepalive = atol(pc_data.Contents);
+//                  else if(!stricmp(pc_data.Argument, "CarrierDetect"))
+//                     iface->if_flags |= IFL_CarrierDetect;
+                  else if(!stricmp(pc_data.Argument, "AlwaysOnline"))
+                     iface->if_flags |= IFL_AlwaysOnline;
+                  else
+                  {
+                     struct ScriptLine *script_line;
+                     int command;
+
+                     if(!stricmp(pc_data.Argument, event_commands[IFE_Online]))
+                        command = IFE_Online;
+                     else if(!stricmp(pc_data.Argument, event_commands[IFE_OnlineFail]))
+                        command = IFE_OnlineFail;
+                     else if(!stricmp(pc_data.Argument, event_commands[IFE_OfflineActive]))
+                        command = IFE_OfflineActive;
+                     else if(!stricmp(pc_data.Argument, event_commands[IFE_OfflinePassive]))
+                        command = IFE_OfflinePassive;
+                     else
+                        command = -1;
+
+                     if(command != -1)
+                     {
+                        if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+                        {
+                           script_line->sl_command = command;
+                           strncpy(script_line->sl_contents, &pc_data.Contents[2], script_line->sl_command);
+                           script_line->sl_userdata = *pc_data.Contents - 48;
+
+                           AddTail((struct List *)&iface->if_events, (struct Node *)script_line);
+                        }
+                     }
+                  }
+               }
+               break;
+
+            case type_LoginScript:
+            {
+               struct ScriptLine *script_line;
+               int command;
+
+               if(!stricmp(pc_data.Argument, script_commands[SL_Send]))
+                  command = SL_Send;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_WaitFor]))
+                  command = SL_WaitFor;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_Dial]))
+                  command = SL_Dial;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_GoOnline]))
+                  command = SL_GoOnline;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_SendLogin]))
+                  command = SL_SendLogin;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_SendPassword]))
+                  command = SL_SendPassword;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_SendBreak]))
+                  command = SL_SendBreak;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_Exec]))
+                  command = SL_Exec;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_Pause]))
+                  command = SL_Pause;
+               else
+                  command = -1;
+
+               if(command != -1)
+               {
+                  if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+                  {
+                     script_line->sl_command = command;
+                     strncpy(script_line->sl_contents, pc_data.Contents, script_line->sl_command);
+
+                     AddTail((struct List *)&data->isp.isp_loginscript, (struct Node *)script_line);
+                  }
+               }
+            }
+            break;
+         }
+      }
+      ParseEnd(&pc_data);
+   }
+
+   // prepare some files
+
+   if(fh = CreateDir("ENV:NetConfig"))
+      UnLock(fh);
+
+   nr_ifaces = 0;
+   if(fh = Open("ENV:NetConfig/AutoInterfaces", MODE_NEWFILE))
+   {
+      if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
+      {
+         iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+         while(iface->if_node.mln_Succ)
+         {
+            iface->if_userdata = (APTR)nr_ifaces++;   // so they know which led they belong to
+            FPrintf(fh, "%ls DEV=%ls UNIT=%ld", iface->if_name, iface->if_sana2device, iface->if_sana2unit);
+            if(iface->if_configparams)
+               FPrintf(fh, " %ls", iface->if_configparams);
+            FPrintf(fh, "\n");
+
+            iface = (struct Interface *)iface->if_node.mln_Succ;
+         }
+      }
+      Close(fh);
+   }
+   if(fh = Open("AmiTCP:db/resolv.conf", MODE_NEWFILE))
+   {
+      FPrintf(fh, "; This file is built dynamically - do not edit\n");
+      Close(fh);
+   }
+
+   amirexx_do_command("RESET");
+
+   DoMethod(obj, MUIM_MainWindow_SetStates);
+   set(app, MUIA_Application_Sleep, FALSE);
+
+   if(data->nr_leds != nr_ifaces)
+   {
+      DoMethod(data->GR_Status, MUIM_Group_InitChange);
+      while((data->nr_leds > nr_ifaces) && (data->nr_leds > 1))
+      {
+         data->nr_leds--;
+         DoMethod(data->GR_Status, OM_REMMEMBER, data->GR_Led[data->nr_leds]);
+         MUI_DisposeObject(data->GR_Led[data->nr_leds]);
+         data->GR_Led[data->nr_leds] = NULL;
+      }
+
+      while((data->nr_leds < nr_ifaces) && (data->nr_leds < 32))
+      {
+         data->GR_Led[data->nr_leds] = NewObject(CL_Led->mcc_Class, NULL, TAG_DONE),
+         DoMethod(data->GR_Status, OM_ADDMEMBER, data->GR_Led[data->nr_leds]);
+         data->nr_leds++;
+         data->GR_Led[data->nr_leds] = NULL;
+      }
+
+      DoMethod(data->GR_Status, MUIM_Group_ExitChange);
+   }
+   current_type = data->nr_leds;
+   while(current_type--)
+      set(data->GR_Led[current_type], MUIA_Group_ActivePage, MUIV_Led_Black);
+
+   // only go online when amitcp's already running
+   if(LockSocketBase)
+   {
+      iterate_ifacelist(&data->isp.isp_ifaces, 1);
+      DoMethod(win, MUIM_MainWindow_PutOnline);
+   }
+
+   return(NULL);
+}
+
+///
+/// MainWindow_ChangeUser
+ULONG MainWindow_ChangeUser(struct IClass *cl, Object *obj, struct MUIP_MainWindow_ChangeUser *msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+   struct passwd *pwd;
+   BPTR homedir;
+   STRPTR user, salt;
+
+   user = (STRPTR)xget(data->TX_User, MUIA_Text_Contents);
+   if(UserGroupBase = OpenLibrary(USERGROUPNAME, 0))
+   {
+      if(pwd = getpwnam(user))
+      {
+         salt = pwd->pw_passwd;
+
+// open passwd req if there's a pw and current uid != 0
+// match = !strcmp(crypt(p, salt), pwd->pw_passwd);
+
+         if(!(homedir = Lock(pwd->pw_dir, SHARED_LOCK)))
+         {
+            MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "Could not obtain a lock on user's homedirectory:\n%ls\nFalling back to \"SYS:\"", pwd->pw_dir);
+            homedir = Lock("SYS:", SHARED_LOCK);
+         }
+         {
+            if(!AssignLock("HOME", homedir))
+               UnLock(homedir);
+         }
+setreuid(-1,0);
+         setgid(pwd->pw_gid);
+         initgroups(user, pwd->pw_gid);
+
+         SetEnvDOS("HOME", pwd->pw_dir, -1, FALSE);
+         SetEnvDOS("LOGNAME", pwd->pw_name, -1, FALSE);
+         SetEnvDOS("USER", pwd->pw_name, -1, FALSE);
+         setlogin(pwd->pw_name);
+         setlastlog(pwd->pw_uid, user, "Console");
+         setuid(pwd->pw_uid);
+      }
+      else
+      {
+         salt = "xx";
+         SetEnvDOS("LOGNAME", user, -1, FALSE);
+         SetEnvDOS("USER", user, -1, FALSE);
+         setlogin(user);
+      }
+      CloseLibrary(UserGroupBase);
+   }
+   SetCurrentUserByName(user);
+
+   return(NULL);
+}
+
+///
 /// MainWindow_MUIRequest
 ULONG MainWindow_MUIRequest(struct IClass *cl, Object *obj, struct MUIP_MainWindow_MUIRequest *msg)
 {
@@ -369,13 +530,13 @@ ULONG MainWindow_MUIRequest(struct IClass *cl, Object *obj, struct MUIP_MainWind
 /// MainWindow_About
 ULONG MainWindow_About(struct IClass *cl, Object *obj, Msg msg)
 {
-   MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033b\033c" VERS "\033n\033c\n\n%ls\n\nAREXX port: '%ls'", GetStr(MSG_TX_About), xget(app, MUIA_Application_Base));
+   MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033b\033cGenesis\033n\033c\n"VERTAG"\n\n%ls\n\nAREXX port: '%ls'", GetStr(MSG_TX_About), xget(app, MUIA_Application_Base));
    return(NULL);
 }
 
 ///
-/// MainWindow_Abort
-ULONG MainWindow_Abort(struct IClass *cl, Object *obj, Msg msg)
+/// MainWindow_Quit
+ULONG MainWindow_Quit(struct IClass *cl, Object *obj, Msg msg)
 {
    if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_QuitCancel), GetStr(MSG_TX_ReallyQuit)))
       DoMethod(app, MUIM_Application_PushMethod, app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
@@ -384,56 +545,126 @@ ULONG MainWindow_Abort(struct IClass *cl, Object *obj, Msg msg)
 }
 
 ///
-/// MainWindow_Online
-ULONG MainWindow_Online(struct IClass *cl, Object *obj, Msg msg)
+/// MainWindow_OnOffline
+ULONG MainWindow_OnOffline(struct IClass *cl, Object *obj, struct MUIP_MainWindow_OnOffline *msg)
 {
-   set(app, MUIA_Application_Sleep, TRUE);
-   if(status_win = NewObject(CL_Online->mcc_Class, NULL, TAG_DONE))
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+   Object *window;
+
+   if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
    {
-      struct Online_Data *ol_data = INST_DATA(CL_Online->mcc_Class, status_win);
+      struct Interface *iface;
 
-      DoMethod(app, OM_ADDMEMBER, status_win);
-      set(status_win, MUIA_Window_Open, TRUE);
-
-//      if(dialscript.mlh_TailPred != (struct MinNode *)&dialscript)
-//         set(ol_data->GR_Terminal, MUIA_ShowMe, TRUE);   // this has to be set after the window is opened (otherwise we get a huge window)
-      DoMethod(status_win, MUIM_Online_GoOnline);
+      iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+      if(iface->if_node.mln_Succ)   // is there at least one iface ?
+      {
+         iface = (struct Interface *)iface->if_node.mln_Succ;
+         if(iface->if_node.mln_Succ)   // is there a second iface ?
+         {
+            set(app, MUIA_Application_Sleep, TRUE);
+            if(window = NewObject(CL_IfaceReq->mcc_Class, NULL, TAG_DONE))
+            {
+               DoMethod(app, OM_ADDMEMBER, window);
+               if(DoMethod(window, MUIM_IfaceReq_BuildList, &data->isp.isp_ifaces, msg->online))
+                  set(window, MUIA_Window_Open, TRUE);
+               else
+                  DoMethod(window, MUIM_IfaceReq_Finished, FALSE);
+            }
+            else
+               set(app, MUIA_Application_Sleep, FALSE);
+         }
+         else
+         {
+            iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+            iface->if_flags |= (msg->online ? IFL_PutOnline : IFL_PutOffline);   // in case there's only one iface
+            DoMethod(obj, (msg->online ? MUIM_MainWindow_PutOnline : MUIM_MainWindow_PutOffline));
+         }
+      }
    }
 
    return(NULL);
 }
 
 ///
-/// MainWindow_Offline
-ULONG MainWindow_Offline(struct IClass *cl, Object *obj, Msg msg)
+/// MainWindow_PutOnline
+ULONG MainWindow_PutOnline(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data = INST_DATA(cl, obj);
-   struct sana2 *s2;
+   struct Interface *iface;
+   BOOL put_one_online = FALSE;
+
+   if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
+   {
+      iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+      while(iface->if_node.mln_Succ)
+      {
+         if(iface->if_flags & IFL_PutOnline)
+            put_one_online = TRUE;
+         iface = (struct Interface *)iface->if_node.mln_Succ;
+      }
+   }
+   if(put_one_online)
+   {
+      set(app, MUIA_Application_Sleep, TRUE);
+      if(status_win = NewObject(CL_Online->mcc_Class, NULL, TAG_DONE))
+      {
+         DoMethod(app, OM_ADDMEMBER, status_win);
+         if(Config.cnf_flags & CFL_ShowStatusWin)
+            set(status_win, MUIA_Window_Open, TRUE);
+         DoMethod(status_win, MUIM_Online_GoOnline);
+      }
+   }
+   return(NULL);
+}
+
+///
+/// MainWindow_PutOffline
+ULONG MainWindow_PutOffline(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
 
    set(app, MUIA_Application_Sleep, TRUE);
 
-   exec_script(&user_stopnet);
-
-   if(data->online)
+   if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
    {
-      DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->online_ihn);
-      data->online = 0;
-   }
-   set(data->BT_Online  , MUIA_Disabled, FALSE);
-   set(data->BT_Offline , MUIA_Disabled, TRUE);
-   set(data->TX_Status  , MUIA_Text_Contents, "offline");
-   set(data->TX_Speed   , MUIA_Text_Contents, "-");
+      struct sana2 *s2;
+      struct Interface *iface;
 
-   if(s2 = sana2_create(&Config))
-   {
-      sana2_offline(s2);
-      sana2_delete(s2);
-   }
-   else
-      syslog(LOG_CRIT, "offline: could not open %ls unit %ld.", Config.cnf_sana2device, Config.cnf_sana2unit);
+      iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+      while(iface->if_node.mln_Succ)
+      {
+         if(iface->if_flags & IFL_PutOffline)
+         {
+            iface->if_flags &= ~IFL_PutOffline;
 
+            if(s2 = sana2_create(iface->if_sana2device, iface->if_sana2unit))
+            {
+               if(sana2_offline(s2))
+                  exec_event(&iface->if_events, IFE_OfflineActive);
+               else
+               {
+                  SocketBase = LockSocketBase;
+                  syslog_AmiTCP(LOG_CRIT, "offline: could not put %ls unit %ld offline.", iface->if_sana2device, iface->if_sana2unit);
+                  SocketBase = NULL;
+               }
+
+               sana2_delete(s2);
+            }
+            else
+            {
+               SocketBase = LockSocketBase;
+               syslog_AmiTCP(LOG_CRIT, "offline: could not open %ls unit %ld.", iface->if_sana2device, iface->if_sana2unit);
+               SocketBase = NULL;
+            }
+            iface->if_flags &= ~IFL_IsOnline;
+            set(data->GR_Led[(ULONG)iface->if_userdata], MUIA_Group_ActivePage, MUIV_Led_Black);
+         }
+         iface = (struct Interface *)iface->if_node.mln_Succ;
+      }
+   }
+
+   DoMethod(obj, MUIM_MainWindow_SetStates);
    set(app, MUIA_Application_Sleep, FALSE);
-
    return(NULL);
 }
 
@@ -450,35 +681,60 @@ ULONG MainWindow_TimeTrigger(struct IClass *cl, Object *obj)
    h = m / 60;
    s = s % 60;
    m = m % 60;
-   sprintf(data->time_str, "%02ld:%02ld:%02ld", h, m, s);
+   sprintf(data->time_str, "Time Online: %02ld:%02ld:%02ld", h, m, s);
    set(data->TX_Online, MUIA_Text_Contents, data->time_str);
 
    return(TRUE);
 }
 ///
-/// MainWindow_WeAreOnline
-ULONG MainWindow_WeAreOnline(struct IClass *cl, Object *obj, Msg msg)
+/// MainWindow_SetStates
+ULONG MainWindow_SetStates(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data = INST_DATA(cl, obj);
-   char buf[21];
+   struct Interface *iface;
+   BOOL one_online = FALSE, one_offline = FALSE;
 
-   set(data->BT_Online, MUIA_Disabled, TRUE);
-   set(data->BT_Offline, MUIA_Disabled, FALSE);
-   set(data->TX_Status, MUIA_Text_Contents, "online");
-
-   sprintf(buf, "%ld baud", Config.cnf_connectspeed);
-   set(data->TX_Speed, MUIA_Text_Contents, (Config.cnf_connectspeed ? (STRPTR)buf : (STRPTR)"unknown"));
-
-   if(!data->online)
+   if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
    {
-      GetSysTime(&data->time);
-      data->online = data->time.tv_secs;
+      iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+      while(iface->if_node.mln_Succ)
+      {
+         if((iface->if_flags & IFL_IsOnline) && !(iface->if_flags & IFL_AlwaysOnline))
+            one_online = TRUE;
+         if(!(iface->if_flags & IFL_IsOnline))
+            one_offline = TRUE;
+         iface = (struct Interface *)iface->if_node.mln_Succ;
+      }
+   }
+   set(data->BT_Online, MUIA_Disabled, !one_offline);
+   set(data->BT_Offline, MUIA_Disabled, !one_online);
+   set(data->BT_Provider, MUIA_Disabled, one_online);
+   set(data->BT_User, MUIA_Disabled, one_online);
 
-      data->online_ihn.ihn_Object = obj;
-      data->online_ihn.ihn_Method = MUIM_MainWindow_TimeTrigger;
-      data->online_ihn.ihn_Flags  = MUIIHNF_TIMER;
-      data->online_ihn.ihn_Millis = 1000;
-      DoMethod(_app(obj), MUIM_Application_AddInputHandler, &data->online_ihn);
+   if(one_online)
+   {
+      set(data->TX_Speed, MUIA_Text_Contents, connectspeed);
+
+      if(!data->online)
+      {
+         GetSysTime(&data->time);
+         data->online = data->time.tv_secs;
+
+         data->online_ihn.ihn_Object = obj;
+         data->online_ihn.ihn_Method = MUIM_MainWindow_TimeTrigger;
+         data->online_ihn.ihn_Flags  = MUIIHNF_TIMER;
+         data->online_ihn.ihn_Millis = 1000;
+         DoMethod(_app(obj), MUIM_Application_AddInputHandler, &data->online_ihn);
+      }
+   }
+   else
+   {
+      if(data->online)
+      {
+         DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->online_ihn);
+         data->online = 0;
+      }
+      set(data->TX_Speed   , MUIA_Text_Contents, "-");
    }
 
    return(NULL);
@@ -547,11 +803,31 @@ ULONG MainWindow_UpdateLog(struct IClass *cl, Object *obj, Msg msg)
                   strncpy(log_entry->info, ptr3, 80);
 
                   DoMethod(data->LI_Log, MUIM_NList_InsertSingle, log_entry, MUIV_NList_Insert_Bottom);
+
+
+                  if(ptr2 = strstr(ptr3, "has been put offline"))
+                  {
+                     struct Interface *iface;
+
+                     ptr2--;
+                     *ptr2 = NULL;
+
+                     if(iface = find_by_name(&data->isp.isp_ifaces, ptr3))
+                     {
+                        set(data->GR_Led[(ULONG)iface->if_userdata], MUIA_Group_ActivePage, MUIV_Led_Red);
+                        exec_event(&iface->if_events, IFE_OfflinePassive);
+                     }
+
+                     DoMethod(win, MUIM_MainWindow_SetStates);
+                  }
                }
             }
          }
 
          data->log_pos = Seek(fh, 0, OFFSET_CURRENT);
+
+         while(xget(data->LI_Log, MUIA_NList_Entries) > 256)
+            DoMethod(data->LI_Log, MUIM_NList_Remove, MUIV_NList_Remove_First);
          DoMethod(data->LI_Log, MUIA_NList_Quiet, FALSE);
 
          Close(fh);
@@ -559,7 +835,7 @@ ULONG MainWindow_UpdateLog(struct IClass *cl, Object *obj, Msg msg)
       FreeVec(log_entry);
    }
 
-   DoMethod(data->LI_Log, MUIM_NList_Jump, xget(data->LI_Log, MUIA_NList_Entries));
+   DoMethod(data->LI_Log, MUIM_NList_Jump, xget(data->LI_Log, MUIA_NList_Entries)-1);
 
    return(NULL);
 }
@@ -574,6 +850,7 @@ struct SAVEDS LogEntry *Log_ConstructFunc(register __a2 APTR pool, register __a1
       memcpy(new, src, sizeof(struct LogEntry));
    return(new);
 }
+const struct Hook Log_ConstructHook= { { 0,0 }, (VOID *)Log_ConstructFunc , NULL, NULL };
 
 ///
 /// Log_DisplayFunc
@@ -593,41 +870,84 @@ SAVEDS LONG Log_DisplayFunc(register __a2 char **array, register __a1 struct Log
    }
    return(NULL);
 }
+const struct Hook Log_DisplayHook  = { { 0,0 }, (VOID *)Log_DisplayFunc   , NULL, NULL };
 
 ///
 
+/// MainWindow_Dispose
+ULONG MainWindow_Dispose(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+
+   clear_isp(&data->isp);
+
+   return(DoSuperMethodA(cl, obj, msg));
+}
+
+///
 /// MainWindow_New
 ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
-   static const struct Hook Log_ConstructHook= { { 0,0 }, (VOID *)Log_ConstructFunc , NULL, NULL };
-   static const struct Hook Log_DisplayHook  = { { 0,0 }, (VOID *)Log_DisplayFunc   , NULL, NULL };
    struct MainWindow_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Window_Title    , GetStr(MSG_TX_MainWindowTitle),
       MUIA_Window_ID       , MAKE_ID('M','A','I','N'),
+      MUIA_Window_Height   , MUIV_Window_Height_MinMax(2),
+      MUIA_Window_Width    , MUIV_Window_Width_MinMax(5),
       MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, MainMenu, NULL),
       WindowContents       , VGroup,
          Child, HGroup,
-            Child, HGroup,
-               GroupFrame,
-               MUIA_Weight, 1,
-               MUIA_Background, MUII_GroupBack,
-               Child, tmp.TX_Status = MakeText("offline"),
-            End,
+            MUIA_Group_SameHeight, TRUE,
             Child, tmp.GR_Online = HGroup,
-               GroupFrame,
-               MUIA_Background, MUII_GroupBack,
-               Child, LLabel("Time Online:"),
-               Child, tmp.TX_Online = MakeText("--:--:--"),
+               Child, tmp.TX_Online = MakeText("Time Online: --:--:--", FALSE),
             End,
-
+            Child, VGroup,
+               TextFrame,
+               GroupSpacing(0),
+               MUIA_InnerTop     , 0,
+               MUIA_InnerBottom  , 0,
+               Child, HVSpace,
+               Child, tmp.GR_Status = HGroup,
+                  InnerSpacing(0, 0),
+                  GroupSpacing(2),
+                  Child, tmp.GR_Led[0] = NewObject(CL_Led->mcc_Class, NULL, TAG_DONE),
+               End,
+               Child, HVSpace,
+            End,
          End,
          Child, tmp.GR_Speed = HGroup,
-            GroupFrame,
-            MUIA_Background, MUII_GroupBack,
-            Child, LLabel("Speed:"),
-            Child, tmp.TX_Speed = MakeText("-          "),
+            Child, tmp.TX_Speed = MakeText(NULL, FALSE),
+         End,
+         Child, tmp.GR_Config = HGroup,
+            Child, tmp.PO_Provider = PopobjectObject,
+               MUIA_Popstring_String      , tmp.TX_Provider = MakeText(NULL, FALSE),
+               MUIA_Popstring_Button      , tmp.BT_Provider = PopButton(MUII_PopUp),
+               MUIA_Popobject_StrObjHook  , &txtobj_hook,
+               MUIA_Popobject_ObjStrHook  , &objtxt_hook,
+               MUIA_Popobject_Object      , tmp.LV_Providers = ListviewObject,
+                  MUIA_Listview_List, tmp.LI_Providers = ListObject,
+                     MUIA_Frame             , MUIV_Frame_InputList,
+                     MUIA_List_ConstructHook, MUIV_List_ConstructHook_String,
+                     MUIA_List_DestructHook , MUIV_List_DestructHook_String,
+                  End,
+               End,
+            End,
+            Child, tmp.BO_ProviderUser = BalanceObject, End,
+            Child, tmp.PO_User = PopobjectObject,
+               MUIA_Weight, 70,
+               MUIA_Popstring_String      , tmp.TX_User = MakeText(NULL, FALSE),
+               MUIA_Popstring_Button      , tmp.BT_User = PopButton(MUII_PopUp),
+               MUIA_Popobject_StrObjHook  , &txtobj_hook,
+               MUIA_Popobject_ObjStrHook  , &objtxt_hook,
+               MUIA_Popobject_Object      , tmp.LV_Users = ListviewObject,
+                  MUIA_Listview_List, tmp.LI_Users = ListObject,
+                     MUIA_Frame             , MUIV_Frame_InputList,
+                     MUIA_List_ConstructHook, MUIV_List_ConstructHook_String,
+                     MUIA_List_DestructHook , MUIV_List_DestructHook_String,
+                  End,
+               End,
+            End,
          End,
          Child, tmp.GR_Log = VGroup,
             Child, tmp.LV_Log = NListviewObject,
@@ -647,8 +967,8 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
          Child, tmp.GR_Buttons = VGroup,
             Child, MUI_MakeObject(MUIO_HBar, 2),
             Child, HGroup,
-               Child, tmp.BT_Online = MakeButton("  Go _online"),
-               Child, tmp.BT_Offline = MakeButton("  Go o_ffline"),
+               Child, tmp.BT_Online = MakeButton("  _Connect"),
+               Child, tmp.BT_Offline = MakeButton("  _Disconnect"),
             End,
          End,
       End,
@@ -659,15 +979,27 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       *data = tmp;
 
       data->online = 0;
+      data->nr_leds = 1;
+
+      bzero(&data->isp, sizeof(struct ISP));
+      NewList((struct List *)&data->isp.isp_ifaces);
+      NewList((struct List *)&data->isp.isp_loginscript);
+
       set(data->BT_Offline, MUIA_Disabled, TRUE);
 
-      DoMethod(obj            , MUIM_Notify, MUIA_Window_CloseRequest, TRUE, obj, 1, MUIM_MainWindow_Abort);
-      DoMethod(data->BT_Online, MUIM_Notify, MUIA_Pressed            , FALSE, obj, 1, MUIM_MainWindow_Online);
-      DoMethod(data->BT_Offline, MUIM_Notify, MUIA_Pressed            , FALSE, obj, 1, MUIM_MainWindow_Offline);
+      DoMethod(obj               , MUIM_Notify, MUIA_Window_CloseRequest , TRUE , obj, 1, MUIM_MainWindow_Quit);
+      DoMethod(data->LV_Users    , MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime , data->PO_User    , 2, MUIM_Popstring_Close, TRUE);
+      DoMethod(data->LV_Providers, MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime , data->PO_Provider, 2, MUIM_Popstring_Close, TRUE);
+      DoMethod(data->BT_Online   , MUIM_Notify, MUIA_Pressed             , FALSE, obj, 2, MUIM_MainWindow_OnOffline, TRUE);
+      DoMethod(data->BT_Offline  , MUIM_Notify, MUIA_Pressed             , FALSE, obj, 2, MUIM_MainWindow_OnOffline, FALSE);
+
+      // these have to be push methods so the popup can get closed first
+      DoMethod(data->TX_Provider , MUIM_Notify, MUIA_Text_Contents       , MUIV_EveryTime , MUIV_Notify_Application, 4, MUIM_Application_PushMethod, obj, 1, MUIM_MainWindow_ChangeProvider);
+      DoMethod(data->TX_User     , MUIM_Notify, MUIA_Text_Contents       , MUIV_EveryTime , MUIV_Notify_Application, 4, MUIM_Application_PushMethod, obj, 1, MUIM_MainWindow_ChangeUser);
 
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT)    , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_About);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT_MUI), MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_AboutMUI, win);
-      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_QUIT)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_Abort);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_QUIT)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_Quit);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_MUI)      , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_OpenConfigWindow, 0);
    }
    return((ULONG)obj);
@@ -677,28 +1009,24 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 /// MainWindow_Dispatcher
 SAVEDS ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   if(msg->MethodID == OM_NEW)
-      return(MainWindow_New                (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_LoadConfig)
-      return(MainWindow_LoadConfig         (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_MUIRequest)
-      return(MainWindow_MUIRequest         (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_About)
-      return(MainWindow_About              (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_Abort)
-      return(MainWindow_Abort              (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_Online)
-      return(MainWindow_Online             (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_Offline)
-      return(MainWindow_Offline            (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_WeAreOnline)
-      return(MainWindow_WeAreOnline        (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_DisposeWindow)
-      return(MainWindow_DisposeWindow      (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_TimeTrigger)
-      return(MainWindow_TimeTrigger        (cl, obj));
-   if(msg->MethodID == MUIM_MainWindow_UpdateLog)
-      return(MainWindow_UpdateLog          (cl, obj, (APTR)msg));
+   switch((ULONG)msg->MethodID)
+   {
+      case OM_NEW                         : return(MainWindow_New                (cl, obj, (APTR)msg));
+      case OM_DISPOSE                     : return(MainWindow_Dispose            (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_LoadConfig     : return(MainWindow_LoadConfig         (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_MUIRequest     : return(MainWindow_MUIRequest         (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_About          : return(MainWindow_About              (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_Quit           : return(MainWindow_Quit               (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_OnOffline      : return(MainWindow_OnOffline          (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_PutOnline      : return(MainWindow_PutOnline          (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_PutOffline     : return(MainWindow_PutOffline         (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_SetStates      : return(MainWindow_SetStates          (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_DisposeWindow  : return(MainWindow_DisposeWindow      (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_TimeTrigger    : return(MainWindow_TimeTrigger        (cl, obj));
+      case MUIM_MainWindow_UpdateLog      : return(MainWindow_UpdateLog          (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_ChangeProvider : return(MainWindow_ChangeProvider       (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_ChangeUser     : return(MainWindow_ChangeUser       (cl, obj, (APTR)msg));
+   }
 
    return(DoSuperMethodA(cl, obj, msg));
 }

@@ -2,6 +2,8 @@
 #include "/includes.h"
 #pragma header
 
+#include <libraries/owndevunit.h>
+#include <pragma/owndevunit_lib.h>
 #include "/Genesis.h"
 #include "Strings.h"
 #include "mui.h"
@@ -10,13 +12,17 @@
 #define SERIAL_BUFSIZE 16384  /* default size */
 ///
 /// external variables
-extern struct IOExtSer      *SerReq;
-extern struct MsgPort       *SerPort;
+extern struct ExecBase *SysBase;
+extern struct Library  *OwnDevUnitBase;
+extern struct IOExtSer *SerReq;
+extern struct MsgPort  *SerPort;
 extern Object *app;
 extern Object *win;
 extern Object *status_win;
-extern struct config Config;
+extern struct Config Config;
 extern struct MUI_CustomClass  *CL_Online;
+extern char connectspeed[];
+extern BOOL SerialLocked;
 ///
 
 /// serial_stopread
@@ -103,27 +109,16 @@ BOOL serial_waitfor(STRPTR string, int secs)
 
                      if(!data->abort)
                         DoMainMethod(data->TR_Terminal, TCM_WRITE, ser_buf, (APTR)1, NULL);
+
                      if(strstr(buffer, string))
                      {
-                        /** find out connection speed and copy to config **/
+                        // find out connection speed and copy to config
                         if(!strcmp(string, "CONNECT"))
                         {
                            if(ser_buf[0] == '\r')
                            {
-                              STRPTR ptr1, ptr2;
-
-                              ptr1 = buffer;
-                              while(!isdigit(*ptr1) && *ptr1)
-                                 ptr1++;
-
-                              ptr2 = ptr1;
-                              while(isdigit(*ptr2))
-                                 ptr2++;
-                              if(ptr2 > ptr1)
-                                 *ptr2 = NULL;
-
-                              Config.cnf_connectspeed = atol(ptr1);
-
+                              strncpy(connectspeed, buffer, 40);
+                              connectspeed[strlen(connectspeed) - 1] = NULL;
                               break;
                            }
                         }
@@ -184,6 +179,19 @@ BOOL serial_carrier(VOID)
 }
 
 ///
+/// serial_dsr
+BOOL serial_dsr(VOID)
+{
+   ULONG DSR = 1<<3;
+
+   if(!SerReq)
+      return(FALSE);
+   SerReq->IOSer.io_Command = SDCMD_QUERY;
+   DoIO((struct IORequest *)SerReq);
+   return((BOOL)(DSR & SerReq->io_Status ? FALSE : TRUE));
+}
+
+///
 /// serial_hangup
 VOID serial_hangup(VOID)
 {
@@ -206,16 +214,32 @@ VOID serial_hangup(VOID)
 /// serial_delete
 VOID serial_delete(VOID)
 {
-   if(SerReq)
+   struct Device *dev;
+
+   if(SerReq && SerReq->IOSer.io_Device)
    {
-      if(SerReq->IOSer.io_Device)
-         CloseDevice((struct IORequest *)SerReq);
-      DeleteExtIO((struct IORequest *)SerReq);
-      SerReq = NULL;
+      if(!CheckIO((struct IORequest *)SerReq))
+      {
+         AbortIO((struct IORequest *)SerReq);
+         WaitIO((struct IORequest *)SerReq);
+      }
+      CloseDevice((struct IORequest *)SerReq);
    }
+   if(SerReq)
+      DeleteExtIO((struct IORequest *)SerReq);
+   SerReq = NULL;
    if(SerPort)
       DeleteMsgPort(SerPort);
    SerPort = NULL;
+
+   Forbid();
+   if(dev = (struct Device *)FindName(&SysBase->DeviceList, Config.cnf_serialdevice))
+      RemDevice(dev);
+   Permit();
+
+   if(SerialLocked && OwnDevUnitBase && *Config.cnf_serialdevice)
+      FreeDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit);
+   SerialLocked = FALSE;
 }
 
 ///
@@ -224,20 +248,32 @@ BOOL serial_create(VOID)
 {
    ULONG flags;
 
-   flags = SERF_XDISABLED | SERF_RAD_BOOGIE | SERF_QUEUEDBRK | SERF_SHARED;
-   if(Config.cnf_7wire)
+   flags = SERF_SHARED;
+   if(Config.cnf_flags & CFL_7Wire)
       flags |= SERF_7WIRE;
+   if(!(Config.cnf_flags & CFL_XonXoff))
+      flags |= SERF_XDISABLED;
+   if(Config.cnf_flags & CFL_RadBoogie)
+      flags |= SERF_RAD_BOOGIE;
+
+   if((Config.cnf_flags & CFL_OwnDevUnit) && OwnDevUnitBase)
+   {
+      if(!AttemptDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit, "Genesis", NULL))
+         SerialLocked = TRUE;
+      else
+         return(FALSE);
+   }
 
    if(SerPort = CreateMsgPort())
    {
       if(SerReq = (struct IOExtSer *)CreateExtIO(SerPort, sizeof(struct IOExtSer)))
       {
-         /* set flags before OpenDevice() */
+         // set flags before OpenDevice()
          SerReq->io_SerFlags = flags;
    
          if(!OpenDevice(Config.cnf_serialdevice, Config.cnf_serialunit, (struct IORequest *)SerReq, 0))
          {
-            /* Set up our serial parameters */
+            // Set up our serial parameters
             SerReq->IOSer.io_Command   = SDCMD_SETPARAMS;
             SerReq->io_Baud      = Config.cnf_baudrate;
             SerReq->io_RBufLen   = (Config.cnf_serbuflen < 512 ? 512 : Config.cnf_serbuflen);
@@ -251,11 +287,11 @@ BOOL serial_create(VOID)
             if(!DoIO((struct IORequest *)SerReq))
                return(TRUE);
             else
-               syslog(LOG_ERR, "serial_create: SETPARAMS failed.");
+               syslog_AmiTCP(LOG_ERR, "serial_create: SETPARAMS failed.");
          }
       }
    }
-   syslog(LOG_CRIT, "serial_create: could not open serial device (%ls, unit %ld).", Config.cnf_serialdevice, Config.cnf_serialunit);
+   syslog_AmiTCP(LOG_CRIT, "serial_create: could not open serial device (%ls, unit %ld).", Config.cnf_serialdevice, Config.cnf_serialunit);
 
    serial_delete();
 

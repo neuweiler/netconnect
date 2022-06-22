@@ -1,33 +1,43 @@
+// WARNING: catalog doesn't get opened, GetStr() crashes on a500
+
 /// includes
 #include "/includes.h"
 #pragma header
 
+#include <libraries/owndevunit.h>
 #include "/Genesis.h"
+#include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/genesis_lib.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
+#include "mui_IfaceReq.h"
+#include "mui_Led.h"
 #include "protos.h"
 
 ///
-
 /// external variables
+extern struct Process *proc;
+extern struct StackSwapStruct StackSwapper;
+extern struct ExecBase *SysBase;
 extern struct Catalog    *cat;
-extern struct Library    *MUIMasterBase;
-extern struct MUI_CustomClass *CL_MainWindow;
-extern struct MUI_CustomClass *CL_Online;
+extern struct Library    *MUIMasterBase, *LockSocketBase, *OwnDevUnitBase;
+extern struct GenesisBase *GenesisBase;
+extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led;
 extern struct MsgPort     *MainPort;
 extern struct timerequest *TimeReq;
 extern struct MsgPort     *TimePort;
-extern ULONG  NotifySignal;
-extern struct NotifyRequest nr;
+extern ULONG  LogNotifySignal, ConfigNotifySignal;
+extern struct NotifyRequest log_nr, config_nr;
 extern struct NewMenu MainMenu[];
-extern Object *app;
-extern Object *win;
-extern struct MinList dialscript;
-extern struct MinList user_startnet;
-extern struct MinList user_stopnet;
-extern struct config Config;
+extern Object *app, *win;
+extern struct Config Config;
 extern ULONG sigs;
+extern char config_file[], connectspeed[];
+#ifdef DEMO
+extern struct Library *BattClockBase;
+#endif
 
 ///
 
@@ -38,6 +48,14 @@ VOID exit_libs(VOID)
       CloseCatalog(cat);
    cat = NULL;
 
+   if(GenesisBase)
+      CloseLibrary((struct Library *)GenesisBase);
+   GenesisBase = NULL;
+
+   if(OwnDevUnitBase)
+      CloseLibrary(OwnDevUnitBase);
+   OwnDevUnitBase = NULL;
+
    if(MUIMasterBase)
       CloseLibrary(MUIMasterBase);
    MUIMasterBase = NULL;
@@ -47,12 +65,16 @@ VOID exit_libs(VOID)
 /// init_libs
 BOOL init_libs(VOID)
 {
-   if(LocaleBase)
-      cat = OpenCatalog(NULL, "Genesis.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
-   if(MUIMasterBase = OpenLibrary("muimaster.library", 11))
-      return(TRUE);
-   else
+//   if(LocaleBase)
+//      cat = OpenCatalog(NULL, "Genesis.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
+   if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
       Printf("Could not open muimaster.library\n");
+   if(!(GenesisBase = (struct GenesisBase *)OpenLibrary(GENESISNAME, 0)))
+      Printf("Could not open " GENESISNAME ".\n");
+   OwnDevUnitBase = OpenLibrary(ODU_NAME, 0);
+
+   if(MUIMasterBase && GenesisBase)
+      return(TRUE);
 
    exit_libs();
    return(FALSE);
@@ -65,8 +87,10 @@ VOID exit_classes(VOID)
 {
    if(CL_MainWindow)          MUI_DeleteCustomClass(CL_MainWindow);
    if(CL_Online)              MUI_DeleteCustomClass(CL_Online);
+   if(CL_IfaceReq)            MUI_DeleteCustomClass(CL_IfaceReq);
+   if(CL_Led)                 MUI_DeleteCustomClass(CL_Led);
 
-   CL_MainWindow = CL_Online = NULL;
+   CL_MainWindow = CL_Online = CL_IfaceReq = CL_Led = NULL;
 }
 
 ///
@@ -75,8 +99,10 @@ BOOL init_classes(VOID)
 {
    CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct MainWindow_Data), MainWindow_Dispatcher);
    CL_Online         = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct Online_Data), Online_Dispatcher);
+   CL_IfaceReq       = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct IfaceReq_Data), IfaceReq_Dispatcher);
+   CL_Led            = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Led_Data), Led_Dispatcher);
 
-   if(CL_MainWindow && CL_Online)
+   if(CL_MainWindow && CL_Online && CL_IfaceReq && CL_Led)
       return(TRUE);
 
    exit_classes();
@@ -136,9 +162,11 @@ BOOL init_ports(VOID)
 #include <clib/battclock_protos.h>
 BOOL check_date(VOID)
 {
+   // one month : 2592000
+
    if(BattClockBase = OpenResource("battclock.resource"))
    {
-      if(ReadBattClock() < 624173854)
+      if(ReadBattClock() < 641235278)
          return(TRUE);
    }
    return(FALSE);
@@ -167,7 +195,7 @@ VOID HandleMainMethod(struct MsgPort *port)
    while(message = (struct MainMessage *)GetMsg(port))
    {
       if(message->MethodID == TCM_INIT ||
-         message->MethodID == MUIM_MainWindow_WeAreOnline ||
+         message->MethodID == MUIM_MainWindow_SetStates ||
          message->MethodID == MUIM_List_Clear)
       {
          message->result = DoMethod(message->obj, message->MethodID);
@@ -199,8 +227,8 @@ VOID HandleMainMethod(struct MsgPort *port)
 
 ///
 
-/// main
-VOID main(VOID)
+/// Handler
+VOID Handler(VOID)
 {
    ULONG id;
 
@@ -216,86 +244,119 @@ VOID main(VOID)
                MUIA_Application_Author       , "Michael Neuweiler",
                MUIA_Application_Base         , "Genesis",
                MUIA_Application_Title        , "Genesis",
-               MUIA_Application_Version      , VERSTAG,
-               MUIA_Application_Copyright    , "Michael Neuweiler 1997",
+               MUIA_Application_SingleTask   , TRUE,
+               MUIA_Application_Version      , "$VER:Genesis "VERTAG,
+               MUIA_Application_Copyright    , "Michael Neuweiler 1997,98",
                MUIA_Application_Description  , GetStr(MSG_AppDescription),
                MUIA_Application_Window       , win = NewObject(CL_MainWindow->mcc_Class, NULL, TAG_DONE),
             End)
             {
                struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
 
+               DoMethod(app, MUIM_Notify, MUIA_Application_DoubleStart, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_ReturnID, ID_DOUBLESTART);
+
+               connectspeed[0] = NULL;
+               bzero(&Config, sizeof(struct Config));
+               strcpy(config_file, DEFAULT_CONFIGFILE);
+               DoMethod(win, MUIM_MainWindow_LoadConfig);
+
+               DeleteFile("T:AmiTCP.log");
                if(launch_amitcp())
                {
-                  bzero(&Config, sizeof(struct config));
-                  NewList((struct List *)&dialscript);
-                  NewList((struct List *)&user_startnet);
-                  NewList((struct List *)&user_stopnet);
+                  log_nr.nr_Name     = "T:AmiTCP.log";
+                  log_nr.nr_FullName = NULL;
+                  log_nr.nr_UserData = NULL;
+                  log_nr.nr_Flags    = NRF_SEND_SIGNAL;
 
-                  nr.nr_Name     = "T:AmiTCP.log";
-                  nr.nr_FullName = NULL;
-                  nr.nr_UserData = NULL;
-                  nr.nr_Flags    = NRF_SEND_SIGNAL;
-
-                  if((NotifySignal = AllocSignal(-1)) != -1)
+                  if((LogNotifySignal = AllocSignal(-1)) != -1)
                   {
-                     nr.nr_stuff.nr_Signal.nr_Task = (struct Task *)FindTask(NULL);
-                     nr.nr_stuff.nr_Signal.nr_SignalNum = NotifySignal;
-                     StartNotify(&nr);
+                     log_nr.nr_stuff.nr_Signal.nr_Task = (struct Task *)FindTask(NULL);
+                     log_nr.nr_stuff.nr_Signal.nr_SignalNum = LogNotifySignal;
+                     StartNotify(&log_nr);
                   }
 
-                  DoMethod(win, MUIM_MainWindow_LoadConfig, DEFAULT_CONFIGFILE);
-                  /* got a dynamic resolv.conf ? => create empty file */
-                  if(Config.cnf_dns1 == INADDR_ANY && Config.cnf_dns2 == INADDR_ANY && !*Config.cnf_domainname)
-                  {
-                     BPTR fh;
+                  config_nr.nr_Name     = config_file;
+                  config_nr.nr_FullName = NULL;
+                  config_nr.nr_UserData = NULL;
+                  config_nr.nr_Flags    = NRF_SEND_SIGNAL;
 
-                     if(fh = Open("AmiTCP:db/resolv.conf", MODE_NEWFILE))
-                     {
-                        FPrintf(fh, "; This file is built dynamically - do not edit\n");
-                        Close(fh);
-                     }
+                  if((ConfigNotifySignal = AllocSignal(-1)) != -1)
+                  {
+                     config_nr.nr_stuff.nr_Signal.nr_Task = (struct Task *)FindTask(NULL);
+                     config_nr.nr_stuff.nr_Signal.nr_SignalNum = ConfigNotifySignal;
+                     StartNotify(&config_nr);
                   }
-                  if(Config.cnf_winstartup == 1)
+
+                  if(Config.cnf_flags & CFL_StartupIconify)
+                     set(app, MUIA_Application_Iconified, TRUE);
+                  if(Config.cnf_flags & CFL_StartupOpenWin)
                      set(win, MUIA_Window_Open, TRUE);
+
                   if(Config.cnf_startup)
                      SystemTags(Config.cnf_startup, TAG_DONE);
-#ifdef DEMO
-                  if(check_date())
-#endif
-                  if(Config.cnf_onlineonstartup)
-                     DoMethod(win, MUIM_MainWindow_Online);
 
 #ifdef DEMO
                   if(!check_date())
                      MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
                   else
+                  {
 #endif
+                  // put always_online online since it wasn't done in MainWindow_ChangeProvider cause AmiTCP wasn't running then
+                  iterate_ifacelist(&data->isp.isp_ifaces, 1);
+                  DoMethod(win, MUIM_MainWindow_PutOnline);
                   while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
                   {
+                     if(id == ID_DOUBLESTART)
+                     {
+                        set(win, MUIA_Window_Open, TRUE);
+                        MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), "Genesis is already running");
+                     }
+
                      if(sigs)
                      {
-                        sigs = Wait(sigs | SIGBREAKF_CTRL_C | 1L << MainPort->mp_SigBit | 1L << NotifySignal);
+                        sigs = Wait(sigs | SIGBREAKF_CTRL_C | 1L << MainPort->mp_SigBit | 1L << LogNotifySignal | 1L << ConfigNotifySignal );
 
                         if(sigs & SIGBREAKF_CTRL_C)
                            break;
                         if(sigs & (1L << MainPort->mp_SigBit))
                            HandleMainMethod(MainPort);
-                        if(sigs & (1L << NotifySignal))
+                        if(sigs & (1L << LogNotifySignal))
                            DoMethod(win, MUIM_MainWindow_UpdateLog);
+                        if(sigs & (1L << ConfigNotifySignal))
+                        {
+                           Delay(20);  // to give some time when saving
+                           DoMethod(win, MUIM_MainWindow_LoadConfig);
+                        }
                      }
                   }
-                  set(win, MUIA_Window_Open, FALSE);
-   
-                  if(data->online)
-                     DoMethod(win, MUIM_MainWindow_Offline);
-                  amirexx_do_command("KILL");
-                  clear_config(&Config);
-                  if(NotifySignal != -1)
-                  {
-                     EndNotify(&nr);
-                     FreeSignal(NotifySignal);
+#ifdef DEMO
                   }
-                  DeleteFile("T:AmiTCP.log");
+#endif
+                  set(win, MUIA_Window_Open, FALSE);
+
+                  if(Config.cnf_shutdown)
+                     SystemTags(Config.cnf_shutdown, TAG_DONE);
+   
+                  iterate_ifacelist(&data->isp.isp_ifaces, 0);
+                  DoMethod(win, MUIM_MainWindow_PutOffline);
+
+                  if(LockSocketBase)      // gets opened in launch_amitcp()
+                     CloseLibrary(LockSocketBase);
+                  LockSocketBase = NULL;
+
+                  amirexx_do_command("KILL");
+
+                  clear_config(&Config);
+                  if(ConfigNotifySignal != -1)
+                  {
+                     EndNotify(&config_nr);
+                     FreeSignal(ConfigNotifySignal);
+                  }
+                  if(LogNotifySignal != -1)
+                  {
+                     EndNotify(&log_nr);
+                     FreeSignal(LogNotifySignal);
+                  }
                }
                else
                   MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorAmiTCPLaunch));
@@ -303,19 +364,48 @@ VOID main(VOID)
                MUI_DisposeObject(app);
                app = NULL;
             }
-            else
-               MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), "Could not create MUI application.");
-
             exit_ports();
          }
-
          exit_classes();
       }
       else
          MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), "Could not create MUI classes.");
 
+      SetCurrentUser(-1);
       exit_libs();
    }
 }
 
 ///
+
+#define NEWSTACK_SIZE 16384
+/// main
+int main(int argc, char *argv[])
+{
+   if(SysBase->LibNode.lib_Version < 37)
+   {
+      static UBYTE AlertData[] = "\0\214\020Genesis requires kickstart v37+ !!!\0\0";
+
+      DisplayAlert(RECOVERY_ALERT, AlertData, 30);
+      exit(30);
+   }
+   proc = (struct Process *)FindTask(NULL);
+   if(((ULONG)proc->pr_Task.tc_SPUpper - (ULONG)proc->pr_Task.tc_SPLower) < NEWSTACK_SIZE)
+   {
+      if(!(StackSwapper.stk_Lower = AllocVec(NEWSTACK_SIZE, MEMF_ANY)))
+         exit(20);
+      StackSwapper.stk_Upper   = (ULONG)StackSwapper.stk_Lower + NEWSTACK_SIZE;
+      StackSwapper.stk_Pointer = (APTR)StackSwapper.stk_Upper;
+      StackSwap(&StackSwapper);
+
+      Handler();
+
+      StackSwap(&StackSwapper);
+      FreeVec(StackSwapper.stk_Lower);
+   }
+   else
+      Handler();
+}
+
+///
+

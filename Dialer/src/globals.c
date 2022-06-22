@@ -2,9 +2,9 @@
 #include "/includes.h"
 #pragma header
 
-#include "rev.h"
 #include "Strings.h"
 #define USE_SCRIPT_COMMANDS
+#define USE_EVENT_COMMANDS
 #include "/Genesis.h"
 #include "mui.h"
 #include "protos.h"
@@ -15,15 +15,20 @@
 struct   Library              *MUIMasterBase = NULL;
 struct   Library              *TimerBase     = NULL;
 struct   Library              *SocketBase    = NULL;
+struct   Library              *LockSocketBase= NULL;
+struct   Library              *OwnDevUnitBase= NULL;
+struct   GenesisBase          *GenesisBase   = NULL;
+#ifdef DEMO
+struct   Library              *BattClockBase = NULL;
+#endif
 
 ///
 
 /// Other data
-struct config Config;
+struct Config Config;
 
-struct MinList dialscript;
-struct MinList user_startnet;
-struct MinList user_stopnet;
+struct Process *proc;
+struct StackSwapStruct StackSwapper;
 
 struct Catalog       *cat       = NULL;   /* pointer to our locale catalog */
 struct MsgPort       *MainPort  = NULL;   /* port to comunicate with mainProcess */
@@ -32,14 +37,17 @@ struct MsgPort       *SerPort   = NULL;   /* Serial reply port */
 struct timerequest   *TimeReq   = NULL;
 struct MsgPort       *TimePort  = NULL;
 
-ULONG  NotifySignal = -1;
-struct NotifyRequest nr;
+ULONG  LogNotifySignal = -1, ConfigNotifySignal = -1;
+struct NotifyRequest log_nr, config_nr;
 ULONG sigs = NULL;
 
 const char AmiTCP_PortName[] = "AMITCP";
+char config_file[MAXPATHLEN];
+char connectspeed[41];
 
 int dialing_try = 0;
 int dial_number = 0;
+BOOL dialup = 0, SerialLocked = FALSE;
 
 int h_errno;
 
@@ -51,7 +59,7 @@ struct NewMenu MainMenu[] =
    { NM_TITLE  , MSG_MENU_PROJECT   , 0                  , 0, 0, (APTR)0               },
    { NM_ITEM   , MSG_MENU_ABOUT     , "  ?", 0, 0, (APTR)MEN_ABOUT       },
    { NM_ITEM   , NM_BARLABEL        , 0                  , 0, 0, 0                     },
-   { NM_ITEM   , MSG_MENU_MUI       , 0                  , 0, 0, (APTR)MEN_ABOUT_MUI   },
+   { NM_ITEM   , MSG_MENU_ABOUTMUI  , 0                  , 0, 0, (APTR)MEN_ABOUT_MUI   },
    { NM_ITEM   , NM_BARLABEL        , 0                  , 0, 0, 0                     },
    { NM_ITEM   , MSG_MENU_QUIT      , "  Q" , 0, 0, (APTR)MEN_QUIT        },
 
@@ -65,6 +73,8 @@ struct NewMenu MainMenu[] =
 /// MUI Class Pointers
 struct MUI_CustomClass  *CL_MainWindow          = NULL;
 struct MUI_CustomClass  *CL_Online              = NULL;
+struct MUI_CustomClass  *CL_IfaceReq            = NULL;
+struct MUI_CustomClass  *CL_Led                 = NULL;
 
 ///
 /// MUI stuff
