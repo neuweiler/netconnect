@@ -3,10 +3,10 @@
 #pragma header
 
 #define USE_SCRIPT_COMMANDS
+#define USE_EVENT_COMMANDS
 #include "/Genesis.h"
 #include "Strings.h"
 #include "mui.h"
-#include "rev.h"
 #include "protos.h"
 #include "mui/Grouppager_mcc.h"
 
@@ -51,6 +51,7 @@
 
 /// Libraries
 struct   Library      *MUIMasterBase = NULL;
+struct   Library      *GenesisBase   = NULL;
 struct   Library      *UserGroupBase = NULL;
 #ifdef DEMO
 struct   Library      *BattClockBase = NULL;
@@ -60,6 +61,9 @@ struct   Catalog      *cat           = NULL; /* pointer to our locale catalog */
 ///
 
 /// other data
+struct Process *proc = NULL;
+struct StackSwapStruct StackSwapper;
+
 char config_file[MAXPATHLEN];
 BOOL changed_passwd;
 BOOL changed_group;
@@ -80,12 +84,13 @@ struct NewMenu MainWindowMenu[] =
    { NM_ITEM , (STRPTR)MSG_MENU_ABOUT     ,"?", 0, 0, (APTR)MEN_ABOUT   },
    { NM_ITEM , (STRPTR)"  About MUI"      , 0, 0, 0,  (APTR)MEN_ABOUT_MUI },
    { NM_ITEM , (STRPTR)NM_BARLABEL        , 0 , 0, 0, (APTR)0           },
-   { NM_ITEM , (STRPTR)"  Iconify"        ,"I", 0, 0, (APTR)MEN_ICONIFY },
+   { NM_ITEM , (STRPTR)"  Iconify"        ,"C", 0, 0, (APTR)MEN_ICONIFY },
    { NM_ITEM , (STRPTR)NM_BARLABEL        , 0 , 0, 0, (APTR)0           },
    { NM_ITEM , (STRPTR)MSG_MENU_QUIT      ,"Q", 0, 0, (APTR)MEN_QUIT    },
 
    { NM_TITLE, (STRPTR)MSG_MENU_SETTINGS  , 0 , 0, 0, (APTR)0           },
    { NM_ITEM , (STRPTR)"  Load"           ,"L", 0, 0, (APTR)MEN_LOAD    },
+   { NM_ITEM , (STRPTR)"  Import"         ,"I", 0, 0, (APTR)MEN_IMPORT  },
    { NM_ITEM , (STRPTR)"  Save"           ,"S", 0, 0, (APTR)MEN_SAVE    },
    { NM_ITEM , (STRPTR)"  Save as..."     ,"W", 0, 0, (APTR)MEN_SAVEAS  },
    { NM_ITEM , (STRPTR)NM_BARLABEL        , 0 , 0, 0, (APTR)0           },
@@ -99,15 +104,17 @@ struct NewMenu MainWindowMenu[] =
 
 /// MUI Class pointers
 
+struct MUI_CustomClass  *CL_About;
+struct MUI_CustomClass  *CL_Databases;
+struct MUI_CustomClass  *CL_Dialer;
 struct MUI_CustomClass  *CL_MainWindow;
+struct MUI_CustomClass  *CL_Modem;
+struct MUI_CustomClass  *CL_PasswdReq;
 struct MUI_CustomClass  *CL_User;
 struct MUI_CustomClass  *CL_Provider;
-struct MUI_CustomClass  *CL_Dialer;
-struct MUI_CustomClass  *CL_Users;
-struct MUI_CustomClass  *CL_Databases;
-struct MUI_CustomClass  *CL_Modem;
-struct MUI_CustomClass  *CL_About;
-struct MUI_CustomClass  *CL_PasswdReq;
+struct MUI_CustomClass  *CL_ProviderWindow;
+struct MUI_CustomClass  *CL_UserWindow;
+struct MUI_CustomClass  *CL_IfaceWindow;
 
 ///
 /// MUI stuff

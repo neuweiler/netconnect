@@ -3,6 +3,9 @@
 #pragma header
 
 #include "/Genesis.h"
+#include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/genesis_lib.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
@@ -11,8 +14,9 @@
 #include "mui_MainWindow.h"
 #include "mui_Modem.h"
 #include "mui_PasswdReq.h"
-#include "mui_Provider.h"
 #include "mui_User.h"
+#include "mui_Provider.h"
+#include "mui_ProviderWindow.h"
 #include "protos.h"
 #include "mui/Grouppager_mcc.h"
 #include "images/information.h"
@@ -20,22 +24,16 @@
 #include "images/dialer.h"
 #include "images/modem.h"
 #include "images/provider.h"
-#include "images/user.h"
 #include "images/logo.h"
 
 ///
 /// external variables
-extern struct MUI_CustomClass  *CL_Provider;
-extern struct MUI_CustomClass  *CL_User;
-extern struct MUI_CustomClass  *CL_Dialer;
-extern struct MUI_CustomClass  *CL_Modem;
-extern struct MUI_CustomClass  *CL_Databases;
-extern struct MUI_CustomClass  *CL_About;
+extern struct MUI_CustomClass  *CL_User, *CL_Provider, *CL_ProviderWindow, *CL_Dialer,
+                               *CL_Modem, *CL_Databases, *CL_About;
 extern char config_file[];
 extern BOOL changed_passwd, changed_group, changed_hosts, changed_protocols,
             changed_services, changed_inetd, changed_networks, changed_rpc, changed_inetaccess;
-extern Object *win;
-extern Object *app;
+extern Object *win, *app;
 extern struct NewMenu MainWindowMenu[];
 
 extern struct BitMapHeader information_header, provider_header, user_header, modem_header, dialer_header, databases_header, logo_header;
@@ -63,20 +61,81 @@ Object *create_bodychunk(struct BitMapHeader *bmhd, ULONG *cols, UBYTE *body)
 }
 
 ///
-/// win_stat
-STRPTR win_stat(LONG active)
+/// is_true
+BOOL is_true(struct pc_Data *pc_data)
 {
-   if(active == 1)
-      return("open");
-   if(active == 2)
-      return("close");
-   return("ignore");
+   if(!*pc_data->Contents || !stricmp(pc_data->Contents, "yes") ||
+      !stricmp(pc_data->Contents, "true") || !strcmp(pc_data->Contents, "1"))
+      return(TRUE);
+   return(FALSE);
+}
+
+///
+/// is_false
+BOOL is_false(struct pc_Data *pc_data)
+{
+   if(!stricmp(pc_data->Contents, "no") || !stricmp(pc_data->Contents, "false") ||
+      !strcmp(pc_data->Contents, "0"))
+      return(TRUE);
+   return(FALSE);
+}
+
+///
+/// yes_no
+const STRPTR yes_no(BOOL value)
+{
+   return((value ? "yes" : "no"));
 }
 
 ///
 
-/// MainWindow_LoadConfig
-ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWindow_LoadConfig *msg)
+enum { type_ISP=1, type_User, type_Iface, type_LoginScript };
+
+/// MainWindow_ClearConfig
+ULONG MainWindow_ClearConfig(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct MainWindow_Data *data              = INST_DATA(cl                      , obj);
+   struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
+   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
+   struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
+   struct Dialer_Data      *dialer_data      = INST_DATA(CL_Dialer->mcc_Class    , data->GR_Dialer);
+
+   DoMethod(provider_data->LI_ISP, MUIM_List_Clear);
+   DoMethod(user_data->LI_User, MUIM_List_Clear);
+
+   setstring(modem_data->STR_Modem, "Generic");
+   setstring(modem_data->STR_InitString, "AT&F&D2");
+   setstring(modem_data->STR_DialPrefix, "ATDT");
+   setstring(modem_data->STR_DialSuffix, NULL);
+   setslider(modem_data->SL_RedialAttempts, 15);
+   setslider(modem_data->SL_RedialDelay, 5);
+
+   setstring(modem_data->STR_SerialDevice, "serial.device");
+   set(modem_data->STR_SerialUnit, MUIA_String_Integer, 0);
+   set(modem_data->STR_BaudRate, MUIA_String_Integer, 38400);
+   set(modem_data->STR_SerBufLen, MUIA_String_Integer, 16384);
+   setcheckmark(modem_data->CH_IgnoreDSR, FALSE);
+   setcheckmark(modem_data->CH_7Wire, FALSE);
+
+   setcheckmark(dialer_data->CH_ConfirmOffline, FALSE);
+   setcheckmark(dialer_data->CH_QuickReconnect, FALSE);
+   setcheckmark(dialer_data->CH_Debug, FALSE);
+   setcheckmark(dialer_data->CH_ShowLog, FALSE);
+   setcheckmark(dialer_data->CH_ShowConnect, FALSE);
+   setcheckmark(dialer_data->CH_ShowOnlineTime, FALSE);
+   setcheckmark(dialer_data->CH_ShowButtons, FALSE);
+   setcheckmark(dialer_data->CH_ShowNetwork, FALSE);
+   setcheckmark(dialer_data->CH_ShowUser, FALSE);
+
+   setstring(dialer_data->STR_Startup, NULL);
+   setstring(dialer_data->STR_Shutdown, NULL);
+
+   return(NULL);
+}
+
+///
+/// MainWindow_LoadDatabases
+ULONG MainWindow_LoadDatabases(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data              = INST_DATA(cl                      , obj);
    struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
@@ -88,243 +147,21 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
    char buffer[41];
    STRPTR ptr;
    int ns = 0;
+   struct User *user = NULL;
+   struct ISP *isp = NULL;
+   struct Interface *iface = NULL;
+   int current_type = NULL;
 
-   /**** load provider.conf ****/
-
-   if(ParseConfig((msg->file ? msg->file : (STRPTR)config_file), &pc_data))
-   {
-      while(ParseNext(&pc_data))
-      {
-         if(!stricmp(pc_data.Argument, "LoginName"))
-            setstring(user_data->STR_LoginName     , pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "Password"))
-            setstring(user_data->STR_Password      , pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "RealName"))
-            setstring(user_data->STR_RealName      , pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "EMail"))
-            setstring(user_data->STR_EMail         , pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "Organisation"))
-            setstring(user_data->STR_Organisation  , pc_data.Contents);
-
-         else if(!stricmp(pc_data.Argument, "Phone"))
-            setstring(dialer_data->STR_Phone, pc_data.Contents);
-
-         else if(!stricmp(pc_data.Argument, "SerialDevice"))
-            setstring(modem_data->PO_SerialDriver, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "SerialUnit"))
-            set(modem_data->STR_SerialUnit, MUIA_String_Integer, atol(pc_data.Contents));
-         else if(!stricmp(pc_data.Argument, "BaudRate"))
-            set(modem_data->PO_BaudRate, MUIA_String_Integer, atol(pc_data.Contents));
-         else if(!stricmp(pc_data.Argument, "CarrierDetect"))
-            setcheckmark(modem_data->CH_Carrier, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "7Wire"))
-            setcheckmark(modem_data->CH_7Wire, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "SerBufLen"))
-            set(modem_data->STR_SerBufLen, MUIA_String_Integer, atol(pc_data.Contents));
-
-         else if(!stricmp(pc_data.Argument, "Modem"))
-            setstring(modem_data->STR_Modem, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "InitString"))
-            setstring(modem_data->STR_ModemInit, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "DialPrefix"))
-            setstring(modem_data->STR_DialPrefix, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "DialSuffix"))
-            setstring(modem_data->STR_DialSuffix, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "RedialAttempts"))
-            setslider(modem_data->SL_RedialAttempts, atol(pc_data.Contents));
-         else if(!stricmp(pc_data.Argument, "RedialDelay"))
-            setslider(modem_data->SL_RedialDelay, atol(pc_data.Contents));
-
-         else if(!stricmp(pc_data.Argument, "Sana2Device"))
-         {
-            if(!stricmp(pc_data.Contents, "DEVS:Networks/appp.device"))
-               setcycle(provider_data->CY_Sana2Device, 0);
-            else if(!stricmp(pc_data.Contents, "DEVS:Networks/aslip.device"))
-               setcycle(provider_data->CY_Sana2Device, 1);
-            else
-               setcycle(provider_data->CY_Sana2Device, 2);
-
-            setstring(provider_data->STR_Sana2Device, pc_data.Contents);
-         }
-         else if(!stricmp(pc_data.Argument, "Sana2Unit"))
-            set(provider_data->STR_Sana2Unit, MUIA_String_Integer, atol(pc_data.Contents));
-         else if(!stricmp(pc_data.Argument, "Sana2Config"))
-            setstring(provider_data->STR_Sana2ConfigFile, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "Sana2ConfigText"))
-         {
-            if(strstr(pc_data.Contents, "\\n"))
-            {
-               STRPTR ptr2;
-
-               setstring(provider_data->TI_Sana2ConfigContents, "");
-               ptr = pc_data.Contents;
-               FOREVER
-               {
-                  if(ptr2 = strstr(ptr, "\\n"))
-                     *ptr2 = NULL;
-                  DoMethod(provider_data->TI_Sana2ConfigContents, MUIM_Textinput_AppendText, ptr, -1);
-                  if(ptr2)
-                     DoMethod(provider_data->TI_Sana2ConfigContents, MUIM_Textinput_AppendText, "\n", -1);
-                  else
-                     break;
-
-                  ptr = ptr2 + 2;
-               }
-            }
-            else
-               setstring(provider_data->TI_Sana2ConfigContents, pc_data.Contents);
-         }
-
-         else if(!stricmp(pc_data.Argument, "Interface"))
-            setstring(provider_data->STR_IfaceName, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "IfConfigParams"))
-            setstring(provider_data->STR_IfaceConfigParams, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "MTU"))
-            set(provider_data->STR_MTU, MUIA_String_Integer, atol(pc_data.Contents));
-         else if(!stricmp(pc_data.Argument, "KeepAlive"))
-            setcycle(provider_data->CY_Ping, atol(pc_data.Contents));
-         else if(!stricmp(pc_data.Argument, "PingInterval"))
-            set(provider_data->SL_Ping, MUIA_Numeric_Value, atol(pc_data.Contents));
-
-
-         else if(!stricmp(pc_data.Argument, "IPAddr"))
-         {
-            setstring(provider_data->STR_IP_Address, pc_data.Contents);
-            setcycle(provider_data->CY_Address, 1);
-         }
-         else if(!stricmp(pc_data.Argument, "HostName"))
-         {
-            setstring(provider_data->STR_HostName, pc_data.Contents);
-            setcycle(provider_data->CY_Address, 1);
-         }
-// DestIP
-// Gateway
-// Netmask
-         else if(!stricmp(pc_data.Argument, "DomainName"))
-         {
-            setstring(provider_data->STR_DomainName, pc_data.Contents);
-            setcycle(provider_data->CY_Resolv, 1);
-         }
-         else if(!stricmp(pc_data.Argument, "NameServer"))
-         {
-            setstring((ns++ ? provider_data->STR_NameServer2 : provider_data->STR_NameServer1), pc_data.Contents);
-            setcycle(provider_data->CY_Resolv, 1);
-         }
-// BootPServer
-         else if(!stricmp(pc_data.Argument, "UseBootP"))
-            setcheckmark(provider_data->CH_BOOTP, !stricmp(pc_data.Contents, "yes"));
-
-         else if(!stricmp(pc_data.Argument, "MailServer"))
-            setstring(provider_data->STR_MailServer, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "POPServer"))
-            setstring(provider_data->STR_POPServer, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "NewsServer"))
-            setstring(provider_data->STR_NewsServer, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "IRCServer"))
-            setstring(provider_data->STR_IRCServer, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "IRCPort"))
-            set(provider_data->STR_IRCPort, MUIA_String_Integer, atol(pc_data.Contents));
-         else if(!stricmp(pc_data.Argument, "TimeServer"))
-            setstring(provider_data->STR_TimeServer, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "ProxyServer"))
-            setstring(provider_data->STR_ProxyServer, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "ProxyPort"))
-            set(provider_data->STR_ProxyPort, MUIA_String_Integer, atol(pc_data.Contents));
-
-         else if(!stricmp(pc_data.Argument, "AutoLogin"))
-            setcycle(dialer_data->CY_AutoLogin, stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "OnlineOnStartup"))
-            setcheckmark(dialer_data->CH_GoOnline, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "QuickReconnect"))
-            setcheckmark(dialer_data->CH_QuickReconnect, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "SynClock"))
-            setcheckmark(dialer_data->CH_SynClock, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "ShowStatus"))
-            setcheckmark(dialer_data->CH_ShowStatus, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "ShowSpeed"))
-            setcheckmark(dialer_data->CH_ShowSpeed, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "ShowOnline"))
-            setcheckmark(dialer_data->CH_ShowOnline, !stricmp(pc_data.Contents, "yes"));
-         else if(!stricmp(pc_data.Argument, "ShowButtons"))
-            setcheckmark(dialer_data->CH_ShowButtons, !stricmp(pc_data.Contents, "yes"));
-
-         else if(!stricmp(pc_data.Argument, "Online"))
-            setstring(dialer_data->STR_Online, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "OnlineFail"))
-            setstring(dialer_data->STR_OnlineFailed, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "OfflineActive"))
-            setstring(dialer_data->STR_OfflineActive, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "OfflinePassive"))
-            setstring(dialer_data->STR_OfflinePassive, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "Startup"))
-            setstring(dialer_data->STR_Startup, pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "Shutdown"))
-            setstring(dialer_data->STR_Shutdown, pc_data.Contents);
-
-         else if(!stricmp(pc_data.Argument, "WinOnline"))
-            setcycle(dialer_data->CY_WinOnline, (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0)));
-         else if(!stricmp(pc_data.Argument, "WinOnlineFail"))
-            setcycle(dialer_data->CY_WinOnlineFailed, (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0)));
-         else if(!stricmp(pc_data.Argument, "WinOfflineActive"))
-            setcycle(dialer_data->CY_WinOfflineActive, (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0)));
-         else if(!stricmp(pc_data.Argument, "WinOfflinePassive"))
-            setcycle(dialer_data->CY_WinOfflinePassive, (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0)));
-         else if(!stricmp(pc_data.Argument, "WinStartup"))
-            setcycle(dialer_data->CY_WinStartup, (!stricmp(pc_data.Contents, "open") ? 1 : (!stricmp(pc_data.Contents, "close") ? 2 : 0)));
-
-         else if(!stricmp(pc_data.Argument, "LoginScript"))
-         {
-            struct ScriptLine *script_line;
-
-            DoMethod(dialer_data->LI_Script, MUIM_List_Clear);
-            if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
-            {
-               while(ParseNext(&pc_data))
-               {
-                  if(!stricmp(pc_data.Argument, "EOS"))
-                     break;
-
-                  if(!stricmp(pc_data.Argument, script_commands[SL_Send]))
-                     script_line->sl_command = SL_Send;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_WaitFor]))
-                     script_line->sl_command = SL_WaitFor;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_Dial]))
-                     script_line->sl_command = SL_Dial;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_GoOnline]))
-                     script_line->sl_command = SL_GoOnline;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendLogin]))
-                     script_line->sl_command = SL_SendLogin;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendPassword]))
-                     script_line->sl_command = SL_SendPassword;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendBreak]))
-                     script_line->sl_command = SL_SendBreak;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_Exec]))
-                     script_line->sl_command = SL_Exec;
-                  else if(!stricmp(pc_data.Argument, script_commands[SL_Pause]))
-                     script_line->sl_command = SL_Pause;
-                  else
-                     script_line->sl_command = 0;
-
-                  strncpy(script_line->sl_contents, pc_data.Contents, 250);
-
-                  DoMethod(dialer_data->LI_Script, MUIM_NList_InsertSingle, script_line, MUIV_NList_Insert_Bottom);
-               }
-               FreeVec(script_line);
-            }
-         }
-      }
-      ParseEnd(&pc_data);
-   }
-
-   /**** load the ModemSettings into the List ****/
+   /**** load the ModemDatabase into the List ****/
    if(ParseConfig("AmiTCP:db/modems", &pc_data))
    {
       struct Modem *modem;
       int protocol_nr = 0;
 
-      if(modem = (struct Modem *)AllocVec(sizeof(struct Modem), MEMF_ANY))
+      if(modem = (struct Modem *)AllocVec(sizeof(struct Modem), MEMF_ANY | MEMF_CLEAR))
       {
-         set(modem_data->LV_Modems, MUIA_List_Quiet, TRUE);
+         set(modem_data->LI_Modems, MUIA_List_Quiet, TRUE);
+         DoMethod(modem_data->LI_Modems, MUIM_List_Clear);
          while(ParseNext(&pc_data))
          {
             if(!stricmp(pc_data.Argument, "Modem"))
@@ -332,7 +169,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                if(*modem->Name)
                {
                   modem->ProtocolName[protocol_nr][0] = NULL;
-                  DoMethod(modem_data->LV_Modems, MUIM_List_InsertSingle, modem, MUIV_List_Insert_Sorted);
+                  DoMethod(modem_data->LI_Modems, MUIM_List_InsertSingle, modem, MUIV_List_Insert_Sorted);
                   bzero(modem, sizeof(struct Modem));
                }
                strncpy(modem->Name, pc_data.Contents, 80);
@@ -354,16 +191,16 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          if(*modem->Name)
          {
             modem->ProtocolName[protocol_nr][0] = NULL;
-            DoMethod(modem_data->LV_Modems, MUIM_List_InsertSingle, modem, MUIV_List_Insert_Sorted);
+            DoMethod(modem_data->LI_Modems, MUIM_List_InsertSingle, modem, MUIV_List_Insert_Sorted);
          }
          strcpy(modem->Name, "Generic");
          strcpy(modem->ProtocolName[0], "Default");
          strcpy(modem->InitString[0], "AT&F&D2");
          modem->ProtocolName[1][0] = NULL;
-         DoMethod(modem_data->LV_Modems, MUIM_List_InsertSingle, modem, MUIV_List_Insert_Top);
+         DoMethod(modem_data->LI_Modems, MUIM_List_InsertSingle, modem, MUIV_List_Insert_Top);
 
          FreeVec(modem);
-         set(modem_data->LV_Modems, MUIA_List_Quiet, FALSE);
+         set(modem_data->LI_Modems, MUIA_List_Quiet, FALSE);
       }
       ParseEnd(&pc_data);
    }
@@ -372,7 +209,8 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
 
    /** put devices into device list of modem page **/
 
-   set(modem_data->LV_Devices, MUIA_List_Quiet, TRUE);
+   set(modem_data->LI_Devices, MUIA_List_Quiet, TRUE);
+   DoMethod(modem_data->LI_Devices, MUIM_List_Clear);
    {
       BPTR lock;
       struct FileInfoBlock *fib;
@@ -391,7 +229,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                         stricmp(fib->fib_FileName, "mfm.device") &&
                         stricmp(fib->fib_FileName, "clipboard.device") &&
                         stricmp(fib->fib_FileName, "parallel.device"))
-                     DoMethod(modem_data->LV_Devices, MUIM_List_InsertSingle, fib->fib_FileName, MUIV_List_Insert_Sorted);
+                     DoMethod(modem_data->LI_Devices, MUIM_List_InsertSingle, fib->fib_FileName, MUIV_List_Insert_Sorted);
                   }
                }
             }
@@ -400,75 +238,13 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          UnLock(lock);
       }
    }
-   set(modem_data->LV_Devices, MUIA_List_Quiet, FALSE);
+   set(modem_data->LI_Devices, MUIA_List_Quiet, FALSE);
 
-
-   /**** parse the passwd file ****/
-
-   set(db_data->LV_Users, MUIA_List_Quiet, TRUE);
-   if(ParseConfig("AmiTCP:db/passwd", &pc_data))
-   {
-      struct User *user;
-
-      if(user = AllocVec(sizeof(struct User), MEMF_ANY))
-      {
-         while(ParseNextLine(&pc_data))
-         {
-            if(ptr = strchr(pc_data.Contents, '|'))
-            {
-               *ptr = NULL;
-               strncpy(user->Login, pc_data.Contents, 40);
-               pc_data.Contents = ptr + 1;
-               if(ptr = strchr(pc_data.Contents, '|'))
-               {
-                  *ptr = NULL;
-                  strncpy(user->Password, pc_data.Contents, 20);
-                  pc_data.Contents = ptr + 1;
-                  if(ptr = strchr(pc_data.Contents, '|'))
-                  {
-                     *ptr = NULL;
-                     user->UserID = atol(pc_data.Contents);
-                     pc_data.Contents = ptr + 1;
-                     if(ptr = strchr(pc_data.Contents, '|'))
-                     {
-                        *ptr = NULL;
-                        user->GroupID = atol(pc_data.Contents);
-                        pc_data.Contents = ptr + 1;
-                        if(ptr = strchr(pc_data.Contents, '|'))
-                        {
-                           *ptr = NULL;
-                           strncpy(user->Name, pc_data.Contents, 80);
-                           pc_data.Contents = ptr + 1;
-                           if(ptr = strchr(pc_data.Contents, '|'))
-                           {
-                              *ptr = NULL;
-                              strncpy(user->HomeDir, pc_data.Contents, MAXPATHLEN - 1);
-                              strncpy(user->Shell, ptr + 1, 80);
-                              if(!strcmp(user->Password, "*"))
-                              {
-                                 user->Disabled = TRUE;
-                                 *user->Password = NULL;
-                              }
-                              else
-                                 user->Disabled = FALSE;
-                              DoMethod(db_data->LV_Users, MUIM_List_InsertSingle, user, MUIV_List_Insert_Bottom);
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-         FreeVec(user);
-      }
-      ParseEnd(&pc_data);
-   }
-   set(db_data->LV_Users, MUIA_List_Quiet, FALSE);
-   DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Users);
 
    /**** parse the group file ****/
 
-   set(db_data->LV_Groups, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_Groups, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_Groups, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/group", &pc_data))
    {
       struct Group *group;
@@ -492,7 +268,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                      *ptr = NULL;
                      group->ID = atol(pc_data.Contents);
                      strncpy(group->Members, ptr + 1, 400);
-                     DoMethod(db_data->LV_Groups, MUIM_List_InsertSingle, group, MUIV_List_Insert_Bottom);
+                     DoMethod(db_data->LI_Groups, MUIM_List_InsertSingle, group, MUIV_List_Insert_Bottom);
                   }
                }
             }
@@ -501,12 +277,13 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_Groups, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_Groups, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Groups);
 
    /**** parse the protocols file ****/
 
-   set(db_data->LV_Protocols, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_Protocols, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_Protocols, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/protocols", &pc_data))
    {
       struct Protocol *protocol;
@@ -530,20 +307,21 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                else
                   *protocol->Aliases = NULL;
 
-               DoMethod(db_data->LV_Protocols, MUIM_List_InsertSingle, protocol, MUIV_List_Insert_Bottom);
+               DoMethod(db_data->LI_Protocols, MUIM_List_InsertSingle, protocol, MUIV_List_Insert_Bottom);
             }
          }
          FreeVec(protocol);
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_Protocols, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_Protocols, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Protocols);
 
 
    /**** parse the services file ****/
 
-   set(db_data->LV_Services, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_Services, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_Services, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/services", &pc_data))
    {
       struct Service *service;
@@ -568,7 +346,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                   else
                      *service->Aliases = NULL;
 
-                  DoMethod(db_data->LV_Services, MUIM_List_InsertSingle, service, MUIV_List_Insert_Bottom);
+                  DoMethod(db_data->LI_Services, MUIM_List_InsertSingle, service, MUIV_List_Insert_Bottom);
                }
             }
          }
@@ -576,13 +354,14 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_Services, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_Services, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Services);
 
 
    /**** parse the inet.access file ****/
 
-   set(db_data->LV_InetAccess, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_InetAccess, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_InetAccess, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/inet.access", &pc_data))
    {
       struct InetAccess *inet_access;
@@ -610,7 +389,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                      inet_access->Access = (stricmp(pc_data.Contents, "allow") ? 0 : 1);
                      inet_access->Log = FALSE;
                   }
-                  DoMethod(db_data->LV_InetAccess, MUIM_List_InsertSingle, inet_access, MUIV_List_Insert_Bottom);
+                  DoMethod(db_data->LI_InetAccess, MUIM_List_InsertSingle, inet_access, MUIV_List_Insert_Bottom);
                }
             }
          }
@@ -618,13 +397,14 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_InetAccess, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_InetAccess, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_InetAccess);
 
 
    /**** parse the inetd.conf file ****/
 
-   set(db_data->LV_Inetd, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_Inetd, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_Inetd, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/inetd.conf", &pc_data))
    {
       struct Inetd *inetd;
@@ -665,7 +445,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                            else
                               *inetd->Args = NULL;
 
-                           DoMethod(db_data->LV_Inetd, MUIM_List_InsertSingle, inetd, MUIV_List_Insert_Bottom);
+                           DoMethod(db_data->LI_Inetd, MUIM_List_InsertSingle, inetd, MUIV_List_Insert_Bottom);
                         }
                      }
                   }
@@ -676,13 +456,14 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_Inetd, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_Inetd, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Inetd);
 
 
    /**** parse the hosts file ****/
 
-   set(db_data->LV_Hosts, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_Hosts, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_Hosts, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/Hosts", &pc_data))
    {
       struct Host *host;
@@ -703,20 +484,21 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                else
                   *host->Aliases = NULL;
 
-               DoMethod(db_data->LV_Hosts, MUIM_List_InsertSingle, host, MUIV_List_Insert_Bottom);
+               DoMethod(db_data->LI_Hosts, MUIM_List_InsertSingle, host, MUIV_List_Insert_Bottom);
             }
          }
          FreeVec(host);
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_Hosts, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_Hosts, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Hosts);
 
 
    /**** parse the networks file ****/
 
-   set(db_data->LV_Networks, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_Networks, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_Networks, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/Networks", &pc_data))
    {
       struct Network *network;
@@ -740,20 +522,21 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                else
                   *network->Aliases = NULL;
 
-               DoMethod(db_data->LV_Networks, MUIM_List_InsertSingle, network, MUIV_List_Insert_Bottom);
+               DoMethod(db_data->LI_Networks, MUIM_List_InsertSingle, network, MUIV_List_Insert_Bottom);
             }
          }
          FreeVec(network);
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_Networks, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_Networks, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Networks);
 
 
    /**** parse the rpc file ****/
 
-   set(db_data->LV_Rpcs, MUIA_List_Quiet, TRUE);
+   set(db_data->LI_Rpcs, MUIA_List_Quiet, TRUE);
+   DoMethod(db_data->LI_Rpcs, MUIM_List_Clear);
    if(ParseConfig("AmiTCP:db/rpc", &pc_data))
    {
       struct Rpc *rpc;
@@ -777,16 +560,390 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                else
                   *rpc->Aliases = NULL;
 
-               DoMethod(db_data->LV_Rpcs, MUIM_List_InsertSingle, rpc, MUIV_List_Insert_Bottom);
+               DoMethod(db_data->LI_Rpcs, MUIM_List_InsertSingle, rpc, MUIV_List_Insert_Bottom);
             }
          }
          FreeVec(rpc);
       }
       ParseEnd(&pc_data);
    }
-   set(db_data->LV_Rpcs, MUIA_List_Quiet, FALSE);
+   set(db_data->LI_Rpcs, MUIA_List_Quiet, FALSE);
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Rpcs);
 
+   return(NULL);
+}
+
+///
+/// MainWindow_LoadConfig
+ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWindow_LoadConfig *msg)
+{
+   struct MainWindow_Data *data              = INST_DATA(cl                      , obj);
+   struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
+   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
+   struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
+   struct Dialer_Data      *dialer_data      = INST_DATA(CL_Dialer->mcc_Class    , data->GR_Dialer);
+   struct Databases_Data   *db_data          = INST_DATA(CL_Databases->mcc_Class , data->GR_Databases);
+   struct pc_Data pc_data;
+   STRPTR ptr;
+   int ns = 0;
+   struct User *user = NULL;
+   struct ISP *isp = NULL;
+   struct Interface *iface = NULL;
+   struct PrefsPPPIface *ppp_if = NULL;
+   int current_type = NULL;
+
+   /**** load providers ****/
+   if(ParseConfig((msg->file ? msg->file : (STRPTR)config_file), &pc_data))
+   {
+      while(ParseNext(&pc_data))
+      {
+         if(!stricmp(pc_data.Argument, "ISP"))
+         {
+            current_type = type_ISP;
+            DoMethod(provider_data->LI_ISP, MUIM_List_InsertSingle, -1, MUIV_List_Insert_Bottom);
+            DoMethod(provider_data->LI_ISP, MUIM_List_GetEntry, xget(provider_data->LI_ISP, MUIA_List_Entries) - 1 , &isp);
+            continue;
+         }
+         else if(!stricmp(pc_data.Argument, "USER"))
+         {
+            current_type = type_User;
+            DoMethod(user_data->LI_User, MUIM_List_InsertSingle, -1, MUIV_List_Insert_Bottom);
+            DoMethod(user_data->LI_User, MUIM_List_GetEntry, xget(user_data->LI_User, MUIA_List_Entries) - 1, &user);
+            continue;
+         }
+         else if(!stricmp(pc_data.Argument, "INTERFACE"))
+         {
+            if(isp)
+            {
+               if(iface = AllocVec(sizeof(struct Interface), MEMF_ANY | MEMF_CLEAR))
+               {
+                  NewList((struct List *)&iface->if_events);
+                  ppp_if = iface->if_userdata = AllocVec(sizeof(struct PrefsPPPIface), MEMF_ANY | MEMF_CLEAR);
+                  AddTail((struct List *)&isp->isp_ifaces, (struct Node *)iface);
+                  current_type = type_Iface;
+               }
+               else
+                  current_type = NULL;
+            }
+            continue;
+         }
+         else if(!stricmp(pc_data.Argument, "LOGINSCRIPT"))
+         {
+            current_type = type_LoginScript;
+            continue;
+         }
+
+         else if(!stricmp(pc_data.Argument, "SerialDevice"))
+            setstring(modem_data->STR_SerialDevice, pc_data.Contents);
+         else if(!stricmp(pc_data.Argument, "SerialUnit"))
+            set(modem_data->STR_SerialUnit, MUIA_String_Integer, atol(pc_data.Contents));
+         else if(!stricmp(pc_data.Argument, "BaudRate"))
+            set(modem_data->STR_BaudRate, MUIA_String_Integer, atol(pc_data.Contents));
+         else if(!stricmp(pc_data.Argument, "SerBufLen"))
+            set(modem_data->STR_SerBufLen, MUIA_String_Integer, atol(pc_data.Contents));
+
+         else if(!stricmp(pc_data.Argument, "Modem"))
+            setstring(modem_data->STR_Modem, pc_data.Contents);
+         else if(!stricmp(pc_data.Argument, "InitString"))
+            setstring(modem_data->STR_InitString, pc_data.Contents);
+         else if(!stricmp(pc_data.Argument, "DialPrefix"))
+            setstring(modem_data->STR_DialPrefix, pc_data.Contents);
+         else if(!stricmp(pc_data.Argument, "DialSuffix"))
+            setstring(modem_data->STR_DialSuffix, pc_data.Contents);
+         else if(!stricmp(pc_data.Argument, "RedialAttempts"))
+            setslider(modem_data->SL_RedialAttempts, atol(pc_data.Contents));
+         else if(!stricmp(pc_data.Argument, "RedialDelay"))
+            setslider(modem_data->SL_RedialDelay, atol(pc_data.Contents));
+
+         else if(!stricmp(pc_data.Argument, "IgnoreDSR") && is_true(&pc_data))
+            setcheckmark(modem_data->CH_IgnoreDSR, TRUE);
+         else if(!stricmp(pc_data.Argument, "7Wire") && is_false(&pc_data))
+            setcheckmark(modem_data->CH_7Wire, FALSE);
+         else if(!stricmp(pc_data.Argument, "RadBoogie") && is_false(&pc_data))
+            setcheckmark(modem_data->CH_RadBoogie, FALSE);
+         else if(!stricmp(pc_data.Argument, "XonXoff") && is_true(&pc_data))
+            setcheckmark(modem_data->CH_XonXoff, TRUE);
+         else if(!stricmp(pc_data.Argument, "OwnDevUnit") && is_true(&pc_data))
+            setcheckmark(modem_data->CH_OwnDevUnit, TRUE);
+
+         else if(!stricmp(pc_data.Argument, "QuickReconnect") && is_true(&pc_data))
+            setcheckmark(dialer_data->CH_QuickReconnect, TRUE);
+         else if(!stricmp(pc_data.Argument, "Debug") && is_true(&pc_data))
+            setcheckmark(dialer_data->CH_Debug, TRUE);
+         else if(!stricmp(pc_data.Argument, "ConfirmOffline") && is_true(&pc_data))
+            setcheckmark(dialer_data->CH_ConfirmOffline, TRUE);
+         else if(!stricmp(pc_data.Argument, "ShowLog") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowLog, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowLamps") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowLamps, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowConnect") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowConnect, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowOnlineTime") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowOnlineTime, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowButtons") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowButtons, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowNetwork") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowNetwork, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowUser") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowUser, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowStatusWin") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowStatusWin, FALSE);
+         else if(!stricmp(pc_data.Argument, "ShowSerialInput") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_ShowSerialInput, FALSE);
+         else if(!stricmp(pc_data.Argument, "StartupOpenWin") && is_false(&pc_data))
+            setcheckmark(dialer_data->CH_StartupOpenWin, FALSE);
+         else if(!stricmp(pc_data.Argument, "StartupIconify") && is_true(&pc_data))
+            setcheckmark(dialer_data->CH_StartupIconify, TRUE);
+
+         else if(!stricmp(pc_data.Argument, "Startup") && strlen(pc_data.Contents) > 2)
+            setstring(dialer_data->STR_Startup, &pc_data.Contents[2]);
+         else if(!stricmp(pc_data.Argument, "Shutdown") && strlen(pc_data.Contents) > 2)
+            setstring(dialer_data->STR_Shutdown, &pc_data.Contents[2]);
+
+         else switch(current_type)
+         {
+            case type_ISP:
+               if(isp)
+               {
+                  if(!stricmp(pc_data.Argument, "Name"))
+                     strcpy(isp->isp_name, (*pc_data.Contents ? pc_data.Contents : "noname ISP"));
+                  else if(!stricmp(pc_data.Argument, "Comment"))
+                     strcpy(isp->isp_comment, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Login"))
+                     strcpy(isp->isp_login, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Password"))
+                     decrypt(pc_data.Contents, isp->isp_password);
+
+                  else if(!stricmp(pc_data.Argument, "Organisation"))
+                     strcpy(isp->isp_organisation  , pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Phone"))
+                     strcpy(isp->isp_phonenumber, pc_data.Contents);
+
+                  else if(!stricmp(pc_data.Argument, "BOOTPServer"))
+                     strcpy(isp->isp_bootp, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "HostName"))
+                     strcpy(isp->isp_hostname, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "TimeServer"))
+                     strcpy(isp->isp_timename, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "DontQueryHostname") && is_true(&pc_data))
+                     isp->isp_flags |= ISF_DontQueryHostname;
+                  else if(!stricmp(pc_data.Argument, "UseBootP") && is_true(&pc_data))
+                     isp->isp_flags |= ISF_UseBootp;
+                  else if(!stricmp(pc_data.Argument, "GetTime") && is_true(&pc_data))
+                     isp->isp_flags |= ISF_GetTime;
+                  else if(!stricmp(pc_data.Argument, "SaveTime") && is_true(&pc_data))
+                     isp->isp_flags |= ISF_SaveTime;
+                  else if(!stricmp(pc_data.Argument, "NameServer"))
+                  {
+                     struct ServerEntry *server;
+
+                     if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
+                     {
+                        strncpy(server->se_name, pc_data.Contents, 40);
+                        AddTail((struct List *)&isp->isp_nameservers, (struct Node *)server);
+                     }
+                  }
+                  else if(!stricmp(pc_data.Argument, "DomainName"))
+                  {
+                     struct ServerEntry *server;
+
+                     if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
+                     {
+                        strncpy(server->se_name, pc_data.Contents, 40);
+                        AddTail((struct List *)&isp->isp_domainnames, (struct Node *)server);
+                     }
+                  }
+               }
+               break;
+            case type_User:
+               if(user)
+               {
+                  if(!stricmp(pc_data.Argument, "Name"))
+                     strncpy(user->us_login, pc_data.Contents, sizeof(user->us_login));
+                  else if(!stricmp(pc_data.Argument, "RealName"))
+                     strncpy(user->us_realname, pc_data.Contents, sizeof(user->us_realname));
+                  else if(!stricmp(pc_data.Argument, "Password"))
+                  {
+                     strncpy(user->us_password, pc_data.Contents, sizeof(user->us_password));
+                     if(!strcmp(user->us_password, "*"))
+                        user->us_flags |= UFL_Disabled;
+                  }
+                  else if(!stricmp(pc_data.Argument, "UID"))
+                     user->us_uid = atol(pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "GID"))
+                     user->us_gid = atol(pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "HomeDir"))
+                     strncpy(user->us_homedir, pc_data.Contents, sizeof(user->us_homedir));
+                  else if(!stricmp(pc_data.Argument, "Shell"))
+                     strncpy(user->us_shell, pc_data.Contents, sizeof(user->us_shell));
+
+//                  else if(!stricmp(pc_data.Argument, "MailLogin"))
+else if(!stricmp(pc_data.Argument, "MailLogin") || !stricmp(pc_data.Argument, "POPLogin"))
+                     strncpy(user->us_maillogin, pc_data.Contents, sizeof(user->us_maillogin));
+//                  else if(!stricmp(pc_data.Argument, "MailPassword"))
+else if(!stricmp(pc_data.Argument, "MailPassword") || !stricmp(pc_data.Argument, "POPPassword"))
+                     decrypt(pc_data.Contents, user->us_mailpassword);
+                  else if(!stricmp(pc_data.Argument, "EMail"))
+                     strncpy(user->us_email, pc_data.Contents, sizeof(user->us_email));
+//                  else if(!stricmp(pc_data.Argument, "MailServer"))
+else if(!stricmp(pc_data.Argument, "MailServer") || !stricmp(pc_data.Argument, "POPServer"))
+                     strncpy(user->us_mailserver, pc_data.Contents, sizeof(user->us_mailserver));
+               }
+               break;
+
+            case type_Iface:
+               if(iface)
+               {
+                  if(!stricmp(pc_data.Argument, "IfName"))
+                     strcpy(iface->if_name, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Sana2Device"))
+                     strcpy(iface->if_sana2device, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Sana2Unit"))
+                     iface->if_sana2unit = atol(pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Sana2Config"))
+                     strcpy(iface->if_sana2config, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Sana2ConfigText") && !iface->if_sana2configtext)
+                  {
+                     if(iface->if_sana2configtext = AllocVec(strlen(pc_data.Contents) + 1, MEMF_ANY | MEMF_CLEAR))
+                     {
+                        if(strstr(pc_data.Contents, "\\n"))
+                        {
+                           STRPTR ptr2;
+
+                           ptr = pc_data.Contents;
+                           FOREVER
+                           {
+                              if(ptr2 = strstr(ptr, "\\n"))
+                                 *ptr2 = NULL;
+                              strcat(iface->if_sana2configtext, ptr);
+                              if(ptr2)
+                                 strcat(iface->if_sana2configtext, "\n");
+                              else
+                                 break;
+
+                              ptr = ptr2 + 2;
+                           }
+                        }
+                        else
+                           strcpy(iface->if_sana2configtext, pc_data.Contents);
+                     }
+                  }
+                  else if(!stricmp(pc_data.Argument, "IfConfigParams") && !iface->if_configparams)
+                     realloc_copy((STRPTR *)&iface->if_configparams, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "MTU"))
+                     iface->if_MTU = atol(pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "IPAddr"))
+                     strcpy(iface->if_addr, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "DestIP"))
+                     strcpy(iface->if_dst, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Gateway"))
+                     strcpy(iface->if_gateway, pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Netmask"))
+                     strcpy(iface->if_netmask, pc_data.Contents);
+
+                  else if(!stricmp(pc_data.Argument, "AlwaysOnline") && is_true(&pc_data))
+                     iface->if_flags |= IFL_AlwaysOnline;
+                  else if(!stricmp(pc_data.Argument, "DefaultPPP") && is_true(&pc_data))
+                     iface->if_flags |= IFL_PPP;
+                  else if(!stricmp(pc_data.Argument, "DefaultSLIP") && is_true(&pc_data))
+                     iface->if_flags |= IFL_SLIP;
+                  else if(!stricmp(pc_data.Argument, "KeepAlive"))
+                     iface->if_keepalive = atol(pc_data.Contents);
+
+                  else if(!stricmp(pc_data.Argument, "CarrierDetect") && is_true(&pc_data) && ppp_if)
+                     ppp_if->ppp_carrierdetect = TRUE;
+                  else if(!stricmp(pc_data.Argument, "ConnectTimeout") && ppp_if)
+                     ppp_if->ppp_connecttimeout = atol(pc_data.Contents);
+                  else if(!stricmp(pc_data.Argument, "Callback") && ppp_if)
+                     strncpy(ppp_if->ppp_callback, pc_data.Contents, sizeof(ppp_if->ppp_callback));
+                  else if(!stricmp(pc_data.Argument, "MPPCompression") && is_true(&pc_data) && ppp_if)
+                     ppp_if->ppp_mppcomp = TRUE;
+                  else if(!stricmp(pc_data.Argument, "VJCompression") && is_true(&pc_data) && ppp_if)
+                     ppp_if->ppp_vjcomp = TRUE;
+                  else if(!stricmp(pc_data.Argument, "BSDCompression") && is_true(&pc_data) && ppp_if)
+                     ppp_if->ppp_bsdcomp = TRUE;
+                  else if(!stricmp(pc_data.Argument, "DeflateCompression") && is_true(&pc_data) && ppp_if)
+                     ppp_if->ppp_deflatecomp = TRUE;
+                  else if(!stricmp(pc_data.Argument, "EOF") && is_true(&pc_data) && ppp_if)
+                     ppp_if->ppp_eof = TRUE;
+
+                  else
+                  {
+                     struct ScriptLine *script_line;
+                     int command;
+
+                     if(!stricmp(pc_data.Argument, event_commands[IFE_Online]))
+                        command = IFE_Online;
+                     else if(!stricmp(pc_data.Argument, event_commands[IFE_OnlineFail]))
+                        command = IFE_OnlineFail;
+                     else if(!stricmp(pc_data.Argument, event_commands[IFE_OfflineActive]))
+                        command = IFE_OfflineActive;
+                     else if(!stricmp(pc_data.Argument, event_commands[IFE_OfflinePassive]))
+                        command = IFE_OfflinePassive;
+                     else
+                        command = -1;
+
+                     if(command != -1)
+                     {
+                        if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+                        {
+                           script_line->sl_command = command;
+                           strncpy(script_line->sl_contents, &pc_data.Contents[2], script_line->sl_command);
+                           script_line->sl_userdata = *pc_data.Contents - 48;
+
+                           AddTail((struct List *)&iface->if_events, (struct Node *)script_line);
+                        }
+                     }
+                  }
+               }
+               break;
+
+            case type_LoginScript:
+            {
+               struct ScriptLine *script_line;
+               int command;
+
+               if(!stricmp(pc_data.Argument, script_commands[SL_Send]))
+                  command = SL_Send;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_WaitFor]))
+                  command = SL_WaitFor;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_Dial]))
+                  command = SL_Dial;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_GoOnline]))
+                  command = SL_GoOnline;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_SendLogin]))
+                  command = SL_SendLogin;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_SendPassword]))
+                  command = SL_SendPassword;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_SendBreak]))
+                  command = SL_SendBreak;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_Exec]))
+                  command = SL_Exec;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_Pause]))
+                  command = SL_Pause;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_ParseIP]))
+                  command = SL_ParseIP;
+               else if(!stricmp(pc_data.Argument, script_commands[SL_ParsePasswd]))
+                  command = SL_ParsePasswd;
+               else
+                  command = -1;
+
+               if(command != -1 && isp)
+               {
+                  if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+                  {
+                     script_line->sl_command = command;
+                     strncpy(script_line->sl_contents, pc_data.Contents, 250);
+
+                     AddTail((struct List *)&isp->isp_loginscript, (struct Node *)script_line);
+                  }
+               }
+            }
+            break;
+         }
+      }
+      ParseEnd(&pc_data);
+   }
    return(NULL);
 }
 
@@ -800,162 +957,309 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
    struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
    struct Dialer_Data      *dialer_data      = INST_DATA(CL_Dialer->mcc_Class    , data->GR_Dialer);
    struct Databases_Data   *db_data          = INST_DATA(CL_Databases->mcc_Class , data->GR_Databases);
-   struct ScriptLine *script_line;
+   struct User *user = NULL;
+   struct ISP *isp = NULL;
    BPTR fh;
+   char buff[110];
    STRPTR ptr;
    LONG pos;
-
-   if(fh = CreateDir("AmiTCP:config"))
-      UnLock(fh);
+   BOOL got_root = FALSE;
 
    if(fh = Open((msg->file ? msg->file : (STRPTR)config_file), MODE_NEWFILE))
    {
-         FPrintf(fh, "LoginName       %ls\n", xget(user_data->STR_LoginName    , MUIA_String_Contents));
-         FPrintf(fh, "Password        %ls\n", xget(user_data->STR_Password     , MUIA_String_Contents));
-         FPrintf(fh, "RealName        %ls\n", xget(user_data->STR_RealName     , MUIA_String_Contents));
-         FPrintf(fh, "EMail           %ls\n", xget(user_data->STR_EMail        , MUIA_String_Contents));
-         FPrintf(fh, "Organisation    %ls\n\n", xget(user_data->STR_Organisation , MUIA_String_Contents));
+      FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n\n");
 
-         FPrintf(fh, "Phone           %ls\n\n", xget(dialer_data->STR_Phone      , MUIA_String_Contents));
+      FPrintf(fh, "SerialDevice    %ls\n", xget(modem_data->STR_SerialDevice  , MUIA_String_Contents));
+      FPrintf(fh, "SerialUnit      %ls\n", xget(modem_data->STR_SerialUnit    , MUIA_String_Contents));
+      FPrintf(fh, "BaudRate        %ls\n", xget(modem_data->STR_BaudRate      , MUIA_String_Contents));
+      FPrintf(fh, "SerBufLen       %ls\n\n", xget(modem_data->STR_SerBufLen   , MUIA_String_Contents));
 
-         FPrintf(fh, "SerialDevice    %ls\n", xget(modem_data->STR_SerialDriver, MUIA_String_Contents));
-         FPrintf(fh, "SerialUnit      %ls\n", xget(modem_data->STR_SerialUnit  , MUIA_String_Contents));
-         FPrintf(fh, "BaudRate        %ls\n", xget(modem_data->STR_BaudRate    , MUIA_String_Contents));
-         FPrintf(fh, "CarrierDetect   %ls\n", (xget(modem_data->CH_Carrier     , MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "7Wire           %ls\n", (xget(modem_data->CH_7Wire       , MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "SerBufLen       %ls\n\n", xget(modem_data->STR_SerBufLen   , MUIA_String_Contents));
+      FPrintf(fh, "Modem           %ls\n", xget(modem_data->STR_Modem         , MUIA_String_Contents));
+      FPrintf(fh, "InitString      %ls\n", xget(modem_data->STR_InitString    , MUIA_String_Contents));
+      FPrintf(fh, "DialPrefix      %ls\n", xget(modem_data->STR_DialPrefix    , MUIA_String_Contents));
+      FPrintf(fh, "DialSuffix      %ls\n", xget(modem_data->STR_DialSuffix    , MUIA_String_Contents));
+      FPrintf(fh, "RedialAttempts  %ld\n", xget(modem_data->SL_RedialAttempts , MUIA_Numeric_Value));
+      FPrintf(fh, "RedialDelay     %ld\n", xget(modem_data->SL_RedialDelay    , MUIA_Numeric_Value));
+      FPrintf(fh, "IgnoreDSR       %ls\n", yes_no(xget(modem_data->CH_IgnoreDSR       , MUIA_Selected)));
+      FPrintf(fh, "7Wire           %ls\n", yes_no(xget(modem_data->CH_7Wire           , MUIA_Selected)));
+      FPrintf(fh, "RadBoogie       %ls\n", yes_no(xget(modem_data->CH_RadBoogie       , MUIA_Selected)));
+      FPrintf(fh, "XonXoff         %ls\n", yes_no(xget(modem_data->CH_XonXoff         , MUIA_Selected)));
+      FPrintf(fh, "OwnDevUnit      %ls\n\n", yes_no(xget(modem_data->CH_OwnDevUnit    , MUIA_Selected)));
+      FPrintf(fh, "QuickReconnect  %ls\n", yes_no(xget(dialer_data->CH_QuickReconnect , MUIA_Selected)));
+      FPrintf(fh, "Debug           %ls\n", yes_no(xget(dialer_data->CH_Debug          , MUIA_Selected)));
+      FPrintf(fh, "ConfirmOffline  %ls\n", yes_no(xget(dialer_data->CH_ConfirmOffline , MUIA_Selected)));
+      FPrintf(fh, "ShowLog         %ls\n", yes_no(xget(dialer_data->CH_ShowLog        , MUIA_Selected)));
+      FPrintf(fh, "ShowLamps       %ls\n", yes_no(xget(dialer_data->CH_ShowLamps      , MUIA_Selected)));
+      FPrintf(fh, "ShowConnect     %ls\n", yes_no(xget(dialer_data->CH_ShowConnect    , MUIA_Selected)));
+      FPrintf(fh, "ShowOnlineTime  %ls\n", yes_no(xget(dialer_data->CH_ShowOnlineTime , MUIA_Selected)));
+      FPrintf(fh, "ShowButtons     %ls\n", yes_no(xget(dialer_data->CH_ShowButtons    , MUIA_Selected)));
+      FPrintf(fh, "ShowNetwork     %ls\n", yes_no(xget(dialer_data->CH_ShowNetwork    , MUIA_Selected)));
+      FPrintf(fh, "ShowUser        %ls\n", yes_no(xget(dialer_data->CH_ShowUser       , MUIA_Selected)));
+      FPrintf(fh, "ShowStatusWin   %ls\n", yes_no(xget(dialer_data->CH_ShowStatusWin  , MUIA_Selected)));
+      FPrintf(fh, "ShowSerialInput %ls\n", yes_no(xget(dialer_data->CH_ShowSerialInput, MUIA_Selected)));
+      FPrintf(fh, "StartupOpenWin  %ls\n", yes_no(xget(dialer_data->CH_StartupOpenWin , MUIA_Selected)));
+      FPrintf(fh, "StartupIconify  %ls\n", yes_no(xget(dialer_data->CH_StartupIconify , MUIA_Selected)));
 
-         FPrintf(fh, "Modem           %ls\n", xget(modem_data->STR_Modem       , MUIA_String_Contents));
-         FPrintf(fh, "InitString      %ls\n", xget(modem_data->STR_ModemInit   , MUIA_String_Contents));
-         FPrintf(fh, "DialPrefix      %ls\n", xget(modem_data->STR_DialPrefix  , MUIA_String_Contents));
-         FPrintf(fh, "DialSuffix      %ls\n", xget(modem_data->STR_DialSuffix  , MUIA_String_Contents));
-         FPrintf(fh, "RedialAttempts  %ld\n", xget(modem_data->SL_RedialAttempts, MUIA_Numeric_Value));
-         FPrintf(fh, "RedialDelay     %ld\n\n", xget(modem_data->SL_RedialDelay  , MUIA_Numeric_Value));
+      if(strlen((STRPTR)xget(dialer_data->STR_Startup      , MUIA_String_Contents)))
+         FPrintf(fh, "Startup         %ls\n", xget(dialer_data->STR_Startup       , MUIA_String_Contents));
+      if(strlen((STRPTR)xget(dialer_data->STR_Shutdown     , MUIA_String_Contents)))
+         FPrintf(fh, "Shutdown        %ls\n\n", xget(dialer_data->STR_Shutdown    , MUIA_String_Contents));
 
-         ptr = NULL;
-         switch(xget(provider_data->CY_Sana2Device, MUIA_Cycle_Active))
+      FPrintf(fh, "\n## ISP, user and interface configuration\n##\n\n");
+
+      pos = 0;
+      FOREVER
+      {
+         DoMethod(provider_data->LI_ISP, MUIM_List_GetEntry, pos++, &isp);
+         if(!isp)
+            break;
+
+         FPrintf(fh, "\nISP\n");
+         FPrintf(fh, "Name              %ls\n", (*isp->isp_name ? isp->isp_name : "noname"));
+         if(*isp->isp_comment)
+            FPrintf(fh, "Comment           %ls\n", isp->isp_comment);
+         if(*isp->isp_login)
+            FPrintf(fh, "Login             %ls\n", isp->isp_login);
+         if(*isp->isp_password)
          {
-            case 0:
-               FPrintf(fh, "Sana2Device     DEVS:Networks/appp.device\nSana2Unit       0\n");
-               FPrintf(fh, "Sana2Config     ENV:Sana2/appp0.config\n");
-               ptr = get_configcontents(TRUE);
-               break;
-            case 1:
-               FPrintf(fh, "Sana2Device     DEVS:Networks/aslip.device\nSana2Unit       0\n");
-               FPrintf(fh, "Sana2Config     ENV:Sana2/aslip0.config\n");
-               ptr = get_configcontents(FALSE);
-               break;
-            default:
-               FPrintf(fh, "Sana2Device     %ls\n", xget(provider_data->STR_Sana2Device        , MUIA_String_Contents));
-               FPrintf(fh, "Sana2Unit       %ls\n", xget(provider_data->STR_Sana2Unit          , MUIA_String_Contents));
-               FPrintf(fh, "Sana2Config     %ls\n", xget(provider_data->STR_Sana2ConfigFile    , MUIA_String_Contents));
-               ptr = (STRPTR)xget(provider_data->TI_Sana2ConfigContents , MUIA_Textinput_Contents);
-               break;
+            encrypt(isp->isp_password, buff);
+            FPrintf(fh, "Password          \"%ls\"\n", buff);
          }
-         if(ptr)
+         if(*isp->isp_organisation)
+            FPrintf(fh, "Organisation      %ls\n", isp->isp_organisation);
+         if(*isp->isp_phonenumber)
+            FPrintf(fh, "Phone             %ls\n", isp->isp_phonenumber);
+         if(*isp->isp_bootp)
+            FPrintf(fh, "BOOTPServer       %ls\n", isp->isp_bootp);
+         if(*isp->isp_hostname)
+            FPrintf(fh, "HostName          %ls\n", isp->isp_hostname);
+         if(*isp->isp_timename)
+            FPrintf(fh, "TimeServer        %ls\n", isp->isp_timename);
+
+         if(isp->isp_flags & ISF_UseBootp)
+            FPrintf(fh, "UseBOOTP          yes\n");
+         if(isp->isp_flags & ISF_DontQueryHostname)
+            FPrintf(fh, "DontQueryHostname yes\n");
+         if(isp->isp_flags & ISF_GetTime)
+            FPrintf(fh, "GetTime           yes\n");
+         if(isp->isp_flags & ISF_SaveTime)
+            FPrintf(fh, "SaveTime          yes\n");
+
+         if(isp->isp_nameservers.mlh_TailPred != (struct MinNode *)&isp->isp_nameservers)
          {
-            if(strchr(ptr, '\n'))
+            struct ServerEntry *server;
+
+            server = (struct ServerEntry *)isp->isp_nameservers.mlh_Head;
+            while(server->se_node.mln_Succ)
             {
-               STRPTR buf, ptr2;
+               FPrintf(fh, "NameServer        %ls\n", server->se_name);
+               server = (struct ServerEntry *)server->se_node.mln_Succ;
+            }
+         }
+         if(isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&isp->isp_domainnames)
+         {
+            struct ServerEntry *server;
 
-               FPrintf(fh, "Sana2ConfigText ");
-               if(buf = AllocVec(strlen(ptr) + 1, MEMF_ANY))
+            server = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
+            while(server->se_node.mln_Succ)
+            {
+               FPrintf(fh, "DomainName        %ls\n", server->se_name);
+               server = (struct ServerEntry *)server->se_node.mln_Succ;
+            }
+         }
+
+         // interfaces
+
+         if(isp->isp_ifaces.mlh_TailPred != (struct MinNode *)&isp->isp_ifaces)
+         {
+            struct Interface *iface;
+            struct PrefsPPPIface *ppp_if;
+
+            iface = (struct Interface *)isp->isp_ifaces.mlh_Head;
+            while(iface->if_node.mln_Succ)
+            {
+               ppp_if = iface->if_userdata;
+
+               FPrintf(fh, "\nINTERFACE\n");
+               FPrintf(fh, "IfName          %ls\n", (*iface->if_name ? iface->if_name : "xxx"));
+               FPrintf(fh, "Sana2Device     %ls\n", iface->if_sana2device);
+               FPrintf(fh, "Sana2Unit       %ld\n", iface->if_sana2unit);
+               FPrintf(fh, "Sana2Config     %ls\n", iface->if_sana2config);
+               if(iface->if_flags & IFL_PPP)
                {
-                  memcpy(buf, ptr, strlen(ptr) + 1);
-
-                  ptr = buf;
-                  FOREVER
+                  FPrintf(fh, "Sana2ConfigText sername %ls\\nserunit %ld\\nserbaud %ld\\nlocalipaddress %%a\\n",
+                     xget(modem_data->STR_SerialDevice, MUIA_String_Contents),
+                     xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
+                     xget(modem_data->STR_BaudRate, MUIA_String_Integer));
+                  if(*isp->isp_login)
+                     FPrintf(fh, "user %%u\\n");
+                  if(*isp->isp_password)
+                     FPrintf(fh, "secret %%p\\n");
+                  if(xget(dialer_data->CH_Debug, MUIA_Selected))
+                     FPrintf(fh, "debug = 1\\ndebug_window = 1\\nerror_requesters = 0\\nlog_file = t:appp.log\\n");
+                  if(xget(modem_data->CH_OwnDevUnit, MUIA_Selected))
+                     FPrintf(fh, "useodu yes\\n");
+                  if(ppp_if)
                   {
-                     if(ptr2 = strchr(ptr, '\n'))
-                        *ptr2 = NULL;
-                     FPrintf(fh, "%ls", ptr);
-                     if(ptr2)
+                     if(ppp_if->ppp_connecttimeout)
+                        FPrintf(fh, "connecttimeout %ld\\n", ppp_if->ppp_connecttimeout);
+                     if(*ppp_if->ppp_callback)
+                        FPrintf(fh, "callback       \"%ls\"\\n", ppp_if->ppp_callback);
+                     FPrintf(fh, "cd             %ls\\n", yes_no(ppp_if->ppp_carrierdetect));
+                     FPrintf(fh, "mppcomp        %ls\\n", yes_no(ppp_if->ppp_mppcomp));
+                     FPrintf(fh, "vjcomp         %ls\\n", yes_no(ppp_if->ppp_vjcomp));
+                     FPrintf(fh, "bsdcomp        %ls\\n", yes_no(ppp_if->ppp_bsdcomp));
+                     FPrintf(fh, "deflatecomp    %ls\\n", yes_no(ppp_if->ppp_deflatecomp));
+                     FPrintf(fh, "eof            %ls\\n", yes_no(ppp_if->ppp_eof));
+                  }
+                  FPrintf(fh, "\n");
+               }
+               else if(iface->if_flags & IFL_SLIP)
+               {
+                  FPrintf(fh, "Sana2ConfigText %ls %ld %ld Shared %%a MTU=%ld",
+                     xget(modem_data->STR_SerialDevice, MUIA_String_Contents),
+                     xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
+                     xget(modem_data->STR_BaudRate, MUIA_String_Integer),
+                     iface->if_MTU);
+
+                  if(xget(modem_data->CH_7Wire, MUIA_Selected))
+                     FPrintf(fh, " 7Wire");
+                  if(ppp_if)
+                  {
+                     if(ppp_if->ppp_carrierdetect)
+                        FPrintf(fh, " CD");
+                  }
+                  FPrintf(fh, "\n");
+               }
+               else if(iface->if_sana2configtext && *iface->if_sana2configtext)
+               {
+                  FPrintf(fh, "Sana2ConfigText ");
+
+                  ptr = iface->if_sana2configtext;
+                  while(*ptr)
+                  {
+                     if(*ptr == '\n')
                         FPrintf(fh, "\\n");
                      else
-                        break;
-                     ptr = ptr2 + 1;
+                        FPrintf(fh, "%lc", *ptr);
+                     ptr++;
                   }
-                  FreeVec(buf);
+                  FPrintf(fh, "\n");
                }
-               FPrintf(fh, "\n");
+               if(iface->if_configparams && *iface->if_configparams)
+                  FPrintf(fh, "IfConfigParams  %ls\n", iface->if_configparams);
+               FPrintf(fh, "MTU             %ld\n", iface->if_MTU);
+
+               if(*iface->if_addr)
+                  FPrintf(fh, "IPAddr          %ls\n", iface->if_addr);
+               if(*iface->if_dst)
+                  FPrintf(fh, "DestIP          %ls\n", iface->if_dst);
+               if(*iface->if_gateway)
+                  FPrintf(fh, "Gateway         %ls\n", iface->if_gateway);
+               if(*iface->if_netmask)
+                  FPrintf(fh, "Netmask         %ls\n", iface->if_netmask);
+
+               if(iface->if_flags & IFL_AlwaysOnline)
+                  FPrintf(fh, "AlwaysOnline\n");
+               if(iface->if_flags & IFL_PPP)
+                  FPrintf(fh, "DefaultPPP\n");
+               if(iface->if_flags & IFL_SLIP)
+                  FPrintf(fh, "DefaultSLIP\n");
+               if(iface->if_keepalive)
+                  FPrintf(fh, "KeepAlive       %ld\n", iface->if_keepalive);
+
+               if(ppp_if && ((iface->if_flags & IFL_PPP) || (iface->if_flags & IFL_SLIP)))
+               {
+                  FPrintf(fh, "CarrierDetect   %ls\n", yes_no(ppp_if->ppp_carrierdetect));
+                  if(iface->if_flags & IFL_PPP)
+                  {
+                     if(ppp_if->ppp_connecttimeout)
+                        FPrintf(fh, "ConnectTimeout  %ld\n", ppp_if->ppp_connecttimeout);
+                     if(*ppp_if->ppp_callback)
+                        FPrintf(fh, "Callback        %ls\n", ppp_if->ppp_callback);
+                     FPrintf(fh, "MPPCompression     %ls\n", yes_no(ppp_if->ppp_mppcomp));
+                     FPrintf(fh, "VJCompression      %ls\n", yes_no(ppp_if->ppp_vjcomp));
+                     FPrintf(fh, "BSDCompression     %ls\n", yes_no(ppp_if->ppp_bsdcomp));
+                     FPrintf(fh, "DeflateCompression %ls\n", yes_no(ppp_if->ppp_deflatecomp));
+                     FPrintf(fh, "EOF                %ls\n", yes_no(ppp_if->ppp_eof));
+                  }
+               }
+
+               if(iface->if_events.mlh_TailPred != (struct MinNode *)&iface->if_events)
+               {
+                  struct ScriptLine *event;
+
+                  event = (struct ScriptLine *)iface->if_events.mlh_Head;
+                  while(event->sl_node.mln_Succ)
+                  {
+                     FPrintf(fh, "%ls      %ld %ls\n", event_commands[event->sl_command], event->sl_userdata, event->sl_contents);
+                     event = (struct ScriptLine *)event->sl_node.mln_Succ;
+                  }
+               }
+
+               iface = (struct Interface *)iface->if_node.mln_Succ;
             }
-            else
-               FPrintf(fh, "Sana2ConfigText %ls\n", ptr);
          }
-         FPrintf(fh, "Interface       %ls\n", xget(provider_data->STR_IfaceName          , MUIA_String_Contents));
-         if(strlen((STRPTR)xget(provider_data->STR_IfaceConfigParams  , MUIA_String_Contents)))
-            FPrintf(fh, "IfConfigParams  %ls\n", xget(provider_data->STR_IfaceConfigParams  , MUIA_String_Contents));
-         FPrintf(fh, "MTU             %ls\n", xget(provider_data->STR_MTU      , MUIA_String_Contents));
-         if(xget(provider_data->CY_Ping, MUIA_Cycle_Active))
+
+         if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
          {
-            FPrintf(fh, "KeepAlive       %ld\n", xget(provider_data->CY_Ping      , MUIA_Cycle_Active));
-            FPrintf(fh, "PingInterval    %ld\n", xget(provider_data->SL_Ping      , MUIA_Numeric_Value));
-         }
-         FPrintf(fh, "\n");
+            struct ScriptLine *script_line;
 
-         if(xget(provider_data->CY_Address, MUIA_Cycle_Active))
+            FPrintf(fh, "\nLOGINSCRIPT\n");
+            script_line = (struct ScriptLine *)isp->isp_loginscript.mlh_Head;
+            while(script_line->sl_node.mln_Succ)
+            {
+               if(*script_line->sl_contents)
+                  FPrintf(fh, "%ls \"%ls\"\n", script_commands[script_line->sl_command], script_line->sl_contents);
+               else
+                  FPrintf(fh, "%ls\n", script_commands[script_line->sl_command]);
+
+               script_line = (struct ScriptLine *)script_line->sl_node.mln_Succ;
+            }
+         }
+      }
+      pos = 0;
+      FOREVER
+      {
+         DoMethod(user_data->LI_User, MUIM_List_GetEntry, pos++, &user);
+         if(!user)
+            break;
+
+         if(!strcmp(user->us_login, "root"))
+            got_root = TRUE;
+
+         FPrintf(fh, "\nUSER\n");
+         if(*user->us_login)
+            FPrintf(fh, "Name         %ls\n", user->us_login);
+         if(*user->us_realname)
+            FPrintf(fh, "RealName     %ls\n", user->us_realname);
+         if(*user->us_password)
+            FPrintf(fh, "Password     \"%ls\"\n", (user->us_flags & UFL_Disabled ? "*" : user->us_password));
+         FPrintf(fh, "UID          %ls\n", user->us_uid);
+         FPrintf(fh, "GID          %ls\n", user->us_gid);
+         if(*user->us_homedir)
+            FPrintf(fh, "HomeDir      %ls\n", user->us_homedir);
+         if(*user->us_shell)
+            FPrintf(fh, "Shell        %ls\n", user->us_shell);
+         if(*user->us_maillogin)
+            FPrintf(fh, "MailLogin     %ls\n", user->us_maillogin);
+         if(*user->us_mailpassword)
          {
-            FPrintf(fh, "IPAddr          %ls\n", xget(provider_data->STR_IP_Address , MUIA_String_Contents));
-            FPrintf(fh, "HostName        %ls\n", xget(provider_data->STR_HostName   , MUIA_String_Contents));
+            encrypt(user->us_mailpassword, buff);
+            FPrintf(fh, "MailPassword  \"%ls\"\n", buff);
          }
-// DestIP
-// Gateway
-// Netmask
-         if(xget(provider_data->CY_Resolv, MUIA_Cycle_Active))
-         {
-            FPrintf(fh, "DomainName      %ls\n", xget(provider_data->STR_DomainName , MUIA_String_Contents));
-            FPrintf(fh, "NameServer      %ls\n", xget(provider_data->STR_NameServer1, MUIA_String_Contents));
-            FPrintf(fh, "NameServer      %ls\n", xget(provider_data->STR_NameServer2, MUIA_String_Contents));
-         }
-// BootPServer
-         FPrintf(fh, "UseBootP        %ls\n\n", (xget(provider_data->CH_BOOTP      , MUIA_Selected) ? "yes" : "no"));
-
-         FPrintf(fh, "MailServer      %ls\n", xget(provider_data->STR_MailServer , MUIA_String_Contents));
-         FPrintf(fh, "POPServer       %ls\n", xget(provider_data->STR_POPServer  , MUIA_String_Contents));
-         FPrintf(fh, "NewsServer      %ls\n", xget(provider_data->STR_NewsServer , MUIA_String_Contents));
-         FPrintf(fh, "IRCServer       %ls\n", xget(provider_data->STR_IRCServer  , MUIA_String_Contents));
-         FPrintf(fh, "IRCPort         %ls\n", xget(provider_data->STR_IRCPort    , MUIA_String_Contents));
-         FPrintf(fh, "TimeServer      %ls\n", xget(provider_data->STR_TimeServer , MUIA_String_Contents));
-         FPrintf(fh, "ProxyServer     %ls\n", xget(provider_data->STR_ProxyServer, MUIA_String_Contents));
-         FPrintf(fh, "ProxyPort       %ls\n\n", xget(provider_data->STR_ProxyPort  , MUIA_String_Contents));
-
-         FPrintf(fh, "AutoLogin       %ls\n", (xget(dialer_data->CY_AutoLogin     , MUIA_Cycle_Active) ? "no" : "yes"));
-         FPrintf(fh, "OnlineOnStartup %ls\n", (xget(dialer_data->CH_GoOnline      , MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "QuickReconnect  %ls\n", (xget(dialer_data->CH_QuickReconnect, MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "SynClock        %ls\n", (xget(dialer_data->CH_SynClock      , MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "ShowStatus      %ls\n", (xget(dialer_data->CH_ShowStatus    , MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "ShowSpeed       %ls\n", (xget(dialer_data->CH_ShowSpeed     , MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "ShowOnline      %ls\n", (xget(dialer_data->CH_ShowOnline    , MUIA_Selected) ? "yes" : "no"));
-         FPrintf(fh, "ShowButtons     %ls\n\n", (xget(dialer_data->CH_ShowButtons   , MUIA_Selected) ? "yes" : "no"));
-
-         FPrintf(fh, "Online          %ls\n", xget(dialer_data->STR_Online        , MUIA_String_Contents));
-         FPrintf(fh, "OnlineFail      %ls\n", xget(dialer_data->STR_OnlineFailed  , MUIA_String_Contents));
-         FPrintf(fh, "OfflineActive   %ls\n", xget(dialer_data->STR_OfflineActive , MUIA_String_Contents));
-         FPrintf(fh, "OfflinePassive  %ls\n", xget(dialer_data->STR_OfflinePassive, MUIA_String_Contents));
-         FPrintf(fh, "Startup         %ls\n", xget(dialer_data->STR_Startup       , MUIA_String_Contents));
-         FPrintf(fh, "Shutdown        %ls\n\n", xget(dialer_data->STR_Shutdown      , MUIA_String_Contents));
-
-         FPrintf(fh, "WinOnline         %ls\n", win_stat(xget(dialer_data->CY_WinOnline        , MUIA_Cycle_Active)));
-         FPrintf(fh, "WinOnlineFail     %ls\n", win_stat(xget(dialer_data->CY_WinOnlineFailed  , MUIA_Cycle_Active)));
-         FPrintf(fh, "WinOfflineActive  %ls\n", win_stat(xget(dialer_data->CY_WinOfflineActive , MUIA_Cycle_Active)));
-         FPrintf(fh, "WinOfflinePassive %ls\n", win_stat(xget(dialer_data->CY_WinOfflinePassive, MUIA_Cycle_Active)));
-         FPrintf(fh, "WinStartup        %ls\n\n", win_stat(xget(dialer_data->CY_WinStartup       , MUIA_Cycle_Active)));
-
-         FPrintf(fh, "LoginScript\n");
-         pos = 0;
-         FOREVER
-         {
-            DoMethod(dialer_data->LV_Script, MUIM_List_GetEntry, pos++, &script_line);
-            if(!script_line)
-               break;
-            FPrintf(fh, "%ls %ls\n", script_commands[script_line->sl_command], script_line->sl_contents);
-         }
-         FPrintf(fh, "EOS\n\n");
+         if(*user->us_email)
+            FPrintf(fh, "EMail        %ls\n", user->us_email);
+         if(*user->us_mailserver)
+            FPrintf(fh, "MailServer    %ls\n", user->us_mailserver);
+      }
+      if(!got_root)
+         FPrintf(fh, "\nUSER\nName root\nRealName The Judge\nPassword *\nUID 0\nGID 0\nHomeDir SYS:\nShell shell\n");
 
       Close(fh);
    }
 
-   if(changed_passwd)
+//   if(changed_passwd)
    {
       if(fh = Open("AmiTCP:db/passwd", MODE_NEWFILE))
       {
@@ -964,13 +1268,16 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          pos = 0;
          FOREVER
          {
-            DoMethod(db_data->LI_Users, MUIM_List_GetEntry, pos++, &user);
+            DoMethod(user_data->LI_User, MUIM_List_GetEntry, pos++, &user);
             if(!user)
                break;
-            FPrintf(fh, "%ls|%ls|%ld|%ld|%ls|%ls|%ls\n", user->Login, (user->Disabled ? "*" : user->Password), user->UserID, user->GroupID, user->Name, user->HomeDir, user->Shell);
+            FPrintf(fh, "%ls|%ls|%ld|%ld|%ls|%ls|%ls\n", user->us_login, (user->us_flags & UFL_Disabled ? "*" : user->us_password), user->us_uid, user->us_gid, user->us_realname, user->us_homedir, user->us_shell);
          }
+         if(!got_root)
+            FPrintf(fh, "root|*|0|0|The Judge|SYS:|shell\n");
          Close(fh);
       }
+      changed_passwd = FALSE;
    }
 
    if(changed_group)
@@ -985,10 +1292,11 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
             DoMethod(db_data->LI_Groups, MUIM_List_GetEntry, pos++, &group);
             if(!group)
                break;
-            FPrintf(fh, "%ls|%ls|%ld|%ls\n", group->Name, /*group->Password*/ "*", group->ID, group->Members);
+            FPrintf(fh, "%ls|%ls|%ld|%ls\n", group->Name, "*", group->ID, group->Members);
          }
          Close(fh);
       }
+      changed_group = FALSE;
    }
 
    if(changed_hosts)
@@ -1011,6 +1319,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
+      changed_hosts = FALSE;
    }
 
    if(changed_protocols)
@@ -1033,6 +1342,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
+      changed_protocols = FALSE;
    }
 
    if(changed_services)
@@ -1055,6 +1365,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
+      changed_services = FALSE;
    }
 
    if(changed_inetaccess)
@@ -1077,6 +1388,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
+      changed_inetaccess = FALSE;
    }
 
    if(changed_inetd)
@@ -1101,6 +1413,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
+      changed_inetd = FALSE;
    }
 
    if(changed_networks)
@@ -1123,6 +1436,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
+      changed_networks = FALSE;
    }
 
    if(changed_rpc)
@@ -1145,6 +1459,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
+      changed_rpc = FALSE;
    }
 
    return(NULL);
@@ -1154,8 +1469,6 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
 /// MainWindow_Finish
 ULONG MainWindow_Finish(struct IClass *cl, Object *obj, struct MUIP_MainWindow_Finish *msg)
 {
-//   struct MainWindow_Data *data = INST_DATA(cl, obj);
-
    if(msg->level)
       DoMethod(obj, MUIM_MainWindow_SaveConfig, config_file);
 
@@ -1170,14 +1483,14 @@ ULONG MainWindow_About(struct IClass *cl, Object *obj, Msg msg)
 {
    Object *req;
 
-   set(win, MUIA_Window_Sleep, TRUE);
+   set(app, MUIA_Application_Sleep, TRUE);
    if(req = (APTR)NewObject(CL_About->mcc_Class, NULL, TAG_DONE))
    {
       DoMethod(app, OM_ADDMEMBER, req);
       set(req, MUIA_Window_Open, TRUE);
    }
    else
-      set(win, MUIA_Window_Sleep, FALSE);
+      set(app, MUIA_Application_Sleep, FALSE);
 
    return(NULL);
 }
@@ -1189,9 +1502,56 @@ ULONG MainWindow_AboutFinish(struct IClass *cl, Object *obj, struct MUIP_MainWin
    Object *window = msg->window;
 
    set(window, MUIA_Window_Open, FALSE);
-   set(win, MUIA_Window_Sleep, FALSE);
    DoMethod(app, OM_REMMEMBER, window);
    MUI_DisposeObject(window);
+   set(app, MUIA_Application_Sleep, FALSE);
+
+   return(NULL);
+}
+
+///
+/// MainWindow_MenuLoad
+ULONG MainWindow_MenuLoad(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+   STRPTR file;
+
+   if(file = getfilename(obj, "Choose config file to load..", config_file, FALSE))
+   {
+      strncpy(config_file, file, MAXPATHLEN);
+      DoMethod(obj, MUIM_MainWindow_ClearConfig);
+      DoMethod(obj, MUIM_MainWindow_LoadConfig, config_file);
+   }
+
+   return(NULL);
+}
+
+///
+/// MainWindow_MenuImport
+ULONG MainWindow_MenuImport(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+
+   STRPTR file;
+
+   if(file = getfilename(obj, "Choose config file to import..", config_file, FALSE))
+      DoMethod(obj, MUIM_MainWindow_LoadConfig, file);
+
+   return(NULL);
+}
+
+///
+/// MainWindow_MenuSaveAs
+ULONG MainWindow_MenuSaveAs(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+   STRPTR file;
+
+   if(file = getfilename(obj, "Choose filename to save config..", config_file, TRUE))
+   {
+      strncpy(config_file, file, MAXPATHLEN);
+      DoMethod(obj, MUIM_MainWindow_SaveConfig, config_file);
+   }
 
    return(NULL);
 }
@@ -1205,35 +1565,24 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
    struct MainWindow_Data *data = INST_DATA(cl, obj);
    BOOL success = FALSE;
 
-   data->GR_Provider       = data->GR_User      =
-   data->GR_Dialer         = data->GR_Modem     =
-   data->GR_Databases      = NULL;
+   data->GR_Provider       = data->GR_Dialer         = data->GR_Modem     =
+   data->GR_Databases      = data->GR_User           = NULL;
 
    if(data->GR_Info)
    {
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Info"), data->GR_Info, NULL, NULL);
    }
-   if(data->GR_User        = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
-   {
-      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
-
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_Pages3), data->GR_User, NULL, NULL);
-   }
-   if(data->GR_Provider    = NewObject(CL_Provider->mcc_Class  , NULL, TAG_DONE))
+   if(data->GR_Provider        = NewObject(CL_Provider->mcc_Class  , NULL, TAG_DONE))
    {
       struct Provider_Data *p_data = INST_DATA(CL_Provider->mcc_Class, data->GR_Provider);
 
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  TCP/IP"), data->GR_Provider, NULL, GPE_LIST | GPE_OPEN);
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Sana II"), p_data->GR_Sana2          , data->GR_Provider, NULL);
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_ProviderRegister3), p_data->GR_Interface      , data->GR_Provider, NULL);
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_ProviderRegister4), p_data->GR_Server         , data->GR_Provider, NULL);
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Provider"), data->GR_Provider, NULL, NULL);
    }
-   if(data->GR_Modem       = NewObject(CL_Modem->mcc_Class     , NULL, TAG_DONE))
+   if(data->GR_User        = NewObject(CL_User->mcc_Class  , NULL, TAG_DONE))
    {
-      struct Modem_Data *m_data = INST_DATA(CL_Modem->mcc_Class, data->GR_Modem);
+      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
 
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Modem / TA"), m_data->GR_Modem , NULL, GPE_LIST);
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_ModemRegister2), m_data->GR_Serial , data->GR_Modem, NULL);
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  User"), data->GR_User, NULL, NULL);
    }
    if(data->GR_Dialer       = NewObject(CL_Dialer->mcc_Class     , NULL, TAG_DONE))
    {
@@ -1241,7 +1590,13 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Dialer"), data->GR_Dialer, NULL, GPE_LIST);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Events"), d_data->GR_Events , data->GR_Dialer, NULL);
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Misc")  , d_data->GR_Misc , data->GR_Dialer, NULL);
+   }
+   if(data->GR_Modem       = NewObject(CL_Modem->mcc_Class     , NULL, TAG_DONE))
+   {
+      struct Modem_Data *m_data = INST_DATA(CL_Modem->mcc_Class, data->GR_Modem);
+
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Modem / TA"), m_data->GR_Modem , NULL, GPE_LIST);
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_ModemRegister2), m_data->GR_Serial , data->GR_Modem, NULL);
    }
    if(data->GR_Databases   = NewObject(CL_Databases->mcc_Class , NULL, TAG_DONE))
    {
@@ -1258,14 +1613,9 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_DatabasesRegister6), d_data->GR_Rpc        , data->GR_Databases, NULL);
    }
 
-   if(data->GR_Provider && data->GR_User  && data->GR_Dialer &&
+   if(data->GR_Provider && data->GR_Dialer && data->GR_User &&
       data->GR_Databases && data->GR_Modem)
    {
-//    struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
-//    struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
-//    struct Databases_Data   *datab_data       = INST_DATA(CL_Databases->mcc_Class , data->GR_Databases);
-//    struct Events_Data      *events_data      = INST_DATA(CL_Events->mcc_Class    , data->GR_Events);
-
       success = TRUE;
    }
 
@@ -1278,48 +1628,46 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 {
    static STRPTR provider_titles[] = { "TCP/IP", "Sana2", "Interface", "Services", NULL };
-   static STRPTR user_titles[] = { "Settings", NULL };
    static STRPTR modem_titles[] = { "Modem / TA", "Device", NULL };
-   static STRPTR dialer_titles[] = { "Script", "Events", "Misc", NULL };
-   static STRPTR databases_titles[] = { "Passwd", "Group", "Hosts", "Protocols", "Services", "Access", "Inetd", "Networks", "Rpc", NULL };
+   static STRPTR dialer_titles[] = { "Misc", "Events", NULL };
 
    struct MainWindow_Data *data = INST_DATA(cl, obj);
    Object *tmp_group, *bodychunk;
    BOOL success = FALSE;
 
-   data->GR_Provider       = data->GR_User       =
-   data->GR_Dialer         = data->GR_Modem      =
-   data->GR_Databases      = NULL;
+   data->GR_Provider       = data->GR_Dialer         = data->GR_Modem      =
+   data->GR_Databases      = data->GR_User           = NULL;
 
    if(data->GR_Info)
    {
       bodychunk = create_bodychunk((struct BitMapHeader *)&information_header, (ULONG *)information_colors , (UBYTE *)information_body);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Info"), data->GR_Info, NULL, NULL, bodychunk);
    }
-   if(data->GR_User        = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
-   {
-      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
-
-      bodychunk = create_bodychunk((struct BitMapHeader *)&user_header, (ULONG *)user_colors , (UBYTE *)user_body);
-      if(tmp_group = RegisterGroup(user_titles),
-         MUIA_CycleChain      , 1,
-         Child, u_data->GR_User,
-      End)
-         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_Pages3), tmp_group, NULL, NULL, bodychunk);
-   }
-   if(data->GR_Provider = NewObject(CL_Provider->mcc_Class  , NULL, TAG_DONE))
+   if(data->GR_Provider        = NewObject(CL_Provider->mcc_Class      , NULL, TAG_DONE))
    {
       struct Provider_Data *p_data = INST_DATA(CL_Provider->mcc_Class, data->GR_Provider);
 
       bodychunk = create_bodychunk((struct BitMapHeader *)&provider_header, (ULONG *)provider_colors , (UBYTE *)provider_body);
-      if(tmp_group = RegisterGroup(provider_titles),
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Provider"), data->GR_Provider, NULL, NULL, bodychunk);
+   }
+   if(data->GR_User            = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
+   {
+      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
+
+      bodychunk = create_bodychunk((struct BitMapHeader *)&user_header, (ULONG *)user_colors , (UBYTE *)user_body);
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  User"), data->GR_User, NULL, NULL, bodychunk);
+   }
+   if(data->GR_Dialer       = NewObject(CL_Dialer->mcc_Class     , NULL, TAG_DONE))
+   {
+      struct Dialer_Data *d_data = INST_DATA(CL_Dialer->mcc_Class, data->GR_Dialer);
+
+      bodychunk = create_bodychunk((struct BitMapHeader *)&dialer_header, (ULONG *)dialer_colors , (UBYTE *)dialer_body);
+      if(tmp_group = RegisterGroup(dialer_titles),
          MUIA_CycleChain      , 1,
-         Child, p_data->GR_TCPIP,
-         Child, p_data->GR_Sana2,
-         Child, p_data->GR_Interface,
-         Child, p_data->GR_Server,
+         Child, d_data->GR_Misc,
+         Child, d_data->GR_Events,
       End)
-         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Provider"), tmp_group, NULL, NULL, bodychunk);
+         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Options"), tmp_group, NULL, NULL, bodychunk);
    }
    if(data->GR_Modem      = NewObject(CL_Modem->mcc_Class    , NULL, TAG_DONE))
    {
@@ -1331,51 +1679,18 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
          Child, m_data->GR_Modem,
          Child, m_data->GR_Serial,
       End)
-         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Modem"), tmp_group, NULL, NULL, bodychunk);
-   }
-   if(data->GR_Dialer       = NewObject(CL_Dialer->mcc_Class     , NULL, TAG_DONE))
-   {
-      struct Dialer_Data *d_data = INST_DATA(CL_Dialer->mcc_Class, data->GR_Dialer);
-
-      bodychunk = create_bodychunk((struct BitMapHeader *)&dialer_header, (ULONG *)dialer_colors , (UBYTE *)dialer_body);
-      if(tmp_group = RegisterGroup(dialer_titles),
-         MUIA_CycleChain      , 1,
-         Child, d_data->GR_Script,
-         Child, d_data->GR_Events,
-         Child, d_data->GR_Misc,
-      End)
-         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Dialer"), tmp_group, NULL, NULL, bodychunk);
+         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Modem/TA"), tmp_group, NULL, NULL, bodychunk);
    }
    if(data->GR_Databases   = NewObject(CL_Databases->mcc_Class , NULL, TAG_DONE))
    {
       struct Databases_Data *d_data = INST_DATA(CL_Databases->mcc_Class, data->GR_Databases);
 
       bodychunk = create_bodychunk((struct BitMapHeader *)&databases_header, (ULONG *)databases_colors , (UBYTE *)databases_body);
-      if(tmp_group = RegisterGroup(databases_titles),
-         MUIA_CycleChain      , 1,
-         Child, d_data->GR_Passwd,
-         Child, d_data->GR_Groups,
-         Child, d_data->GR_Hosts,
-         Child, d_data->GR_Protocols,
-         Child, d_data->GR_Services,
-         Child, d_data->GR_InetAccess,
-         Child, d_data->GR_Inetd,
-         Child, d_data->GR_Networks,
-         Child, d_data->GR_Rpc,
-      End)
-         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  DataBase"), tmp_group, NULL, NULL, bodychunk);
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Database"), data->GR_Databases, NULL, NULL, bodychunk);
    }
 
-   if(data->GR_Provider && data->GR_User  && data->GR_Dialer &&
-      data->GR_Databases && data->GR_Modem)
-   {
-//    struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
-//    struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
-//    struct Databases_Data   *datab_data       = INST_DATA(CL_Databases->mcc_Class , data->GR_Databases);
-//    struct Events_Data      *events_data      = INST_DATA(CL_Events->mcc_Class    , data->GR_Events);
-
+   if(data->GR_Provider && data->GR_Dialer && data->GR_Databases && data->GR_Modem && data->GR_User)
       success = TRUE;
-   }
 
    return(success);
 }
@@ -1389,24 +1704,18 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct MainWindow_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title    , VERS "  © 1997 by Michael Neuweiler, Active Software",
+      MUIA_Window_Title    , "GenesisPrefs © 1997,98 by Michael Neuweiler, Active Software",
       MUIA_Window_ID       , MAKE_ID('A','R','E','F'),
       MUIA_Window_AppWindow, TRUE,
-      MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, MainWindowMenu,0),
+      MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, MainWindowMenu, 0),
       WindowContents       , VGroup,
          Child, tmp.GR_Pager = GrouppagerObject,
             MUIA_Grouppager_ListHorizWeight  , 40,
-            MUIA_Grouppager_ListMinLineHeight, MAX(PROVIDER_HEIGHT, MAX(USER_HEIGHT, MAX(MODEM_HEIGHT, MAX(DIALER_HEIGHT, MAX(INFORMATION_HEIGHT, DATABASES_HEIGHT))))),
+            MUIA_Grouppager_ListMinLineHeight, MAX(PROVIDER_HEIGHT, MAX(MODEM_HEIGHT, MAX(DIALER_HEIGHT, MAX(INFORMATION_HEIGHT, DATABASES_HEIGHT)))),
             MUIA_Grouppager_ListAdjustWidth  , TRUE,
             MUIA_Grouppager_DefaultGroup, VGroup,
                GroupFrame,
                MUIA_Background, MUII_GroupBack,
-               Child, HVSpace,
-               Child, HVSpace,
-               Child, CLabel("                    loading...                    "),
-               Child, HVSpace,
-               Child, CLabel("please wait"),
-               Child, HVSpace,
                Child, HVSpace,
             End,
 //            MUIA_Grouppager_BalanceObject    , TRUE,
@@ -1444,11 +1753,10 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                MUIA_Bodychunk_Compression, LOGO_COMPRESSION,
                MUIA_Bodychunk_Masking    , LOGO_MASKING,
                MUIA_Bitmap_SourceColors  , (ULONG *)logo_colors,
-//               MUIA_Bitmap_Transparent   , 0,
             End,
             Child, HVSpace,
          End,
-         Child, CLabel("Preferences "VSTRING" ("__DATE__")"),
+         Child, CLabel("Preferences "VERSIONSTRING),
          Child, HVSpace,
 #ifdef DEMO
          Child, CLabel(GetStr(MSG_TX_DemoVersion)),
@@ -1460,16 +1768,28 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->BT_Save   , MUIA_ShortHelp, GetStr(MSG_Help_Save));
       set(data->BT_Cancel , MUIA_ShortHelp, GetStr(MSG_Help_Cancel));
 
-      DoMethod(obj            , MUIM_Notify, MUIA_Window_CloseRequest, TRUE            , obj, 2, MUIM_MainWindow_Finish, 0);
-      DoMethod(data->BT_Cancel  , MUIM_Notify, MUIA_Pressed            , FALSE           , obj, 2, MUIM_MainWindow_Finish, 0);
-      DoMethod(data->BT_Save    , MUIM_Notify, MUIA_Pressed            , FALSE           , obj, 2, MUIM_MainWindow_Finish, 1);
+      DoMethod(obj            , MUIM_Notify, MUIA_Window_CloseRequest, TRUE   , obj, 2, MUIM_MainWindow_Finish, 0);
+      DoMethod(data->BT_Cancel, MUIM_Notify, MUIA_Pressed            , FALSE  , obj, 2, MUIM_MainWindow_Finish, 0);
+      DoMethod(data->BT_Save  , MUIM_Notify, MUIA_Pressed            , FALSE  , obj, 2, MUIM_MainWindow_Finish, 1);
 
-      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ICONIFY)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
-         MUIV_Notify_Application, 3, MUIM_Set, MUIA_Application_Iconified, TRUE);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT)       , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
          obj, 1, MUIM_MainWindow_About);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT_MUI)   , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+         MUIV_Notify_Application, 2, MUIM_Application_AboutMUI, obj);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ICONIFY)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+         MUIV_Notify_Application, 3, MUIM_Set, MUIA_Application_Iconified, TRUE);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_QUIT)        , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
          MUIV_Notify_Application, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
+
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_LOAD)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+         obj, 1, MUIM_MainWindow_MenuLoad);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_IMPORT)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+         obj, 1, MUIM_MainWindow_MenuImport);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_SAVE)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+         obj, 2, MUIM_MainWindow_SaveConfig, config_file);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_SAVEAS)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
+         obj, 1, MUIM_MainWindow_MenuSaveAs);
+
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_MUI)         , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime,
          MUIV_Notify_Application, 2, MUIM_Application_OpenConfigWindow, 0);
    }
@@ -1480,20 +1800,21 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 /// MainWindow_Dispatcher
 SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   if(msg->MethodID == OM_NEW)
-      return(MainWindow_New           (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_InitGroups)
-      return(MainWindow_InitGroups    (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_Finish)
-      return(MainWindow_Finish        (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_LoadConfig)
-      return(MainWindow_LoadConfig    (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_SaveConfig)
-      return(MainWindow_SaveConfig    (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_About)
-      return(MainWindow_About         (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_MainWindow_AboutFinish)
-      return(MainWindow_AboutFinish   (cl, obj, (APTR)msg));
+   switch((ULONG)msg->MethodID)
+   {
+      case OM_NEW                       : return(MainWindow_New           (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_InitGroups   : return(MainWindow_InitGroups    (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_Finish       : return(MainWindow_Finish        (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_ClearConfig  : return(MainWindow_ClearConfig   (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_LoadConfig   : return(MainWindow_LoadConfig    (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_LoadDatabases: return(MainWindow_LoadDatabases (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_SaveConfig   : return(MainWindow_SaveConfig    (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_About        : return(MainWindow_About         (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_AboutFinish  : return(MainWindow_AboutFinish   (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_MenuLoad     : return(MainWindow_MenuLoad      (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_MenuImport   : return(MainWindow_MenuImport    (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_MenuSaveAs   : return(MainWindow_MenuSaveAs    (cl, obj, (APTR)msg));
+   }
 
    return(DoSuperMethodA(cl, obj, msg));
 }

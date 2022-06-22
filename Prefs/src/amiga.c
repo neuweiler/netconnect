@@ -3,24 +3,20 @@
 #pragma header
 
 #include "/Genesis.h"
-#include "rev.h"
+#include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/genesis_lib.h"
 #include "Strings.h"
 #include "mui.h"
-#include "mui_DataBase.h"
-#include "mui_Dialer.h"
-#include "mui_MainWindow.h"
-#include "mui_Modem.h"
-#include "mui_PasswdReq.h"
-#include "mui_Provider.h"
-#include "mui_User.h"
 #include "protos.h"
 
 ///
 /// external variables
 extern Object *app;
 extern Object *win;
+extern struct Library *GenesisLibrary;
 extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct MUI_CustomClass  *CL_User;
+extern struct MUI_CustomClass  *CL_ProviderWindow;
 extern struct MUI_CustomClass  *CL_Provider;
 extern struct MUI_CustomClass  *CL_Dialer;
 extern struct MUI_CustomClass  *CL_Users;
@@ -189,159 +185,6 @@ Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only)
 }
 
 ///
-/// get_file_size
-LONG get_file_size(STRPTR file)
-{
-   struct FileInfoBlock *fib;
-   BPTR lock;
-   LONG size = -1;
-
-   if(lock = Lock(file, ACCESS_READ))
-   {
-      if(fib = AllocDosObject(DOS_FIB, NULL))
-      {
-         if(Examine(lock, fib))
-            size = (fib->fib_DirEntryType > 0 ? -2 : fib->fib_Size);
-
-         FreeDosObject(DOS_FIB, fib);
-      }
-      UnLock(lock);
-   }
-   return(size);
-}
-
-///
-/// ParseConfig
-BOOL ParseConfig(STRPTR file, struct pc_Data *pc_data)
-{
-   LONG size;
-   STRPTR buf = NULL;
-   BPTR fh;
-   BOOL success = FALSE;
-
-   if((size = get_file_size(file)) > -1)
-   {
-      if(buf = AllocVec(size, MEMF_ANY))
-      {
-         if(fh = Open(file, MODE_OLDFILE))
-         {
-            if(Read(fh, buf, size) == size)
-            {
-               success = TRUE;
-
-               pc_data->Buffer   = buf;
-               pc_data->Size     = size;
-               pc_data->Current  = buf;
-
-               pc_data->Argument = NULL;
-               pc_data->Contents = NULL;
-            }
-
-            Close(fh);
-         }
-      }
-   }
-
-   return(success);
-}
-
-///
-/// ParseNext
-BOOL ParseNext(struct pc_Data *pc_data)
-{
-   BOOL success = FALSE;
-   STRPTR ptr_eol, ptr_tmp;
-
-   if(pc_data->Current && pc_data->Current < pc_data->Buffer + pc_data->Size)
-   {
-      if(ptr_eol = strchr(pc_data->Current, '\n'))
-      {
-         *ptr_eol = NULL;
-
-         if(pc_data->Contents = strchr(pc_data->Current, 34))              /* is the content between ""'s ? */
-         {
-            pc_data->Contents++;
-            if(ptr_tmp = strchr(pc_data->Contents, 34))  /* find the ending '"' */
-               *ptr_tmp = NULL;
-
-            ptr_tmp = pc_data->Contents - 2;
-            while(((*ptr_tmp == ' ') || (*ptr_tmp == 9)) && ptr_tmp >= pc_data->Current)
-               ptr_tmp--;
-
-            ptr_tmp++;
-            *ptr_tmp = NULL;
-         }
-         else
-         {
-            pc_data->Contents = strchr(pc_data->Current, ' ');                   /* a space  */
-            ptr_tmp           = strchr(pc_data->Current, 9);                     /* or a TAB */
-
-            if((ptr_tmp < pc_data->Contents && ptr_tmp) || !pc_data->Contents)   /* which one comes first ? */
-               pc_data->Contents = ptr_tmp;
-            if(pc_data->Contents)
-            {
-               *pc_data->Contents++ = NULL;
-               while((*pc_data->Contents == ' ') || (*pc_data->Contents == 9))
-                  pc_data->Contents++;
-
-               if(ptr_tmp = strchr(pc_data->Contents, ';')) /* cut out the comment */
-                  *ptr_tmp = NULL;
-            }
-            else
-               pc_data->Contents = "";
-         }
-
-         pc_data->Argument = pc_data->Current;
-         pc_data->Current  = ptr_eol + 1;
-         success = TRUE;
-      }
-      else
-         pc_data->Current = NULL;
-   }
-   return(success);
-}
-
-///
-/// ParseNextLine
-BOOL ParseNextLine(struct pc_Data *pc_data)
-{
-   BOOL success = FALSE;
-   STRPTR ptr_eol;
-
-   if(pc_data->Current && pc_data->Current < pc_data->Buffer + pc_data->Size)
-   {
-      if(ptr_eol = strchr(pc_data->Current, '\n'))
-      {
-         *ptr_eol = NULL;
-
-         pc_data->Argument = "";
-         pc_data->Contents = pc_data->Current;
-         pc_data->Current  = ptr_eol + 1;
-         success = TRUE;
-      }
-      else
-         pc_data->Current = NULL;
-   }
-
-   return(success);
-}
-
-///
-/// ParseEnd
-VOID ParseEnd(struct pc_Data *pc_data)
-{
-   if(pc_data->Buffer)
-      FreeVec(pc_data->Buffer);
-
-   pc_data->Buffer   = NULL;
-   pc_data->Size     = NULL;
-   pc_data->Current  = NULL;
-
-   pc_data->Argument = NULL;
-   pc_data->Contents = NULL;
-}
-
-///
 /// extract_arg
 STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep)
 {
@@ -381,7 +224,7 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
    struct FileRequester *req;
    struct Window *w;
    static LONG left=-1,top=-1,width=-1,height=-1;
-   char *res = NULL;
+   char *res = NULL, *ptr = NULL;
    static const struct Hook IntuiMsgHook = { { 0,0 }, (VOID *)IntuiMsgFunc, NULL, NULL };
 
    get(win, MUIA_Window_Window, &w);
@@ -393,6 +236,10 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
       height   = w->Height-w->BorderTop-w->BorderBottom - 4;
    }
 
+   strcpy(buf, file);
+   if(ptr = PathPart(buf))
+      *ptr++ = NULL;
+
    if(req = MUI_AllocAslRequestTags(ASL_FileRequest,
       ASLFR_Window         , w,
       ASLFR_TitleText      , title,
@@ -400,8 +247,8 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
       ASLFR_InitialTopEdge , top,
       ASLFR_InitialWidth   , width,
       ASLFR_InitialHeight  , height,
-//    ASLFR_InitialDrawer  , (drawer ? drawer : (STRPTR)"PROGDIR:"),
-      ASLFR_InitialFile    , (file ? file : (STRPTR)""),
+      ASLFR_InitialDrawer  , buf,
+      ASLFR_InitialFile    , (ptr ? ptr : file),
       ASLFR_DoSaveMode     , save,
       ASLFR_RejectIcons    , TRUE,
       ASLFR_UserData       , app,
@@ -430,53 +277,94 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
 }
 
 ///
-/// get_configcontents
-STRPTR get_configcontents(BOOL ppp)
+/// realloc_copy
+STRPTR realloc_copy(STRPTR *old, STRPTR src)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-   struct Modem_Data *modem_data = INST_DATA(CL_Modem->mcc_Class, data->GR_Modem);
-   struct Provider_Data *provider_data = INST_DATA(CL_Provider->mcc_Class, data->GR_Provider);
-   struct User_Data *user_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
-   static char buffer[1024];
+   if(*old)
+      FreeVec(*old);
+   *old = NULL;
 
-   if(ppp)
+   if(src && *src)
    {
-      sprintf(buffer, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %ls\n%lsuser %ls\nsecret %ls\n",
-         xget(modem_data->STR_SerialDriver, MUIA_String_Contents),
-         xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
-         xget(modem_data->STR_BaudRate, MUIA_String_Integer),
-         xget(provider_data->STR_IP_Address, MUIA_String_Contents),
-         (xget(modem_data->CH_Carrier, MUIA_Selected) ? "cd yes\n" : ""),
-//  (xget(modem_data->CH_7Wire, MUIA_Selected) ? "7Wire " : ""),
-         xget(user_data->STR_LoginName, MUIA_String_Contents),
-         xget(user_data->STR_Password, MUIA_String_Contents));
-//  xget(provider_data->STR_MTU, MUIA_String_Integer));
-
-/*      sprintf(buffer, "%ls %ld %ld Shared %ls %ls%ls ALLOWPAP=YES ALLOWCHAPMS=YES ALLOWCHAPMD5=YES USERID=%ls PASSWORD=%ls MTU=%ld",
-         xget(modem_data->STR_SerialDriver, MUIA_String_Contents),
-         xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
-         xget(modem_data->STR_BaudRate, MUIA_String_Integer),
-         xget(provider_data->STR_IP_Address, MUIA_String_Contents),
-         (xget(modem_data->CH_Carrier, MUIA_Selected) ? "CD " : ""),
-         (xget(modem_data->CH_7Wire, MUIA_Selected) ? "7Wire " : ""),
-         xget(user_data->STR_LoginName, MUIA_String_Contents),
-         xget(user_data->STR_Password, MUIA_String_Contents),
-         xget(provider_data->STR_MTU, MUIA_String_Integer));
-*/
-   }
-   else
-   {
-      sprintf(buffer, "%ls %ld %ld Shared %ls %ls%ls MTU=%ld",
-         xget(modem_data->STR_SerialDriver, MUIA_String_Contents),
-         xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
-         xget(modem_data->STR_BaudRate, MUIA_String_Integer),
-         xget(provider_data->STR_IP_Address, MUIA_String_Contents),
-         (xget(modem_data->CH_Carrier, MUIA_Selected) ? "CD " : ""),
-         (xget(modem_data->CH_7Wire, MUIA_Selected) ? "7Wire " : ""),
-         xget(provider_data->STR_MTU, MUIA_String_Integer));
+      if(*old = AllocVec(strlen(src) + 1, MEMF_ANY))
+         strcpy(*old, src);
    }
 
-   return(buffer);
+   return(*old);
+}
+
+///
+
+#define ENCODE(c) (c ? (c & 0x3F) + 0x20 : 0x60)
+#define DECODE(c) ((c - 0x20) & 0x3F)
+
+/// encrypt
+VOID encrypt(STRPTR in, STRPTR out)
+{
+   LONG n, i;
+   UBYTE c;
+   STRPTR s, t;
+
+   n = strlen(in);
+   if (n > 0)
+   {
+      s = out;
+      *s++ = ENCODE(n);
+
+      for (i = 0; i < n; i += 3)
+      {
+         t = &in[i];
+
+         c = t[0] >> 2;
+         *s++ = ENCODE(c);
+         c = (t[0] << 4) & 0x30 | (t[1] >> 4) & 0x0F;
+         *s++ = ENCODE(c);
+         c = (t[1] << 2) & 0x3C | (t[2] >> 6) & 0x03;
+         *s++ = ENCODE(c);
+         c = t[2] & 0x3F;
+         *s++ = ENCODE(c);
+      }
+      *s = NULL;
+   }
+}
+
+///
+/// decrypt
+VOID decrypt(STRPTR in, STRPTR out)
+{
+   STRPTR s, t;
+   LONG l, c;
+
+   s = in;
+   t = out;
+   c = *s++;
+   l = DECODE(c);
+   if (c != '\n' && l > 0)
+   {
+      while (l >= 4)
+      {
+         c = DECODE(s[0]) << 2 | DECODE(s[1]) >> 4;
+         *t++ = c;
+         c = DECODE(s[1]) << 4 | DECODE(s[2]) >> 2;
+         *t++ = c;
+         c = DECODE(s[2]) << 6 | DECODE(s[3]);
+         *t++ = c;
+
+         s += 4;
+         l -= 3;
+      }
+      c = DECODE(s[0]) << 2 | DECODE(s[1]) >> 4;
+      if (l >= 1)
+         *t++ = c;
+      c = DECODE(s[1]) << 4 | DECODE(s[2]) >> 2;
+      if (l >= 2)
+         *t++ = c;
+      c = DECODE(s[2]) << 6 | DECODE(s[3]);
+      if (l >= 3)
+         *t++ = c;
+      s += 4;
+   }
+   *t = NULL;
 }
 
 ///

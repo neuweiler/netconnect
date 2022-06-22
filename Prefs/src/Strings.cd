@@ -487,10 +487,10 @@ Device Settings
 MSG_LA_ModemType (//)
 Type:
 ;
-MSG_LA_ModemInit (//)
+MSG_LA_InitString (//)
 Init String:
 ;
-MSG_CC_ModemInit (/1/1)
+MSG_CC_InitString (/1/1)
 i
 ;
 MSG_LA_DialPrefix (//)
@@ -552,7 +552,7 @@ o
 MSG_Help_Modem (//)
 Select your modem.\nIf your modem is not listed, then just\ninsert the correct initialisation string\n(as found in your modem handbook)\nin the \"Modem Init\" box below.
 ;
-MSG_Help_ModemInit (//)
+MSG_Help_InitString (//)
 Enter the initialisation\nstring of your modem.
 ;
 MSG_Help_DialPrefix (//)
@@ -564,7 +564,7 @@ How many times should the dialer\ntry to establish a connection ?
 MSG_Help_RedialDelay (//)
 Time in seconds until\nthe next dial attempt.
 ;
-MSG_Help_SerialDriver (//)
+MSG_Help_SerialDevice (//)
 Enter the name of\nyour serial driver.\n(case sensitive !)
 ;
 MSG_Help_SerialUnit (//)

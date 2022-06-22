@@ -1,5 +1,5 @@
-#define MUIM_Modem_PopString_Close              (TAGBASE_PREFS | 0x1020)
-#define MUIM_Modem_UpdateProtocolList           (TAGBASE_PREFS | 0x1021)
+#define MUIM_Modem_PopString_Close              (TAGBASE_PREFS | 0x1060)
+#define MUIM_Modem_UpdateProtocolList           (TAGBASE_PREFS | 0x1061)
 
 #define MUIV_Modem_PopString_Modem        1
 #define MUIV_Modem_PopString_Protocol     2
@@ -11,19 +11,22 @@ struct Modem_Data
    Object *GR_Modem;
    Object *PO_Modem;
    Object *LV_Modems;
+   Object *LI_Modems;
    Object *STR_Modem;
-   Object *PO_ModemInit;
+   Object *PO_InitString;
    Object *LV_Protocols;
-   Object *STR_ModemInit;
+   Object *LI_Protocols;
+   Object *STR_InitString;
    Object *PO_DialPrefix;
    Object *STR_DialPrefix;
    Object *LV_DialPrefix;
    Object *STR_DialSuffix;
 
    Object *GR_Serial;
-   Object *PO_SerialDriver;
-   Object *STR_SerialDriver;
+   Object *PO_SerialDevice;
+   Object *STR_SerialDevice;
    Object *LV_Devices;
+   Object *LI_Devices;
    Object *STR_SerialUnit;
    Object *PO_BaudRate;
    Object *STR_BaudRate;
@@ -31,7 +34,11 @@ struct Modem_Data
    Object *STR_SerBufLen;
    Object *SL_RedialAttempts;
    Object *SL_RedialDelay;
-   Object *CH_Carrier;
+
+   Object *CH_IgnoreDSR;
    Object *CH_7Wire;
+   Object *CH_RadBoogie;
+   Object *CH_XonXoff;
+   Object *CH_OwnDevUnit;
 };
 

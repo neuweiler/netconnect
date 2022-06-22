@@ -14,14 +14,11 @@ Object *MakeKeyCycle(STRPTR *array, STRPTR control_char);
 Object *MakeKeySlider(LONG min, LONG max, LONG level, STRPTR control_char);
 Object *MakeKeyCheckMark(BOOL state, STRPTR control_char);
 Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only);
-LONG get_file_size(STRPTR file);
-BOOL ParseConfig(STRPTR file, struct pc_Data *pc_data);
-BOOL ParseNext(struct pc_Data *pc_data);
-BOOL ParseNextLine(struct pc_Data *pc_data);
-VOID ParseEnd(struct pc_Data *pc_data);
 STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep);
 char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save);
-STRPTR get_configcontents(BOOL ppp);
+STRPTR realloc_copy(STRPTR *old, STRPTR src);
+VOID encrypt(STRPTR in, STRPTR out);
+VOID decrypt(STRPTR in, STRPTR out);
 
 ///
 /// mui?.c
@@ -29,11 +26,14 @@ SAVEDS ULONG PasswdReq_Dispatcher(register __a0 struct IClass *cl, register __a2
 SAVEDS ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ULONG Provider_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ULONG ProviderWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ULONG User_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ULONG Dialer_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ULONG Paths_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ULONG Databases_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ULONG Modem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ULONG IfaceWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ULONG UserWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 
 ///
 

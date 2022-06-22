@@ -25,7 +25,10 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
    struct About_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title, VERS,
+      MUIA_Window_Title, "GenesisPrefs "VERSIONSTRING,
+      MUIA_Window_RefWindow   , win,
+      MUIA_Window_LeftEdge    , MUIV_Window_LeftEdge_Centered,
+      MUIA_Window_TopEdge     , MUIV_Window_TopEdge_Centered,
       MUIA_Window_Height, MUIV_Window_Height_MinMax(30),
       WindowContents, VGroup,
          MUIA_Background, MUII_RequesterBack,
@@ -54,7 +57,7 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
             MUIA_Scrollgroup_Contents, VirtgroupObject,
                ReadListFrame,
                Child, TextObject,
-                  MUIA_Text_Contents, "\33c\33b\n"VERS"\n",
+                  MUIA_Text_Contents, "\33c\33b\nGenesisPrefs\033n "VERTAG"\n",
                End,
                Child, MUI_MakeObject(MUIO_HBar, 2),
 #ifdef DEMO

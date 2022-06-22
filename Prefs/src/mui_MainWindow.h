@@ -1,9 +1,14 @@
-#define MUIM_MainWindow_Finish                  (TAGBASE_PREFS | 0x1000)
-#define MUIM_MainWindow_InitGroups              (TAGBASE_PREFS | 0x1001)
-#define MUIM_MainWindow_LoadConfig              (TAGBASE_PREFS | 0x1002)
-#define MUIM_MainWindow_SaveConfig              (TAGBASE_PREFS | 0x1003)
-#define MUIM_MainWindow_About                   (TAGBASE_PREFS | 0x1004)
-#define MUIM_MainWindow_AboutFinish             (TAGBASE_PREFS | 0x1005)
+#define MUIM_MainWindow_Finish                  (TAGBASE_PREFS | 0x1010)
+#define MUIM_MainWindow_InitGroups              (TAGBASE_PREFS | 0x1011)
+#define MUIM_MainWindow_LoadConfig              (TAGBASE_PREFS | 0x1012)
+#define MUIM_MainWindow_SaveConfig              (TAGBASE_PREFS | 0x1013)
+#define MUIM_MainWindow_About                   (TAGBASE_PREFS | 0x1014)
+#define MUIM_MainWindow_AboutFinish             (TAGBASE_PREFS | 0x1015)
+#define MUIM_MainWindow_MenuLoad                (TAGBASE_PREFS | 0x1016)
+#define MUIM_MainWindow_MenuImport              (TAGBASE_PREFS | 0x1017)
+#define MUIM_MainWindow_MenuSaveAs              (TAGBASE_PREFS | 0x1018)
+#define MUIM_MainWindow_ClearConfig             (TAGBASE_PREFS | 0x1019)
+#define MUIM_MainWindow_LoadDatabases           (TAGBASE_PREFS | 0x101a)
 
 struct MUIP_MainWindow_Finish          { ULONG MethodID; LONG level; };
 struct MUIP_MainWindow_AboutFinish     { ULONG MethodID; Object *window; };
@@ -14,6 +19,8 @@ struct MainWindow_Data
 {
    Object *MN_Strip;
 
+   Object *LV_Pager;
+   Object *LI_Pager;
    Object *GR_Pager;
 
    Object *BT_Save;

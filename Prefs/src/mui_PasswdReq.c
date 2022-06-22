@@ -3,7 +3,6 @@
 #pragma header
 
 #include "/Genesis.h"
-#include "rev.h"
 #include "Strings.h"
 #include "mui.h"
 #include "mui_PasswdReq.h"
@@ -46,7 +45,7 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, HGroup,
-            Child, tmp.BT_Okay = MakeButton("  _Okay"),
+            Child, tmp.BT_Okay   = MakeButton("  _Okay"),
             Child, tmp.BT_Cancel = MakeButton("  _Cancel"),
          End,
       End,

@@ -1,14 +1,16 @@
-#define MUIM_User_InsertFile                    (TAGBASE_PREFS | 0x1040)
+#define MUIM_User_SetStates               (TAGBASE_PREFS | 0x1030)
+#define MUIM_User_NewUser                 (TAGBASE_PREFS | 0x1031)
+#define MUIM_User_Edit                    (TAGBASE_PREFS | 0x1032)
+#define MUIM_User_EditFinish              (TAGBASE_PREFS | 0x1033)
 
-struct MUIP_User_InsertFile            { ULONG MethodID; LONG stopnet; };
+struct MUIP_User_EditFinish   { ULONG MethodID; Object *win; LONG ok; };
 
 struct User_Data
 {
-   Object *GR_User;
-   Object *STR_LoginName;
-   Object *STR_RealName;
-   Object *STR_Password;
-   Object *STR_EMail;
-   Object *STR_Organisation;
+   Object *LV_User;
+   Object *LI_User;
+   Object *BT_New;
+   Object *BT_Delete;
+   Object *BT_Edit;
 };
 
