@@ -17,7 +17,6 @@ struct   Library              *TimerBase     = NULL;
 struct   Library              *SocketBase    = NULL;
 struct   Library              *LockSocketBase= NULL;
 struct   Library              *OwnDevUnitBase= NULL;
-struct   GenesisBase          *GenesisBase   = NULL;
 #ifdef DEMO
 struct   Library              *BattClockBase = NULL;
 #endif
@@ -45,8 +44,6 @@ const char AmiTCP_PortName[] = "AMITCP";
 char config_file[MAXPATHLEN];
 char connectspeed[41];
 
-int dialing_try = 0;
-int dial_number = 0;
 BOOL dialup = 0, SerialLocked = FALSE;
 
 int h_errno;
@@ -64,6 +61,7 @@ struct NewMenu MainMenu[] =
    { NM_ITEM   , MSG_MENU_QUIT      , "  Q" , 0, 0, (APTR)MEN_QUIT        },
 
    { NM_TITLE  , MSG_MENU_SETTINGS  , 0                  , 0, 0, (APTR)0               },
+   { NM_ITEM   , MSG_MENU_GENESIS   , "  G"  , 0, 0, (APTR)MEN_GENESIS         },
    { NM_ITEM   , MSG_MENU_MUI       , "  M"  , 0, 0, (APTR)MEN_MUI         },
 
    { NM_END    , NULL               , 0                  , 0, 0, (APTR)0               },

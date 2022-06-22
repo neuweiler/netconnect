@@ -1,0 +1,42 @@
+History for GenesisWizard
+=========================
+
+2.0.2 (19.4.98)
+---------------
+
+* pages are now built at startup and no longer dynamically.
+  this improoves speed and eliminates problems when switching
+  pages but eats much more memory.
+* removed modem-detect since it caused more trouble than it
+  helped (e.g. isdn) and only 7 modem types were supported.
+* added page #2 to choose between modem/direct connection.
+
+
+2.0.3 (27.4.98)
+---------------
+
+* readded all those fancy wiz-pics again.. minor growth of
+  filesize :)
+* removed "isp info" pages. if the ip, gateway / destination
+  or DNS addresses are unknown before iface is put online
+  then requesters will appear (in the future).
+* added a page to enter sanaII configuration details (config
+  file and interface parameters).
+
+2.1.0 (30.4.98)
+---------------
+
+* ready for beta testing again.. (especially sanaII section)
+* now requesters will popup when one of those is missing:
+  ip addr, gateway addr, dns addr, hostname, domainname
+* env:apppdns1 was not deleted (misspelled filename in DeleteFile())
+  and thus they were probably reused after switching the provider config.
+
+2.1.1 (4.5.98)
+--------------
+
+* If gateway or dns were given manually, they will be shown properly now
+  in the display-config-window.
+* temporarely added debug information.. to locate the point where ominous
+  crashes occur (no enforcer hits, only one big bang).
+

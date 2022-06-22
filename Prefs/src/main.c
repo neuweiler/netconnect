@@ -105,17 +105,17 @@ VOID exit_classes(VOID)
 /// init_classes
 BOOL init_classes(VOID)
 {
-   CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct MainWindow_Data)    , MainWindow_Dispatcher);
-   CL_ProviderWindow = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct ProviderWindow_Data), ProviderWindow_Dispatcher);
-   CL_UserWindow     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct UserWindow_Data)    , UserWindow_Dispatcher);
-   CL_Provider       = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Provider_Data)      , Provider_Dispatcher);
-   CL_User           = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct User_Data)          , User_Dispatcher);
-   CL_Dialer         = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Dialer_Data)        , Dialer_Dispatcher);
-   CL_Databases      = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Databases_Data)     , Databases_Dispatcher);
-   CL_Modem          = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Modem_Data)         , Modem_Dispatcher);
-   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)         , About_Dispatcher);
-   CL_PasswdReq      = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct PasswdReq_Data)     , PasswdReq_Dispatcher);
-   CL_IfaceWindow    = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct IfaceWindow_Data)   , IfaceWindow_Dispatcher);
+   CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct MainWindow_Data)    , MainWindow_Dispatcher);
+   CL_ProviderWindow = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct ProviderWindow_Data), ProviderWindow_Dispatcher);
+   CL_UserWindow     = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct UserWindow_Data)    , UserWindow_Dispatcher);
+   CL_Provider       = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct Provider_Data)      , Provider_Dispatcher);
+   CL_User           = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct User_Data)          , User_Dispatcher);
+   CL_Dialer         = MUI_CreateCustomClass(NULL, MUIC_Register  , NULL, sizeof(struct Dialer_Data)        , Dialer_Dispatcher);
+   CL_Databases      = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct Databases_Data)     , Databases_Dispatcher);
+   CL_Modem          = MUI_CreateCustomClass(NULL, MUIC_Register  , NULL, sizeof(struct Modem_Data)         , Modem_Dispatcher);
+   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct About_Data)         , About_Dispatcher);
+   CL_PasswdReq      = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct PasswdReq_Data)     , PasswdReq_Dispatcher);
+   CL_IfaceWindow    = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct IfaceWindow_Data)   , IfaceWindow_Dispatcher);
 
    if(CL_MainWindow     && CL_ProviderWindow && CL_Provider    &&
       CL_Dialer         && CL_About          && CL_PasswdReq   &&
@@ -161,7 +161,7 @@ BOOL check_date(VOID)
 
    if(BattClockBase = OpenResource("battclock.resource"))
    {
-      if(ReadBattClock() < 641235278)
+      if(ReadBattClock() < 644407784)
          return(TRUE);
    }
    return(FALSE);
@@ -174,6 +174,7 @@ BOOL check_date(VOID)
 VOID Handler(VOID)
 {
    ULONG sigs = NULL;
+   BPTR fh;
 
    if(init_libs())
    {
@@ -197,6 +198,11 @@ VOID Handler(VOID)
 
                set(data->GR_Pager, MUIA_Grouppager_Active, 0);
                set(win, MUIA_Window_Open, TRUE);
+
+               if(fh = CreateDir("AmiTCP:home"))
+                  UnLock(fh);
+               if(fh = CreateDir("AmiTCP:db"))
+                  UnLock(fh);
 
                strcpy(config_file, DEFAULT_CONFIGFILE);
                DoMethod(win, MUIM_MainWindow_LoadConfig, config_file);

@@ -135,7 +135,8 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
 {
    struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
    struct ScriptLine *script_line;
-   char buf[256];
+   char buf[256], number_buf[101];
+   STRPTR number_ptr, ptr;
    BOOL success = FALSE, ok;
    int dial_tries;
 
@@ -163,28 +164,46 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
          dial_tries = 1;
          do
          {
-            sprintf(buf, "Dialing '%ls'\n(attempt %ld/%ld)", isp->isp_phonenumber, dial_tries, conf->cnf_redialattempts);
-            if(data->abort)   return(FALSE);
-            DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buf, NULL);
-            if(data->abort)   return(FALSE);
+            strncpy(number_buf, isp->isp_phonenumber, 100);
+            number_ptr = number_buf;
+            FOREVER
+            {
+               if(ptr = strchr(number_ptr, '|'))
+                  *ptr = NULL;
 
-            serial_send("AAT\r", -1);
-            serial_waitfor("OK", 1);
-            if(data->abort)
-               return(FALSE);
+               sprintf(buf, "Dialing '%ls'\n(attempt %ld/%ld)", number_ptr, dial_tries, conf->cnf_redialattempts);
+               if(data->abort)   return(FALSE);
+               DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buf, NULL);
+               if(data->abort)   return(FALSE);
 
-            EscapeString(buf, conf->cnf_initstring);
-            strncat(buf, "\r", sizeof(buf) - strlen(buf));
-            serial_send(buf, -1);
-            serial_waitfor("OK", 2);
-            if(data->abort)
-               return(FALSE);
+               serial_send("AAT\r", -1);
+               serial_waitfor("OK", 1);
+               if(data->abort)
+                  return(FALSE);
 
-            sprintf(buf, "%ls%ls%ls\r", conf->cnf_dialprefix, isp->isp_phonenumber, conf->cnf_dialsuffix);
-            serial_send(buf, -1);
-            ok = serial_waitfor("CONNECT", 90);
-            if(data->abort)
-               return(FALSE);
+               EscapeString(buf, conf->cnf_initstring);
+               strncat(buf, "\r", sizeof(buf) - strlen(buf));
+               serial_send(buf, -1);
+               serial_waitfor("OK", 2);
+               if(data->abort)
+                  return(FALSE);
+
+               sprintf(buf, "%ls%ls%ls\r", conf->cnf_dialprefix, number_ptr, conf->cnf_dialsuffix);
+               serial_send(buf, -1);
+               ok = serial_waitfor("CONNECT", 90);
+               if(data->abort)
+                  return(FALSE);
+
+               if(ptr)
+               {
+                  number_ptr = ptr + 1;
+                  Delay(100);
+                  if(data->abort)
+                     return(FALSE);
+               }
+               else
+                  break;
+            }
 
             if(!ok && dial_tries < conf->cnf_redialattempts)
             {
@@ -192,7 +211,11 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
 
                while(dly-- > 0)
                {
-                  Delay(49);
+                  sprintf(buf, "...%ld sec", dly + 1);
+                  if(data->abort)   return(FALSE);
+                  DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buf, NULL);
+                  if(data->abort)   return(FALSE);
+                  Delay(48);
                   if(data->abort)
                      return(FALSE);
                }
@@ -381,7 +404,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
          }
          if(data->abort)   goto fail;
 
-         if(!iface_online(iface_data, iface))
+         if(!iface_online(iface_data))
             goto fail;
 
          if(data->abort)   goto fail;
@@ -400,7 +423,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
 
    if(data->abort)   goto fail;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Configuring the interface", NULL);
-   if(data->abort)   return(FALSE);
+   if(data->abort)   goto fail;
 
    // get the interface address
    if(iface_getaddr(iface_data, &iface_data->ifd_addr))
@@ -572,7 +595,7 @@ VOID iface_cleanup_bootp(struct Interface_Data *iface_data, struct Config *conf)
 
 ///
 /// iface_online
-BOOL iface_online(struct Interface_Data *iface_data, struct Interface *iface)
+BOOL iface_online(struct Interface_Data *iface_data)
 {
    if(sana2_online(iface_data->ifd_s2) == FALSE)
       return(FALSE);

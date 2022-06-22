@@ -1,0 +1,248 @@
+@database wizard.guide
+@$VER:
+
+@NODE "Main" "Contents Page"
+
+
+@{b}Internet Setup Wizard Guide@{ub}
+
+@{" Page 1 - Welcome to the Setup Wizard " link "welcome" 0}
+@{" Page 2 - Modem Information " link "modem" 0}
+@{" Page 3 - Modem Setup " link "modem1" 0}
+@{" Page 4 - User Information " link "user" 0}
+@{" Page 5 - Provider Information " link "provider" 0}
+@{" Page 6 - Dialling your Provider " link "dial" 0}
+@{" Page 7 - Configuration Complete " link "complete" 0}
+
+@ENDNODE
+
+@NODE "welcome"
+
+Welcome
+=======
+
+Welcome to the Setup Wizard for Genesis. This Wizard will guide you, 
+step by step, through the configuration needed for your Internet 
+connection.
+
+You will be required to enter some very basic but essential information. 
+You will need to be aware of:
+
+- Your loginname to connect to your provider
+- The password needed to make that connection
+- Your provider's telephone number in order to call them to connect to 
+  the Internet
+
+This Wizard will take you through the necessary stages to achive your 
+connection including dialling your provider, recording the login script 
+and negotiating some network information.
+
+At the end of the configuration, the Wizard will present you with a 
+"configuration completed" window where you can choose to save the config 
+(necessary), print the config (option) and view the config (worth checking).
+
+Press 'next' to move to the next page and the Wizard will automatically 
+try to locate your modem, so make sure your modem is connected, switched 
+on and connected to the phone line!
+
+@ENDNODE
+
+@NODE "modem"
+
+Serial Device
+=============
+
+Once the Wizard has attempted to find your modem, it should tell you which 
+"device" the modem was connected to. Most modems will be connected to the 
+standard Amiga serial port which means that they use the "serial.device" 
+in order to control this port.
+
+If you are using a serial card, the Wizard will find another device. If 
+you are using the Surf Squirrel, for example, the Wizard should find the 
+"surfsquirrel.device" on unit 0.
+
+The type of modem should be selected as long as the Wizard directly supports 
+your modem. If it isn't supported, don't worry, you can always choose 
+"Generic" which should work on any Hayes compatible modem (ie. most modems!).
+
+Press the 'next' button to move to the next page.
+
+@ENDNODE
+
+@NODE "modem1"
+
+Modem Setup (3)
+===============
+
+Once your modem has been selected, the Wizard should insert the necessary 
+initialisation string into this box. It will look something like "AT&F1&D2".
+
+An initialisation string (or "init" string for short) resets the modem and 
+forces it to do certain things. ie. the command "L3" (AT&F1&L3&D2) would 
+force the volume control of the modem into high volume mode.
+
+Despite what some people may tell you, a standard init string doesn't 
+normally make the modem work any faster or slower. Using "Generic" 
+wouldn't mean that a 56K modem only works at 28.8K speeds, for example.
+
+Normally a good modem will come with a user handbook listing different 
+Hayes compatible commands. It is a good idea to have a read of this 
+(although it can be a little technical in jargon) to understand all the 
+commands available for your modem.
+
+You will need to enter the dial prefix. This is the string that is 
+used to initialise the modem in order to make the dial sequence. Most 
+modems use "ATDT" before the phone number as they are on a digital 
+network. Select ATDT if you are unsure.
+
+Now you can move the the next page.
+
+@ENDNODE
+
+@NODE "user"
+
+User Info (4)
+=============
+
+You should enter your real name in the box (you should know this!).
+
+You will be required to enter the login name that you agree with your 
+Internet Service Provider. A login name is the name you give to your 
+provider in order for them to recognise who you are when you dial their 
+phone number (to connect to the Internet).
+
+You need to enter your password. This password would have been chosen by 
+you, with your login name, in order to stop people dialling into the 
+Internet as you or will have been given to you from the provider as a 
+random set of digits. Demon Internet and BT Internet are two providers 
+who give you a random password for security reasons, other providers let 
+you choose your own.
+
+You need to enter your password twice to confirm you have entered a 
+correct password.
+
+Press 'next' to move to the next page.
+
+@ENDNODE
+
+@NODE "provider"
+
+ISP Info (5)
+============
+
+Firstly enter the telephone number that you can use to dial your provider. 
+You can add multiple numbers to this by clicking the pop-up button and 
+entering other numbers.
+
+If the first number is busy/engaged when you dial your provider, Genesis 
+will try the next alternative number if available. If you do not choose an 
+alternative number, Genesis will keep trying the main number until a 
+connection is made.
+
+Next you will have to choose whether your provider offers a dynamic or 
+static connection. Don't worry, this isn't that hard!
+
+Most (around 95%) of providers offer a dynamic connection. This means that 
+everytime you connect to the Internet you are "assigned" a unique number, 
+but this changes everyime you connect.
+
+A static IP address is offered by Demon Internet, Sonnet and a couple of 
+other UK (and perhaps American) providers. A static IP address means you 
+are given a set of numbers (which looks like "194.221.224.72") which you 
+must enter into your software. Everytime you connect to the Internet this 
+static IP address is used to represent your Internet connection.
+
+A static IP address offers advantages: you can set up your own web server 
+on your computer and tell people to log into your IP address (an IP address 
+is basically you, but in number form). As a static IP address never changes, 
+you will always be able to tell people to http://194.221.224.72 with their 
+web browser!
+
+As most providers do not give static IP addresses, you should leave this 
+set to dynamic.
+
+Now you must choose the protocol used to make the Internet connection. 
+Most, if not all, providers now use a "PPP" (Point to Point Protocol) 
+connection, so leave this set to PPP. Only the occassional, mostly 
+non-UK/USA based, provider uses the older "SLIP" connection.
+
+Does your provider require a login script? If your provider uses a login 
+script to allow you to connect to their service you will need to leave 
+this set to "yes, use a login script after dialling".
+
+A login script just asks you for your "login:", "password:" and may 
+ask you for certain other information such as "protocol:" (where you 
+would enter PPP).
+
+Some providers do not use a login script. They use a method called PAP 
+or CHAP in order to connect you to their service (your provider should 
+be able to tell you if they support PAP or CHAP). Essentially a PAP or 
+CHAP dial procedure involves this:
+
+1. You dial the provider
+
+2. You see "CONNECT <speed>"
+
+3. The software and your provider negotiate the connection "behind the 
+   scenes"
+
+If your provider does support PAP or CHAP then you should choose "no, 
+go online immediately (PAP/CHAP)".
+
+If you are stuck you could set the Wizard to "yes, use a login script 
+after dialling" and then if nothing happens after "CONNECT <speed>" 
+you could manually press the go online button yourself.
+
+@ENDNODE
+
+@NODE "dial"
+
+Dial (6)
+========
+
+Now you are about to dial your provider for the first time!
+
+Press the "dial" button and the dial procedure will start. Once you 
+are connected to your provider you should see "CONNECT 38400".
+
+If your provider use a login script to connect you to the Internet 
+you will be presented with something like:
+
+Login: <now press the "send login" button>
+Password: <now press the "send password" button>
+Protocol: <now type "PPP">
+HELLO
+
+Once "HELLO" is reached or the login script doesn't ask you for any 
+more information you may need to press the "go online" button.
+
+In the example login script above you should substitute "<now press 
+the "send login" button> for actually pressing this button. If you 
+do not press the "go online" button, and type in your login name 
+instead, Genesis may not dial your provider correctly when you use the 
+main program.
+
+If your provider uses PAP/CHAP the Wizard will go online automatically 
+after the "CONNECT 38400".
+
+@ENDNODE
+
+@NODE "complete"
+
+Config Complete (7)
+===================
+
+If you reach this window then the Internet Setup Wizard should have 
+successfully obtained all the necessary information to connect you to 
+your provider.
+
+You can now choose to save the configuration information (you need to 
+do this!), print the info (if you have a printer) for your future 
+reference and view the info (for reference purposes only).
+
+Once you press "finish" the Wizard will save the information you have 
+entered into the GUI and, along with the network information the Wizard 
+automatically obtains from your provider, will create a "config" file 
+ready to be used within the Genesis preferences program.
+
+@ENDNODE

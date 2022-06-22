@@ -53,7 +53,7 @@ void iface_close_sana2(struct Interface_Data *iface_data);
 BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf);
 void  iface_cleanup_bootp(struct Interface_Data *iface_data, struct Config *conf);
 
-BOOL iface_online(struct Interface_Data *iface_data, struct Interface *iface);
+BOOL iface_online(struct Interface_Data *iface_data);
 BOOL    iface_offline(struct Interface_Data * iface_data);
 
 BOOL    iface_runscript(struct Interface_Data * iface_data, struct Interface *iface, struct ISP *isp, struct Config *conf);

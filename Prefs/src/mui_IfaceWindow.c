@@ -19,6 +19,23 @@ extern Object *win;
 
 ///
 
+/// set_ip_addr
+VOID set_ip_addr(STRPTR src, Object *str_obj, Object *cy_obj, STRPTR def)
+{
+   if(src && *src && strcmp(src, (def ? def : "0.0.0.0")))
+   {
+      setstring(str_obj , src);
+      setcycle(cy_obj   , 1);
+   }
+   else
+   {
+      setstring(str_obj, NULL);
+      setcycle(cy_obj  , 0);
+   }
+}
+
+///
+
 /// IfaceWindow_CopyData
 ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
 {
@@ -32,18 +49,21 @@ ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
       strncpy(data->iface->if_name, (STRPTR)xget(data->STR_IfaceName, MUIA_String_Contents), sizeof(data->iface->if_name));
       strncpy(data->iface->if_addr, (STRPTR)xget(data->STR_Address, MUIA_String_Contents), sizeof(data->iface->if_addr));
       if(xget(data->CY_Address, MUIA_Cycle_Active))
-      {
          strncpy(data->iface->if_addr, (STRPTR)xget(data->STR_Address, MUIA_String_Contents), sizeof(data->iface->if_addr));
-         set(data->STR_Address, MUIA_Disabled, FALSE);
-      }
       else
-      {
          *data->iface->if_addr = NULL;
-         set(data->STR_Address, MUIA_Disabled, TRUE);
-      }
-      strncpy(data->iface->if_dst, (STRPTR)xget(data->STR_Dest, MUIA_String_Contents), sizeof(data->iface->if_dst));
-      strncpy(data->iface->if_gateway, (STRPTR)xget(data->STR_Gateway, MUIA_String_Contents), sizeof(data->iface->if_gateway));
-      strncpy(data->iface->if_netmask, (STRPTR)xget(data->STR_Netmask, MUIA_String_Contents), sizeof(data->iface->if_netmask));
+      if(xget(data->CY_Dest, MUIA_Cycle_Active))
+         strncpy(data->iface->if_dst, (STRPTR)xget(data->STR_Dest, MUIA_String_Contents), sizeof(data->iface->if_dst));
+      else
+         *data->iface->if_dst = NULL;
+      if(xget(data->CY_Gateway, MUIA_Cycle_Active))
+         strncpy(data->iface->if_gateway, (STRPTR)xget(data->STR_Gateway, MUIA_String_Contents), sizeof(data->iface->if_gateway));
+      else
+         *data->iface->if_gateway = NULL;
+      if(xget(data->CY_Netmask, MUIA_Cycle_Active))
+         strncpy(data->iface->if_netmask, (STRPTR)xget(data->STR_Netmask, MUIA_String_Contents), sizeof(data->iface->if_netmask));
+      else
+         *data->iface->if_netmask = NULL;
       realloc_copy((STRPTR *)&data->iface->if_configparams, (STRPTR)xget(data->STR_ConfigParams, MUIA_String_Contents));
       data->iface->if_MTU = xget(data->STR_MTU, MUIA_String_Integer);
 
@@ -93,8 +113,16 @@ ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
       if(ppp_if)
       {
          ppp_if->ppp_carrierdetect  = xget(data->CH_CarrierDetect     , MUIA_Selected);
-         ppp_if->ppp_connecttimeout = xget(data->STR_ConnectTimeout   , MUIA_String_Integer);
-         strcpy(ppp_if->ppp_callback, (STRPTR)xget(data->STR_Callback , MUIA_String_Contents));
+         if(xget(data->CH_Callback, MUIA_Selected))
+         {
+            ppp_if->ppp_connecttimeout = xget(data->SL_ConnectTimeout   , MUIA_Numeric_Value);
+            strcpy(ppp_if->ppp_callback, (STRPTR)xget(data->STR_Callback , MUIA_String_Contents));
+         }
+         else
+         {
+            ppp_if->ppp_connecttimeout = 0;
+            *ppp_if->ppp_callback = NULL;
+         }
          ppp_if->ppp_mppcomp        = xget(data->CH_MPPCompression    , MUIA_Selected);
          ppp_if->ppp_vjcomp         = xget(data->CH_VJCompression     , MUIA_Selected);
          ppp_if->ppp_bsdcomp        = xget(data->CH_BSDCompression    , MUIA_Selected);
@@ -116,22 +144,11 @@ ULONG IfaceWindow_Init(struct IClass *cl, Object *obj, struct MUIP_IfaceWindow_I
    {
       struct PrefsPPPIface *ppp_if = data->iface->if_userdata;
 
-      setstring(data->STR_IfaceName      , data->iface->if_name);
-      if(*data->iface->if_addr && strcmp(data->iface->if_addr, "0.0.0.0"))
-      {
-         setstring(data->STR_Address , data->iface->if_addr);
-         setcycle(data->CY_Address   , 1);
-         set(data->STR_Address       , MUIA_Disabled, FALSE);
-      }
-      else
-      {
-         setstring(data->STR_Address, NULL);
-         setcycle(data->CY_Address  , 0);
-         set(data->STR_Address      , MUIA_Disabled, TRUE);
-      }
-      setstring(data->STR_Dest          , data->iface->if_dst);
-      setstring(data->STR_Gateway       , data->iface->if_gateway);
-      setstring(data->STR_Netmask       , data->iface->if_netmask);
+      setstring(data->STR_IfaceName     , data->iface->if_name);
+      set_ip_addr(data->iface->if_addr    , data->STR_Address, data->CY_Address, NULL);
+      set_ip_addr(data->iface->if_dst     , data->STR_Dest   , data->CY_Dest   , NULL);
+      set_ip_addr(data->iface->if_gateway , data->STR_Gateway, data->CY_Gateway, NULL);
+      set_ip_addr(data->iface->if_netmask , data->STR_Netmask, data->CY_Netmask, "255.255.255.255");
       setstring(data->STR_ConfigParams  , data->iface->if_configparams);
       set(data->STR_MTU                 , MUIA_String_Integer, data->iface->if_MTU);
 
@@ -153,28 +170,18 @@ ULONG IfaceWindow_Init(struct IClass *cl, Object *obj, struct MUIP_IfaceWindow_I
       setcheckmark(data->CH_AlwaysOnline , data->iface->if_flags & IFL_AlwaysOnline);
 
       setcheckmark(data->CH_CarrierDetect     , ppp_if->ppp_carrierdetect);
-      set(data->STR_ConnectTimeout            , MUIA_String_Integer   , ppp_if->ppp_connecttimeout);
-      setstring(data->STR_Callback            , ppp_if->ppp_callback);
+      if(*ppp_if->ppp_callback)
+      {
+         setcheckmark(data->CH_Callback       , TRUE);
+         setstring(data->STR_Callback         , ppp_if->ppp_callback);
+         setslider(data->SL_ConnectTimeout    , ppp_if->ppp_connecttimeout);
+      }
       setcheckmark(data->CH_MPPCompression    , ppp_if->ppp_mppcomp);
       setcheckmark(data->CH_VJCompression     , ppp_if->ppp_vjcomp);
       setcheckmark(data->CH_BSDCompression    , ppp_if->ppp_bsdcomp);
       setcheckmark(data->CH_DeflateCompression, ppp_if->ppp_deflatecomp);
       setcycle(data->CY_EOF                   , ppp_if->ppp_eof);
    }
-   set(data->PA_Sana2Device         , MUIA_Disabled, !specify_sana2);
-   set(data->STR_Sana2Unit          , MUIA_Disabled, !specify_sana2);
-   set(data->PA_Sana2ConfigFile     , MUIA_Disabled, !specify_sana2);
-   set(data->TI_Sana2ConfigText     , MUIA_Disabled, !specify_sana2);
-
-   set(data->CH_CarrierDetect       , MUIA_Disabled, !((data->iface->if_flags & IFL_PPP) || (data->iface->if_flags & IFL_SLIP)));
-   set(data->CH_MPPCompression      , MUIA_Disabled, !(data->iface->if_flags & IFL_PPP));
-   set(data->CH_VJCompression       , MUIA_Disabled, !(data->iface->if_flags & IFL_PPP));
-   set(data->CH_BSDCompression      , MUIA_Disabled, !(data->iface->if_flags & IFL_PPP));
-   set(data->CH_DeflateCompression  , MUIA_Disabled, !(data->iface->if_flags & IFL_PPP));
-   set(data->CY_EOF                 , MUIA_Disabled, !(data->iface->if_flags & IFL_PPP));
-   set(data->STR_ConnectTimeout     , MUIA_Disabled, !(data->iface->if_flags & IFL_PPP));
-   set(data->STR_Callback           , MUIA_Disabled, !(data->iface->if_flags & IFL_PPP));
-
    return(NULL);
 }
 
@@ -204,6 +211,7 @@ ULONG IfaceWindow_PopString_Close(struct IClass *cl, Object *obj, struct MUIP_If
       "NOTRACKING",                                  // a2060
       "IPTYPE=204 ARPTYPE=205 ARPREQ=3 IPREQ=16 WRITEREQ=16",  // ax25
       "IPTYPE=2048 NOARP P2P IPREQ=8 WRITEREQ=8",    // liana0
+      "IPTYPE=2048 NOARP P2P IPREQ=8 WRITEREQ=8"     // ariadne
       "IPTYPE=2048 NOARP P2P IPREQ=8 WRITEREQ=8"     // ariadneliana0
       };
 
@@ -225,6 +233,30 @@ ULONG IfaceWindow_PopString_Close(struct IClass *cl, Object *obj, struct MUIP_If
 }
 
 ///
+/// IfaceWindow_SanaActive
+ULONG IfaceWindow_SanaActive(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct IfaceWindow_Data *data = INST_DATA(cl, obj);
+   ULONG value;
+
+   value = xget(data->CY_Sana2Device, MUIA_Cycle_Active);
+   DoMethod(obj, MUIM_MultiSet, MUIA_Disabled, value < 2,
+      data->PA_Sana2Device, data->STR_Sana2Unit, data->PA_Sana2ConfigFile,
+      data->TI_Sana2ConfigText, NULL);
+
+   DoMethod(obj, MUIM_MultiSet, MUIA_Disabled, value != 0,
+      data->CH_MPPCompression, data->CH_VJCompression, data->CH_BSDCompression,
+      data->CH_DeflateCompression, data->CY_EOF, data->CH_Callback, NULL);
+
+   DoMethod(obj, MUIM_MultiSet, MUIA_Disabled, ((value != 0) || (!xget(data->CH_Callback, MUIA_Selected))),
+      data->SL_ConnectTimeout, data->STR_Callback, NULL);
+
+   set(data->CH_CarrierDetect, MUIA_Disabled, value > 1);
+
+   return(NULL);
+}
+
+///
 
 /// IfaceWindow_New
 ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
@@ -232,6 +264,7 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct IfaceWindow_Data tmp;
    static STRPTR STR_CY_Ping[4];
    static STRPTR STR_CY_Dynamic[3];
+   static STRPTR STR_CY_Netmask[3];
    static STRPTR STR_CY_SanaDevice[4];
    static STRPTR STR_CY_EOF[3];
    static STRPTR ARR_IfacePages[] = { "Interface", "Sana II", "Misc", "PPP", NULL };
@@ -245,6 +278,10 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
    STR_CY_Dynamic[0] = GetStr(MSG_CY_Address0);
    STR_CY_Dynamic[1] = GetStr(MSG_CY_Address1);
    STR_CY_Dynamic[2] = NULL;
+
+   STR_CY_Netmask[0] = GetStr("  default");
+   STR_CY_Netmask[1] = GetStr("  specify");
+   STR_CY_Netmask[2] = NULL;
 
    STR_CY_SanaDevice[0] = GetStr("  PPP");
    STR_CY_SanaDevice[1] = GetStr("  SLIP");
@@ -282,40 +319,45 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                         End,
                      End,
                   End,
-                  Child, MakeKeyLabel2(MSG_LA_Address, MSG_CC_Address),
-                  Child, HGroup,
+                  Child, VGroup,
+                     Child, MakeKeyLabel2(MSG_LA_Address, MSG_CC_Address),
+                     Child, MakeKeyLabel2("  Destination:", "  d"),
+                     Child, MakeKeyLabel2("  Gateway:", "  y"),
+                     Child, MakeKeyLabel2("  Netmask:", "  e"),
+                  End,
+                  Child, ColGroup(2),
                      Child, tmp.STR_Address = TextinputObject,
                         StringFrame,
                         MUIA_ControlChar     , *GetStr(MSG_CC_Address),
                         MUIA_CycleChain      , 1,
                         MUIA_String_Accept   , "0123456789.",
-                        MUIA_String_MaxLen   , 18,
+                        MUIA_String_MaxLen   , 16,
                      End,
                      Child, tmp.CY_Address = Cycle(STR_CY_Dynamic),
-                  End,
-                  Child, MakeKeyLabel2("  Destination:", "  d"),
-                  Child, tmp.STR_Dest = TextinputObject,
-                     StringFrame,
-                     MUIA_ControlChar     , *GetStr("  d"),
-                     MUIA_CycleChain      , 1,
-                     MUIA_String_Accept   , "0123456789.",
-                     MUIA_String_MaxLen   , 18,
-                  End,
-                  Child, MakeKeyLabel2("  Gateway:", "  y"),
-                  Child, tmp.STR_Gateway = TextinputObject,
-                     StringFrame,
-                     MUIA_ControlChar     , *GetStr("  y"),
-                     MUIA_CycleChain      , 1,
-                     MUIA_String_Accept   , "0123456789.",
-                     MUIA_String_MaxLen   , 18,
-                  End,
-                  Child, MakeKeyLabel2("  Netmask:", "  e"),
-                  Child, tmp.STR_Netmask = TextinputObject,
-                     StringFrame,
-                     MUIA_ControlChar     , *GetStr("  e"),
-                     MUIA_CycleChain      , 1,
-                     MUIA_String_Accept   , "0123456789.",
-                     MUIA_String_MaxLen   , 18,
+                     Child, tmp.STR_Dest = TextinputObject,
+                        StringFrame,
+                        MUIA_ControlChar     , *GetStr("  d"),
+                        MUIA_CycleChain      , 1,
+                        MUIA_String_Accept   , "0123456789.",
+                        MUIA_String_MaxLen   , 16,
+                     End,
+                     Child, tmp.CY_Dest = Cycle(STR_CY_Dynamic),
+                     Child, tmp.STR_Gateway = TextinputObject,
+                        StringFrame,
+                        MUIA_ControlChar     , *GetStr("  y"),
+                        MUIA_CycleChain      , 1,
+                        MUIA_String_Accept   , "0123456789.",
+                        MUIA_String_MaxLen   , 16,
+                     End,
+                     Child, tmp.CY_Gateway = Cycle(STR_CY_Dynamic),
+                     Child, tmp.STR_Netmask = TextinputObject,
+                        StringFrame,
+                        MUIA_ControlChar     , *GetStr("  e"),
+                        MUIA_CycleChain      , 1,
+                        MUIA_String_Accept   , "0123456789.",
+                        MUIA_String_MaxLen   , 16,
+                     End,
+                     Child, tmp.CY_Netmask = Cycle(STR_CY_Netmask),
                   End,
                   Child, MakeKeyLabel2(MSG_LA_MTU, MSG_CC_MTU),
                   Child, HGroup,
@@ -359,9 +401,14 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
             End,
             Child, VGroup,
+               Child, HVSpace,
                Child, ColGroup(2),
-                  Child, Label("  Keep alive:"),
-                  Child, tmp.SL_KeepAlive = MUI_MakeObject(MUIO_NumericButton, NULL, 0, 60, "Ping every %2ld min"),
+                  Child, Label("Keep alive:"),
+                  Child, HGroup,
+                     Child, Label("Ping every "),
+                     Child, tmp.SL_KeepAlive = MUI_MakeObject(MUIO_NumericButton, NULL, 0, 60, "%2ld"),
+                     Child, Label(" min"),
+                  End,
                   Child, MakeKeyLabel2("  Is always online:", "  o"),
                   Child, HGroup,
                      Child, tmp.CH_AlwaysOnline = MakeKeyCheckMark(FALSE, "  o"),
@@ -372,23 +419,42 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
             Child, VGroup, // ppp
                Child, HVSpace,
-               Child, ColGroup(2),
-                  Child, KeyLLabel1(GetStr(MSG_LA_CarrierDetect), *GetStr(MSG_CC_CarrierDetect)),
+               Child, ColGroup(5),
+                  Child, MakeKeyLabel2(MSG_LA_CarrierDetect, MSG_CC_CarrierDetect),
                   Child, tmp.CH_CarrierDetect = MakeKeyCheckMark(FALSE, MSG_CC_CarrierDetect),
-                  Child, MakeKeyLabel2("  MPP Compression:", "  m"),
-                  Child, tmp.CH_MPPCompression = MakeKeyCheckMark(FALSE, "  m"),
-                  Child, MakeKeyLabel2("  VJ Compression:", "  v"),
-                  Child, tmp.CH_VJCompression = MakeKeyCheckMark(FALSE, "  v"),
-                  Child, MakeKeyLabel2("  BSD Compression:", "  b"),
-                  Child, tmp.CH_BSDCompression = MakeKeyCheckMark(FALSE, "  b"),
-                  Child, MakeKeyLabel2("  Deflate Compression:", "  d"),
-                  Child, tmp.CH_DeflateCompression = MakeKeyCheckMark(FALSE, "  d"),
+                  Child, HVSpace,
                   Child, MakeKeyLabel2("  EOF Mode:", "  e"),
                   Child, tmp.CY_EOF = KeyCycle(STR_CY_EOF, GetStr("  e")),
-                  Child, MakeKeyLabel2("  Connect timeout:", "  t"),
-                  Child, tmp.STR_ConnectTimeout = MakeKeyString(NULL, 16, "  t"),
+                  Child, MakeKeyLabel2("  MPP Compression:", "  m"),
+                  Child, tmp.CH_MPPCompression = MakeKeyCheckMark(FALSE, "  m"),
+                  Child, HVSpace,
+                  Child, MakeKeyLabel2("  BSD Compression:", "  b"),
+                  Child, HGroup,
+                     Child, tmp.CH_BSDCompression = MakeKeyCheckMark(FALSE, "  b"),
+                     Child, HVSpace,
+                  End,
+                  Child, MakeKeyLabel2("  VJ Compression:", "  v"),
+                  Child, tmp.CH_VJCompression = MakeKeyCheckMark(FALSE, "  v"),
+                  Child, HVSpace,
+                  Child, MakeKeyLabel2("  Deflate Compression:", "  d"),
+                  Child, HGroup,
+                     Child, tmp.CH_DeflateCompression = MakeKeyCheckMark(FALSE, "  d"),
+                     Child, HVSpace,
+                  End,
+               End,
+               Child, HVSpace,
+               Child, ColGroup(2),
                   Child, MakeKeyLabel2("  Callback:", "  a"),
-                  Child, tmp.STR_Callback = MakeKeyString(NULL, 80, "  a"),
+                  Child, HGroup,
+                     GroupSpacing(1),
+                     Child, tmp.CH_Callback = MakeKeyCheckMark(FALSE, "  a"),
+                     Child, tmp.STR_Callback = MakeKeyString(NULL, 80, "  n"),
+                  End,
+                  Child, MakeKeyLabel2("  Timeout:", "  t"),
+                  Child, HGroup,
+                     Child, tmp.SL_ConnectTimeout = MUI_MakeObject(MUIO_NumericButton, NULL, 5, 360, "%2ld sec"),
+                     Child, HVSpace,
+                  End,
                End,
                Child, HVSpace,
             End,
@@ -407,12 +473,33 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       data->iface = NULL;
 
       set(data->CY_Address, MUIA_Weight, 0);
+      set(data->CY_Dest   , MUIA_Weight, 0);
+      set(data->CY_Gateway, MUIA_Weight, 0);
+      set(data->CY_Netmask, MUIA_Weight, 0);
+
+      set(data->STR_Address        , MUIA_Disabled, TRUE);
+      set(data->STR_Dest           , MUIA_Disabled, TRUE);
+      set(data->STR_Gateway        , MUIA_Disabled, TRUE);
+      set(data->STR_Netmask        , MUIA_Disabled, TRUE);
+      set(data->PA_Sana2Device    , MUIA_Disabled, TRUE);
+      set(data->STR_Sana2Unit     , MUIA_Disabled, TRUE);
+      set(data->PA_Sana2ConfigFile, MUIA_Disabled, TRUE);
+      set(data->TI_Sana2ConfigText, MUIA_Disabled, TRUE);
+      set(data->STR_Callback      , MUIA_Disabled, TRUE);
+      set(data->SL_ConnectTimeout , MUIA_Disabled, TRUE);
 
       DoMethod(obj                 , MUIM_Notify, MUIA_Window_CloseRequest, TRUE            , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_ProviderWindow_EditIfaceFinish, obj, 0);
       DoMethod(data->BT_Cancel     , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_ProviderWindow_EditIfaceFinish, obj, 0);
       DoMethod(data->BT_Okay       , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_ProviderWindow_EditIfaceFinish, obj, 1);
 
+      DoMethod(data->CH_Callback   , MUIM_Notify, MUIA_Selected           , MUIV_EveryTime  , obj, 6, MUIM_MultiSet, MUIA_Disabled, MUIV_NotTriggerValue, data->STR_Callback, data->SL_ConnectTimeout, NULL);
+
       DoMethod(data->LV_IfaceNames , MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime , obj, 2, MUIM_IfaceWindow_PopString_Close, MUIV_IfaceWindow_PopString_IfaceName);
+      DoMethod(data->CY_Address    , MUIM_Notify, MUIA_Cycle_Active        , MUIV_EveryTime , data->STR_Address , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
+      DoMethod(data->CY_Dest       , MUIM_Notify, MUIA_Cycle_Active        , MUIV_EveryTime , data->STR_Dest    , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
+      DoMethod(data->CY_Gateway    , MUIM_Notify, MUIA_Cycle_Active        , MUIV_EveryTime , data->STR_Gateway , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
+      DoMethod(data->CY_Netmask    , MUIM_Notify, MUIA_Cycle_Active        , MUIV_EveryTime , data->STR_Netmask , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
+      DoMethod(data->CY_Sana2Device, MUIM_Notify, MUIA_Cycle_Active        , MUIV_EveryTime , obj, 1, MUIM_IfaceWindow_SanaActive);
    }
    return((ULONG)obj);
 }
@@ -427,6 +514,7 @@ SAVEDS ULONG IfaceWindow_Dispatcher(register __a0 struct IClass *cl, register __
       case MUIM_IfaceWindow_Init             : return(IfaceWindow_Init           (cl, obj, (APTR)msg));
       case MUIM_IfaceWindow_CopyData         : return(IfaceWindow_CopyData       (cl, obj, (APTR)msg));
       case MUIM_IfaceWindow_PopString_Close  : return(IfaceWindow_PopString_Close(cl, obj, (APTR)msg));
+      case MUIM_IfaceWindow_SanaActive       : return(IfaceWindow_SanaActive     (cl, obj, (APTR)msg));
    }
 
    return(DoSuperMethodA(cl, obj, msg));

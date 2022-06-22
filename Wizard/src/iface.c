@@ -205,12 +205,14 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
       }
 
       if(data->abort)   goto fail;
+Printf("open sana2 dev (%ls / %ld)\n", iface->if_sana2device, iface->if_sana2unit);
 
       if(!(iface_data->ifd_s2 = sana2_create(iface->if_sana2device, iface->if_sana2unit)))
       {
          syslog_AmiTCP(LOG_CRIT, "iface_init: could not open %ls unit %ld.", iface->if_sana2device, iface->if_sana2unit);
          return(FALSE);
       }
+Printf("query device info\n");
 
       // query device information
       if(sana2_devicequery(iface_data->ifd_s2) == FALSE)
@@ -228,10 +230,13 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
          iface_data->ifd_s2->s2_hwtype == S2WireType_SLIP ||
          iface_data->ifd_s2->s2_hwtype == S2WireType_CSLIP)
       {
+Printf("is a device that operates over serial line\n");
+Printf("put iface online\n");
          if(!iface_online(iface_data))
             goto fail;
 
          if(data->abort)   goto fail;
+Printf("get addresses\n");
 
          // Query the hardware addresses of the Sana-II device
          if(!sana2_getaddresses(iface_data->ifd_s2, iface))
@@ -241,6 +246,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
        // The Sana2 device needs to be closed here (before AmiTCP gets to know
        // about the device) because of the bugs of the original CBM slip-driver
        // & derivatives.
+Printf("close sana2 dev\n");
 
       iface_close_sana2(iface_data);
    }
@@ -248,6 +254,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
    if(data->abort)   goto fail;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Configuring the interface", NULL);
    if(data->abort)   goto fail;
+Printf("getaddr, flags, etc.\n");
 
    // get the interface address
    if(iface_getaddr(iface_data, &iface_data->ifd_addr))
@@ -266,10 +273,12 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
       goto fail;
    if(iface_getlinkinfo(iface_data))
       goto fail;
+Printf("iface_init completed\n");
 
    return(TRUE);
 
 fail:
+Printf("iface_init failed\n");
    iface_deinit(iface_data);
    return(FALSE);
 }
@@ -279,6 +288,7 @@ fail:
 VOID iface_deinit(struct Interface_Data *iface_data)
 {
    // we keep the serial.dev open
+Printf("iface_deinit: close sana2\n");
    iface_close_sana2(iface_data);
 }
 
@@ -421,12 +431,19 @@ VOID iface_cleanup_bootp(struct Interface_Data *iface_data, struct Config *conf)
 /// iface_online
 BOOL iface_online(struct Interface_Data *iface_data)
 {
-   if(sana2_online(iface_data->ifd_s2) == FALSE)
+Printf("1\n");
+   if(iface_data)
    {
-      Printf("Could not get %ls (unit %lu) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
-      return(FALSE);
+Printf("2\n");
+      if(sana2_online(iface_data->ifd_s2) == FALSE)
+      {
+Printf("12\n");
+         Printf("Could not get %ls (unit %lu) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
+         return(FALSE);
+      }
+      Printf("Put Sana2 device %ls (unit: %ld) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
    }
-   Printf("Put Sana2 device %ls (unit: %ld) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
+Printf("13\n");
 
    return(TRUE);
 }

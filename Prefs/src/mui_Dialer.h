@@ -1,12 +1,12 @@
 struct Dialer_Data
 {
-   Object *GR_Events;
    Object *PA_Startup;
    Object *STR_Startup;
+   Object *CY_Startup;
    Object *PA_Shutdown;
    Object *STR_Shutdown;
+   Object *CY_Shutdown;
 
-   Object *GR_Misc;
    Object *CH_QuickReconnect;
    Object *CH_ConfirmOffline;
    Object *CH_Debug;

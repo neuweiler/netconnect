@@ -148,101 +148,95 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
    static const struct Hook Modem_ProtocolList_DisplayHook= { { 0,0 }, (VOID *)Modem_ProtocolList_DisplayFunc , NULL, NULL };
    static STRPTR ARR_BaudRates[] = { "9600", "14400", "19200", "38400", "57600", "76800", "115200", "230400", "345600", "460800" , NULL };
    static STRPTR ARR_DialPrefix[] = { "ATDT", "ATDP", "ATD0w", "ATD0,", NULL };
+   static STRPTR ARR_Modem_Register[] = { "Modem / TA", "Device", NULL };
+   static STRPTR ARR_Handshake[] = { "RTS/CTS", "Xon/Xoff", "none", NULL };
    struct Modem_Data tmp;
 
-   if(obj = tmp.GR_Modem = (Object *)DoSuperNew(cl, obj,
-#ifndef DO_LISTTREE
-      InnerSpacing(0,0),
-#endif
-      Child, HVSpace,
-      Child, MUI_MakeObject(MUIO_BarTitle, "Modem / TA settings"),
-      Child, ColGroup(2),
-         Child, MakeKeyLabel2(MSG_LA_ModemType, "  m"),
-         Child, tmp.PO_Modem = PopobjectObject,
-            MUIA_Popstring_String      , tmp.STR_Modem = MakeKeyString(NULL, 80, "  m"),
-            MUIA_Popstring_Button      , PopButton(MUII_PopUp),
-            MUIA_Popobject_StrObjHook  , &strobjhook,
-            MUIA_Popobject_Object      , tmp.LV_Modems = ListviewObject,
-               MUIA_CycleChain            , 1,
-               MUIA_Listview_DoubleClick  , TRUE,
-               MUIA_Listview_List         , tmp.LI_Modems = ListObject,
-                  MUIA_Frame              , MUIV_Frame_InputList,
-                  MUIA_List_ConstructHook , &ModemList_ConstructHook,
-                  MUIA_List_DestructHook  , &des_hook,
-                  MUIA_List_CompareHook   , &sorthook,
-                  MUIA_List_AutoVisible   , TRUE,
+   if(obj = (Object *)DoSuperNew(cl, obj,
+      MUIA_Register_Titles, ARR_Modem_Register,
+      Child, VGroup,
+         Child, HVSpace,
+         Child, MUI_MakeObject(MUIO_BarTitle, "Modem / TA settings"),
+         Child, ColGroup(2),
+            Child, MakeKeyLabel2(MSG_LA_ModemType, "  m"),
+            Child, tmp.PO_Modem = PopobjectObject,
+               MUIA_Popstring_String      , tmp.STR_Modem = MakeKeyString("Generic", 80, "  m"),
+               MUIA_Popstring_Button      , PopButton(MUII_PopUp),
+               MUIA_Popobject_StrObjHook  , &strobjhook,
+               MUIA_Popobject_Object      , tmp.LV_Modems = ListviewObject,
+                  MUIA_CycleChain            , 1,
+                  MUIA_Listview_DoubleClick  , TRUE,
+                  MUIA_Listview_List         , tmp.LI_Modems = ListObject,
+                     MUIA_Frame              , MUIV_Frame_InputList,
+                     MUIA_List_ConstructHook , &ModemList_ConstructHook,
+                     MUIA_List_DestructHook  , &des_hook,
+                     MUIA_List_CompareHook   , &sorthook,
+                     MUIA_List_AutoVisible   , TRUE,
+                  End,
                End,
             End,
-         End,
-         Child, MakeKeyLabel2(MSG_LA_InitString, MSG_CC_InitString),
-         Child, tmp.PO_InitString = PopobjectObject,
-            MUIA_Popstring_String      , tmp.STR_InitString = MakeKeyString(NULL, 80, MSG_CC_InitString),
-            MUIA_Popstring_Button      , PopButton(MUII_PopUp),
-            MUIA_Popobject_StrObjHook  , &strobjhook,
-            MUIA_Popobject_Object      , tmp.LV_Protocols = ListviewObject,
-               MUIA_Listview_DoubleClick  , TRUE,
-               MUIA_Listview_List         , tmp.LI_Protocols = ListObject,
-                  MUIA_Frame              , MUIV_Frame_InputList,
-                  MUIA_List_ConstructHook , &Modem_ProtocolList_ConstructHook,
-                  MUIA_List_DestructHook  , &des_hook,
-                  MUIA_List_DisplayHook   , &Modem_ProtocolList_DisplayHook,
-                  MUIA_List_CompareHook   , &sorthook,
-                  MUIA_List_Format        , "BAR,",
-                  MUIA_List_AutoVisible   , TRUE,
-                  MUIA_List_Title         , TRUE,
+            Child, MakeKeyLabel2(MSG_LA_InitString, MSG_CC_InitString),
+            Child, tmp.PO_InitString = PopobjectObject,
+               MUIA_Popstring_String      , tmp.STR_InitString = MakeKeyString("AT&F&D2", 80, MSG_CC_InitString),
+               MUIA_Popstring_Button      , PopButton(MUII_PopUp),
+               MUIA_Popobject_StrObjHook  , &strobjhook,
+               MUIA_Popobject_Object      , tmp.LV_Protocols = ListviewObject,
+                  MUIA_Listview_DoubleClick  , TRUE,
+                  MUIA_Listview_List         , tmp.LI_Protocols = ListObject,
+                     MUIA_Frame              , MUIV_Frame_InputList,
+                     MUIA_List_ConstructHook , &Modem_ProtocolList_ConstructHook,
+                     MUIA_List_DestructHook  , &des_hook,
+                     MUIA_List_DisplayHook   , &Modem_ProtocolList_DisplayHook,
+                     MUIA_List_CompareHook   , &sorthook,
+                     MUIA_List_Format        , "BAR,",
+                     MUIA_List_AutoVisible   , TRUE,
+                     MUIA_List_Title         , TRUE,
+                  End,
                End,
             End,
-         End,
-         Child, MakeKeyLabel2(MSG_LA_DialPrefix, MSG_CC_DialPrefix),
-         Child, tmp.PO_DialPrefix = PopobjectObject,
-            MUIA_Popstring_String      , tmp.STR_DialPrefix = MakeKeyString(NULL, 80, MSG_CC_DialPrefix),
-            MUIA_Popstring_Button      , PopButton(MUII_PopUp),
-            MUIA_Popobject_StrObjHook  , &strobjhook,
-            MUIA_Popobject_ObjStrHook  , &objstrhook,
-            MUIA_Popobject_Object      , tmp.LV_DialPrefix = ListviewObject,
-               MUIA_Listview_DoubleClick  , TRUE,
-               MUIA_Listview_List         , ListObject,
-                  MUIA_Frame              , MUIV_Frame_InputList,
-                  MUIA_List_ConstructHook , MUIV_List_ConstructHook_String,
-                  MUIA_List_DestructHook  , MUIV_List_DestructHook_String,
-                  MUIA_List_SourceArray   , ARR_DialPrefix,
+            Child, MakeKeyLabel2(MSG_LA_DialPrefix, MSG_CC_DialPrefix),
+            Child, tmp.PO_DialPrefix = PopobjectObject,
+               MUIA_Popstring_String      , tmp.STR_DialPrefix = MakeKeyString("ATDT", 40, MSG_CC_DialPrefix),
+               MUIA_Popstring_Button      , PopButton(MUII_PopUp),
+               MUIA_Popobject_StrObjHook  , &strobjhook,
+               MUIA_Popobject_ObjStrHook  , &objstrhook,
+               MUIA_Popobject_Object      , tmp.LV_DialPrefix = ListviewObject,
+                  MUIA_Listview_DoubleClick  , TRUE,
+                  MUIA_Listview_List         , ListObject,
+                     MUIA_Frame              , MUIV_Frame_InputList,
+                     MUIA_List_ConstructHook , MUIV_List_ConstructHook_String,
+                     MUIA_List_DestructHook  , MUIV_List_DestructHook_String,
+                     MUIA_List_SourceArray   , ARR_DialPrefix,
+                  End,
                End,
             End,
+            Child, MakeKeyLabel2("  Dial suffix:", "  u"),
+            Child, tmp.STR_DialSuffix = MakeKeyString(NULL, 40, "  u"),
          End,
-         Child, MakeKeyLabel2("  Dial suffix:", "  u"),
-         Child, tmp.STR_DialSuffix = MakeKeyString(NULL, 80, "  u"),
+         Child, HVSpace,
+         Child, MUI_MakeObject(MUIO_BarTitle, "Redial settings"),
+         Child, ColGroup(2),
+            Child, MakeKeyLabel2(MSG_LA_RedialAttempts, MSG_CC_RedialAttempts),
+            Child, tmp.SL_RedialAttempts  = MakeKeySlider(0, 99, 15, MSG_CC_RedialAttempts),
+            Child, MakeKeyLabel2(MSG_LA_RedialDelay, MSG_CC_RedialDelay),
+            Child, tmp.SL_RedialDelay     = MakeKeySlider(0, 120, 5, MSG_CC_RedialDelay),
+         End,
+         Child, HVSpace,
       End,
-      Child, HVSpace,
-      Child, MUI_MakeObject(MUIO_BarTitle, "Redial settings"),
-      Child, ColGroup(2),
-         Child, MakeKeyLabel2(MSG_LA_RedialAttempts, MSG_CC_RedialAttempts),
-         Child, tmp.SL_RedialAttempts  = MakeKeySlider(0, 99, 15, MSG_CC_RedialAttempts),
-         Child, MakeKeyLabel2(MSG_LA_RedialDelay, MSG_CC_RedialDelay),
-         Child, tmp.SL_RedialDelay     = MakeKeySlider(0, 120, 5, MSG_CC_RedialDelay),
-      End,
-      Child, HVSpace,
-   TAG_MORE, msg->ops_AttrList))
-   {
-      struct Modem_Data *data = INST_DATA(cl, obj);
 
-      *data = tmp;
-
-      data->GR_Serial = VGroup,
-#ifndef DO_LISTTREE
-         InnerSpacing(0,0),
-#endif
+      Child, VGroup,
          Child, HVSpace,
          Child, MUI_MakeObject(MUIO_BarTitle, "Device settings"),
          Child, ColGroup(2),
             Child, MakeKeyLabel2(MSG_LA_Device, MSG_CC_Device),
-            Child, data->PO_SerialDevice = PopobjectObject,
-               MUIA_Popstring_String      , data->STR_SerialDevice = MakeKeyString(NULL, MAXPATHLEN, MSG_CC_Device),
+            Child, tmp.PO_SerialDevice = PopobjectObject,
+               MUIA_Popstring_String      , tmp.STR_SerialDevice = MakeKeyString("serial.device", 80, MSG_CC_Device),
                MUIA_Popstring_Button      , PopButton(MUII_PopUp),
                MUIA_Popobject_StrObjHook  , &strobjhook,
                MUIA_Popobject_ObjStrHook  , &objstrhook,
-               MUIA_Popobject_Object      , data->LV_Devices = ListviewObject,
+               MUIA_Popobject_Object      , tmp.LV_Devices = ListviewObject,
                   MUIA_Listview_DoubleClick  , TRUE,
-                  MUIA_Listview_List         , data->LI_Devices = ListObject,
+                  MUIA_Listview_List         , tmp.LI_Devices = ListObject,
                      MUIA_Frame              , MUIV_Frame_InputList,
                      MUIA_List_ConstructHook , MUIV_List_ConstructHook_String,
                      MUIA_List_DestructHook  , MUIV_List_DestructHook_String,
@@ -252,26 +246,28 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
             End,
             Child, MakeKeyLabel2(MSG_LA_Unit, MSG_CC_Unit),
-            Child, data->STR_SerialUnit = TextinputObject,
+            Child, tmp.STR_SerialUnit = TextinputObject,
                StringFrame,
                MUIA_ControlChar     , *GetStr(MSG_CC_Unit),
                MUIA_CycleChain      , 1,
                MUIA_String_MaxLen   , 5,
+               MUIA_String_Integer  , 0,
                MUIA_String_Accept   , "1234567890",
             End,
             Child, MakeKeyLabel2(MSG_LA_BaudRate, MSG_CC_BaudRate),
-            Child, data->PO_BaudRate = PopobjectObject,
-               MUIA_Popstring_String, data->STR_BaudRate = TextinputObject,
+            Child, tmp.PO_BaudRate = PopobjectObject,
+               MUIA_Popstring_String, tmp.STR_BaudRate = TextinputObject,
                   StringFrame,
                   MUIA_ControlChar     , *GetStr(MSG_CC_BaudRate),
                   MUIA_CycleChain      , 1,
                   MUIA_String_MaxLen   , 8,
+                  MUIA_String_Integer  , 38400,
                   MUIA_String_Accept   , "1234567890",
                End,
                MUIA_Popstring_Button      , PopButton(MUII_PopUp),
                MUIA_Popobject_StrObjHook  , &strobjhook,
                MUIA_Popobject_ObjStrHook  , &objstrhook,
-               MUIA_Popobject_Object      , data->LV_BaudRate = ListviewObject,
+               MUIA_Popobject_Object      , tmp.LV_BaudRate = ListviewObject,
                   MUIA_Listview_DoubleClick  , TRUE,
                   MUIA_Listview_List         , ListObject,
                      MUIA_Frame              , MUIV_Frame_InputList,
@@ -281,67 +277,72 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
             End,
             Child, MakeKeyLabel2("  Buffer size:", "  b"),
-            Child, data->STR_SerBufLen = TextinputObject,
+            Child, tmp.STR_SerBufLen = TextinputObject,
                StringFrame,
                MUIA_ControlChar     , *GetStr("  b"),
                MUIA_CycleChain      , 1,
                MUIA_String_MaxLen   , 7,
+               MUIA_String_Integer  , 16384,
                MUIA_String_Accept   , "1234567890",
             End,
          End,
          Child, HVSpace,
          Child, MUI_MakeObject(MUIO_BarTitle, "Options"),
-         Child, ColGroup(5),
-            Child, data->CH_IgnoreDSR  = MakeKeyCheckMark(FALSE, "  i"),
-            Child, KeyLLabel1(GetStr("  Ignore DSR"), *GetStr("  i")),
+         Child, HGroup,
             Child, HVSpace,
-            Child, data->CH_7Wire      = MakeKeyCheckMark(FALSE, MSG_CC_HardwareHandshake),
-            Child, KeyLLabel1(GetStr(MSG_LA_HardwareHandshake), *GetStr(MSG_CC_HardwareHandshake)),
-            Child, data->CH_RadBoogie    = MakeKeyCheckMark(FALSE, "  h"),
-            Child, KeyLLabel1(GetStr("  Highspeed mode"), *GetStr("  h")),
+            Child, ColGroup(2),
+               Child, tmp.CH_RadBoogie    = MakeKeyCheckMark(TRUE, "  h"),
+               Child, KeyLLabel1(GetStr("  Highspeed mode"), *GetStr("  h")),
+               Child, tmp.CH_IgnoreDSR  = MakeKeyCheckMark(FALSE, "  i"),
+               Child, KeyLLabel1(GetStr("  Ignore DSR"), *GetStr("  i")),
+               Child, tmp.CH_OwnDevUnit  = MakeKeyCheckMark(FALSE, "  o"),
+               Child, KeyLLabel1(GetStr("  Use OwnDevUnit"), *GetStr("  o")),
+            End,
             Child, HVSpace,
-            Child, data->CH_XonXoff     = MakeKeyCheckMark(FALSE, "  x"),
-            Child, KeyLLabel1(GetStr("  Enable Xon / Xoff"), *GetStr("  x")),
-            Child, data->CH_OwnDevUnit  = MakeKeyCheckMark(FALSE, "  o"),
-            Child, KeyLLabel1(GetStr("  Use OwnDevUnit"), *GetStr("  o")),
-            Child, HVSpace,
-            Child, VVSpace,
-            Child, VVSpace,
+            Child, VGroup,
+               Child, HGroup,
+                  Child, MakeKeyLabel2("  Flow control:", "  f"),
+                  Child, tmp.CY_Handshake = MakeKeyCycle(ARR_Handshake, "  f"),
+               End,
+               Child,HVSpace,
+            End,
+            Child,HVSpace,
          End,
          Child, HVSpace,
-      End;
+      End,
 
-      if(data->GR_Serial)
-      {
-         set(data->CH_IgnoreDSR  , MUIA_CycleChain, 1);
-         set(data->CH_7Wire      , MUIA_CycleChain, 1);
+   TAG_MORE, msg->ops_AttrList))
+   {
+      struct Modem_Data *data = INST_DATA(cl, obj);
 
-         set(data->STR_Modem        , MUIA_ShortHelp, GetStr(MSG_Help_Modem));
-         set(data->STR_DialPrefix   , MUIA_ShortHelp, GetStr(MSG_Help_DialPrefix));
-         set(data->STR_InitString   , MUIA_ShortHelp, GetStr(MSG_Help_InitString));
-         set(data->SL_RedialAttempts, MUIA_ShortHelp, GetStr(MSG_Help_RedialAttempts));
-         set(data->SL_RedialDelay   , MUIA_ShortHelp, GetStr(MSG_Help_RedialDelay));
+      *data = tmp;
 
-         set(data->STR_SerialDevice, MUIA_ShortHelp, GetStr(MSG_Help_SerialDevice));
-         set(data->STR_SerialUnit  , MUIA_ShortHelp, GetStr(MSG_Help_SerialUnit));
-         set(data->STR_BaudRate    , MUIA_ShortHelp, GetStr(MSG_Help_BaudRate));
-         set(data->CH_7Wire        , MUIA_ShortHelp, GetStr(MSG_Help_7Wire));
+      set(data->CH_IgnoreDSR  , MUIA_CycleChain, 1);
+      set(data->CY_Handshake  , MUIA_CycleChain, 1);
 
-         DoMethod(data->LV_Modems     , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , obj, 2, MUIM_Modem_PopString_Close, MUIV_Modem_PopString_Modem);
-         DoMethod(data->LV_Protocols  , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , obj, 2, MUIM_Modem_PopString_Close, MUIV_Modem_PopString_Protocol);
-         DoMethod(data->LV_BaudRate   , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , data->PO_BaudRate, 2, MUIM_Popstring_Close, TRUE);
-         DoMethod(data->LV_DialPrefix , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , data->PO_DialPrefix, 2, MUIM_Popstring_Close, TRUE);
-         DoMethod(data->LV_Devices    , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , data->PO_SerialDevice, 2, MUIM_Popstring_Close, TRUE);
+      set(data->STR_Modem        , MUIA_ShortHelp, GetStr(MSG_Help_Modem));
+      set(data->STR_DialPrefix   , MUIA_ShortHelp, GetStr(MSG_Help_DialPrefix));
+      set(data->STR_InitString   , MUIA_ShortHelp, GetStr(MSG_Help_InitString));
+      set(data->SL_RedialAttempts, MUIA_ShortHelp, GetStr(MSG_Help_RedialAttempts));
+      set(data->SL_RedialDelay   , MUIA_ShortHelp, GetStr(MSG_Help_RedialDelay));
 
-         DoMethod(data->STR_Modem        , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InitString);
-         DoMethod(data->STR_InitString   , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_DialPrefix);
-         DoMethod(data->STR_DialPrefix   , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_DialSuffix);
-         DoMethod(data->STR_SerialDevice , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_SerialUnit);
-         DoMethod(data->STR_SerialUnit   , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_BaudRate);
-         DoMethod(data->STR_BaudRate     , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_SerBufLen);
-      }
-      else
-         obj = NULL;
+      set(data->STR_SerialDevice, MUIA_ShortHelp, GetStr(MSG_Help_SerialDevice));
+      set(data->STR_SerialUnit  , MUIA_ShortHelp, GetStr(MSG_Help_SerialUnit));
+      set(data->STR_BaudRate    , MUIA_ShortHelp, GetStr(MSG_Help_BaudRate));
+//      set(data->CH_7Wire        , MUIA_ShortHelp, GetStr(MSG_Help_7Wire));
+
+      DoMethod(data->LV_Modems     , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , obj, 2, MUIM_Modem_PopString_Close, MUIV_Modem_PopString_Modem);
+      DoMethod(data->LV_Protocols  , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , obj, 2, MUIM_Modem_PopString_Close, MUIV_Modem_PopString_Protocol);
+      DoMethod(data->LV_BaudRate   , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , data->PO_BaudRate, 2, MUIM_Popstring_Close, TRUE);
+      DoMethod(data->LV_DialPrefix , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , data->PO_DialPrefix, 2, MUIM_Popstring_Close, TRUE);
+      DoMethod(data->LV_Devices    , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , data->PO_SerialDevice, 2, MUIM_Popstring_Close, TRUE);
+
+      DoMethod(data->STR_Modem        , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InitString);
+      DoMethod(data->STR_InitString   , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_DialPrefix);
+      DoMethod(data->STR_DialPrefix   , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_DialSuffix);
+      DoMethod(data->STR_SerialDevice , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_SerialUnit);
+      DoMethod(data->STR_SerialUnit   , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_BaudRate);
+      DoMethod(data->STR_BaudRate     , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_SerBufLen);
    }
    return((ULONG)obj);
 }

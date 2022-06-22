@@ -15,7 +15,6 @@ struct LoginScript_Data
    struct MUI_InputHandlerNode ihnode;
    BOOL ihnode_added;
 
-   Object *GR_Picture;
    Object *TR_Terminal;
    Object *SB_Terminal;
    Object *BT_Dial;

@@ -14,6 +14,7 @@
 extern struct MUI_CustomClass  *CL_MainWindow, *CL_UserWindow;
 extern struct Hook objstrhook, des_hook;
 extern Object *win, *app;
+extern BOOL changed_passwd;
 
 ///
 
@@ -22,6 +23,8 @@ ULONG User_SetStates(struct IClass *cl, Object *obj, Msg msg)
 {
    struct User_Data *data = INST_DATA(cl, obj);
    struct User *user;
+
+   changed_passwd = TRUE;
 
    DoMethod(data->LI_User   , MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &user);
    set(data->BT_Delete, MUIA_Disabled, !user);
@@ -35,9 +38,37 @@ ULONG User_SetStates(struct IClass *cl, Object *obj, Msg msg)
 ULONG User_NewUser(struct IClass *cl, Object *obj, Msg msg)
 {
    struct User_Data *data = INST_DATA(cl, obj);
+   struct User *user, *tmp_user;
+   ULONG pos;
+   BOOL found;
 
    DoMethod(data->LI_User, MUIM_List_InsertSingle, -1, MUIV_List_Insert_Bottom);
    set(data->LI_User, MUIA_List_Active, MUIV_List_Active_Bottom);
+
+   DoMethod(data->LI_User, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &user);
+   if(user)
+   {
+      user->us_uid = 100;
+      user->us_gid = 100;
+
+      do    // find free user ID
+      {
+         found = FALSE;
+         pos = 0;
+         while(!found)
+         {
+            DoMethod(data->LI_User, MUIM_List_GetEntry, pos++, &tmp_user);
+            if(!tmp_user)
+               break;
+            if((user->us_uid == tmp_user->us_uid) && (user != tmp_user))
+               found = TRUE;
+         }
+         if(found)
+            user->us_uid++;
+      }  while(found);
+
+      strcpy(user->us_shell, "noshell");
+   }
    DoMethod(obj, MUIM_User_Edit);
 
    return(NULL);
@@ -82,6 +113,7 @@ ULONG User_EditFinish(struct IClass *cl, Object *obj, struct MUIP_User_EditFinis
    DoMethod(app, OM_REMMEMBER, msg->win);
    MUI_DisposeObject(msg->win);
    set(app, MUIA_Application_Sleep, FALSE);
+   DoMethod(data->LI_User, MUIM_List_Redraw, MUIV_List_Redraw_Active);
 
    return(NULL);
 }
@@ -109,15 +141,28 @@ SAVEDS ASM LONG user_dspfunc(REG(a2) char **array, REG(a1) struct User *user)
 {
    if(user)
    {
+      static char buf1[16], buf2[16];
+
+      sprintf(buf1, "%ld", user->us_uid);
+      sprintf(buf2, "%ld", user->us_gid);
+
       *array++ = user->us_login;
       *array++ = user->us_realname;
-      *array   = user->us_email;
+      *array++ = buf1;
+      *array++ = buf2;
+      *array++ = user->us_homedir;
+      *array++ = user->us_shell;
+      *array   = (((user->us_password[0] == '*') && (user->us_password[1] == NULL)) ? "disabled" : (!*user->us_password ? "\033bno password\033n" : "normal"));
    }
    else
    {
       *array++ = "\033bUser";
       *array++ = "\033bReal Name";
-      *array   = "\033bEMail";
+      *array++ = "\033bUID";
+      *array++ = "\033bGID";
+      *array++ = "\033bHome Dir";
+      *array++ = "\033bShell";
+      *array   = "\033bStatus";
    }
 
    return(NULL);
@@ -130,12 +175,8 @@ static struct Hook user_dsphook = {{NULL, NULL}, (VOID *)user_dspfunc, NULL, NUL
 ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct User_Data tmp;
-   static STRPTR ARR_DefaultSpecify[] = { "default", "specify", NULL };
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-#ifndef DO_LISTTREE
-      InnerSpacing(0,0),
-#endif
       Child, VGroup,
          GroupSpacing(0),
          Child, tmp.LV_User = NListviewObject,
@@ -147,7 +188,7 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
                MUIA_NList_ConstructHook, &user_conshook,
                MUIA_NList_DestructHook , &des_hook,
                MUIA_NList_DisplayHook  , &user_dsphook,
-               MUIA_NList_Format       , "BAR,BAR,",
+               MUIA_NList_Format       , "BAR,BAR,BAR,BAR,BAR,BAR,",
                MUIA_NList_Title        , TRUE,
             End,
          End,

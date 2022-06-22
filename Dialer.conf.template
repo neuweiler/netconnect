@@ -1,0 +1,37 @@
+## Dialer configuration file
+
+SerialDevice     "serial.device"
+SerialUnit       0
+BaudRate         38400
+CarrierDetect    yes
+7Wire            yes
+SerBufLen        16384
+
+Modem            "ZyXEL U-1496 series"
+InitString       "AT&F&D2&C1X4S0=0"
+DialPrefix       "ATDT"
+DialSuffix       ""
+RedialAttempts   10
+RedialDelay      5
+
+AutoLogin        yes
+OnlineOnStartup  no
+QuickReconnect   yes
+SynClock         yes
+ShowStatus       yes
+ShowSpeed        yes
+ShowOnlineTime   yes
+ShowButtons      yes
+
+Online           ""
+OnlineFail       ""
+OfflineActive    ""
+OfflinePassive   ""
+Startup          ""
+Shutdown         ""
+WinOnline         -
+WinOnlineFail     open
+WinOfflineActive  iconify
+WinOfflinePassive close
+WinStartup        open
+

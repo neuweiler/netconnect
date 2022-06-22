@@ -15,92 +15,167 @@
 
 ///
 
+#define DEFAULT_CONFIGFILE "AmiTCP:db/genesis.conf"
+
 /// Config
-enum { CNF_Assign_Static = 1, CNF_Assign_IFace, CNF_Assign_BootP, CNF_Assign_Root, CNF_Assign_DNSQuery };
-#define DEFAULT_CONFIGFILE "AmiTCP:config/Default.config"
+#define CFL_IgnoreDSR            (1)
+#define CFL_7Wire                (1 << 1)    // default on
+#define CFL_RadBoogie            (1 << 2)    // default on
+#define CFL_XonXoff              (1 << 3)
+#define CFL_OwnDevUnit           (1 << 4)
+#define CFL_QuickReconnect       (1 << 5)
+#define CFL_Debug                (1 << 6)
+#define CFL_ConfirmOffline       (1 << 7)
+#define CFL_ShowLog              (1 << 8)    // default on
+#define CFL_ShowLamps            (1 << 9)    // default on
+#define CFL_ShowConnect          (1 << 10)   // default on
+#define CFL_ShowOnlineTime       (1 << 11)   // default on
+#define CFL_ShowButtons          (1 << 12)   // default on
+#define CFL_ShowNetwork          (1 << 13)   // default on
+#define CFL_ShowUser             (1 << 14)   // default on
+#define CFL_ShowStatusWin        (1 << 15)   // default on
+#define CFL_ShowSerialInput      (1 << 16)   // default on
+#define CFL_StartupOpenWin       (1 << 17)   // default on
+#define CFL_StartupIconify       (1 << 18)
 
-struct config
+
+struct Config
 {
-   char    cnf_loginname[81]; // for login at provider
-   char    cnf_username[81];  // for env:LOGNAME
-   char    cnf_password[81];
-   char    cnf_realname[81];
-   char    cnf_email[81];
-   char    cnf_organisation[81];
-
-   char    cnf_phonenumber[256];
-
    char    cnf_serialdevice[81];
    int     cnf_serialunit;
    ULONG   cnf_baudrate;
-   USHORT  cnf_carrierdetect;
-   USHORT  cnf_7wire;
    ULONG   cnf_serbuflen;
 
    char    cnf_modemname[81];
    char    cnf_initstring[81];
-   char    cnf_dialprefix[81];
-   char    cnf_dialsuffix[81];
+   char    cnf_dialprefix[41];
+   char    cnf_dialsuffix[41];
    int     cnf_redialattempts;
    int     cnf_redialdelay;
+   ULONG   cnf_flags;
 
-   char    cnf_sana2device[MAXPATHLEN];
-   int     cnf_sana2unit;
-   char    cnf_sana2config[MAXPATHLEN];
-   char    *cnf_sana2configtext;
-   char    cnf_ifname[21];
-   char    *cnf_ifconfigparams;
-   int     cnf_MTU;           /* maximum transfer unit */
-   int     cnf_keepalive;     /* do nothing, icmp ping (1) or ppp ping (2) */
-   int     cnf_pinginterval;  /* interval in minutes */
-
-   ULONG  cnf_addr;          /* IP address */
-   ULONG  cnf_dst;           /* destination (or broadcast) address */
-   ULONG  cnf_netmask;       /* netmask */
-   ULONG  cnf_gateway;       /* default gateway */
-   ULONG  cnf_dns1;
-   ULONG  cnf_dns2;
-   ULONG  cnf_bootpserver;   /* bootp server IP address */
-   USHORT cnf_use_bootp;
-
-   char    cnf_hostname[64]; /* space for fully qualified host name */
-   char    cnf_domainname[64];  /* space for our domain name */
-   char    cnf_timename[64];
-
-   USHORT cnf_autologin;
-   USHORT cnf_onlineonstartup;
-   USHORT cnf_quickreconnect;
-   USHORT cnf_synclock;
-   USHORT cnf_showstatus;
-   USHORT cnf_showspeed;
-   USHORT cnf_showonlinetime;
-   USHORT cnf_showbuttons;
-
-   char    *cnf_online;             /* pointer to file to be executed */
-   char    *cnf_onlinefail;
-   char    *cnf_offlineactive;
-   char    *cnf_offlinepassive;
    char    *cnf_startup;
+   int     cnf_startuptype;
    char    *cnf_shutdown;
-   USHORT cnf_winonline;           /* 0= do nothing, 1= open, 2= close */
-   USHORT cnf_winonlinefail;
-   USHORT cnf_winofflineactive;
-   USHORT cnf_winofflinepassive;
-   USHORT cnf_winstartup;
+   int     cnf_shutdowntype;
+};
+///
+/// Interface
+#define IFL_IsOnline       (1)         /* is the iface currently online ? */
+#define IFL_PutOnline      (1 << 1)    /* shall the iface be put online in this pass ? */
+#define IFL_PutOffline     (1 << 2)    /* shall the iface be put online in this pass ? */
+#define IFL_AlwaysOnline   (1 << 3)    /* must iface be online as longa as genesis's running ? */
 
-/** private stuff **/
+#define IFL_IPDynamic      (1 << 4)    /* was ip addr set to dynamic at startup ? */
+#define IFL_DSTDynamic     (1 << 5)    /* was dst dynamic */
+#define IFL_GWDynamic      (1 << 6)    /* was gateway dynamic */
+#define IFL_NMDynamic      (1 << 7)    /* was netmask dynamic */
+#define IFL_PPP            (1 << 8)    /* is it default ppp */
+#define IFL_SLIP           (1 << 9)    /* is it default slip */
 
-   ULONG  cnf_connectspeed;   /* baudrate we're connected */
-   USHORT cnf_use_hwtype;  /* use hardware type on BOOTP? */
+enum { IFE_Online = 0, IFE_OnlineFail, IFE_OfflineActive, IFE_OfflinePassive };
+#ifdef USE_EVENT_COMMANDS
+STRPTR event_commands[] = { "Online", "OnlineFail", "OfflineActive", "OfflinePassive", NULL };
+#else
+extern STRPTR event_commands[];
+#endif
 
+struct Interface
+{
+   struct MinNode if_node;
+
+   char    if_name[21];
+   char    if_sana2device[MAXPATHLEN];
+   int     if_sana2unit;
+   char    if_sana2config[MAXPATHLEN];
+   char    *if_sana2configtext;
+   char    *if_configparams;
+   int     if_MTU;             /* maximum transfer unit */
+
+   char    if_addr[16];        /* IP address */
+   char    if_dst[16];         /* destination (or broadcast) address */
+   char    if_gateway[16];     /* default gateway */
+   char    if_netmask[16];     /* netmask */
+
+   ULONG   if_flags;           /* flags for the iface */
+   int     if_keepalive;       /* ping interval in minutes */
+
+   struct MinList if_events;
+   APTR    if_userdata;
+};
+
+///
+/// ISP
+enum { CNF_Assign_Static = 1, CNF_Assign_IFace, CNF_Assign_BootP, CNF_Assign_Root, CNF_Assign_DNSQuery };
+
+#define ISF_UseBootp          (1)         /* Use bootp */
+#define ISF_GetTime           (1 << 1)    /* Ask time at given server */
+#define ISF_SaveTime          (1 << 2)    /* Save time to batt clock */
+#define ISF_DontQueryHostname (1 << 3)    /* Don't query hostname => speedup */
+
+struct ISP
+{
+   char   isp_name[41];
+   char   isp_comment[41];
+   char   isp_login[41];
+   char   isp_password[41];
+
+   char   isp_phonenumber[101];
+   char   isp_organisation[41];
+
+   char   isp_bootp[16];       /* bootp server IP address */
+   char   isp_hostname[64];    /* space for fully qualified host name */
+   char   isp_timename[64];
+   UWORD  isp_flags;
+
+   struct MinList isp_nameservers;
+   struct MinList isp_domainnames;
+   struct MinList isp_ifaces;
+   struct MinList isp_loginscript;
+};
+
+///
+/// User
+struct User
+{
+   char   us_login[41];
+   char   us_realname[81];
+   char   us_password[41];
+   LONG   us_uid;
+   LONG   us_gid;
+   char   us_homedir[MAXPATHLEN];
+   char   us_shell[81];
+};
+
+///
+/// PrefsPPPIface
+struct PrefsPPPIface
+{
+   BOOL ppp_carrierdetect;
+   ULONG ppp_connecttimeout;
+   char ppp_callback[81];
+   BOOL ppp_mppcomp;
+   BOOL ppp_vjcomp;
+   BOOL ppp_bsdcomp;
+   BOOL ppp_deflatecomp;
+   BOOL ppp_eof;
 };
 ///
 
-/// ScriptLine
+/// ServerEntry   (41)
+struct ServerEntry
+{
+   struct MinNode se_node;
 
-enum { SL_Send = 0, SL_WaitFor, SL_Dial, SL_GoOnline, SL_SendLogin, SL_SendPassword, SL_SendBreak, SL_Exec, SL_Pause };
+   char se_name[41];
+};
+
+///
+/// ScriptLine    (256)
+
+enum { SL_Send = 0, SL_WaitFor, SL_Dial, SL_GoOnline, SL_SendLogin, SL_SendPassword, SL_SendBreak, SL_Exec, SL_Pause, SL_ParseIP, SL_ParsePasswd };
 #ifdef USE_SCRIPT_COMMANDS
-STRPTR script_commands[] = { "Send", "WaitFor", "Dial", "GoOnline", "SendLogin", "SendPassword", "SendBreak", "Exec", "Pause", NULL };
+STRPTR script_commands[] = { "Send", "WaitFor", "Dial", "GoOnline", "SendLogin", "SendPassword", "SendBreak", "Exec", "Pause", "ParseIP", "ParsePasswd", NULL };
 #else
 extern STRPTR script_commands[];
 #endif
@@ -111,19 +186,8 @@ struct ScriptLine
 
    int sl_command;
    char sl_contents[256];
+   int sl_userdata;
 };
-///
-/// struct pc_Data
-struct pc_Data
-{
-   STRPTR Buffer;    /* buffer holding the file (internal use only) */
-   LONG Size;        /* variable holding the size of the buffer (internal use only) */
-   STRPTR Current;   /* pointer to the current position (internal use only) */
-
-   STRPTR Argument;  /* pointer to the argument */
-   STRPTR Contents;  /* pointer to its contents */
-};
-
 ///
 /// struct Modem
 struct Modem
@@ -139,20 +203,6 @@ struct ModemProtocol
 {
    char Name[41];
    char InitString[41];
-};
-
-///
-/// struct User
-struct User
-{
-   char Login[41];
-   char Password[41];
-   LONG UserID;
-   LONG GroupID;
-   char Name[81];
-   char HomeDir[MAXPATHLEN];
-   char Shell[81];
-   BOOL Disabled;       // I can't overwrite the password immediately when "disable" is selected because it might get deselected again
 };
 
 ///
@@ -238,6 +288,16 @@ struct Rpc
 
 ///
 
+/// struct pc_Data
+struct pc_Data
+{
+   STRPTR Buffer;    /* buffer holding the file (internal use only) */
+   LONG Size;        /* variable holding the size of the buffer (internal use only) */
+   STRPTR Current;   /* pointer to the current position (internal use only) */
 
+   STRPTR Argument;  /* pointer to the argument name */
+   STRPTR Contents;  /* pointer to the argument's contents */
+};
 
+///
 

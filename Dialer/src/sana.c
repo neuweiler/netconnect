@@ -123,25 +123,17 @@ BOOL sana2_online(struct sana2 *s2)
 /// sana2_offline
 BOOL sana2_offline(struct sana2 *s2)
 {
-Printf("1\n");
    s2->s2_req->ios2_Req.io_Command = S2_OFFLINE;
-Printf("2\n");
    DoIO((struct IORequest *)s2->s2_req);
-Printf("1\n");
    if(s2->s2_req->ios2_Req.io_Error)
    {
-Printf("err: %ld\n", s2->s2_req->ios2_Req.io_Error);
       if(s2->s2_req->ios2_Req.io_Error != S2ERR_BAD_STATE)
       {
-Printf("3\n");
          syslog_AmiTCP(LOG_ERR, "sana2_offline: could not put %ls, unit %ld offline.", s2->s2_name, s2->s2_unit);
          SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
-Printf("4\n");
          return(FALSE);
       }
-Printf("5\n");
    }
-Printf("6\n");
    return(TRUE);
 }
 

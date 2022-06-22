@@ -1,0 +1,30 @@
+int main( int argc, char *argv[] )
+{
+    if( SysBase->LibNode.lib_Version < 37 ) {
+        if( IntuitionBase = (struct IntuitionBase *) OpenLibrary( "intuition.library", 0 )) {
+            static UBYTE AlertData[] = "\0\214\020STFax requires kickstart v37+ !!!\0\0";
+            DisplayAlert( RECOVERY_ALERT, AlertData, 30 );
+            CloseLibrary(( struct Library * )IntuitionBase );
+        }
+        exit( 30 );
+    }
+    MyTask = (struct Process *) FindTask( NULL );
+    if(((ULONG)MyTask->pr_Task.tc_SPUpper - (ULONG)MyTask->pr_Task.tc_SPLower ) < NEWSTACK_SIZE ) {
+        if(!( StackSwapper.stk_Lower = AllocMem( NEWSTACK_SIZE, 0L )))
+            CleanUp( 20 );
+        StackSwapper.stk_Upper   = (ULONG)StackSwapper.stk_Lower + NEWSTACK_SIZE;
+        StackSwapper.stk_Pointer = (APTR)StackSwapper.stk_Upper;
+        StackSwap( &StackSwapper );
+        Flags |= STACK_SWAPPED;
+    }
+    RealMain();
+}
+
+clean_up()
+{
+    if( Flags & STACK_SWAPPED ) {
+        StackSwap( &StackSwapper );
+        FreeMem( StackSwapper.stk_Lower, NEWSTACK_SIZE );
+    }
+}
+

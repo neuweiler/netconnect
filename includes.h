@@ -12,6 +12,7 @@
 #include <libraries/ifconfig.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/route.h>
 
 #include <string.h>
 #include <stdio.h>

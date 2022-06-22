@@ -25,11 +25,12 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
    struct About_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title, "GenesisPrefs "VERSIONSTRING,
+      MUIA_Window_Title       , "GenesisPrefs "VERSIONSTRING,
+      MUIA_Window_ID          , MAKE_ID('A','B','O','U'),
       MUIA_Window_RefWindow   , win,
       MUIA_Window_LeftEdge    , MUIV_Window_LeftEdge_Centered,
       MUIA_Window_TopEdge     , MUIV_Window_TopEdge_Centered,
-      MUIA_Window_Height, MUIV_Window_Height_MinMax(30),
+      MUIA_Window_Height      , MUIV_Window_Height_MinMax(100),
       WindowContents, VGroup,
          MUIA_Background, MUII_RequesterBack,
          Child, HGroup,

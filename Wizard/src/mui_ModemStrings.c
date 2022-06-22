@@ -10,6 +10,7 @@
 #include "mui.h"
 #include "mui_ModemStrings.h"
 #include "mui_MainWindow.h"
+#include "mui_SerialModem.h"
 #include "protos.h"
 
 #include "images/setup_page2.h"
@@ -18,11 +19,8 @@
 /// external variables
 extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct Config Config;
-extern BOOL no_picture;
+extern struct MUI_CustomClass  *CL_SerialModem;
 
-extern ULONG setup_page2_colors[];
-extern UBYTE setup_page2_body[];
 extern struct Hook strobjhook, sorthook, txtobjhook, deshook, objstrhook;
 
 ///
@@ -71,22 +69,27 @@ VOID SAVEDS initstring_objstrfunc(register __a2 Object *list,register __a1 Objec
 ULONG ModemStrings_LoadData(struct IClass *cl, Object *obj, Msg msg)
 {
    struct ModemStrings_Data *data = INST_DATA(cl, obj);
+   struct MainWindow_Data   *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
+   struct SerialModem_Data *sm_data = INST_DATA(CL_SerialModem->mcc_Class, mw_data->GR_SerialModem);
    struct pc_Data pc_data;
    struct ModemProtocol *modem_protocol;
    int counter = 0;
+   STRPTR modemname;
 
    // load the Modem InitStrings into the List
    if(ParseConfig("AmiTCP:db/modems", &pc_data))
    {
       set(data->LV_Protocols, MUIA_List_Quiet, TRUE);
+      DoMethod(data->LV_Protocols, MUIM_List_Clear);
 
       if(modem_protocol = AllocVec(sizeof(struct ModemProtocol), MEMF_ANY | MEMF_CLEAR))
       {
+         modemname = (STRPTR)xget(sm_data->TX_ModemName, MUIA_Text_Contents);
          while(ParseNext(&pc_data))
          {
             if(!stricmp(pc_data.Argument, "Modem"))
             {
-               if(!strcmp(pc_data.Contents, Config.cnf_modemname))
+               if(!strcmp(pc_data.Contents, modemname))
                   break;
             }
          }
@@ -128,74 +131,57 @@ ULONG ModemStrings_New(struct IClass *cl, Object *obj, struct opSet *msg)
    static const struct Hook ProtocolList_ConstructHook= { { 0,0 }, (VOID *)ProtocolList_ConstructFunc , NULL, NULL };
    static const struct Hook ProtocolList_DisplayHook= { { 0,0 }, (VOID *)ProtocolList_DisplayFunc , NULL, NULL };
    static const struct Hook initstring_objstrhook= { { 0,0 }, (VOID *)initstring_objstrfunc , NULL, NULL };
-   static STRPTR ARR_DialPrefix[] = { "ATDT", "ATDP", "ATD0w", "ATD0,", NULL };
+   static STRPTR ARR_DialPrefix[] = { "AT", "ATDT", "ATDP", "ATD0w", "ATD0,", NULL };
+   Object *originator;
+
+   originator = (Object *)GetTagData(MUIA_Genesis_Originator, 0, msg->ops_AttrList);
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Group_Horiz, TRUE,
-      Child, tmp.GR_Picture = VGroup,
-         MUIA_ShowMe, !no_picture,
-         Child, BodychunkObject,
-            GroupFrame,
-            InnerSpacing(0, 0),
-            MUIA_FixWidth             , SETUP_PAGE2_WIDTH,
-            MUIA_FixHeight            , SETUP_PAGE2_HEIGHT,
-            MUIA_Bitmap_Width         , SETUP_PAGE2_WIDTH ,
-            MUIA_Bitmap_Height        , SETUP_PAGE2_HEIGHT,
-            MUIA_Bodychunk_Depth      , SETUP_PAGE2_DEPTH ,
-            MUIA_Bodychunk_Body       , (UBYTE *)setup_page2_body,
-            MUIA_Bodychunk_Compression, SETUP_PAGE2_COMPRESSION,
-            MUIA_Bodychunk_Masking    , SETUP_PAGE2_MASKING,
-            MUIA_Bitmap_SourceColors  , (ULONG *)setup_page2_colors,
-         End,
-         Child, HVSpace,
-      End,
-      Child, VGroup,   // modem strings
-         GroupFrame,
-         MUIA_Background, MUII_TextBack,
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoInitString)),
-         Child, tmp.PO_InitString = PopobjectObject,
-            MUIA_Popstring_String      , tmp.STR_InitString = MakeString(Config.cnf_initstring, 80),
-            MUIA_Popstring_Button      , PopButton(MUII_PopUp),
-            MUIA_Popobject_StrObjHook  , &strobjhook,
-            MUIA_Popobject_ObjStrHook  , &initstring_objstrhook,
-            MUIA_Popobject_Object      , tmp.LV_Protocols = ListviewObject,
-               MUIA_Listview_DoubleClick  , TRUE,
-               MUIA_Listview_List         , ListObject,
-                  MUIA_Frame              , MUIV_Frame_InputList,
-                  MUIA_List_ConstructHook , &ProtocolList_ConstructHook,
-                  MUIA_List_DestructHook  , &deshook,
-                  MUIA_List_DisplayHook   , &ProtocolList_DisplayHook,
-                  MUIA_List_CompareHook   , &sorthook,
-                  MUIA_List_Format        , "BAR,",
-                  MUIA_List_AutoVisible   , TRUE,
-                  MUIA_List_Title         , TRUE,
-               End,
+      GroupFrame,
+      MUIA_Background, MUII_TextBack,
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoInitString)),
+      Child, tmp.PO_InitString = PopobjectObject,
+         MUIA_Popstring_String      , tmp.STR_InitString = MakeString("AT&F&D2", 80),
+         MUIA_Popstring_Button      , PopButton(MUII_PopUp),
+         MUIA_Popobject_StrObjHook  , &strobjhook,
+         MUIA_Popobject_ObjStrHook  , &initstring_objstrhook,
+         MUIA_Popobject_Object      , tmp.LV_Protocols = ListviewObject,
+            MUIA_Listview_DoubleClick  , TRUE,
+            MUIA_Listview_List         , ListObject,
+               MUIA_Frame              , MUIV_Frame_InputList,
+               MUIA_List_ConstructHook , &ProtocolList_ConstructHook,
+               MUIA_List_DestructHook  , &deshook,
+               MUIA_List_DisplayHook   , &ProtocolList_DisplayHook,
+               MUIA_List_CompareHook   , &sorthook,
+               MUIA_List_Format        , "BAR,",
+               MUIA_List_AutoVisible   , TRUE,
+               MUIA_List_Title         , TRUE,
             End,
          End,
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoDialPrefix)),
-         Child, tmp.PO_DialPrefix = PopobjectObject,
-            MUIA_Popstring_String      , tmp.STR_DialPrefix = MakeString(Config.cnf_dialprefix, 80),
-            MUIA_Popstring_Button      , PopButton(MUII_PopUp),
-            MUIA_Popobject_StrObjHook  , &strobjhook,
-            MUIA_Popobject_ObjStrHook  , &objstrhook,
-            MUIA_Popobject_Object      , tmp.LV_DialPrefix = ListviewObject,
-               MUIA_Listview_DoubleClick  , TRUE,
-               MUIA_Listview_List         , ListObject,
-                  MUIA_Frame              , MUIV_Frame_InputList,
-                  MUIA_List_ConstructHook , MUIV_List_ConstructHook_String,
-                  MUIA_List_DestructHook  , MUIV_List_DestructHook_String,
-                  MUIA_List_SourceArray   , ARR_DialPrefix,
-               End,
+      End,
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoDialPrefix)),
+      Child, tmp.PO_DialPrefix = PopobjectObject,
+         MUIA_Popstring_String      , tmp.STR_DialPrefix = MakeString("ATDT", 80),
+         MUIA_Popstring_Button      , PopButton(MUII_PopUp),
+         MUIA_Popobject_StrObjHook  , &strobjhook,
+         MUIA_Popobject_ObjStrHook  , &objstrhook,
+         MUIA_Popobject_Object      , tmp.LV_DialPrefix = ListviewObject,
+            MUIA_Listview_DoubleClick  , TRUE,
+            MUIA_Listview_List         , ListObject,
+               MUIA_Frame              , MUIV_Frame_InputList,
+               MUIA_List_ConstructHook , MUIV_List_ConstructHook_String,
+               MUIA_List_DestructHook  , MUIV_List_DestructHook_String,
+               MUIA_List_SourceArray   , ARR_DialPrefix,
             End,
          End,
-         Child, HVSpace,
       End,
+      Child, HVSpace,
       TAG_MORE, msg->ops_AttrList))
    {
       struct ModemStrings_Data *data = INST_DATA(cl, obj);
-      struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
+      struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, originator);
 
       *data = tmp;
 
@@ -204,8 +190,8 @@ ULONG ModemStrings_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       DoMethod(data->LV_Protocols        , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime, data->PO_InitString, 2, MUIM_Popstring_Close, TRUE);
       DoMethod(data->LV_DialPrefix       , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime, data->PO_DialPrefix, 2, MUIM_Popstring_Close, TRUE);
-      DoMethod(data->STR_InitString      , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_DialPrefix);
-      DoMethod(data->STR_DialPrefix      , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, mw_data->BT_Next);
+      DoMethod(data->STR_InitString      , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, originator, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_DialPrefix);
+      DoMethod(data->STR_DialPrefix      , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, originator, 3, MUIM_Set, MUIA_Window_ActiveObject, mw_data->BT_Next);
    }
 
    return((ULONG)obj);
@@ -215,10 +201,11 @@ ULONG ModemStrings_New(struct IClass *cl, Object *obj, struct opSet *msg)
 /// ModemString_Dispatcher
 SAVEDS ULONG ModemStrings_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   if(msg->MethodID == OM_NEW)
-      return(ModemStrings_New         (cl, obj, (APTR)msg));
-   if(msg->MethodID == MUIM_ModemStrings_LoadData)
-      return(ModemStrings_LoadData    (cl, obj, (APTR)msg));
+   switch((ULONG)msg->MethodID)
+   {
+      case OM_NEW                      : return(ModemStrings_New         (cl, obj, (APTR)msg));
+      case MUIM_ModemStrings_LoadData  : return(ModemStrings_LoadData    (cl, obj, (APTR)msg));
+   }
 
    return(DoSuperMethodA(cl, obj, msg));
 }

@@ -88,10 +88,10 @@ MSG_TX_ErrorAutoInterfaces (//)
 Could not create ENV:NetConfig/AutoInterfaces
 ;
 MSG_TX_ErrorAmiTCPLaunch (//)
-Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:bin/AmiTCP.kernel does not exist.\n2) Another TCP stack is running (like Miami).\n3) Invalid AmiTCP.key in AmiTCP:key.
+Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is running (like Miami).\n3) Invalid AmiTCP.key in AmiTCP:key.
 ;
 MSG_TX_ErrorBsdsocketLib (//)
-Could not open bsdsocket.library.\nPlease make sure the file AmiTCP.kernel can be found in AmiTCP:bin/
+Could not open bsdsocket.library.\nPlease make sure the file AmiTCP can be found in AmiTCP:kernel/
 ;
 MSG_TX_ErrorIfConfigLib (//)
 Could not open ifconfig.library.\nIt looks like AmiTCP Genesis is not properly installed.\nPlease make sure ifconfig.library\ncan be found in AmiTCP:Libs/
@@ -152,11 +152,17 @@ Project
 MSG_MENU_ABOUT (//)
 About...
 ;
+MSG_MENU_ABOUTMUI (//)
+About MUI...
+;
 MSG_MENU_QUIT (//)
 Quit
 ;
 MSG_MENU_SETTINGS (//)
 Settings
+;
+MSG_MENU_GENESIS (//)
+Genesis...
 ;
 MSG_MENU_MUI (//)
 MUI...

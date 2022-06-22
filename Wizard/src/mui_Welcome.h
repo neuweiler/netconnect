@@ -1,5 +1,5 @@
 struct Welcome_Data
 {
-   Object *GR_Picture;
+   Object *BC_Logo;
 };
 

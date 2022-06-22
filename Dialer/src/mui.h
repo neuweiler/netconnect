@@ -2,7 +2,7 @@
 #define TAGBASE_GENESIS (TAG_USER | (MUISERIALNR_GENESIS << 16))
 
 #define VVSpace MUI_NewObject(MUIC_Rectangle, MUIA_FixWidth, 1, TAG_DONE)
-enum { MEN_ABOUT=1, MEN_ABOUT_MUI, MEN_QUIT, MEN_MUI };
+enum { MEN_ABOUT=1, MEN_ABOUT_MUI, MEN_QUIT, MEN_MUI, MEN_GENESIS };
 enum { ID_DOUBLESTART=40 };
 
 #define MUIV_Background_Red      "2:cccccccc,60606060,60606060"
@@ -57,6 +57,7 @@ struct LogEntry
 #define MUIM_MainWindow_UpdateLog              (TAGBASE_GENESIS | 0x100c)
 #define MUIM_MainWindow_ChangeProvider         (TAGBASE_GENESIS | 0x100d)
 #define MUIM_MainWindow_ChangeUser             (TAGBASE_GENESIS | 0x100e)
+#define MUIM_MainWindow_GenesisPrefs           (TAGBASE_GENESIS | 0x100f)
 
 ///
 /// Online
@@ -75,6 +76,7 @@ struct LogEntry
 struct MUIP_MainWindow_DisposeWindow      { ULONG MethodID; Object *window; };
 struct MUIP_MainWindow_MUIRequest         { ULONG MethodID; STRPTR buttons; STRPTR message; };
 struct MUIP_MainWindow_OnOffline          { ULONG MethodID; LONG online; };
+struct MUIP_MainWindow_SendPing           { ULONG MethodID; STRPTR hostname; };
 ///
 /// Online
 

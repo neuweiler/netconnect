@@ -221,9 +221,6 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct Provider_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-#ifndef DO_LISTTREE
-      InnerSpacing(0,0),
-#endif
       Child, VGroup,
          GroupSpacing(0),
          Child, tmp.LV_ISP = NListviewObject,

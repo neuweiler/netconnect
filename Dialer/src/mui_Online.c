@@ -174,7 +174,7 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
    struct Interface_Data *iface_data = NULL;
    BPTR fh;
    BOOL success = FALSE, is_secondary;
-   char buffer[41];
+   char buffer[MAXPATHLEN];
 
    // open bsdsocket.library
    if(!(SocketBase = OpenLibrary("bsdsocket.library", 0)))
@@ -188,8 +188,8 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
    if((*(BYTE *)((struct Library *)SocketBase + 1)) & 0x04)
       dialup = 1;
 
-   DeleteFile("ENV:APPdns1");
-   DeleteFile("ENV:APPdns2");
+   DeleteFile("ENV:APPPdns1");
+   DeleteFile("ENV:APPPdns2");
 
    if(data->abort)   goto abort;
 
@@ -197,7 +197,7 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
    {
       iface = (struct Interface *)mw_data->isp.isp_ifaces.mlh_Head;
       is_secondary = FALSE;
-      while(iface->if_node.mln_Succ)
+      while(iface->if_node.mln_Succ && !data->abort)
       {
          if(iface->if_flags & IFL_PutOnline)
          {
@@ -214,17 +214,18 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
                if(data->abort)   goto abort;
                DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_InitDevice), NULL);
                if(data->abort)   goto abort;
-               DoMainMethod(data->TR_Terminal, TCM_INIT, NULL, NULL, NULL);
+               if(DoMainMethod(win, MUIM_Genesis_Get, (APTR)MUIA_Window_Open, NULL, NULL))
+                  DoMainMethod(data->TR_Terminal, TCM_INIT, NULL, NULL, NULL);
                if(data->abort)   goto abort;
                if(!(iface_init(iface_data, iface, &mw_data->isp, &Config)))
                   goto abort;
 
                // get appp.device's ms-dns addresses
                GetEnvDOS("APPPdns1", buffer, 20);
-               if(strcmp(buffer, "0.0.0.0") && !find_server_by_name(&mw_data->isp.isp_nameservers, buffer))
+               if(!find_server_by_name(&mw_data->isp.isp_nameservers, buffer))
                   add_server(&mw_data->isp.isp_nameservers, buffer);
                GetEnvDOS("APPPdns2", buffer, 20);
-               if(strcmp(buffer, "0.0.0.0") && !find_server_by_name(&mw_data->isp.isp_nameservers, buffer))
+               if(!find_server_by_name(&mw_data->isp.isp_nameservers, buffer))
                   add_server(&mw_data->isp.isp_nameservers, buffer);
 
                if(data->abort)   goto abort;
@@ -299,7 +300,6 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
                      mw_data->isp.isp_flags |= ISF_DontQueryHostname;
                   }
 
-
                   // add in reverse order since each entry is added to top of list
                   if(mw_data->isp.isp_nameservers.mlh_TailPred != (struct MinNode *)&mw_data->isp.isp_nameservers)
                   {
@@ -308,8 +308,6 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
                      {
                         if(amirexx_do_command("ADD START NAMESERVER %ls", server->se_name) != RETURN_OK)
                            syslog_AmiTCP(LOG_ERR, GetStr(MSG_TX_ErrorSetDNS), server->se_name);
-else
-syslog_AmiTCP(LOG_DEBUG, "Added Nameserver %ls to beginning of search list", server->se_name);
                         server = (struct ServerEntry *)server->se_node.mln_Pred;
                         if(data->abort)   goto abort;
                      }
@@ -356,8 +354,6 @@ syslog_AmiTCP(LOG_DEBUG, "Added Nameserver %ls to beginning of search list", ser
                      {
                         if(amirexx_do_command("ADD START DOMAIN %ls", server->se_name) != RETURN_OK)
                            syslog_AmiTCP(LOG_WARNING, GetStr(MSG_TX_WarningSetDomain), server->se_name);
-else
-syslog_AmiTCP(LOG_DEBUG, "Added Domainname %ls to beginning of list", server->se_name);
                         server = (struct ServerEntry *)server->se_node.mln_Pred;
                         if(data->abort)   goto abort;
                      }
@@ -377,7 +373,7 @@ syslog_AmiTCP(LOG_DEBUG, "Added Domainname %ls to beginning of list", server->se
                      FPrintf(fh, "; Name Servers\n");
                      if(mw_data->isp.isp_nameservers.mlh_TailPred != (struct MinNode *)&mw_data->isp.isp_nameservers)
                      {
-                        server = (struct ServerEntry *)mw_data->isp.isp_nameservers.mlh_Tail;
+                        server = (struct ServerEntry *)mw_data->isp.isp_nameservers.mlh_Head;
                         while(server->se_node.mln_Succ)
                         {
                            FPrintf(fh, "NAMESERVER %ls\n", server->se_name);
@@ -419,6 +415,12 @@ syslog_AmiTCP(LOG_DEBUG, "Added Domainname %ls to beginning of list", server->se
    DoMainMethod(win, MUIM_MainWindow_SetStates, NULL, NULL, NULL);
    success = TRUE;
 
+   if((mw_data->isp.isp_flags & (ISF_GetTime | ISF_SaveTime)) && *mw_data->isp.isp_timename)
+   {
+      sprintf(buffer, "C:Execute AmiTCP:bin/SynClock %ls%ls", mw_data->isp.isp_timename, (mw_data->isp.isp_flags & ISF_SaveTime ? " SAVE" : ""));
+      run_async(buffer);
+   }
+
 abort:
 
 // **********************************************************************
@@ -430,8 +432,11 @@ abort:
        iface_deinit(iface_data);
        iface_free(iface_data);
        iface_data = NULL;
-       exec_event(&iface->if_events, IFE_OnlineFail);
-       DoMainMethod(mw_data->GR_Led[(int)iface->if_userdata], MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Red, NULL);
+       if(!data->abort)
+       {
+          exec_event(&iface->if_events, IFE_OnlineFail);
+          DoMethod(app, MUIM_Application_PushMethod, mw_data->GR_Led[(int)iface->if_userdata], 3, MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Red);
+       }
     }
 
    if(SocketBase)

@@ -17,6 +17,7 @@
 ///
 /// external variables
 extern struct Library *LocaleBase, *LockSocketBase;
+extern struct ExecBase *SysBase;
 extern struct Catalog *cat;
 extern struct MUI_CustomClass *CL_MainWindow;
 extern Object *win, *app;
@@ -129,50 +130,6 @@ BOOL SetEnvDOS(STRPTR name, STRPTR string, LONG len, BOOL save)
 }
 
 ///
-/// amirexx_do_command
-LONG amirexx_do_command(const char *fmt, ...)
-{
-   char buf[256];
-   struct MsgPort *port; /* our reply port */
-   struct MsgPort *AmiTCP_Port;
-   struct RexxMsg *rmsg;
-   LONG rc = 20;         /* fail */
-
-   vsprintf(buf, fmt, (va_list)(&fmt + (va_list)1));
-
-   if(port = CreateMsgPort())
-   {
-      port->mp_Node.ln_Name = "BOOTPCONFIG";
-      if(rmsg = CreateRexxMsg(port, NULL, (STRPTR)AmiTCP_PortName))
-      {
-         rmsg->rm_Action = RXCOMM;
-         rmsg->rm_Args[0] = (STRPTR)buf;
-         if(FillRexxMsg(rmsg, 1, 0))
-         {
-            Forbid();
-            if(AmiTCP_Port = FindPort((STRPTR)AmiTCP_PortName))
-            {
-               PutMsg(AmiTCP_Port, (struct Message *)rmsg);
-               Permit();
-               do
-               {
-                  WaitPort(port);
-               } while(GetMsg(port) != (struct Message *)rmsg);
-               rc = rmsg->rm_Result1;
-            }
-            else
-               Permit();
-
-            ClearRexxMsg(rmsg, 1);
-         }
-         DeleteRexxMsg(rmsg);
-      }
-      DeleteMsgPort(port);
-   }
-   return(rc);
-}
-
-///
 /// EscapeString
 VOID EscapeString(STRPTR buffer, STRPTR str)
 {
@@ -255,6 +212,7 @@ VOID EscapeString(STRPTR buffer, STRPTR str)
 }
 
 ///
+
 /// clear_config
 VOID clear_config(struct Config *conf)
 {
@@ -266,11 +224,14 @@ VOID clear_config(struct Config *conf)
    bzero(conf, sizeof(struct Config));
 
    strcpy(conf->cnf_serialdevice, "serial.device");
-   strcpy(conf->cnf_initstring, "ATZ");
-   strcpy(conf->cnf_dialprefix, "ATD");
+   strcpy(conf->cnf_initstring, "AT&F&D2");
+   strcpy(conf->cnf_dialprefix, "ATDT");
    conf->cnf_baudrate        = 38400;
    conf->cnf_redialattempts  = 10;
    conf->cnf_redialdelay     = 5;
+   conf->cnf_flags = CFL_7Wire | CFL_RadBoogie | CFL_ShowLog | CFL_ShowLamps | CFL_ShowConnect |
+      CFL_ShowOnlineTime | CFL_ShowButtons | CFL_ShowNetwork | CFL_ShowUser | CFL_ShowStatusWin |
+      CFL_ShowSerialInput | CFL_StartupOpenWin;
 }
 
 ///
@@ -328,7 +289,6 @@ VOID clear_isp(struct ISP *isp)
 }
 
 ///
-
 /// iterate_ifacelist
 VOID iterate_ifacelist(struct MinList *list, int set_mode)
 {
@@ -398,6 +358,9 @@ struct Interface *find_by_name(struct MinList *list, STRPTR name)
 struct ServerEntry *add_server(struct MinList *list, STRPTR name)
 {
    struct ServerEntry *server;
+
+   if(!name || !*name || !strcmp(name, "0.0.0.0"))
+      return(NULL);
 
    if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
    {
@@ -536,18 +499,18 @@ VOID exec_command(STRPTR command, int how)
    *buf = NULL;
    switch(how)
    {
-      case 1: // SCRIPT
+      case 1: // WB:
+         run_wb(command);
+         break;
+      case 2: // SCRIPT
          strcpy(buf, "c:Execute ");
          strncat(buf, command, MAXPATHLEN);
          SystemTags(buf, TAG_DONE);
          break;
-      case 2: // AREXX:
+      case 3: // AREXX:
          strcpy(buf, "SYS:Rexxc/rx ");
          strncat(buf, command, MAXPATHLEN);
          SystemTags(buf, TAG_DONE);
-         break;
-      case 3: // WB:
-         run_wb(command);
          break;
       default: // EXEC_CLI
          SystemTags(command, TAG_DONE);
@@ -604,11 +567,16 @@ BOOL launch_amitcp(VOID)
    }
 
    if(!FindPort((STRPTR)AmiTCP_PortName))
-      run_async((Config.cnf_flags & CFL_Debug ? "AmiTCP:kernel/AmiTCP debug" : "AmiTCP:kernel/AmiTCP"));
+   {
+      if(SysBase->AttnFlags & AFF_68020)
+         run_async((Config.cnf_flags & CFL_Debug ? "AmiTCP:kernel/AmiTCP.020 debug" : "AmiTCP:kernel/AmiTCP.020"));
+      else
+         run_async((Config.cnf_flags & CFL_Debug ? "AmiTCP:kernel/AmiTCP debug" : "AmiTCP:kernel/AmiTCP"));
+   }
 
    /* wait until AmiTCP is running */
    i = 0;
-   while(!FindPort((STRPTR)AmiTCP_PortName) && i++ < 40)
+   while(!FindPort((STRPTR)AmiTCP_PortName) && i++ < 60)
       Delay(25);
 
    if(FindPort((STRPTR)AmiTCP_PortName))
@@ -671,6 +639,50 @@ VOID syslog_AmiTCP(ULONG level, const STRPTR format, ...)
    if(SocketBase)
       vsyslog(level, format, (LONG *)va);
    va_end(va);
+}
+
+///
+/// amirexx_do_command
+LONG amirexx_do_command(const char *fmt, ...)
+{
+   char buf[256];
+   struct MsgPort *port; /* our reply port */
+   struct MsgPort *AmiTCP_Port;
+   struct RexxMsg *rmsg;
+   LONG rc = 20;         /* fail */
+
+   vsprintf(buf, fmt, (va_list)(&fmt + (va_list)1));
+
+   if(port = CreateMsgPort())
+   {
+      port->mp_Node.ln_Name = "BOOTPCONFIG";
+      if(rmsg = CreateRexxMsg(port, NULL, (STRPTR)AmiTCP_PortName))
+      {
+         rmsg->rm_Action = RXCOMM;
+         rmsg->rm_Args[0] = (STRPTR)buf;
+         if(FillRexxMsg(rmsg, 1, 0))
+         {
+            Forbid();
+            if(AmiTCP_Port = FindPort((STRPTR)AmiTCP_PortName))
+            {
+               PutMsg(AmiTCP_Port, (struct Message *)rmsg);
+               Permit();
+               do
+               {
+                  WaitPort(port);
+               } while(GetMsg(port) != (struct Message *)rmsg);
+               rc = rmsg->rm_Result1;
+            }
+            else
+               Permit();
+
+            ClearRexxMsg(rmsg, 1);
+         }
+         DeleteRexxMsg(rmsg);
+      }
+      DeleteMsgPort(port);
+   }
+   return(rc);
 }
 
 ///

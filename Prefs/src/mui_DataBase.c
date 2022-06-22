@@ -939,13 +939,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
       Child, tmp.CY_Pager = Cycle(STR_CY_Pages),
       Child, tmp.GR_Pager = VGroup,
          MUIA_Group_PageMode, TRUE,
-#ifndef DO_LISTTREE
-         InnerSpacing(0,0),
-#endif
          Child, tmp.GR_Groups = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_Groups = NListviewObject,
@@ -979,13 +973,10 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   MUIA_String_Accept   , "-1234567890",
                End,
                Child, MakeKeyLabel2(MSG_LA_GroupMembers, "  m"),
-               Child, tmp.STR_GroupMembers = MakeKeyString(NULL, 1020, "  m"),
+               Child, tmp.STR_GroupMembers = MakeKeyString(NULL, 1023, "  m"),
             End,
          End,
          Child, tmp.GR_Hosts = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_Hosts = NListviewObject,
@@ -1023,9 +1014,6 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, tmp.GR_Protocols = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_Protocols = NListviewObject,
@@ -1063,9 +1051,6 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, tmp.GR_Services = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_Services = NListviewObject,
@@ -1115,9 +1100,6 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, tmp.GR_InetAccess = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_InetAccess = NListviewObject,
@@ -1144,7 +1126,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   Child, MakeKeyLabel2(MSG_LA_Service, MSG_CC_Service),
                   Child, tmp.STR_InetAccessService   = MakeKeyString(NULL, 40, MSG_CC_Service),
                   Child, MakeKeyLabel2("  Host:", "  h"),
-                  Child, tmp.STR_InetAccessHost      = MakeKeyString(NULL, 40, "  h"),
+                  Child, tmp.STR_InetAccessHost      = MakeKeyString(NULL, 80, "  h"),
                   Child, MakeKeyLabel2("  Access:", "  a"),
                   Child, HGroup,
                      Child, tmp.CY_InetAccess = Cycle(STR_CY_Access),
@@ -1155,9 +1137,6 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, tmp.GR_Inetd = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_Inetd = NListviewObject,
@@ -1210,9 +1189,6 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, tmp.GR_Networks = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_Networks = NListviewObject,
@@ -1250,9 +1226,6 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, tmp.GR_Rpc = VGroup,
-#ifndef DO_LISTTREE
-            InnerSpacing(0,0),
-#endif
             Child, VGroup,
                GroupSpacing(0),
                Child, tmp.LV_Rpcs = NListviewObject,

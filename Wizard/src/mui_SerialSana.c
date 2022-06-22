@@ -7,13 +7,8 @@
 #include "mui_SerialSana.h"
 #include "protos.h"
 
-#include "images/setup_page1.h"
 ///
 /// external variables
-extern BOOL no_picture;
-
-extern ULONG setup_page1_colors[];
-extern UBYTE setup_page1_body[];
 
 ///
 
@@ -23,42 +18,24 @@ ULONG SerialSana_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct SerialSana_Data tmp;
    static STRPTR ARR_RA_Interface[3];
 
-   ARR_RA_Interface[0] = GetStr(MSG_RA_Interface_Serial);
-   ARR_RA_Interface[1] = GetStr(MSG_RA_Interface_Sana);
+   ARR_RA_Interface[0] = GetStr("  \nUse a modem (analog/ISDN) to dialup\na provider.\n");
+   ARR_RA_Interface[1] = GetStr("  \nSpecify a Sana-II driver for your\nnetwork card or ISDN board.");
    ARR_RA_Interface[2] = NULL;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Group_Horiz, TRUE,
-/*      Child, tmp.GR_Picture = VGroup,
-         MUIA_ShowMe, !no_picture,
-         Child, BodychunkObject,
-            GroupFrame,
-            InnerSpacing(0, 0),
-            MUIA_FixWidth             , SETUP_PAGE1_WIDTH,
-            MUIA_FixHeight            , SETUP_PAGE1_HEIGHT,
-            MUIA_Bitmap_Width         , SETUP_PAGE1_WIDTH ,
-            MUIA_Bitmap_Height        , SETUP_PAGE1_HEIGHT,
-            MUIA_Bodychunk_Depth      , SETUP_PAGE1_DEPTH ,
-            MUIA_Bodychunk_Body       , (UBYTE *)setup_page1_body,
-            MUIA_Bodychunk_Compression, SETUP_PAGE1_COMPRESSION,
-            MUIA_Bodychunk_Masking    , SETUP_PAGE1_MASKING,
-            MUIA_Bitmap_SourceColors  , (ULONG *)setup_page1_colors,
+      GroupFrame,
+      MUIA_Background, MUII_TextBack,
+      Child, HVSpace,
+      Child, MakeText(GetStr("  Analog modem: choose the first option\nISDN board: first one => bscisdn.device,\n    fossil.device or simmilar will be used.\n    second one => use sana2 driver like iwan.device\ndirect connections with network card\n(ariadne, etc.): choose 2nd option")),
+      Child, HGroup,
+         Child, HVSpace,
+         Child, tmp.RA_Interface = RadioObject,
+            MUIA_CycleChain   , 1,
+            MUIA_Radio_Entries, ARR_RA_Interface,
          End,
          Child, HVSpace,
       End,
-*/      Child, VGroup,   // Serial connection with Modem (PPP/Slip) or direct connection (Ethernet/Arcnet etc.) with Network card
-         GroupFrame,
-         Child, HVSpace,
-         Child, HGroup,
-            Child, HVSpace,
-            Child, tmp.RA_Interface = RadioObject,
-               MUIA_CycleChain   , 1,
-               MUIA_Radio_Entries, ARR_RA_Interface,
-            End,
-            Child, HVSpace,
-         End,
-         Child, HVSpace,
-      End,
+      Child, HVSpace,
       TAG_MORE, msg->ops_AttrList))
    {
       struct SerialSana_Data *data = INST_DATA(cl, obj);

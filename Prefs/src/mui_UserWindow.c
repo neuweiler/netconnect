@@ -20,43 +20,41 @@ extern struct MUI_CustomClass *CL_PasswdReq;
 extern Object *win, *app;
 
 ///
-/*
-      case MUIV_Databases_Modification_Disable:
-         DoMethod(data->LV_Users, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &user);
-         if(user)
-         {
-            user->Disabled = xget(data->CH_Disabled, MUIA_Selected);
-            set(data->BT_ChangePassword, MUIA_Disabled, user->Disabled);
-            set(data->BT_RemovePassword, MUIA_Disabled, !*user->Password || user->Disabled);
-            DoMethod(data->LV_Users, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
-         }
-         break;
-      case MUIV_Databases_Modification_ChangePassword:
-      {
-         Object *window;
 
-         set(app, MUIA_Application_Sleep, TRUE);
-         if(window = NewObject(CL_PasswdReq->mcc_Class, NULL, MUIA_Genesis_Originator, obj, TAG_DONE))
-         {
-            DoMethod(app, OM_ADDMEMBER, window);
-            set(window, MUIA_Window_Open, TRUE);
-         }
-      }
-      break;
-      case MUIV_Databases_Modification_RemovePassword:
-         DoMethod(data->LV_Users, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &user);
-         if(user)
-         {
-            if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_ReallyRemovePasswd), GetStr(MSG_TX_ReallyRemovePasswd)))
-            {
-               MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), GetStr(MSG_TX_PasswordWarning));
-               *user->Password = NULL;
-               set(data->BT_RemovePassword, MUIA_Disabled, TRUE);
-            }
-            DoMethod(data->LV_Users, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
-         }
-         break;
-*/
+/// UserWindow_DisableActive
+ULONG UserWindow_DisableActive(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct UserWindow_Data *data = INST_DATA(cl, obj);
+   BOOL disabled;
+
+   disabled = xget(data->CH_Disabled, MUIA_Selected);
+   set(data->BT_ChangePassword, MUIA_Disabled, disabled);
+   set(data->BT_RemovePassword, MUIA_Disabled, !*data->user->us_password || disabled);
+
+   return(NULL);
+}
+
+///
+/// UserWindow_ChangePassword
+ULONG UserWindow_ChangePassword(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct UserWindow_Data *data = INST_DATA(cl, obj);
+   Object *window;
+
+   set(app, MUIA_Application_Sleep, TRUE);
+   if(window = NewObject(CL_PasswdReq->mcc_Class, NULL,
+      MUIA_Genesis_Originator, obj,
+      MUIA_PasswdReq_OldPassword, data->user->us_password,
+      TAG_DONE))
+   {
+      DoMethod(app, OM_ADDMEMBER, window);
+      set(window, MUIA_Window_Open, TRUE);
+   }
+
+   return(NULL);
+}
+
+///
 /// UserWindow_PasswdReqFinish
 ULONG UserWindow_PasswdReqFinish(struct IClass *cl, Object *obj, struct MUIP_Genesis_Finish *msg)
 {
@@ -66,31 +64,20 @@ ULONG UserWindow_PasswdReqFinish(struct IClass *cl, Object *obj, struct MUIP_Gen
    {
       struct PasswdReq_Data *pw_data = INST_DATA(CL_PasswdReq->mcc_Class, msg->obj);
 
-      if(strcmp((STRPTR)xget(pw_data->STR_pw1, MUIA_String_Contents), (STRPTR)xget(pw_data->STR_pw2, MUIA_String_Contents)))
+      if(strlen((STRPTR)xget(pw_data->STR_pw1, MUIA_String_Contents)))
       {
-         MUI_Request(app, win, NULL, NULL, "*_Okay", "The passwords you have\nentered are not equal.");
-         setstring(pw_data->STR_pw1, NULL);
-         setstring(pw_data->STR_pw2, NULL);
-         set(msg->obj, MUIA_Window_ActiveObject, pw_data->STR_pw1);
-         return(NULL);
+         if(!UserGroupBase)
+            UserGroupBase = OpenLibrary(USERGROUPNAME, 0);
+
+         if(UserGroupBase)
+         {
+            strcpy(data->user->us_password, crypt((STRPTR)xget(pw_data->STR_pw1, MUIA_String_Contents), data->user->us_password));
+            CloseLibrary(UserGroupBase);
+            UserGroupBase = NULL;
+         }
       }
       else
-      {
-         if(strlen((STRPTR)xget(pw_data->STR_pw1, MUIA_String_Contents)))
-         {
-            if(!UserGroupBase)
-               UserGroupBase = OpenLibrary(USERGROUPNAME, 0);
-
-            if(UserGroupBase)
-            {
-               strcpy(data->user->us_password, crypt((STRPTR)xget(pw_data->STR_pw1, MUIA_String_Contents), data->user->us_password));
-               CloseLibrary(UserGroupBase);
-               UserGroupBase = NULL;
-            }
-         }
-         else
-            MUI_Request(app, win, NULL, NULL, "*_Abort", "Unable to change password.");
-      }
+         MUI_Request(app, win, NULL, NULL, "*_Abort", "Unable to change password.");
    }
    set(msg->obj, MUIA_Window_Open, FALSE);
    DoMethod(app, OM_REMMEMBER, msg->obj),
@@ -101,7 +88,66 @@ ULONG UserWindow_PasswdReqFinish(struct IClass *cl, Object *obj, struct MUIP_Gen
 }
 
 ///
+/// UserWindow_RemovePassword
+ULONG UserWindow_RemovePassword(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct UserWindow_Data *data = INST_DATA(cl, obj);
 
+   if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_ReallyRemovePasswd), GetStr(MSG_TX_ReallyRemovePasswd)))
+   {
+      MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), GetStr(MSG_TX_PasswordWarning));
+      *data->user->us_password = NULL;
+      set(data->BT_RemovePassword, MUIA_Disabled, TRUE);
+   }
+   return(NULL);
+}
+
+///
+/// UserWindow_NameActive
+ULONG UserWindow_NameActive(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct UserWindow_Data *data = INST_DATA(cl, obj);
+
+   if(!strlen((STRPTR)xget(data->STR_HomeDir, MUIA_String_Contents)))
+   {
+      char buf[81];
+
+      sprintf(buf, "AmiTCP:home/%ls", (STRPTR)xget(data->STR_Name, MUIA_String_Contents));
+      setstring(data->STR_HomeDir, buf);
+      DoMethod(obj, MUIM_UserWindow_HomeDirActive);
+   }
+   set(win, MUIA_Window_ActiveObject, data->STR_RealName);
+
+   return(NULL);
+}
+
+///
+/// UserWindow_HomeDirActive
+ULONG UserWindow_HomeDirActive(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct UserWindow_Data *data = INST_DATA(cl, obj);
+   STRPTR file;
+   BPTR fh;
+
+   file = (STRPTR)xget(data->STR_HomeDir, MUIA_String_Contents);
+   if(fh = Lock(file, ACCESS_READ))
+      UnLock(fh);
+   else
+   {
+      if(MUI_Request(app, win, NULL, NULL, GetStr("  *_Create|_Abort"), "A directory named '%ls'\ndoes not exist yet.\nWould you like to create it ?", file))
+      {
+         if(fh = CreateDir(file))
+            UnLock(fh);
+         else
+            MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), "Could not create\n%ls", file);
+      }
+   }
+   set(win, MUIA_Window_ActiveObject, data->STR_Shell);
+
+   return(NULL);
+}
+
+///
 
 /// UserWindow_Init
 ULONG UserWindow_Init(struct IClass *cl, Object *obj, struct MUIP_UserWindow_Init *msg)
@@ -112,15 +158,13 @@ ULONG UserWindow_Init(struct IClass *cl, Object *obj, struct MUIP_UserWindow_Ini
 
    setstring(data->STR_Name         , data->user->us_login);
    setstring(data->STR_RealName     , data->user->us_realname);
-   setstring(data->STR_MailLogin    , data->user->us_maillogin);
-   setstring(data->STR_MailPassword , data->user->us_mailpassword);
-   setstring(data->STR_EMail        , data->user->us_email);
-   setstring(data->STR_MailServer   , data->user->us_mailserver);
    setcheckmark(data->CH_Disabled   , !strcmp(data->user->us_password, "*"));
    setstring(data->STR_HomeDir      , data->user->us_homedir);
    setstring(data->STR_Shell        , data->user->us_shell);
    set(data->STR_UserID             , MUIA_String_Integer, data->user->us_uid);
    set(data->STR_GroupID            , MUIA_String_Integer, data->user->us_gid);
+   if(!*data->user->us_password)
+      set(data->BT_RemovePassword, MUIA_Disabled, TRUE);
 
    return(NULL);
 }
@@ -132,11 +176,6 @@ ULONG UserWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
 
    strcpy(data->user->us_login         , (STRPTR)xget(data->STR_Name         , MUIA_String_Contents));
    strcpy(data->user->us_realname      , (STRPTR)xget(data->STR_RealName     , MUIA_String_Contents));
-   strcpy(data->user->us_maillogin     , (STRPTR)xget(data->STR_MailLogin    , MUIA_String_Contents));
-   strcpy(data->user->us_mailpassword  , (STRPTR)xget(data->STR_MailPassword , MUIA_String_Contents));
-   strcpy(data->user->us_email         , (STRPTR)xget(data->STR_EMail        , MUIA_String_Contents));
-   strcpy(data->user->us_mailserver    , (STRPTR)xget(data->STR_MailServer   , MUIA_String_Contents));
-
    if(xget(data->CH_Disabled, MUIA_Selected))
       strcpy(data->user->us_password, "*");
    strcpy(data->user->us_homedir       , (STRPTR)xget(data->STR_HomeDir      , MUIA_String_Contents));
@@ -152,7 +191,6 @@ ULONG UserWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
 ULONG UserWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct UserWindow_Data tmp;
-   static STRPTR ARR_Pages[] = { "User settings", "Advanced", NULL };
    Object *originator;
 
    originator = (Object *)GetTagData(MUIA_Genesis_Originator, 0, msg->ops_AttrList);
@@ -162,61 +200,41 @@ ULONG UserWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       MUIA_Window_ID       , MAKE_ID('U','S','R','E'),
       MUIA_Window_Height   , MUIV_Window_Height_MinMax(0),
       WindowContents       , VGroup,
-         Child, RegisterGroup(ARR_Pages),
-            Child, VGroup,
-               Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  User Name:", "  n"),
-                  Child, tmp.STR_Name = MakeKeyString(NULL, 80, "  n"),
-                  Child, MakeKeyLabel2("  Real Name:", "  o"),
-                  Child, tmp.STR_RealName = MakeKeyString(NULL, 80, "  o"),
-                  Child, MakeKeyLabel2("  EMail:", "  o"),
-                  Child, tmp.STR_EMail = MakeKeyString(NULL, 80, "  e"),
-                  Child, MakeKeyLabel2("  Mail Login:", "  l"),
-                  Child, HGroup,
-                     Child, tmp.STR_MailLogin = MakeKeyString(NULL, 80, "  l"),
-                     Child, MakeKeyLabel2("  Mail Password:", "  p"),
-                     Child, tmp.STR_MailPassword = TextinputObject,
-                        MUIA_ControlChar     , *GetStr("  p"),
-                        MUIA_CycleChain      , 1,
-                        MUIA_Frame           , MUIV_Frame_String,
-                        MUIA_String_Secret   , TRUE,
-                        MUIA_String_MaxLen   , 80,
-                     End,
-                  End,
-                  Child, MakeKeyLabel2("  Mail Server:", "  v"),
-                  Child, tmp.STR_MailServer = MakeKeyString(NULL, 80, "  v"),
-               End,
-            End,
-            Child, ColGroup(2),
+         Child, ColGroup(2),
+            GroupFrame,
+            Child, MakeKeyLabel2("  User Name:", "  n"),
+            Child, tmp.STR_Name = MakeKeyString(NULL, 40, "  n"),
+            Child, MakeKeyLabel2("  Real Name:", "  o"),
+            Child, tmp.STR_RealName = MakeKeyString(NULL, 80, "  o"),
+            Child, MakeKeyLabel2(MSG_LA_HomeDir, MSG_CC_HomeDir),
+            Child, tmp.PA_HomeDir   = MakePopAsl(tmp.STR_HomeDir = MakeKeyString(NULL, MAXPATHLEN, MSG_CC_FullName), GetStr(MSG_TX_ChooseHomeDir), TRUE),
+            Child, MakeKeyLabel2(MSG_LA_Shell, MSG_CC_Shell),
+            Child, HGroup,
+               Child, tmp.STR_Shell = MakeKeyString(NULL, 80, MSG_CC_Shell),
                Child, MakeKeyLabel2(MSG_LA_DisableUser, MSG_CC_DisableUser),
-               Child, HGroup,
-                  Child, tmp.CH_Disabled  = MakeKeyCheckMark(FALSE, MSG_CC_DisableUser),
-                  Child, HVSpace,
+               Child, tmp.CH_Disabled  = MakeKeyCheckMark(FALSE, MSG_CC_DisableUser),
+            End,
+            Child, MakeKeyLabel2(MSG_LA_UserID, MSG_CC_UserID),
+            Child, HGroup,
+               Child, tmp.STR_UserID   = TextinputObject,
+                  StringFrame,
+                  MUIA_ControlChar     , *GetStr(MSG_CC_UserID),
+                  MUIA_CycleChain      , 1,
+                  MUIA_String_MaxLen   , 7,
+                  MUIA_String_Accept   , "1234567890-",
                End,
-               Child, MakeKeyLabel2(MSG_LA_HomeDir, MSG_CC_HomeDir),
-               Child, HGroup,
-                  Child, tmp.PA_HomeDir   = MakePopAsl(tmp.STR_HomeDir = MakeKeyString(NULL, MAXPATHLEN, MSG_CC_FullName), GetStr(MSG_TX_ChooseHomeDir), TRUE),
-                  Child, HGroup,
-                     Child, MakeKeyLabel2(MSG_LA_Shell, MSG_CC_Shell),
-                     Child, tmp.STR_Shell = MakeKeyString(NULL, 80, MSG_CC_Shell),
-                  End,
+               Child, tmp.BT_ChangePassword = MakeButton(MSG_BT_ChangePassword),
+            End,
+            Child, MakeKeyLabel2(MSG_LA_UserGID, MSG_CC_UserGID),
+            Child, HGroup,
+               Child, tmp.STR_GroupID        = TextinputObject,
+                  StringFrame,
+                  MUIA_ControlChar     , *GetStr(MSG_CC_UserGID),
+                  MUIA_CycleChain      , 1,
+                  MUIA_String_MaxLen   , 7,
+                  MUIA_String_Accept   , "1234567890-",
                End,
-               Child, MakeKeyLabel2(MSG_LA_UserID, MSG_CC_UserID),
-               Child, HGroup,
-                  Child, tmp.STR_UserID   = TextinputObject,
-                     StringFrame,
-                     MUIA_ControlChar     , *GetStr(MSG_CC_UserID),
-                     MUIA_CycleChain      , 1,
-                     MUIA_String_MaxLen   , 7,
-                     MUIA_String_Accept   , "1234567890",
-                  End,
-                  Child, tmp.BT_ChangePassword = MakeButton(MSG_BT_ChangePassword),
-               End,
-               Child, MakeKeyLabel2(MSG_LA_UserGID, MSG_CC_UserGID),
-               Child, HGroup,
-                  Child, tmp.STR_GroupID        = MakeKeyString(NULL, 7, MSG_CC_UserGID),
-                  Child, tmp.BT_RemovePassword  = MakeButton(MSG_BT_RemovePassword),
-               End,
+               Child, tmp.BT_RemovePassword  = MakeButton(MSG_BT_RemovePassword),
             End,
          End,
          Child, HGroup,
@@ -230,19 +248,20 @@ ULONG UserWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       *data = tmp;
 
-      set(data->STR_MailLogin       , MUIA_ShortHelp, GetStr(MSG_Help_LoginName));
-      set(data->STR_MailPassword    , MUIA_ShortHelp, GetStr(MSG_Help_Password));
-
       DoMethod(obj                 , MUIM_Notify, MUIA_Window_CloseRequest, TRUE            , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_User_EditFinish, obj, 0);
       DoMethod(data->BT_Cancel     , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_User_EditFinish, obj, 0);
       DoMethod(data->BT_Okay       , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_User_EditFinish, obj, 1);
 
-      DoMethod(data->STR_Name          , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_RealName);
-      DoMethod(data->STR_RealName      , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_EMail);
-      DoMethod(data->STR_EMail         , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_MailLogin);
-      DoMethod(data->STR_MailLogin     , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_MailPassword);
-      DoMethod(data->STR_MailPassword  , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_MailServer);
-      DoMethod(data->STR_MailServer     , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Name);
+      DoMethod(data->CH_Disabled       , MUIM_Notify, MUIA_Selected       , MUIV_EveryTime  , obj, 1, MUIM_UserWindow_DisableActive);
+      DoMethod(data->BT_ChangePassword , MUIM_Notify, MUIA_Pressed        , FALSE           , obj, 1, MUIM_UserWindow_ChangePassword);
+      DoMethod(data->BT_RemovePassword , MUIM_Notify, MUIA_Pressed        , FALSE           , obj, 1, MUIM_UserWindow_RemovePassword);
+
+      DoMethod(data->STR_Name          , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_UserWindow_NameActive);
+      DoMethod(data->STR_HomeDir       , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_UserWindow_HomeDirActive);
+      DoMethod(data->STR_RealName      , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_HomeDir);
+      DoMethod(data->STR_Shell         , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_UserID);
+      DoMethod(data->STR_UserID        , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_GroupID);
+      DoMethod(data->STR_GroupID       , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->BT_Okay);
    }
    return((ULONG)obj);
 }
@@ -253,10 +272,15 @@ SAVEDS ULONG UserWindow_Dispatcher(register __a0 struct IClass *cl, register __a
 {
    switch((ULONG)msg->MethodID)
    {
-      case OM_NEW                      : return(UserWindow_New               (cl, obj, (APTR)msg));
-      case MUIM_UserWindow_Init        : return(UserWindow_Init              (cl, obj, (APTR)msg));
-      case MUIM_UserWindow_CopyData    : return(UserWindow_CopyData          (cl, obj, (APTR)msg));
-      case MUIM_Genesis_Finish         : return(UserWindow_PasswdReqFinish  (cl, obj, (APTR)msg));
+      case OM_NEW                         : return(UserWindow_New               (cl, obj, (APTR)msg));
+      case MUIM_UserWindow_Init           : return(UserWindow_Init              (cl, obj, (APTR)msg));
+      case MUIM_UserWindow_CopyData       : return(UserWindow_CopyData          (cl, obj, (APTR)msg));
+      case MUIM_Genesis_Finish            : return(UserWindow_PasswdReqFinish   (cl, obj, (APTR)msg));
+      case MUIM_UserWindow_DisableActive  : return(UserWindow_DisableActive     (cl, obj, (APTR)msg));
+      case MUIM_UserWindow_ChangePassword : return(UserWindow_ChangePassword    (cl, obj, (APTR)msg));
+      case MUIM_UserWindow_RemovePassword : return(UserWindow_RemovePassword    (cl, obj, (APTR)msg));
+      case MUIM_UserWindow_NameActive     : return(UserWindow_NameActive        (cl, obj, (APTR)msg));
+      case MUIM_UserWindow_HomeDirActive  : return(UserWindow_HomeDirActive     (cl, obj, (APTR)msg));
    }
 
    return(DoSuperMethodA(cl, obj, msg));

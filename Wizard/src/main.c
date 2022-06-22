@@ -10,20 +10,28 @@
 #include "/genesis.lib/genesis_lib.h"
 #include "mui.h"
 #include "mui_Finished.h"
-#include "mui_ISPInfo1.h"
-#include "mui_ISPInfo2.h"
+#include "mui_Protocol.h"
 #include "mui_LoginScript.h"
 #include "mui_MainWindow.h"
-#include "mui_ModemDetect.h"
 #include "mui_ModemStrings.h"
 #include "mui_Online.h"
-//#include "mui_Sana2.h"
+#include "mui_Sana2.h"
+#include "mui_SanaConfig.h"
 #include "mui_SerialModem.h"
-//#include "mui_SerialSana.h"
-#include "mui_Advanced.h"
+#include "mui_SerialSana.h"
 #include "mui_UserInfo.h"
 #include "mui_Welcome.h"
+#include "mui_Request.h"
 #include "protos.h"
+
+#include "images/setup_page0.h"
+#include "images/setup_page1.h"
+#include "images/setup_page2.h"
+#include "images/setup_page3.h"
+#include "images/setup_page4.h"
+#include "images/setup_page5.h"
+#include "images/setup_page6.h"
+#include "images/setup_page7.h"
 
 ///
 /// external variables
@@ -36,11 +44,10 @@ extern struct Library *MUIMasterBase, *GenesisBase;
 #ifdef DEMO
 extern struct Library *BattClockBase;
 #endif
-extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct MUI_CustomClass  *CL_ModemDetect;
-extern struct MUI_CustomClass  *CL_Online;
-extern struct MUI_CustomClass  *CL_Welcome , *CL_SerialSana, *CL_SerialModem, *CL_ModemStrings, *CL_Advanced;
-extern struct MUI_CustomClass  *CL_UserInfo, *CL_ISPInfo1, *CL_ISPInfo2, *CL_LoginScript, *CL_Finished, *CL_Sana2;
+extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_Welcome , *CL_SerialSana,
+                              *CL_SerialModem, *CL_ModemStrings, *CL_UserInfo, *CL_Protocol,
+                              *CL_LoginScript, *CL_Finished, *CL_Sana2, *CL_SanaConfig,
+                              *CL_Request;
 extern struct NewMenu MainMenu[];
 extern struct MsgPort *MainPort;
 extern Object *app;
@@ -49,9 +56,16 @@ extern char serial_buffer[], serial_buffer_old1[], serial_buffer_old2[];
 extern WORD ser_buf_pos;
 extern struct Config Config;
 extern ULONG sigs;
-extern BOOL no_picture, use_loginscript, easy_ppp;
+extern BOOL no_picture, use_loginscript;
 extern struct ISP ISP;
 extern struct Interface Iface;
+
+extern ULONG *colors[NUM_PAGES], setup_page0_colors[], setup_page1_colors[], setup_page2_colors[],
+             setup_page3_colors[], setup_page4_colors[], setup_page5_colors[], setup_page6_colors[],
+             setup_page7_colors[];
+extern UBYTE *bodies[NUM_PAGES], setup_page0_body[], setup_page1_body[], setup_page2_body[],
+             setup_page3_body[], setup_page4_body[], setup_page5_body[], setup_page6_body[],
+             setup_page7_body[];
 
 ///
 
@@ -90,24 +104,23 @@ BOOL init_libs(VOID)
 VOID exit_classes(VOID)
 {
    if(CL_MainWindow)          MUI_DeleteCustomClass(CL_MainWindow);
-   if(CL_ModemDetect)         MUI_DeleteCustomClass(CL_ModemDetect);
    if(CL_Online)              MUI_DeleteCustomClass(CL_Online);
+   if(CL_Request)             MUI_DeleteCustomClass(CL_Request);
 
    if(CL_Welcome)             MUI_DeleteCustomClass(CL_Welcome);
-//   if(CL_SerialSana)          MUI_DeleteCustomClass(CL_SerialSana);
-   if(CL_Advanced)            MUI_DeleteCustomClass(CL_Advanced);
+   if(CL_SerialSana)          MUI_DeleteCustomClass(CL_SerialSana);
    if(CL_SerialModem)         MUI_DeleteCustomClass(CL_SerialModem);
    if(CL_ModemStrings)        MUI_DeleteCustomClass(CL_ModemStrings);
    if(CL_UserInfo)            MUI_DeleteCustomClass(CL_UserInfo);
-   if(CL_ISPInfo1)            MUI_DeleteCustomClass(CL_ISPInfo1);
-   if(CL_ISPInfo2)            MUI_DeleteCustomClass(CL_ISPInfo2);
+   if(CL_Protocol)            MUI_DeleteCustomClass(CL_Protocol);
    if(CL_LoginScript)         MUI_DeleteCustomClass(CL_LoginScript);
    if(CL_Finished)            MUI_DeleteCustomClass(CL_Finished);
-//   if(CL_Sana2)               MUI_DeleteCustomClass(CL_Sana2);
+   if(CL_Sana2)               MUI_DeleteCustomClass(CL_Sana2);
+   if(CL_SanaConfig)          MUI_DeleteCustomClass(CL_SanaConfig);
 
-   CL_MainWindow = CL_ModemDetect = CL_Online = CL_Advanced =
-   CL_Welcome = CL_SerialSana = CL_SerialModem = CL_ModemStrings =
-   CL_UserInfo = CL_ISPInfo1 = CL_ISPInfo2 = CL_LoginScript = CL_Finished = CL_Sana2 = NULL;
+   CL_MainWindow = CL_Online = CL_Welcome = CL_SerialSana = CL_SerialModem = CL_ModemStrings =
+   CL_UserInfo = CL_Protocol = CL_LoginScript = CL_Finished = CL_Sana2 = CL_SanaConfig =
+   CL_Request = NULL;
 }
 
 ///
@@ -115,24 +128,23 @@ VOID exit_classes(VOID)
 BOOL init_classes(VOID)
 {
    CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct MainWindow_Data)    , MainWindow_Dispatcher);
-   CL_ModemDetect    = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct ModemDetect_Data)   , ModemDetect_Dispatcher);
    CL_Online         = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct Online_Data)        , Online_Dispatcher);
+   CL_Request        = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct Request_Data)       , Request_Dispatcher);
 
    CL_Welcome         = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Welcome_Data)       , Welcome_Dispatcher);
-//   CL_SerialSana      = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct SerialSana_Data)    , SerialSana_Dispatcher);
-   CL_Advanced        = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Advanced_Data)      , Advanced_Dispatcher);
+   CL_SerialSana      = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct SerialSana_Data)    , SerialSana_Dispatcher);
    CL_SerialModem     = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct SerialModem_Data)   , SerialModem_Dispatcher);
    CL_ModemStrings    = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct ModemStrings_Data)  , ModemStrings_Dispatcher);
    CL_UserInfo        = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct UserInfo_Data)      , UserInfo_Dispatcher);
-   CL_ISPInfo1        = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct ISPInfo1_Data)      , ISPInfo1_Dispatcher);
-   CL_ISPInfo2        = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct ISPInfo2_Data)      , ISPInfo2_Dispatcher);
+   CL_Protocol        = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Protocol_Data)      , Protocol_Dispatcher);
    CL_LoginScript     = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct LoginScript_Data)   , LoginScript_Dispatcher);
    CL_Finished        = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Finished_Data)      , Finished_Dispatcher);
-//   CL_Sana2           = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Sana2_Data)         , Sana2_Dispatcher);
+   CL_Sana2           = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Sana2_Data)         , Sana2_Dispatcher);
+   CL_SanaConfig      = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct SanaConfig_Data)    , SanaConfig_Dispatcher);
 
-   if(CL_MainWindow && CL_ModemDetect && CL_Online && CL_Advanced &&
-      CL_Welcome && /*CL_SerialSana &&*/ CL_SerialModem && CL_ModemStrings &&
-      CL_UserInfo && CL_ISPInfo1 && CL_ISPInfo2 && CL_LoginScript && CL_Finished /*&& CL_Sana2*/)
+   if(CL_MainWindow && CL_Online && CL_Welcome && CL_SerialSana && CL_SerialModem && CL_ModemStrings &&
+      CL_UserInfo && CL_Protocol && CL_LoginScript && CL_Finished && CL_Sana2 && CL_SanaConfig &&
+      CL_Request)
       return(TRUE);
 
    exit_classes();
@@ -172,7 +184,7 @@ BOOL check_date(VOID)
 {
    if(BattClockBase = OpenResource("battclock.resource"))
    {
-      if(ReadBattClock() < 641814503)
+      if(ReadBattClock() < 644407784)
          return(TRUE);
    }
    return(FALSE);
@@ -220,6 +232,7 @@ VOID HandleMainMethod(struct MsgPort *port)
             message->result = DoMethod(message->obj, message->MethodID, message->data1, message->data2);
             break;
          case MUIM_List_Select:
+         case MUIM_MainWindow_Request:
             message->result = DoMethod(message->obj, message->MethodID, message->data1, message->data2, message->data3);
             break;
 
@@ -231,6 +244,9 @@ VOID HandleMainMethod(struct MsgPort *port)
             break;
          case MUIM_Serial_WaitFor:
             message->result = serial_waitfor(message->data1, message->data2, message->data3, (int)message->obj);
+            break;
+         case MUIM_Serial_HangUp:
+            serial_hangup();
             break;
       }
 
@@ -254,6 +270,28 @@ VOID Handler(VOID)
          {
             LocalizeNewMenu(MainMenu);
 
+            bodies[PAGE_Welcome]       = setup_page0_body;
+            bodies[PAGE_SerialSana]    = (UBYTE *)setup_page1_body;
+            bodies[PAGE_SerialModem]   = (UBYTE *)setup_page2_body;
+            bodies[PAGE_ModemStrings]  = (UBYTE *)setup_page7_body;
+            bodies[PAGE_UserInfo]      = (UBYTE *)setup_page3_body;
+            bodies[PAGE_Protocol]      = (UBYTE *)setup_page4_body;
+            bodies[PAGE_LoginScript]   = (UBYTE *)setup_page5_body;
+            bodies[PAGE_Finished]      = (UBYTE *)setup_page6_body;
+            bodies[PAGE_Sana2]         = (UBYTE *)setup_page7_body;
+            bodies[PAGE_SanaConfig]    = (UBYTE *)setup_page3_body;
+
+            colors[PAGE_Welcome]       = (ULONG *)setup_page0_colors;
+            colors[PAGE_SerialSana]    = (ULONG *)setup_page1_colors;
+            colors[PAGE_SerialModem]   = (ULONG *)setup_page2_colors;
+            colors[PAGE_ModemStrings]  = (ULONG *)setup_page7_colors;
+            colors[PAGE_UserInfo]      = (ULONG *)setup_page3_colors;
+            colors[PAGE_Protocol]      = (ULONG *)setup_page4_colors;
+            colors[PAGE_LoginScript]   = (ULONG *)setup_page5_colors;
+            colors[PAGE_Finished]      = (ULONG *)setup_page6_colors;
+            colors[PAGE_Sana2]         = (ULONG *)setup_page7_colors;
+            colors[PAGE_SanaConfig]    = (ULONG *)setup_page3_colors;
+
             if(app = ApplicationObject,
                MUIA_Application_Author       , "Michael Neuweiler",
                MUIA_Application_Base         , "GenesisWizard",
@@ -267,12 +305,13 @@ VOID Handler(VOID)
             {
                struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
 
+               DoMethod(data->GR_ModemStrings, MUIM_ModemStrings_LoadData);
+               DoMethod(data->GR_SerialModem , MUIM_SerialModem_LoadData);
+
                set(win, MUIA_Window_Open, TRUE);
                if(!xget(win, MUIA_Window_Open))    // check if there was enogh space to open window
                {
-                  struct Welcome_Data *w_data = INST_DATA(CL_Welcome->mcc_Class, data->GR_Active);
-
-                  set(w_data->GR_Picture, MUIA_ShowMe, FALSE);
+                  set(data->GR_Picture, MUIA_ShowMe, FALSE);
                   no_picture = TRUE;
                   set(win, MUIA_Window_Open, TRUE);
                }
@@ -291,10 +330,6 @@ VOID Handler(VOID)
                Config.cnf_serbuflen = 16384;
                Config.cnf_redialattempts = 10;
                Config.cnf_redialdelay = 5;
-               strcpy(Config.cnf_initstring, "AT&F&D2");
-               strcpy(Config.cnf_dialprefix, "ATDT");
-               strcpy(Config.cnf_modemname, "Generic");
-               strcpy(Config.cnf_serialdevice, "serial.device");
 
                bzero(&ISP, sizeof(struct ISP));
                NewList((struct List *)&ISP.isp_loginscript);
@@ -306,8 +341,7 @@ VOID Handler(VOID)
                bzero(&Iface, sizeof(struct Interface));
                strcpy(Iface.if_netmask, "255.255.255.0");
                Iface.if_MTU    = 1500;
-               use_loginscript = TRUE;
-               easy_ppp = TRUE;
+               use_loginscript = FALSE;
 
 #ifdef DEMO
                if(!check_date())
@@ -333,6 +367,8 @@ VOID Handler(VOID)
 
                serial_delete();
                clear_list(&ISP.isp_loginscript);
+               clear_list(&ISP.isp_nameservers);
+               clear_list(&ISP.isp_domainnames);
             }
             else
                MUI_Request(0,0,0,0, GetStr(MSG_ReqBT_Abort), GetStr(MSG_TX_ErrorMUIApp));

@@ -9,7 +9,6 @@
 #include "mui_MainWindow.h"
 #include "protos.h"
 
-#include "images/setup_page6.h"
 ///
 /// external variables
 extern Object *win, *app;
@@ -18,10 +17,6 @@ extern struct Hook deshook;
 extern struct Config Config;
 extern struct ISP ISP;
 extern struct Interface Iface;
-extern BOOL no_picture;
-
-extern ULONG setup_page6_colors[];
-extern UBYTE setup_page6_body[];
 
 ///
 
@@ -63,7 +58,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
 {
    struct Finished_Data *data = INST_DATA(cl, obj);
    Object *window, *script;
-   char ip_info[41], dest_info[41], dns1_info[41], dns2_info[41], device_info[81];
+   char ip_info[41], dest_info[41], dns1_info[41], dns2_info[41], device_info[81], domain_info[81];
 
    if(addr_assign == CNF_Assign_Static)
       sprintf(ip_info, "%ls (%ls)", Iface.if_addr, GetStr(MSG_TX_Static));
@@ -80,23 +75,42 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
       strcpy(dest_info, GetStr(MSG_TX_Dynamic));
       strcat(dest_info, (dst_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
    }
-/*
-   if(*ISP.isp_dns1)
-   {
-      strcpy(dns1_info, ISP.isp_dns1);
-      strcat(dns1_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
-   }
-   else
-      strcpy(dns1_info, GetStr(MSG_TX_Undefined));
 
-   if(*ISP.isp_dns2)
+   *dns1_info = *dns2_info = NULL;
+   if(ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)
    {
-      strcpy(dns2_info, ISP.isp_dns2);
-      strcat(dns2_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
+      struct ServerEntry *server;
+
+      server = (struct ServerEntry *)ISP.isp_nameservers.mlh_TailPred;
+      if(server->se_node.mln_Pred)
+      {
+         strcpy(dns1_info, server->se_name);
+         strcat(dns1_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
+         server = (struct ServerEntry *)server->se_node.mln_Pred;
+         if(server->se_node.mln_Pred)
+         {
+            strcpy(dns2_info, server->se_name);
+            strcat(dns2_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
+         }
+      }
    }
-   else
+   if(!*dns1_info)
+      strcpy(dns1_info, GetStr(MSG_TX_Undefined));
+   if(!*dns2_info)
       strcpy(dns2_info, GetStr(MSG_TX_Undefined));
-*/
+
+   *domain_info = NULL;
+   if(ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames)
+   {
+      struct ServerEntry *server;
+
+      server = (struct ServerEntry *)ISP.isp_domainnames.mlh_TailPred;
+      if(server->se_node.mln_Pred)
+         strcpy(domain_info, server->se_name);
+   }
+   if(!*domain_info)
+      strcpy(domain_info, GetStr(MSG_TX_Undefined));
+
    if(strcmp(Iface.if_name, "ppp") && strcmp(Iface.if_name, "slip"))
       sprintf(device_info, "%ls, unit %ld", FilePart(Iface.if_sana2device), Iface.if_sana2unit);
    else
@@ -150,8 +164,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
                Child, Label(GetStr(MSG_BLA_DNS2IPAddr)),
                Child, MakeText(dns2_info),
                Child, Label(GetStr(MSG_BLA_DomainName)),
-Child, HVSpace,
-//               Child, MakeText(ISP.isp_domainname),
+               Child, MakeText(domain_info),
             End,
          End,
          Child, script = ListviewObject,
@@ -202,53 +215,33 @@ ULONG Finished_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct Finished_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Group_Horiz, TRUE,
-      Child, tmp.GR_Picture = VGroup,
-        MUIA_ShowMe, !no_picture,
-        Child, BodychunkObject,
-            GroupFrame,
-            InnerSpacing(0, 0),
-            MUIA_FixWidth             , SETUP_PAGE6_WIDTH,
-            MUIA_FixHeight            , SETUP_PAGE6_HEIGHT,
-            MUIA_Bitmap_Width         , SETUP_PAGE6_WIDTH ,
-            MUIA_Bitmap_Height        , SETUP_PAGE6_HEIGHT,
-            MUIA_Bodychunk_Depth      , SETUP_PAGE6_DEPTH ,
-            MUIA_Bodychunk_Body       , (UBYTE *)setup_page6_body,
-            MUIA_Bodychunk_Compression, SETUP_PAGE6_COMPRESSION,
-            MUIA_Bodychunk_Masking    , SETUP_PAGE6_MASKING,
-            MUIA_Bitmap_SourceColors  , (ULONG *)setup_page6_colors,
-         End,
+      GroupFrame,
+      MUIA_Background, MUII_TextBack,
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoSaveConfig)),
+      Child, HGroup,
+         Child, tmp.CH_Config = CheckMark(TRUE),
+         Child, MakePopAsl(tmp.STR_Config = MakeString(DEFAULT_CONFIGFILE, MAXPATHLEN), MSG_TX_SaveConfiguration, FALSE),
+      End,
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoSaveInfo)),
+      Child, HGroup,
+         Child, tmp.CH_Info = CheckMark(TRUE),
+         Child, MakePopAsl(tmp.STR_Info = MakeString("AmiTCP:log/GenesisWizard.log", MAXPATHLEN), MSG_TX_SaveInformation, FALSE),
+      End,
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoPrint)),
+      Child, HGroup,
+         Child, tmp.CH_Printer = CheckMark(FALSE),
+         Child, tmp.STR_Printer = MakeString("PRT:", 80),
+      End,
+      Child, HVSpace,
+      Child, HGroup,
+         Child, HVSpace,
+         Child, tmp.BT_ShowConfig = MakeButton(MSG_BT_ViewConfigInfo),
          Child, HVSpace,
       End,
-      Child, VGroup,
-         GroupFrame,
-         MUIA_Background, MUII_TextBack,
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoSaveConfig)),
-         Child, HGroup,
-            Child, tmp.CH_Config = CheckMark(TRUE),
-            Child, MakePopAsl(tmp.STR_Config = MakeString(DEFAULT_CONFIGFILE, MAXPATHLEN), MSG_TX_SaveConfiguration, FALSE),
-         End,
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoSaveInfo)),
-         Child, HGroup,
-            Child, tmp.CH_Info = CheckMark(TRUE),
-            Child, MakePopAsl(tmp.STR_Info = MakeString("AmiTCP:log/GenesisWizard.log", MAXPATHLEN), MSG_TX_SaveInformation, FALSE),
-         End,
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoPrint)),
-         Child, HGroup,
-            Child, tmp.CH_Printer = CheckMark(FALSE),
-            Child, tmp.STR_Printer = MakeString("PRT:", 80),
-         End,
-         Child, HVSpace,
-         Child, HGroup,
-            Child, HVSpace,
-            Child, tmp.BT_ShowConfig = MakeButton(MSG_BT_ViewConfigInfo),
-            Child, HVSpace,
-         End,
-         Child, HVSpace,
-      End,
+      Child, HVSpace,
       TAG_MORE, msg->ops_AttrList))
    {
       struct Finished_Data *data = INST_DATA(cl, obj);

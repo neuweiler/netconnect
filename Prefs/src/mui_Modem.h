@@ -8,7 +8,6 @@ struct MUIP_Modem_PopString_Close      { ULONG MethodID; LONG flags; };
 
 struct Modem_Data
 {
-   Object *GR_Modem;
    Object *PO_Modem;
    Object *LV_Modems;
    Object *LI_Modems;
@@ -22,7 +21,6 @@ struct Modem_Data
    Object *LV_DialPrefix;
    Object *STR_DialSuffix;
 
-   Object *GR_Serial;
    Object *PO_SerialDevice;
    Object *STR_SerialDevice;
    Object *LV_Devices;
@@ -36,9 +34,8 @@ struct Modem_Data
    Object *SL_RedialDelay;
 
    Object *CH_IgnoreDSR;
-   Object *CH_7Wire;
    Object *CH_RadBoogie;
-   Object *CH_XonXoff;
    Object *CH_OwnDevUnit;
+   Object *CY_Handshake;
 };
 

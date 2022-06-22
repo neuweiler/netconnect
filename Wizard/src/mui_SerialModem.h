@@ -1,8 +1,10 @@
 #define MUIM_SerialModem_LoadData            (TAGBASE_WIZARD | 0x1040)
+#define MUIM_SerialModem_ModemActive         (TAGBASE_WIZARD | 0x1041)
+
+struct MUIP_SerialModem_ModemActive          { ULONG MethodID; ULONG popstring; };
 
 struct SerialModem_Data
 {
-   Object *GR_Picture;
    Object *PO_SerialDevice;
    Object *STR_SerialDevice;
    Object *LV_SerialDevices;
@@ -10,10 +12,4 @@ struct SerialModem_Data
    Object *PO_ModemName;
    Object *LV_Modems;
    Object *TX_ModemName;
-   Object *PO_InitString;
-   Object *LV_Protocols;
-   Object *STR_InitString;
-   Object *PO_DialPrefix;
-   Object *STR_DialPrefix;
-   Object *LV_DialPrefix;
 };

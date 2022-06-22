@@ -1,0 +1,73 @@
+ 1. Bogomil (May  6 05:43): PAP login via gvpser.device geht hier jetzt, allerdings mußte ich das alles manuell einstellen. Der wizard sagt, daß basis-befehle vom modem nichst verstanden wurden oder sowas.
+ 2. Bogomil (May  6 05:44): ich habe nachwievor noch das problem, daß nach connect-disconnect-connect kein ping zu einem rechner im lan möglich ist.
+Prefs:
+======
+
+* iface has minlist for online, offline active, offline passive, online fail => use listview
+* "copy" button for providers, ifaces, users
+* add possibility to set default gateway
+
+Dialler:
+========
+
+* DON'T CALL ANY bsdsocket.lib call when SocketBase == NULL !!!! check everything !!!!
+* wenn quit mit iface online und sanaII device nicht oeffnen => kein SocketBase aber syslog() wird in sana.c sana_offline() aufgerufen
+* add AREXX commands !
+* when quit an still online => requester "you're still online, really wanna quit ?"
+* no isp => crash
+* menu: load config
+* quick reconnect (crash => modem stays online, reuse connection)
+* close gadget => option so it will iconify instead of quit
+* detach afer "always online" ifaces are online (wbstartup, etc.)
+* menus to switch "show buttons", etc..
+* Tooltypes: time to wait for amitcp
+
+Amigainfo: What I do in Genesis prefs is that there is a new config window "Autostart" (example) where I can select one or several providers, set some options for how Genesis will be started. Then GenesisPrefs creates the file "Genesis_startup" which is executed from User-Startup with an IF Exists...
+(AmigaInf Well, what I would souugest is that the it will be possible to have a local database for a Provider (actually it should probably be renamed to Network. The global is just a database.
+(AmigaInf Also Modem should be able to handla multiple modems and then I select which one within the Network configureation.
+(AmigaInf So the Network configurations will actually become full configurations with their own files
+
+Wizard:
+=======
+
+* add username if not in db/passwd (and db/group) yet
+
+
+misc:
+=====
+
+* send "RESET" to AmiTCP when SavePrefs, ChangeISP
+* loginscript: add "ParseIP", "ParseNextPasswd" (bogomil)
+* catalog not opened => crashes on a500
+* create small proggy like bootpconfig so Genesis won't be required
+
+MUI Problems could be caused by:
+================================
+
+* no GroupInit/ExitChange
+* forgot one of the above
+* ColGroup() with unfilled columns
+* ShowMe in ColGroup
+
+
+Chris' Extra "ToDo's"
+=====================
+1. Add password control per user so that genesis.library won't allow another user
+   to connect via Genesis without the correct password. Perhaps a users POP3
+   password could be mirrored their access password?
+   Also, a user shouldn't be able to change another users password - they would
+   have to enter their pass to alter the existing password.
+7. Quick reconnect from ram:/file option. Also fix D0/D2 stuff.
+14. Create a shortcut icon (like Win95/98) for new ISP's in a drawer. ie.
+    AmiTCP:Providers/Demon.info.
+    A user could leave this .info file on WB and, when executed, would load
+    Genesis and go online automatically - also a user and other options could
+    be setup within tooltypes.
+16. Change GenesisPrefs' menus so that "Import" is renamed to "Import Provider"
+    and add an option into menu to "Export Provider".
+    I also reckon you should add a RMB menu to the "networks" so that you could
+    add/remove/import/export/rename a provider via the RMB menu.
+
+Michael: if OpenDevice() fails, flush the memory and try once again to open
+it. This will fix this problem.
+

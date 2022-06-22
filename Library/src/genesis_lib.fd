@@ -1,0 +1,18 @@
+##base _GenesisBase
+##bias 30
+##public
+GetFileSize(file)(a0)
+ParseConfig(file, pc_data)(a0,a1)
+ParseNext(pc_data)(a0)
+ParseNextLine(pc_data)(a0)
+ParseEnd(pc_data)(a0)
+FreeUserData(ud)(a0)
+GetUser(user_number)(d0)
+GetCurrentUser()()
+GetUserByName(name)(a0)
+SetCurrentUser(user_number)(d0)
+SetCurrentUserByName(name)(a0)
+AskForUser(muibase, app, win, name)(a0,a1,a2,a3)
+ClearUserList()()
+LoadUserList(file)(a0)
+##end

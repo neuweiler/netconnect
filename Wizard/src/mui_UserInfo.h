@@ -4,7 +4,6 @@ struct MUIP_UserInfo_AddPhone  { ULONG MethodID; LONG doit; };
 
 struct UserInfo_Data
 {
-   Object *GR_Picture;
    Object *STR_LoginName;
    Object *STR_Password;
    Object *PO_PhoneNumber;

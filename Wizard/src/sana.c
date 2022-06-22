@@ -104,18 +104,31 @@ BOOL sana2_getaddresses(struct sana2 *s2, struct Interface *iface)
 /// sana2_online
 BOOL sana2_online(struct sana2 *s2)
 {
-   s2->s2_req->ios2_Req.io_Command = S2_ONLINE;
-   DoIO((struct IORequest *)s2->s2_req);
-   if(s2->s2_req->ios2_Req.io_Error)
+   if(s2)
    {
-      if(s2->s2_req->ios2_Req.io_Error != S2ERR_BAD_STATE)
+Printf("3\n");
+      s2->s2_req->ios2_Req.io_Command = S2_ONLINE;
+Printf("4\n");
+      DoIO((struct IORequest *)s2->s2_req);
+Printf("5\n");
+      if(s2->s2_req->ios2_Req.io_Error)
       {
-         syslog(LOG_ERR, "sana2_online: could not put %ls, unit %ld online.", s2->s2_name, s2->s2_unit);
-         SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
-         return(FALSE);
+Printf("6\n");
+         if(s2->s2_req->ios2_Req.io_Error != S2ERR_BAD_STATE)
+         {
+Printf("7\n");
+            syslog(LOG_ERR, "sana2_online: could not put %ls, unit %ld online.", s2->s2_name, s2->s2_unit);
+Printf("8\n");
+            SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
+Printf("9\n");
+            return(FALSE);
+         }
       }
+Printf("10\n");
+      return(TRUE);
    }
-   return(TRUE);
+Printf("11\n");
+   return(FALSE);
 }
 
 ///

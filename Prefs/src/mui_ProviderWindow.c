@@ -113,6 +113,8 @@ ULONG ProviderWindow_Init(struct IClass *cl, Object *obj, struct MUIP_ProviderWi
       }
    }
 
+   setcheckmark(data->CH_GetTime, data->isp->isp_flags & ISF_GetTime);
+   setcheckmark(data->CH_SaveTime, data->isp->isp_flags & ISF_SaveTime);
    setstring(data->STR_TimeServer, data->isp->isp_timename);
    setstring(data->STR_BootpServer, data->isp->isp_bootp);
    setcheckmark(data->CH_BOOTP, data->isp->isp_flags & ISF_UseBootp);
@@ -202,7 +204,10 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
          strncpy(data->isp->isp_hostname, (STRPTR)xget(data->STR_HostName  , MUIA_String_Contents), sizeof(data->isp->isp_hostname));
       else
          *data->isp->isp_hostname = NULL;
-//   data->isp->isp_dontqueryhostname = xget(data->CH_DontQueryHostname, MUIA_Selected);
+      if(xget(data->CH_DontQueryHostname, MUIA_Selected))
+         data->isp->isp_flags |= ISF_DontQueryHostname;
+      else
+         data->isp->isp_flags &= ~ISF_DontQueryHostname;
 
       if(data->isp->isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp->isp_ifaces)
       {
@@ -214,6 +219,9 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
                FreeVec(iface1->if_sana2configtext);
             if(iface1->if_configparams)
                FreeVec(iface1->if_configparams);
+            if(iface1->if_userdata)
+               FreeVec(iface1->if_userdata);
+// remove events
             FreeVec(iface1);
             iface1 = iface2;
          }
@@ -233,13 +241,29 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
             iface2->if_configparams = NULL;
             if(iface1->if_configparams)
                realloc_copy((STRPTR *)&iface2->if_configparams, iface1->if_configparams);
+            if(iface2->if_userdata = (APTR)AllocVec(sizeof(struct PrefsPPPIface), MEMF_ANY))
+               memcpy(iface2->if_userdata, iface1->if_userdata, sizeof(struct PrefsPPPIface));
+            NewList((struct List *)&iface2->if_events);
+// copy events
+
             AddTail((struct List *)&data->isp->isp_ifaces, (struct Node *)iface2);
          }
       }
 
+      if(xget(data->CH_GetTime, MUIA_Selected))
+         data->isp->isp_flags |= ISF_GetTime;
+      else
+         data->isp->isp_flags &= ~ISF_GetTime;
+      if(xget(data->CH_SaveTime, MUIA_Selected))
+         data->isp->isp_flags |= ISF_SaveTime;
+      else
+         data->isp->isp_flags &= ~ISF_SaveTime;
       strncpy(data->isp->isp_timename , (STRPTR)xget(data->STR_TimeServer, MUIA_String_Contents) , sizeof(data->isp->isp_timename));
       strncpy(data->isp->isp_bootp, (STRPTR)xget(data->STR_BootpServer, MUIA_String_Contents), sizeof(data->isp->isp_bootp));
-//   data->isp->isp_use_bootp = xget(data->CH_BOOTP, MUIA_Selected);
+      if(xget(data->CH_BOOTP, MUIA_Selected))
+         data->isp->isp_flags |= ISF_UseBootp;
+      else
+         data->isp->isp_flags &= ~ISF_UseBootp;
 
       if(data->isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&data->isp->isp_loginscript)
       {
@@ -555,19 +579,43 @@ struct Interface * SAVEDS IfaceList_ConstructFunc(register __a2 APTR pool, regis
             new->if_configparams = NULL;
             realloc_copy((STRPTR *)&new->if_configparams, src->if_configparams);
          }
+         NewList((struct List *)&new->if_events);
+         if(src->if_events.mlh_TailPred != (struct MinNode *)&src->if_events)
+         {
+            struct ScriptLine *event1, *event2;
+
+            event1 = (struct ScriptLine *)src->if_events.mlh_Head;
+            while(event1->sl_node.mln_Succ)
+            {
+               if(event2 = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+               {
+                  memcpy(event2, event1, sizeof(struct ScriptLine));
+                  AddTail((struct List *)&new->if_events, (struct Node *)event2);
+               }
+               event1 = (struct ScriptLine *)event1->sl_node.mln_Succ;
+            }
+         }
+
       }
       else
       {
          strcpy(new->if_name, "ppp");
          strcpy(new->if_sana2device, "DEVS:Networks/");
          strcpy(new->if_sana2config, "ENV:Sana2/");
+         new->if_flags = IFL_PPP;
          new->if_MTU = 1500;
+         NewList((struct List *)&new->if_events);
       }
+
 
       if(new->if_userdata = AllocVec(sizeof(struct PrefsPPPIface), MEMF_ANY | MEMF_CLEAR))
       {
+         struct PrefsPPPIface *ppp_if = (struct PrefsPPPIface *)new->if_userdata;
+
          if(src && (src != (APTR)-1) && src->if_userdata)
             memcpy(new->if_userdata, src->if_userdata, sizeof(struct PrefsPPPIface));
+         else
+            ppp_if->ppp_carrierdetect = TRUE;
       }
    }
    return(new);
@@ -644,22 +692,22 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                Child, MUI_MakeObject(MUIO_BarTitle, "ISP information"),
                Child, ColGroup(2),
                   Child, MakeKeyLabel2("  Name:", "  n"),
-                  Child, tmp.STR_Name    = MakeKeyString(NULL, 80, "  n"),
+                  Child, tmp.STR_Name    = MakeKeyString(NULL, 40, "  n"),
                   Child, MakeKeyLabel2("  Comment:", "  o"),
-                  Child, tmp.STR_Comment = MakeKeyString(NULL, 80, "  o"),
+                  Child, tmp.STR_Comment = MakeKeyString(NULL, 40, "  o"),
                End,
                Child, HVSpace,
                Child, MUI_MakeObject(MUIO_BarTitle, "Authentication"),
                Child, ColGroup(2),
                   Child, MakeKeyLabel2("  Login:", "  l"),
-                  Child, tmp.STR_Login    = MakeKeyString(NULL, 80, "  l"),
+                  Child, tmp.STR_Login    = MakeKeyString(NULL, 40, "  l"),
                   Child, MakeKeyLabel2(MSG_LA_Password, MSG_CC_Password),
                   Child, tmp.STR_Password = TextinputObject,
                      StringFrame,
                      MUIA_ControlChar     , *GetStr(MSG_CC_Password),
                      MUIA_CycleChain      , 1,
                      MUIA_String_Secret   , TRUE,
-                     MUIA_String_MaxLen   , 80,
+                     MUIA_String_MaxLen   , 40,
                   End,
                End,
                Child, HVSpace,
@@ -691,7 +739,7 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                         StringFrame,
                         MUIA_CycleChain      , 1,
                         MUIA_String_Accept   , "0123456789.",
-                        MUIA_String_MaxLen   , 18,
+                        MUIA_String_MaxLen   , 16,
                      End,
                   End,
                   Child, VGroup,
@@ -729,7 +777,7 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                Child, ColGroup(2),
                   Child, MakeKeyLabel2(MSG_LA_HostName, MSG_CC_HostName),
                   Child, HGroup,
-                     Child, tmp.STR_HostName = MakeKeyString(NULL, 80, MSG_CC_HostName),
+                     Child, tmp.STR_HostName = MakeKeyString(NULL, 64, MSG_CC_HostName),
                      Child, tmp.CY_HostName  = Cycle(STR_CY_Dynamic),
                   End,
                End,
@@ -767,25 +815,35 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
             End,
 
-
             Child, tmp.GR_Server = VGroup,
                Child, HVSpace,
-               Child, MUI_MakeObject(MUIO_BarTitle, "Control"),
+               Child, MUI_MakeObject(MUIO_BarTitle, "Time"),
                Child, ColGroup(2),
+                  Child, MakeKeyLabel2("  Sync clock", "  y"),
+                  Child, HGroup,
+                     Child, tmp.CH_GetTime = MakeKeyCheckMark(FALSE, "  y"),
+                     Child, HVSpace,
+                     Child, MakeKeyLabel2("  Save time", "  a"),
+                     Child, tmp.CH_SaveTime = MakeKeyCheckMark(FALSE, "  a"),
+                  End,
                   Child, MakeKeyLabel2(MSG_LA_TimeServer, MSG_CC_TimeServer),
-                  Child, tmp.STR_TimeServer     = MakeKeyString(NULL, 80, MSG_CC_TimeServer),
+                  Child, tmp.STR_TimeServer     = MakeKeyString(NULL, 64, MSG_CC_TimeServer),
+               End,
+               Child, HVSpace,
+               Child, MUI_MakeObject(MUIO_BarTitle, "BOOTP"),
+               Child, ColGroup(2),
+                  Child, MakeKeyLabel2("  Use BOOTP:", "  u"),
+                  Child, HGroup,
+                     Child, tmp.CH_BOOTP = MakeKeyCheckMark(FALSE, "  u"),
+                     Child, HVSpace,
+                  End,
                   Child, MakeKeyLabel2("  BOOTP Server:", MSG_CC_BOOTP),
                   Child, tmp.STR_BootpServer    = TextinputObject,
                      StringFrame,
                      MUIA_ControlChar     , *GetStr(MSG_CC_BOOTP),
                      MUIA_CycleChain      , 1,
                      MUIA_String_Accept   , "0123456789.",
-                     MUIA_String_MaxLen   , 18,
-                  End,
-                  Child, MakeKeyLabel2("  Use BOOTP:", "  u"),
-                  Child, HGroup,
-                     Child, tmp.CH_BOOTP = MakeKeyCheckMark(FALSE, "  u"),
-                     Child, HVSpace,
+                     MUIA_String_MaxLen   , 16,
                   End,
                End,
                Child, HVSpace,
@@ -820,7 +878,7 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                Child, HGroup,
                   Child, MakeKeyLabel2("  Phone numbers:", "  p"),
                   Child, tmp.PO_Phone = PopobjectObject,
-                     MUIA_Popstring_String      , tmp.STR_Phone = MakeKeyString(NULL, MAXPATHLEN, "  p"),
+                     MUIA_Popstring_String      , tmp.STR_Phone = MakeKeyString(NULL, 100, "  p"),
                      MUIA_Popstring_Button      , PopButton(MUII_PopUp),
                      MUIA_Popobject_Object      , VGroup,
                         MUIA_Frame, MUIV_Frame_Group,
@@ -860,8 +918,11 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->BT_AddDomainName   , MUIA_Disabled, TRUE);
       set(data->BT_RemoveDomainName, MUIA_Disabled, TRUE);
       set(data->STR_DomainName     , MUIA_Disabled, TRUE);
+      set(data->STR_HostName       , MUIA_Disabled, TRUE);
       set(data->BT_DeleteIface     , MUIA_Disabled, TRUE);
       set(data->BT_EditIface       , MUIA_Disabled, TRUE);
+      set(data->CH_SaveTime        , MUIA_Disabled, TRUE);
+      set(data->STR_TimeServer     , MUIA_Disabled, TRUE);
       set(data->CY_Command         , MUIA_Disabled, TRUE);
       set(data->STR_String         , MUIA_Disabled, TRUE);
       set(data->BT_Remove          , MUIA_Disabled, TRUE);
@@ -885,17 +946,18 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       DoMethod(data->BT_Cancel     , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_Provider_EditISPFinish, obj, 0);
       DoMethod(data->BT_Okay       , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_Provider_EditISPFinish, obj, 1);
 
-      DoMethod(data->LI_NameServers       , MUIM_Notify, MUIA_List_Active , MUIV_EveryTime  , obj, 1, MUIM_ProviderWindow_NameserversActive);
-      DoMethod(data->BT_AddNameServer     , MUIM_Notify, MUIA_Pressed     , FALSE           , obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_AddNameServer);
-      DoMethod(data->BT_RemoveNameServer  , MUIM_Notify, MUIA_Pressed     , FALSE           , data->LI_NameServers, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
-      DoMethod(data->STR_NameServer       , MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_NameServer);
-      DoMethod(data->LI_DomainNames       , MUIM_Notify, MUIA_List_Active , MUIV_EveryTime  , obj, 1, MUIM_ProviderWindow_DomainnamesActive);
-      DoMethod(data->BT_AddDomainName     , MUIM_Notify, MUIA_Pressed     , FALSE           , obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_AddDomainName);
-      DoMethod(data->BT_RemoveDomainName  , MUIM_Notify, MUIA_Pressed     , FALSE           , data->LI_DomainNames, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
-      DoMethod(data->STR_DomainName       , MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_DomainName);
-      DoMethod(data->CY_Resolv     , MUIM_Notify, MUIA_Cycle_Active       , MUIV_EveryTime  , data->STR_DomainName    , 12, MUIM_MultiSet, MUIA_Disabled, MUIV_NotTriggerValue, data->LV_NameServers, data->BT_AddNameServer, data->BT_RemoveNameServer, data->STR_NameServer, data->LV_DomainNames, data->BT_AddDomainName, data->BT_RemoveDomainName, data->STR_DomainName, NULL);
-      DoMethod(data->CY_HostName   , MUIM_Notify, MUIA_Cycle_Active       , MUIV_EveryTime  , data->STR_HostName      , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
-      DoMethod(data->CH_BOOTP      , MUIM_Notify, MUIA_Selected           , MUIV_EveryTime  , data->STR_BootpServer   , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
+      DoMethod(data->LI_NameServers       , MUIM_Notify, MUIA_List_Active     , MUIV_EveryTime  , obj, 1, MUIM_ProviderWindow_NameserversActive);
+      DoMethod(data->BT_AddNameServer     , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_AddNameServer);
+      DoMethod(data->BT_RemoveNameServer  , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LI_NameServers, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
+      DoMethod(data->STR_NameServer       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_NameServer);
+      DoMethod(data->LI_DomainNames       , MUIM_Notify, MUIA_List_Active     , MUIV_EveryTime  , obj, 1, MUIM_ProviderWindow_DomainnamesActive);
+      DoMethod(data->BT_AddDomainName     , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_AddDomainName);
+      DoMethod(data->BT_RemoveDomainName  , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LI_DomainNames, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
+      DoMethod(data->STR_DomainName       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_ProviderWindow_Modification, MUIV_ProviderWindow_Modification_DomainName);
+      DoMethod(data->CY_Resolv            , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , data->STR_DomainName    , 12, MUIM_MultiSet, MUIA_Disabled, MUIV_NotTriggerValue, data->LV_NameServers, data->BT_AddNameServer, data->BT_RemoveNameServer, data->STR_NameServer, data->LV_DomainNames, data->BT_AddDomainName, data->BT_RemoveDomainName, data->STR_DomainName, NULL);
+      DoMethod(data->CY_HostName          , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , data->STR_HostName      , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
+      DoMethod(data->CH_GetTime           , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , data->STR_TimeServer    , 6, MUIM_MultiSet, MUIA_Disabled, MUIV_NotTriggerValue, data->CH_SaveTime, data->STR_TimeServer, NULL);
+      DoMethod(data->CH_BOOTP             , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , data->STR_BootpServer   , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
 
       DoMethod(data->STR_Name             , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Comment);
       DoMethod(data->STR_Comment          , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Login);

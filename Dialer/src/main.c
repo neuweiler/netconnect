@@ -23,7 +23,6 @@ extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 extern struct Catalog    *cat;
 extern struct Library    *MUIMasterBase, *LockSocketBase, *OwnDevUnitBase;
-extern struct GenesisBase *GenesisBase;
 extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led;
 extern struct MsgPort     *MainPort;
 extern struct timerequest *TimeReq;
@@ -48,10 +47,6 @@ VOID exit_libs(VOID)
       CloseCatalog(cat);
    cat = NULL;
 
-   if(GenesisBase)
-      CloseLibrary((struct Library *)GenesisBase);
-   GenesisBase = NULL;
-
    if(OwnDevUnitBase)
       CloseLibrary(OwnDevUnitBase);
    OwnDevUnitBase = NULL;
@@ -69,11 +64,9 @@ BOOL init_libs(VOID)
 //      cat = OpenCatalog(NULL, "Genesis.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
       Printf("Could not open muimaster.library\n");
-   if(!(GenesisBase = (struct GenesisBase *)OpenLibrary(GENESISNAME, 0)))
-      Printf("Could not open " GENESISNAME ".\n");
    OwnDevUnitBase = OpenLibrary(ODU_NAME, 0);
 
-   if(MUIMasterBase && GenesisBase)
+   if(MUIMasterBase)
       return(TRUE);
 
    exit_libs();
@@ -133,8 +126,6 @@ VOID exit_ports(VOID)
 /// init_ports
 BOOL init_ports(VOID)
 {
-   BOOL success = FALSE;
-
    if(MainPort = CreateMsgPort())
    {
       if(TimePort = (struct MsgPort *)CreateMsgPort())
@@ -166,7 +157,7 @@ BOOL check_date(VOID)
 
    if(BattClockBase = OpenResource("battclock.resource"))
    {
-      if(ReadBattClock() < 641235278)
+      if(ReadBattClock() < 644407784)
          return(TRUE);
    }
    return(FALSE);
@@ -292,9 +283,6 @@ VOID Handler(VOID)
                   if(Config.cnf_flags & CFL_StartupOpenWin)
                      set(win, MUIA_Window_Open, TRUE);
 
-                  if(Config.cnf_startup)
-                     SystemTags(Config.cnf_startup, TAG_DONE);
-
 #ifdef DEMO
                   if(!check_date())
                      MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
@@ -304,11 +292,16 @@ VOID Handler(VOID)
                   // put always_online online since it wasn't done in MainWindow_ChangeProvider cause AmiTCP wasn't running then
                   iterate_ifacelist(&data->isp.isp_ifaces, 1);
                   DoMethod(win, MUIM_MainWindow_PutOnline);
+
+                  if(Config.cnf_startup)
+                     exec_command(Config.cnf_startup, Config.cnf_startuptype);
+
                   while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
                   {
                      if(id == ID_DOUBLESTART)
                      {
-                        set(win, MUIA_Window_Open, TRUE);
+                        if(!xget(win, MUIA_Window_Open))
+                           set(win, MUIA_Window_Open, TRUE);
                         MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), "Genesis is already running");
                      }
 
@@ -335,7 +328,7 @@ VOID Handler(VOID)
                   set(win, MUIA_Window_Open, FALSE);
 
                   if(Config.cnf_shutdown)
-                     SystemTags(Config.cnf_shutdown, TAG_DONE);
+                     exec_command(Config.cnf_shutdown, Config.cnf_shutdowntype);
    
                   iterate_ifacelist(&data->isp.isp_ifaces, 0);
                   DoMethod(win, MUIM_MainWindow_PutOffline);

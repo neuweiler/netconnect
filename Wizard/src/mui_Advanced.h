@@ -2,6 +2,5 @@
 
 struct Advanced_Data
 {
-   Object *GR_Picture;
    Object *RA_Advanced;
 };

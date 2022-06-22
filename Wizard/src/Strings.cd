@@ -1,0 +1,536 @@
+#language english
+#version 1
+#lengthbytes 0
+;
+;
+; general stuff
+;
+;
+MSG_AppDescription (//)
+Tool to setup Genesis.
+;
+MSG_ReqBT_Okay (//)
+*_Okay
+;
+MSG_ReqBT_QuitCancel (//)
+_Quit|*_Cancel
+;
+MSG_ReqBT_BackCancel (//)
+Yes, go _back !|*_Cancel
+;
+MSG_ReqBT_Abort (//)
+*_Abort
+;
+MSG_ReqBT_ContinueAbort (//)
+_Continue|*\033b_Abort
+;
+MSG_BT_Okay (//)
+_Okay
+;
+MSG_BT_Finish (//)
+\033bFinish
+;
+MSG_BT_Next (//)
+Next >
+;
+MSG_BT_Back (//)
+< Back
+;
+MSG_BT_Abort (//)
+Abort
+;
+MSG_BT__Abort (//)
+_Abort
+;
+MSG_BT_Dial (//)
+\033bdial (f1)
+;
+MSG_BT_GoOnline (//)
+go online (f2)
+;
+MSG_BT_HangUp (//)
+hang up (f3)
+;
+MSG_BT_SendLogin (//)
+send login (f4)
+;
+MSG_BT_SendPassword (//)
+send password (f5)
+;
+MSG_BT_SendBreak (//)
+send break (f6)
+;
+MSG_BT_ViewConfigInfo (//)
+_View configuration information
+;
+MSG_BT_Add (//)
+_Add
+;
+MSG_BT_Cancel (//)
+_Cancel
+;
+MSG_TX_Dynamic (//)
+dynamic
+;
+MSG_TX_Static (//)
+static
+;
+MSG_TX_Undefined (//)
+- undefined -
+;
+MSG_TX_ShowConfigWindowTitle (//)
+Genesis configuration
+;
+MSG_LA_ShowConfigTitle (//)
+\033uGenesisWizard network configuration information
+;
+MSG_TX_MainWindowTitle (//)
+Wizard for setup of Genesis © 1997 by Michael Neuweiler, Active Software
+;
+MSG_TX_Welcome (//)
+\033b                           Welcome to the world of...                           \033n
+MSG_BLA_Device (//)
+\033bDevice:
+;
+MSG_BLA_Modem (//)
+\033bModem:
+;
+MSG_LA_Unit (//)
+Unit:
+;
+MSG_LA_Phone (//)
+Phone number:
+;
+MSG_LA_IPAddress (//)
+IP address:
+;
+MSG_LA_RemoteIPAddress (//)
+Remote IP address:
+;
+MSG_LA_Netmask (//)
+Netmask:
+;
+MSG_LA_DNS1IPAddr (//)
+Domain Name Server #1 IP address:
+;
+MSG_LA_DNS2IPAddr (//)
+Domain Name Server #2 IP address:
+;
+MSG_LA_DomainName (//)
+Domain name:
+;
+MSG_LA_Protocol (//)
+Protocol:
+;
+MSG_BLA_Phone (//)
+\033bPhone:
+;
+MSG_LA_LoginName (//)
+Login name:
+;
+MSG_BLA_LoginName (//)
+\033bLogin Name:
+;
+MSG_LA_Password (//)
+Password:
+;
+MSG_CC_Password (/1/1)
+p
+;
+MSG_TX_SaveConfiguration (//)
+Choose filename to store configuration
+;
+MSG_TX_SaveInformation (//)
+Choose filename to store config information
+;
+MSG_BLA_Speed (//)
+\033bSpeed:
+;
+MSG_BLA_InitString (//)
+\033bInitString:
+;
+MSG_BLA_DialPrefix (//)
+\033bDialPrefix:
+;
+MSG_BLA_LocalIPAddr (//)
+\033bLocal IP address:
+;
+MSG_BLA_RemoteIPAddr (//)
+\033bRemote IP address:
+;
+MSG_BLA_Netmask (//)
+\033bNetmask:
+;
+MSG_BLA_DNS1IPAddr (//)
+\033bDNS #1 IP address:
+;
+MSG_BLA_DNS2IPAddr (//)
+\033bDNS #2 IP address:
+;
+MSG_BLA_DomainName (//)
+\033bDomain name:
+;
+MSG_LA_LoginScript_List (//)
+Login Script
+;
+MSG_TX_InfoTitle (//)
+Genesis network configuration\n----------------------------\n\nGenesis Wizard Copyright © 1997 by Michael Neuweiler.\n\n\n
+;
+MSG_TX_NoDialtone (//)
+The modem reported it can't detect a dial tone.\nPlease make sure the modem is connected properly to\nthe phone line and that the line is free.\nThen try again.
+;
+MSG_TX_ReallyQuit (//)
+Do you really want to quit?
+;
+MSG_TX_About (//)
+Main programming by Michael Neuweiler\n\n\033bTHIS IS A DEMO VERSION !\033n
+;
+MSG_TX_GoBack (//)
+If you go back now the login script\nhas to be recorded again.
+;
+MSG_TX_CouldNotConnect (//)
+Could not connect to provider.\nPlease make sure all modem related information\nand the phone number is correct and then retry again.
+;
+MSG_TX_Dialing (//)
+\033[1mDialing '%ls'\033[0m (attempt %ld/9)\n\n
+;
+MSG_CY_Script_Record (//)
+yes, use a login script after dialing
+;
+MSG_CY_Script_DontRecord (//)
+no, go online immediately (PAP/CHAP)
+;
+MSG_TX_ObtainedBy (//)
+obtained by
+;
+;
+;
+; Modem Detect
+;
+;
+MSG_TX_LookingForModem (//)
+          Looking for your modem          \n
+MSG_TX_FoundModem (//)
+Modem found on %ls, unit %ld.\nanalyzing...
+;
+MSG_LA_PleaseWait (//)
+Please wait...
+;
+MSG_TX_ModemNotFound (//)
+Could not locate your modem.\nMake sure it is switched on and properly\nconnected to your amiga and that no other\nprogram is using the serial device. Please,\nchoose the correct serial device and modem\ntype manually.
+;
+MSG_TX_UnknownModemType (//)
+Could not identify your modem.\nPlease choose your modem type manually.\nIf you can not locate your modem, try \"Generic\".
+;
+MSG_LA_Device (//)
+Device:
+;
+MSG_LA_Modem (//)
+Modem:
+;
+MSG_LA_InitString (//)
+Init string:
+;
+MSG_LA_DialPrefix (//)
+Dial prefix:
+;
+MSG_LA_LoginScript (//)
+Login Script:
+;
+MSG_LA_AddNumber (//)
+Add number...
+;
+;
+;
+; Modem Window
+;
+;
+MSG_BLA_Protocol (//)
+\033bProtocol
+;
+MSG_BLA_InitString2 (//)
+\033bInitString
+;
+;                      ;
+; Online
+;
+;
+MSG_TX_GatherNetInfo (//)
+          gathering network information...          \n
+;
+MSG_TX_InitDevice (//)
+initializing device...
+;
+MSG_TX_SendingBOOTP (//)
+sending BOOTP request...
+;
+MSG_TX_NoBOOTP (//)
+no answer to our\nBOOTP request
+;
+MSG_TX_GotBOOTP (//)
+received BOOTP reply
+;
+MSG_TX_ConfiguringAmiTCP (//)
+configuring AmiTCP...
+;
+MSG_TX_GetDomain (//)
+obtaining host name\nand domain name...
+;
+MSG_TX_Finished (//)
+finished
+;
+MSG_TX_ClosingConnection (//)
+closing connection...
+;
+MSG_TX_ErrorLaunchAmiTCP (//)
+Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:bin/AmiTCP.kernel does not exist.\n2) Another TCP stack is running (like Miami).\n3) Invalid AmiTCP.key in AmiTCP:key.
+;
+MSG_TX_ErrorBsdsocketLib (//)
+Could not open bsdsocket.library.\nPlease make sure the file AmiTCP.kernel can be found in AmiTCP:bin/
+;
+MSG_TX_ErrorIfaceAlloc (//)
+Interface allocation failed.\nThis might be a result of memory shortage.
+;
+MSG_TX_ErrorIfaceInit (//)
+ERROR: Could not initialize interface.
+;
+MSG_TX_ErrorNoIP (//)
+Could not obtain local IP address.\nPlease refer to the logfile in RAM:GenesisWizard.log\nand contact your support site.
+;
+MSG_TX_ErrorConfigIface (//)
+Could not configure interface %ls.
+;
+MSG_TX_WarningNoDNS (//)
+Was unable to obtain DomainNameServer (DNS) IP-addresses.\nFalling back to root DNS servers but in order to\nget faster responses on queries you should enter the\ncorrect IP addresses of your provider manually in Genesis Preferences\nafter importing the config file created by this program.
+;
+MSG_TX_ErrorSetDNS (//)
+Could not tell AmiTCP about the nameserver %ls.\nPlease contact your support site if this problem persits.
+;
+MSG_TX_WarningNoHostname (//)
+Could not obtain the hostname for this machine.\nAmiTCP might still work without this information.
+;
+MSG_TX_WarningNoDomain (//)
+Was unable to obtain domain name.\nMake sure you set the correct value manually\nby using Genesis Preferences !!
+;
+MSG_TX_WarningSetDomain (//)
+Could not tell AmiTCP about our domainname '%ls'.\nPlease make sure this is the correct value and modify\nin Genesis Preferences accordingly.
+;
+MSG_TX_WarningSetHostname (//)
+Could not tell AmiTCP about our hostname '%ls'.\nHowever AmiTCP will work without this.
+;
+MSG_TX_ErrorLaunchSubtask (//)
+Was unable to launch sub task for\ngathering network information.\nUnable to finish setup.
+;
+MSG_TX_WarningNoCarrierOnline (//)
+The wizard could not detect a carrier signal from your\nmodem. Maybe because your modem or your serial device\ndoes not support this or because no connection has been\nestablished yet. In the latter case you should abort\nnow.
+;
+MSG_TX_ErrorMUIApp (//)
+Could not create MUI application.
+;
+MSG_TX_ErrorMsgPorts (//)
+Could not create message ports.
+;
+MSG_TX_ErrorMUICustomClasses (//)
+Could not create MUI custom classes.
+;
+MSG_TX_ErrorSaveConfig (//)
+Could not save configuration to %ls
+;
+MSG_TX_ErrorOpenX (//)
+Could not open %ls.
+;
+MSG_TX_CouldNotOpenDevice_Unit (//)
+Could not open %ls, unit %ld !\nPlease make sure the settings are correct.
+;
+MSG_TX_ErrorCreatePage (//)
+FATAL ERROR: could not create page.\nPlease restart Wizard.
+;
+MSG_TX_ErrorNoPage (//)
+FATAL ERROR: new page not given.\nPlease restart Wizard.
+;
+;
+;
+; Menus
+;
+;
+MSG_MENU_PROJECT (//)
+Project
+;
+MSG_MENU_ABOUT (//)
+About...
+;
+MSG_MENU_ABOUT_MUI (//)
+About MUI...
+;
+MSG_MENU_QUIT (//)
+Quit
+;
+MSG_MENU_SETTINGS (//)
+Settings
+;
+MSG_MENU_MUI (//)
+MUI...
+;
+;
+;
+; Help bubbles
+;
+;
+;
+MSG_HELP_Back (//)
+Go back one page
+;
+MSG_HELP_Next (//)
+Go to next page
+;
+MSG_HELP_Abort (//)
+Terminate Genesis Wizard
+;
+MSG_HELP_Finish (//)
+Save configuration\nand end program.
+;
+MSG_HELP_LoginName (//)
+Enter the username / login name\nfor your provider here.
+;
+MSG_HELP_Password (//)
+Enter the password to\nlogin at your provider here.
+;
+MSG_HELP_PhoneNumber (//)
+Enter the phone number of your provider here.\nYou can enter multiple numbers by separating\nthem with a '|' vertical bar sign.
+;
+MSG_HELP_IPAddress (//)
+If your provider has given you a\nstatic IP address, you must enter it here.
+;
+MSG_HELP_DynamicStatic (//)
+Choose whether your provider gives\nyou a dynamic IP address or a static one.\n(usually dynamic addresses are used).
+;
+MSG_HELP_Protocol (//)
+Choose which protocol\nis used by your provider.
+;
+MSG_HELP_RecordScript (//)
+Choose if you need to record a login script\nafter you're connected or if we can go online\nimmediately (e.g. for PAP / CHAP).
+;
+MSG_HELP_Dial (//)
+Dial the phonenumber of your provider\nand establish a modem connection.
+;
+MSG_HELP_GoOnline (//)
+Put Genesis online to gather\nrequired network information.
+;
+MSG_HELP_HangUp (//)
+Hang up the modem\nand stop dialing.
+;
+MSG_HELP_SendLogin (//)
+Send your username / login name.
+;
+MSG_HELP_SendPassword (//)
+Send your password.
+;
+MSG_HELP_SendBreak (//)
+Send a break signal.
+;
+MSG_HELP_DoSaveConfig (//)
+Choose if you want\nto save the configuration.
+;
+MSG_HELP_DoSaveInfo (//)
+Choose if you want to save\nthe network information into\nan ascii file.
+;
+MSG_HELP_DoPrint (//)
+Choose if you want to print\nthe network information.
+;
+MSG_HELP_ConfigFilename (//)
+Choose a filename to\nstore the configuration into.
+;
+MSG_HELP_InfoFilename (//)
+Choose a filename to store\nthe network information into.
+;
+MSG_HELP_PrinterDevice (//)
+Choose the device name of your\nprinter to print an information sheet.
+;
+MSG_HELP_ShowConfig (//)
+Display the network configuration\nin a separate window.
+;
+MSG_HELP_SerialDevice (//)
+The name of the serial device.\nUsually this is 'serial.device'.
+;
+MSG_HELP_SerialUnit (//)
+The unit number\nfor the serial device.
+;
+MSG_HELP_Modem (//)
+Choose your modem from the list.\nIf it can't be found, use 'Generic'.
+;
+MSG_HELP_InitString (//)
+Choose / enter the appropriate\ninitialisation string for your modem.
+;
+MSG_HELP_DialPrefix (//)
+This string will be placed\nin front of the phone number\nwhen dialing.
+;
+;
+;
+MSG_TX_InfoSaveConfig (//)
+The Wizard has successfully gathered all necessary network\ninformation to get you connected to the Internet! Please\nchoose where you want to save the \033bconfiguration file\033n (we\nrecommend you leave this checked as default):
+;
+MSG_TX_InfoSaveInfo (//)
+Do you want to save the configuration information to a \033blogfile\033n?
+;
+MSG_TX_InfoPrint (//)
+Would you like to \033bprint\033n the configuration information for future\nreference?
+;
+MSG_TX_InfoIPAddress (//)
+Now select a \033bdynamic\033n or \033bstatic\033n IP address depending on\nwhat your provider requires. Most providers (95%) will use a\ndynamic connection and you will not need to enter an address:
+;
+MSG_TX_InfoProtocol (//)
+Choose the \033bprotocol\033n that will be used (most, if not all service\nproviders require a \"ppp\" connection):
+;
+MSG_TX_InfoUseLoginScript (//)
+Does your provider require a \033blogin script\033n?
+;
+MSG_TX_InfoLoginScript (//)
+Now you have entered all the necessary information the Wizard will attempt to dial your provider, record the loginscript and find other network variables.\n\n\When you are ready, click the \"\033bdial\033n\" button to dial your provider. You are able to manually enter text into the dial window but you must press the relevant button when you are asked for your login name or password. You need to click the \"\033bsend loginname\033n\" and \"\033bsend password\033n\" buttons to send your login name automatically.\n\nOnce the dial process has finished and you do not need to enter any further information you need to click the \"\033bgo online\033n\" button in order for the Wizard to record the necessary information from your provider.\n\n\If something does go wrong, you can always click on \"\033bhang up\033n\" and then restart by pressing \"\033bdial\033n\" once again.\n\n\Now press \"\033bdial\033n\" to proceeed.
+;
+MSG_TX_InfoInitString (//)
+Once you have selected your modem, the correct\n\033binitialisation\033n string should be shown in the box below. If no\ninit string is shown, please enter a string before continuing.\nYou may need to refer to your modem user handbook for\nthis information:,
+;
+MSG_TX_InfoDialPrefix (//)
+Now you need to enter the \033bdial prefix\033n. This string\npreceedes the phone number when dialling your provider.\nATDT (tone dialling) or ATDP (pulse) is the normal string\nused in most countries:
+;
+MSG_TX_InfoSerialDevice (//)
+If your \033bserial device\033n isn't listed , please enter the name of\nthe device used to control your modem (ie. serial.device)\nand the correct \033bunit\033n number. If you press the pop-up\nbutton you will be presented with a list of all the current\ndevices installed on your computer:
+;
+MSG_TX_InfoModemName (//)
+If your \033bmodem type\033n is not shown below, please choose\nyour modem by using the pop-up menu. If your modem is\nnot listed, choose \"Generic\":
+;
+MSG_TX_InfoLoginName (//)
+Please enter the \033blogin name\033n chosen to connect to your\nInternet Service Provider (loginname is sometimes referred\nto as the \"user-id\":
+;
+MSG_TX_InfoPassword (//)
+Enter your \033bpassword\033n needed to connect to your Internet\nService Provider:
+;
+MSG_TX_InfoPhoneNumber (//)
+Enter the \033bphone number\033n of your provider:
+;
+MSG_TX_InfoWelcome (//)
+This Wizard will guide you through, step by step, the configuration needed for your Internet connection.\n\n\
+You will be required to enter very basic, but essential, information needed to get your computer connected to the Internet. Please enter the required information in the boxes provided and by pressing \"Next\" or \"Back\" to goto the next or previous page.\n\n\
+At the end of the configuration, the Wizard will try to establish a connection to the Internet (via your Internet Service Provider) and will automatically gather all the remaining network information.\n\n\
+Tip: If you get stuck at any point refer to your user guide or hold your mouse button over a box and a help bubble should appear with extra information.\n\n\
+When you press the \"Next\" button, the Wizard will look for your modem so please make sure yout modem is switched on, connected to the phone line and connected to the serial port on your Amiga.
+;
+;
+MSG_TX_SpecifyInitString (//)
+You must specify an \033binit string\033n!
+;
+MSG_TX_SpecifyDialPrefix (//)
+You must specify a \033bdial prefix\033n !\nOtherwise the modem won't\nbe able to dial.
+;
+MSG_TX_SpecifyPhoneNumber (//)
+You must enter a \033bphone number\033n !
+;
+MSG_TX_SpecifyPassword (//)
+You must enter your \033bpassword\033n !
+;
+MSG_TX_SpecifyLoginName (//)
+You must enter your \033blogin name\033n !
+;
+MSG_TX_SpecifyIPAddress (//)
+If you use a \033bstatic IP address\033n\nthen you need to specify one !
+;

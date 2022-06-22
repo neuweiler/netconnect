@@ -1,0 +1,101 @@
+History for GenesisPrefs
+========================
+
+2.0.1
+-----
+
+* Data entered in Gateway, Destination and Netmask still got
+  lost. Now every option available in the prefs should get
+  saved.
+* minor gui rearrangements in interface section.
+* Added debug mode: see prefs/options. logfiles go to t:
+* options not supported yet by genesis have got ghostes icons
+  now.
+
+2.0.2
+-----
+
+* hostname setting (dynamic/static) fixed.. was wrong way round
+* "secret" and "user" won't be written to appp config if
+  no login/passwd is entered (when no authent. is required).
+
+2.0.3
+-----
+
+* mofidifed way of saving flags (on/off switches) => it might be
+  necessary to adjust your configuration settings.
+  Make sure you reselect "PPP" in interface/sanaII if you want
+  the default settings to be used for appp.device
+* it is now possible to add more than two nameservers by using
+  a list.
+* the same applies for domain names.
+* removed MailServer, NewsServer, ProxyServer and IRCServer
+  (were some leftovers from netconnect 1).
+* moved "CarrierDetect" to interface/ppp section where it belongs.
+* Database section got a cycle gadget to select active page.
+* added XonXoff, RadBoogie, OwnDevUnit support.
+
+2.0.4  (21.3.98)
+----------------
+
+* moved interface configuration stuff into separate window.
+* moved user configuration stuff into separate window.
+* added ppp specific options in interface section (gui only !).
+* transfered database/passwd into user section. WARNING: passwd
+  will get overwritten !! Create backup first !
+
+2.1.4 (4.4.98)
+---------------
+
+* removed "mail login", "mail passwd", "email addr" and
+  "mail server" from user section since these are client specific
+  entries. Now user information is only stored in amitcp:db/passwd
+  and no longer in genesis.conf. => restore passwd from your backup
+  and check your user settings (for the last time :)
+* skipped some revision numbers to equalize it with genesis since
+  it is necessary to use corresponding versions of genesis and prefs.
+* "change password" and "remove password" in user section now work again.
+* about window now has snapshot gadget and is larger by default.
+* owndevunit will be handled by the dialler only => appp config file no
+  longer contains "owndevunit yes".
+* changed lame grouppager.mcc code into superiour code =>
+  much faster, much smaller, less buggy.
+* dynamic/static cycle gadgets now work for destination, gateway and
+  netmask too.
+* "startup" and "shutdown" can be cli command, dos script, arexx script
+  or workbench command. unfortunately the first two characters are
+  dropped from previous configs => check again in "options/execute".
+* switched on code optimisation: smaller, faster code.
+* sorry for all the inconveniences.. I think it was the last time ;)
+
+2.1.5 (6.4.98)
+--------------
+
+* merged contents of user-edit window into one page.
+* added checkbox to enable/disable callback.
+* changed connect timeout from string into popup-slider.
+
+2.1.6 (20.4.98)
+---------------
+
+* some minor internal changes.
+
+2.1.7 (30.4.98)
+---------------
+
+* added support for appp.device's xonxoff and 7wire options
+* some minor gui enhancements
+* when user name is changed and homedir is still empty then homedir
+  will automatically be filled.
+* when homedir is changed, it will check if the dir already exists.
+* when new user is added, next free user id will be used automatically.
+* user passwd can only be changed when old passwd is entered.
+* password must now be at least 6 chars long and contain one digit or
+  one of those : - / % & + , . ; : $ ! < >    (security reasons)
+* merged "rts/cts" and "xon/xoff" checkmarks into a cycle gadget.
+
+2.1.8 (4.5.98)
+--------------
+
+* added possibility to set get-time and save-time in isp section.
+

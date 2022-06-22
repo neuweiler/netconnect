@@ -10,7 +10,6 @@
 #include "mui_Online.h"
 #include "protos.h"
 
-#include "images/setup_page5.h"
 ///
 /// external variables
 extern Object *app, *win, *status_win;
@@ -24,12 +23,7 @@ extern char keyboard_buffer[];
 extern WORD ser_buf_pos, key_buf_pos;
 extern struct   MsgPort        *SerReadPort;
 extern struct   IOExtSer       *SerReadReq, *SerWriteReq;
-extern BOOL no_picture;
 extern struct ISP ISP;
-
-extern ULONG setup_page5_colors[];
-extern struct BitMapHeader setup_page5_header[];
-extern UBYTE setup_page5_body[];
 
 ///
 
@@ -432,68 +426,48 @@ ULONG LoginScript_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct LoginScript_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Group_Horiz, TRUE,
-      Child, tmp.GR_Picture = VGroup,
-         MUIA_ShowMe, !no_picture,
-         Child, BodychunkObject,
-            GroupFrame,
-            InnerSpacing(0, 0),
-            MUIA_FixWidth             , SETUP_PAGE5_WIDTH,
-            MUIA_FixHeight            , SETUP_PAGE5_HEIGHT,
-            MUIA_Bitmap_Width         , SETUP_PAGE5_WIDTH ,
-            MUIA_Bitmap_Height        , SETUP_PAGE5_HEIGHT,
-            MUIA_Bodychunk_Depth      , SETUP_PAGE5_DEPTH ,
-            MUIA_Bodychunk_Body       , (UBYTE *)setup_page5_body,
-            MUIA_Bodychunk_Compression, SETUP_PAGE5_COMPRESSION,
-            MUIA_Bodychunk_Masking    , SETUP_PAGE5_MASKING,
-            MUIA_Bitmap_SourceColors  , (ULONG *)setup_page5_colors,
+      Child, ListviewObject,
+         MUIA_Weight, 70,
+         MUIA_Listview_Input  , FALSE,
+         MUIA_Listview_List   , FloattextObject,
+            MUIA_Frame, MUIV_Frame_ReadList,
+            MUIA_Background         , MUII_ReadListBack,
+            MUIA_Floattext_Text     , GetStr(MSG_TX_InfoLoginScript),
+            MUIA_Floattext_TabSize  , 4,
+            MUIA_Floattext_Justify, TRUE,
          End,
-         Child, HVSpace,
       End,
-      Child, VGroup,   // login script recorder
-         Child, ListviewObject,
-            MUIA_Weight, 70,
-            MUIA_Listview_Input  , FALSE,
-            MUIA_Listview_List   , FloattextObject,
-               MUIA_Frame, MUIV_Frame_ReadList,
-               MUIA_Background         , MUII_ReadListBack,
-               MUIA_Floattext_Text     , GetStr(MSG_TX_InfoLoginScript),
-               MUIA_Floattext_TabSize  , 4,
-               MUIA_Floattext_Justify, TRUE,
+      Child, BalanceObject, End,
+      Child, VGroup,
+         GroupSpacing(0),
+         Child, HGroup,
+            GroupSpacing(0),
+            InnerSpacing(0, 0),
+            Child, tmp.TR_Terminal = TermObject,
+               MUIA_CycleChain, 1,
+               InputListFrame,
+               TCA_EMULATION  , TCV_EMULATION_VT100,
+               TCA_LFASCRLF   , TRUE,
+               TCA_DESTRBS    , TRUE,
+               TCA_ECHO       , FALSE,
+               TCA_DELASBS    , TRUE,
+               TCA_CURSORSTYLE, TCV_CURSORSTYLE_UNDERLINED,
+               TCA_SELECT     , TRUE,
+               TCA_8BIT       , TRUE,
+               TCA_WRAP       , FALSE,
+            End,
+            Child, tmp.SB_Terminal = ScrollbarObject,
+               MUIA_Weight, 0,
             End,
          End,
-         Child, BalanceObject, End,
-         Child, VGroup,
+         Child, ColGroup(3),
             GroupSpacing(0),
-            Child, HGroup,
-               GroupSpacing(0),
-               InnerSpacing(0, 0),
-               Child, tmp.TR_Terminal = TermObject,
-                  MUIA_CycleChain, 1,
-                  InputListFrame,
-                  TCA_EMULATION  , TCV_EMULATION_VT100,
-                  TCA_LFASCRLF   , TRUE,
-                  TCA_DESTRBS    , TRUE,
-                  TCA_ECHO       , FALSE,
-                  TCA_DELASBS    , TRUE,
-                  TCA_CURSORSTYLE, TCV_CURSORSTYLE_UNDERLINED,
-                  TCA_SELECT     , TRUE,
-                  TCA_8BIT       , TRUE,
-                  TCA_WRAP       , FALSE,
-               End,
-               Child, tmp.SB_Terminal = ScrollbarObject,
-                  MUIA_Weight, 0,
-               End,
-            End,
-            Child, ColGroup(3),
-               GroupSpacing(0),
-               Child, tmp.BT_Dial         = MakeButton(MSG_BT_Dial),
-               Child, tmp.BT_GoOnline     = MakeButton(MSG_BT_GoOnline),
-               Child, tmp.BT_HangUp       = MakeButton(MSG_BT_HangUp),
-               Child, tmp.BT_SendLogin    = MakeButton(MSG_BT_SendLogin),
-               Child, tmp.BT_SendPassword = MakeButton(MSG_BT_SendPassword),
-               Child, tmp.BT_SendBreak    = MakeButton(MSG_BT_SendBreak),
-            End,
+            Child, tmp.BT_Dial         = MakeButton(MSG_BT_Dial),
+            Child, tmp.BT_GoOnline     = MakeButton(MSG_BT_GoOnline),
+            Child, tmp.BT_HangUp       = MakeButton(MSG_BT_HangUp),
+            Child, tmp.BT_SendLogin    = MakeButton(MSG_BT_SendLogin),
+            Child, tmp.BT_SendPassword = MakeButton(MSG_BT_SendPassword),
+            Child, tmp.BT_SendBreak    = MakeButton(MSG_BT_SendBreak),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))

@@ -40,18 +40,21 @@ ULONG sigs = NULL;
 const char AmiTCP_PortName[] = "AMITCP";
 
 int addr_assign = 0, dst_assign = 0, dns_assign = 0, domainname_assign = 0;
-char sana2configtext[1024];
+char sana2configtext[1024], configparams[MAXPATHLEN];
 
 int h_errno;
 int dialing_try, dial_number;
 
 char serial_in[10];
-char serial_buffer[81], keyboard_buffer[81];
+char serial_buffer[1024], keyboard_buffer[81];
 char serial_buffer_old1[81];
 char serial_buffer_old2[81];
 WORD ser_buf_pos, key_buf_pos;
 BOOL keyboard_input = FALSE;
-BOOL use_loginscript, use_modem, no_picture, easy_ppp, dialup = FALSE;
+BOOL use_loginscript, use_modem, no_picture, dialup = FALSE;
+
+ULONG *colors[NUM_PAGES];
+UBYTE *bodies[NUM_PAGES];
 
 ///
 /// MainMenu
@@ -73,16 +76,15 @@ struct NewMenu MainMenu[] =
 
 /// MUI Class Pointers
 struct MUI_CustomClass  *CL_MainWindow          = NULL;
-struct MUI_CustomClass  *CL_ModemDetect         = NULL;
 struct MUI_CustomClass  *CL_Online              = NULL;
+struct MUI_CustomClass  *CL_Request             = NULL;
 
 struct MUI_CustomClass  *CL_Finished            = NULL;
-struct MUI_CustomClass  *CL_Advanced            = NULL;
-struct MUI_CustomClass  *CL_ISPInfo1            = NULL;
-struct MUI_CustomClass  *CL_ISPInfo2            = NULL;
+struct MUI_CustomClass  *CL_Protocol            = NULL;
 struct MUI_CustomClass  *CL_LoginScript         = NULL;
 struct MUI_CustomClass  *CL_ModemStrings        = NULL;
 struct MUI_CustomClass  *CL_Sana2               = NULL;
+struct MUI_CustomClass  *CL_SanaConfig          = NULL;
 struct MUI_CustomClass  *CL_SerialModem         = NULL;
 struct MUI_CustomClass  *CL_SerialSana          = NULL;
 struct MUI_CustomClass  *CL_UserInfo            = NULL;

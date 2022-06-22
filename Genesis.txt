@@ -1,0 +1,124 @@
+History for Genesis
+===================
+
+2.0.1
+-----
+* moved AmiTCP:bin/AmiTCP.kernel to AmiTCP:kernel/AmiTCP
+  make sure you also rename the file appropriately.
+* Added debug mode: see prefs/options. logfiles go to t:
+* lo0 (127.0.0.1) is configured automatically at startup.
+* inetd is started at startup, not just when going online
+
+2.0.2
+-----
+
+* fixed very lame bug that prevented to go online a second
+  time with ppp without terminating genesis first.
+* "Speed" gadget now displays contents of modem's "CONNECT"
+  string (more useful than baudrate, eh ?)
+* AmiTCP now gets started properly => genesis can be started
+  from WB too.
+
+2.0.3
+-----
+
+* inetd now gets started properly too from WB.
+* if tcp: is already mounted it won't be mounted again.
+* added notification on config file => when changes are saved
+  it will be reloaded. requester will popup if an iface is
+  still online (can't switch config with iface online).
+* ifaces with "Always Online" set now will be set online
+  when isp is beeing switched too.
+* added option "ShowStatusWindows  yes/no" if user doesn't
+  want status windows to be opened (at startup or at going
+  online)
+* readded serial output terminal (who requested that again ? :)
+
+
+2.1.0
+-----
+
+* mucho travacho ! :)
+* added OwnDevUnit support.
+* the events "Online", "OnlineFail", "OfflineActive" and
+  "OfflinePassive" now belong to the interfaces (no longer to
+  global config) and commands now get executed. (also see prefs).
+* Xon/Xoff can now be enabled/disabled.
+* highspeed mode (RAD_BOOGIE) can now be enabled/disabled.
+* only one instance of genesis can be started.
+* replaced "on/offline" icon with lamps for each interface.
+  (lamp design from Voyager - and thanks for the help Olli !)
+* removed lame bug that made Genesis crash when putting
+  ifaces offline.
+* if interface is "always online" it will now be put online at
+  startup too.
+
+2.1.1
+-----
+
+* fixed bogomil's "crash on 2nd exit" bug.
+* increased timeout for amitcp launch for those with an
+  increddible HUGE s:User-Startup :)
+
+2.1.2
+-----
+
+* now supports more than 2 nameservers and more than 1
+  domainname.
+* user name is now set correctly: "whoami" and "AmIRC" get the
+  correct name if it was defined in db/passwd (but that's gonna
+  be automated soon anyway).
+
+2.1.3 (30.3.98)
+---------------
+
+* fixed bug that caused an enforcer hit when adding nameservers to
+  amitcp:db/resolv.conf . should also solve the problem of adding
+  empty entries to this file.
+* now reads configuration correctly (again).
+
+2.1.4 (4.4.98)
+---------------
+
+* now reads amitcp:db/passwd to get user information. user stuff in
+  genesis.conf has been dropped. => run genesisprefs first, verify
+  user information and save. otherwise you'll see strange things in
+  isp and user lists.
+* startup-event is launched after "always online" ifaces are set
+  online => samba should work now.
+* added menu entry to start prefs from genesis... yessss ! :)
+
+2.1.5 (6.4.98)
+--------------
+
+* increased wait time for amitcp-kernel at startup to 30 secs
+  (certain people use to have huuuuge user-startups ! :)
+* fixed enforcer hit which occured when "always online" and
+  "iconified at startup" were selected. The cause was term.mcc
+  which doesn't like to get called when the window is iconified.
+* startup and shutdown got parsed wrong. the leading number (which
+  indicated the type (0:cli, wb, script, 3:rexx) was included into the
+  commandline.
+* to start genesisprefs from menu it has to be in AMITCP:, PROGDIR: or
+  in the path and its name must be "GenesisPrefs".
+
+2.1.6 (20.4.98)
+---------------
+
+* a stupid bug prevented genesisprefs to be launched when it wasn't
+  in AmiTCP:
+* multiple phonenumbers are supported (separated with a '|').
+* displays how many seconds remain in redial delay.
+
+2.1.7 (30.4.98)
+---------------
+
+* env:apppdns1 was not deleted (misspelled filename in DeleteFile())
+  and thus they were probably reused after switching the provider config.
+
+2.1.8 (4.5.98)
+--------------
+
+* added SynClock functionality (gettime / savetime).
+* launches 68020 version of AmiTCP if available and applicable.
+

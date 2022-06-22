@@ -2,7 +2,6 @@
 
 struct Finished_Data
 {
-   Object *GR_Picture;
    Object *STR_Config;
    Object *CH_Config;
    Object *STR_Info;

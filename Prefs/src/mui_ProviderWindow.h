@@ -56,9 +56,11 @@ struct ProviderWindow_Data
    Object *BT_EditIface;
 
    Object *GR_Server;
+   Object *CH_GetTime;
+   Object *CH_SaveTime;
    Object *STR_TimeServer;
-   Object *STR_BootpServer;
    Object *CH_BOOTP;
+   Object *STR_BootpServer;
 
    Object *GR_Script;
    Object *LV_Script;

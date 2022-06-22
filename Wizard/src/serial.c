@@ -9,6 +9,17 @@
 #include "protos.h"
 
 #define SERIAL_BUFSIZE 16384  /* default size */
+
+   /* Definitions to access the line signal setting functions supported by
+    * some IO serial boards (namely the ASDG board).
+    */
+
+#define SIOCMD_SETCTRLLINES   (CMD_NONSTD + 7)
+#define SIOB_RTSB    0
+#define SIOB_DTRB    1
+#define SIOB_RTSF    (1L << SIOB_RTSB)
+#define SIOB_DTRF    (1L << SIOB_DTRB)
+
 ///
 /// external variables
 extern struct IOExtSer      *SerReadReq, *SerWriteReq;
@@ -17,6 +28,7 @@ extern Object *app, *win, *status_win;
 extern struct Config Config;
 extern struct MUI_CustomClass  *CL_Online;
 extern struct ExecBase *SysBase;
+extern char serial_in[], serial_buffer[];
 
 ///
 
@@ -68,11 +80,9 @@ VOID serial_send(STRPTR cmd, LONG len)
 /// serial_waitfor
 int serial_waitfor(STRPTR string1, STRPTR string2, STRPTR string3, int secs)
 {
-   struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
    ULONG sig;
    struct timerequest *time_req; // have to open our own timer, global one is for main task. won't work if used in different task
    struct MsgPort *time_port;
-   char ser_buf[5], buffer[1024];
    int buf_pos = 0, found = 0;
    BOOL timer_running = FALSE;
 
@@ -89,8 +99,8 @@ int serial_waitfor(STRPTR string1, STRPTR string2, STRPTR string3, int secs)
             SendIO((struct IORequest *)time_req);
             timer_running = TRUE;
 
-            serial_startread(ser_buf, 1);
-            while(!data->abort)
+            serial_startread(serial_in, 1);
+            FOREVER
             {
                sig = Wait((1L << SerReadPort->mp_SigBit) | (1L<< time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
                if(sig & (1L << SerReadPort->mp_SigBit))
@@ -99,24 +109,24 @@ int serial_waitfor(STRPTR string1, STRPTR string2, STRPTR string3, int secs)
                   {
                      WaitIO((struct IORequest *)SerReadReq);
 
-                     buffer[buf_pos++] = ser_buf[0];
-                     buffer[buf_pos] = NULL;
+                     serial_buffer[buf_pos++] = serial_in[0];
+                     serial_buffer[buf_pos] = NULL;
 
-//                     if(!data->abort)
-//                        DoMainMethod(data->TR_Terminal, TCM_WRITE, ser_buf, (APTR)1, NULL);
+                     if(buf_pos > 1020)
+                        buf_pos = 0;
 
                      if(string1)
-                        if(strstr(buffer, string1))
+                        if(strstr(serial_buffer, string1))
                            found = 1;
                      if(string2)
-                        if(strstr(buffer, string2))
+                        if(strstr(serial_buffer, string2))
                            found = 2;
                      if(string3)
-                        if(strstr(buffer, string3))
+                        if(strstr(serial_buffer, string3))
                            found = 3;
                      if(found)
                         break;
-                     serial_startread(ser_buf, 1);
+                     serial_startread(serial_in, 1);
                   }
                }
                if(sig & (1L << time_port->mp_SigBit))
@@ -192,14 +202,32 @@ VOID serial_clear(VOID)
 /// serial_hangup
 VOID serial_hangup(VOID)
 {
+   if(SerWriteReq)
+   {
+      SerWriteReq->IOSer.io_Command  = SIOCMD_SETCTRLLINES;
+      SerWriteReq->IOSer.io_Offset   = SIOB_DTRF;
+      SerWriteReq->IOSer.io_Length   = 0;
+
+      if(!DoIO((struct IORequest *)SerWriteReq))
+      {
+         Delay(50);
+
+         SerWriteReq->IOSer.io_Command  = SIOCMD_SETCTRLLINES;
+         SerWriteReq->IOSer.io_Offset   = SIOB_DTRF;
+         SerWriteReq->IOSer.io_Length   = SIOB_DTRF;
+
+         DoIO((struct IORequest *)SerWriteReq);
+      }
+   }
+
    if(serial_carrier())
    {
       serial_send("+", 1);
-      Delay(20);
+      Delay(10);
       serial_send("+", 1);
-      Delay(20);
+      Delay(10);
       serial_send("+", 1);
-      Delay(20);
+      Delay(10);
       serial_send("ATH0\r", -1);
    }
    else

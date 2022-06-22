@@ -9,17 +9,11 @@
 #include "mui_MainWindow.h"
 #include "protos.h"
 
-#include "images/setup_page3.h"
 ///
 /// external variables
-extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
 extern struct Config Config;
-extern BOOL no_picture;
 extern struct ISP ISP;
-
-extern ULONG setup_page3_colors[];
-extern UBYTE setup_page3_body[];
 
 ///
 
@@ -56,68 +50,49 @@ ULONG UserInfo_AddPhone(struct IClass *cl, Object *obj, struct MUIP_UserInfo_Add
 ULONG UserInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct UserInfo_Data tmp;
+   Object *originator;
+
+   originator = (Object *)GetTagData(MUIA_Genesis_Originator, 0, msg->ops_AttrList);
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Group_Horiz, TRUE,
-      Child, tmp.GR_Picture = VGroup,
-         MUIA_ShowMe, !no_picture,
-         Child, BodychunkObject,
-            GroupFrame,
-            InnerSpacing(0, 0),
-            MUIA_FixWidth             , SETUP_PAGE3_WIDTH,
-            MUIA_FixHeight            , SETUP_PAGE3_HEIGHT,
-            MUIA_Bitmap_Width         , SETUP_PAGE3_WIDTH ,
-            MUIA_Bitmap_Height        , SETUP_PAGE3_HEIGHT,
-            MUIA_Bodychunk_Depth      , SETUP_PAGE3_DEPTH ,
-            MUIA_Bodychunk_Body       , (UBYTE *)setup_page3_body,
-            MUIA_Bodychunk_Compression, SETUP_PAGE3_COMPRESSION,
-            MUIA_Bodychunk_Masking    , SETUP_PAGE3_MASKING,
-            MUIA_Bitmap_SourceColors  , (ULONG *)setup_page3_colors,
-         End,
-         Child, HVSpace,
+      GroupFrame,
+      MUIA_Background, MUII_TextBack,
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoLoginName)),
+      Child, tmp.STR_LoginName = MakeString(NULL, 80),
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoPassword)),
+      Child, tmp.STR_Password = StringObject,
+         MUIA_CycleChain      , 1,
+         MUIA_Frame           , MUIV_Frame_String,
+         MUIA_String_Secret   , TRUE,
+         MUIA_String_MaxLen   , 80,
       End,
-      Child, VGroup,   // enter user info
-         GroupFrame,
-         MUIA_Background, MUII_TextBack,
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoLoginName)),
-         Child, tmp.STR_LoginName = MakeString(ISP.isp_login, 80),
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoPassword)),
-         Child, tmp.STR_Password = StringObject,
+      Child, HVSpace,
+      Child, MakeText(GetStr(MSG_TX_InfoPhoneNumber)),
+      Child, tmp.PO_PhoneNumber = PopobjectObject,
+         MUIA_Popstring_String      , tmp.STR_PhoneNumber = StringObject,
             MUIA_CycleChain      , 1,
-            MUIA_Frame           , MUIV_Frame_String,
-            MUIA_String_Secret   , TRUE,
+            StringFrame,
             MUIA_String_MaxLen   , 80,
-            MUIA_String_Contents , ISP.isp_password,
+            MUIA_String_Accept, "1234567890 |",
          End,
-         Child, HVSpace,
-         Child, MakeText(GetStr(MSG_TX_InfoPhoneNumber)),
-         Child, tmp.PO_PhoneNumber = PopobjectObject,
-            MUIA_Popstring_String      , tmp.STR_PhoneNumber = StringObject,
-               MUIA_CycleChain      , 1,
-               StringFrame,
-               MUIA_String_MaxLen   , 80,
-               MUIA_String_Contents , ISP.isp_phonenumber,
-               MUIA_String_Accept, "1234567890 |",
-            End,
-            MUIA_Popstring_Button      , PopButton(MUII_PopUp),
-            MUIA_Popobject_Object      , VGroup,
-               MUIA_Frame, MUIV_Frame_Group,
-               Child, LLabel(GetStr(MSG_LA_AddNumber)),
-               Child, tmp.STR_AddPhone = MakeString(NULL, 30),
-               Child, HGroup,
-                  Child, tmp.BT_AddPhone = MakeButton(MSG_BT_Add),
-                  Child, tmp.BT_CancelPhone = MakeButton(MSG_BT_Cancel),
-               End,
+         MUIA_Popstring_Button      , PopButton(MUII_PopUp),
+         MUIA_Popobject_Object      , VGroup,
+            MUIA_Frame, MUIV_Frame_Group,
+            Child, LLabel(GetStr(MSG_LA_AddNumber)),
+            Child, tmp.STR_AddPhone = MakeString(NULL, 30),
+            Child, HGroup,
+               Child, tmp.BT_AddPhone = MakeButton(MSG_BT_Add),
+               Child, tmp.BT_CancelPhone = MakeButton(MSG_BT_Cancel),
             End,
          End,
-         Child, HVSpace,
       End,
+      Child, HVSpace,
       TAG_MORE, msg->ops_AttrList))
    {
       struct UserInfo_Data *data = INST_DATA(cl, obj);
-      struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
+      struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, originator);
 
       *data = tmp;
 
@@ -125,9 +100,9 @@ ULONG UserInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->STR_Password     , MUIA_ShortHelp, GetStr(MSG_HELP_Password));
       set(data->STR_PhoneNumber  , MUIA_ShortHelp, GetStr(MSG_HELP_PhoneNumber));
 
-      DoMethod(data->STR_LoginName  , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Password);
-      DoMethod(data->STR_Password   , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_PhoneNumber);
-      DoMethod(data->STR_PhoneNumber, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, mw_data->BT_Next);
+      DoMethod(data->STR_LoginName  , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, originator, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Password);
+      DoMethod(data->STR_Password   , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, originator, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_PhoneNumber);
+      DoMethod(data->STR_PhoneNumber, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, originator, 3, MUIM_Set, MUIA_Window_ActiveObject, mw_data->BT_Next);
       DoMethod(data->BT_AddPhone    , MUIM_Notify, MUIA_Pressed           , FALSE         , obj, 2, MUIM_UserInfo_AddPhone, TRUE);
       DoMethod(data->BT_CancelPhone , MUIM_Notify, MUIA_Pressed           , FALSE         , obj, 2, MUIM_UserInfo_AddPhone, FALSE);
    }

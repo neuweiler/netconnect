@@ -4,8 +4,6 @@
 struct Online_Data
 {
    struct Process *TCPHandler;
-   struct SignalSemaphore HandlerSemaphore;
-   char addr[21];  /** to give the tcphandler the entered IP address **/
    int abort;
 
    Object *TX_Info;
