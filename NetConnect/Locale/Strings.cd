@@ -1,0 +1,507 @@
+#language english
+#version 1
+#lengthbytes 0
+;
+; name the catalog files "netconnect.catalog"
+;;
+;; General Strings:
+;;
+MSG_AppCopyright (//)
+Michael Neuweiler © 1996-98
+;
+MSG_BT_Okay (//)
+_Okay
+;
+MSG_LA_About (//)
+About
+;
+MSG_TX_About1 (//)
+© 1996-98 Michael Neuweiler & Active Technologies\n\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler
+;
+MSG_TX_About2 (//)
+MUI - Copyright © Stefan Stuntz
+;
+MSG_MENU_PROJECT (//)
+Project
+;
+MSG_MENU_ABOUT (//)
+About...
+;
+MSG_MENU_QUIT (//)
+Quit
+;
+MSG_MENU_SETTINGS (//)
+Settings
+;
+MSG_MENU_MUI (//)
+MUI...
+;
+MSG_BT_Save (//)
+_Save
+;
+MSG_BT_Use (//)
+_Use
+;
+MSG_BT_Test (//)
+_Test
+;
+MSG_BT_Cancel (//)
+_Cancel
+;
+MSG_TX_New (//)
+New
+;
+MSG_BT_New1 (//)
+_New
+;
+MSG_BT_New2 (//)
+N_ew
+;
+MSG_BT_New3 (//)
+Ne_w
+;
+MSG_BT_Delete1 (//)
+_Delete
+;
+MSG_BT_Delete2 (//)
+De_lete
+;
+MSG_BT_Remove1 (//)
+_Remove
+;
+MSG_BT_Clear (//)
+C_lear
+;
+MSG_BT_Edit1 (//)
+_Edit
+;
+MSG_BT_Edit2 (//)
+Ed_it
+;
+MSG_BT_Copy (//)
+Cop_y
+;
+MSG_HELP_Save (//)
+Save all changes\npermanently.
+;
+MSG_HELP_Use (//)
+Save the changes\ntemporarely.\n(until you reboot)
+;
+MSG_HELP_Cancel (//)
+Discard all changes.
+;
+MSG_HELP_Test (//)
+Test the current settings.\nNothing will be saved.
+;
+MSG_HELP_Okay (//)
+Accept changes.
+;
+;
+;;
+;; Controller Part :
+;;
+MSG_ControllerAppDescription (//)
+NetConnect
+;
+MSG_MENU_CONTROLLER (//)
+NetConnect
+;
+MSG_MENU_GENESIS (//)
+Genesis
+;
+MSG_MENU_HELP (//)
+Help
+;
+;;
+;; Preferences Part : 
+;;
+;
+MSG_PrefsAppDescription (//)
+NCC Prefs - NetConnect Preferences
+;
+MSG_MENU_LOAD (//)
+Load..
+;
+MSG_MENU_SAVE_AS (//)
+Save as..
+;
+MSG_MENU_RESET_DEFAULT (//)
+Reset to default
+;
+MSG_LA_MainSettings (//)
+Main Settings
+;
+MSG_LA_AdvancedSettings (//)
+Advanced Settings
+;
+MSG_LA_ScriptEditor (//)
+Script Editor
+;
+MSG_WI_EditIcon (//)
+Edit Icon
+;
+MSG_LA_Name (//)
+Name :
+;
+MSG_CC_Name (/1/1)
+m
+;
+MSG_LA_Hotkey (//)
+Hotkey :
+;
+MSG_CC_Hotkey (/1/1)
+h
+;
+MSG_LA_ProgramType (//)
+Type :
+;
+MSG_CC_ProgramType (/1/1)
+t
+;
+MSG_CY_CLI (//)
+CLI
+;
+MSG_CY_Workbench (//)
+Workbench
+;
+MSG_CY_Script (//)
+DOS Script
+;
+MSG_CY_ARexxScript (//)
+ARexx Script
+;
+MSG_LA_Program (//)
+Program :
+;
+MSG_CC_Program (/1/1)
+p
+;
+MSG_LA_Image (//)
+Image :
+;
+MSG_CC_Image (/1/1)
+i
+;
+MSG_LA_Sound (//)
+Sound :
+;
+MSG_CC_Sound (/1/1)
+d
+;
+MSG_LA_Volume (//)
+Volume :
+;
+MSG_CC_Volume (/1/1)
+v
+;
+MSG_LA_Stack (//)
+Stack :
+;
+MSG_CC_Stack (/1/1)
+k
+;
+MSG_LA_Priority (//)
+Priority :
+;
+MSG_CC_Priority (/1/1)
+y
+;
+MSG_LA_CurrentDir (//)
+Current Dir :
+;
+MSG_CC_CurrentDir (/1/1)
+d
+;
+MSG_LA_OutputFile (//)
+Output File :
+;
+MSG_CC_OutputFile (/1/1)
+u
+;
+MSG_LA_PublicScreen (//)
+Public Screen :
+;
+MSG_CC_PublicScreen (/1/1)
+r
+;
+MSG_LA_WBArguments (//)
+use WB-Icons as arguments
+;
+MSG_CC_WBArguments (/1/1)
+w
+;
+MSG_LA_DrawFrame (//)
+draw an icon frame
+;
+MSG_CC_DrawFrame (/1/1)
+a
+;
+MSG_LA_PubScreen2Front (//)
+pop PublicScreen to front
+;
+MSG_CC_PubScreen2Front (/1/1)
+p
+;
+MSG_CY_IconText (//)
+Icon & Text
+;
+MSG_CY_Icon (//)
+Icons only
+;
+MSG_CY_Text (//)
+Text only
+;
+MSG_LV_DockTitle (//)
+Icon Bar
+;
+MSG_LV_ButtonBankTitle (//)
+Button Bank
+;
+MSG_LA_Rows (//)
+Rows :
+;
+MSG_CC_Rows (/1/1)
+o
+;
+MSG_LA_Font (//)
+Font :
+;
+MSG_CC_Font (/1/1)
+f
+;
+MSG_TX_SelectFont (//)
+Please select a font...
+;
+MSG_LA_Activate (//)
+Activate
+;
+MSG_CC_Activate (/1/1)
+a
+;
+MSG_LA_PopUp (//)
+Pop Up
+;
+MSG_CC_PopUp (/1/1)
+p
+;
+MSG_LA_Backdrop (//)
+Backdrop
+;
+MSG_CC_Backdrop (/1/1)
+k
+;
+MSG_LA_Frontmost (//)
+Frontmost
+;
+MSG_CC_Frontmost (/1/1)
+f
+;
+MSG_LA_Borderless (//)
+Borderless
+;
+MSG_CC_Borderless (/1/1)
+b
+;
+MSG_LA_DragBar (//)
+DragBar
+;
+MSG_CC_DragBar (/1/1)
+g
+;
+MSG_TX_Dock (//)
+Dock
+;
+MSG_GR_Information (//)
+Information
+;
+MSG_GR_Menus (//)
+Menus
+;
+MSG_BT_Menu_BarLabel (//)
+*_Menu|_BarLabel
+;
+MSG_TX_CreateWhat (//)
+What would you like\nto create ?
+;
+MSG_TX_NewMenu (//)
+New Menu
+;
+MSG_CY_Synchron (//)
+synch
+;
+MSG_CY_Asynchron (//)
+asynch
+;
+MSG_LA_MenuEntries (//)
+Menu Entries
+;
+MSG_LA_Programs (//)
+Programs
+;
+MSG_LA_ScriptModified (//)
+The script in the editor\nhas been modified.\n\nWhat would you like to do ?
+;
+MSG_TX_InternetDock (//)
+Internet Dock
+;
+MSG_BT_SaveDiscardChanges (//)
+*_Save Changes|_Discard Changes
+;
+MSG_HELP_Pager (//)
+Here you can select the page
+;
+MSG_HELP_NewDock (//)
+Create a new dock.
+;
+MSG_HELP_RemoveDock (//)
+Remove the currently selected dock.
+;
+MSG_HELP_IconName (//)
+A name you can give\nto the button.
+;
+MSG_HELP_Type (//)
+The type of program.\nIt determines how the\nprogram is beeing launched.
+;
+MSG_HELP_Program (//)
+The filename of the program.
+;
+MSG_HELP_IconHotkey (//)
+A hotkey to launch\nthe program.
+;
+MSG_HELP_Image (//)
+Name of an IFF brush or .icon file which\nholds the image for the\nbutton.
+;
+MSG_HELP_Sound (//)
+Name of a sound file\nwhich will be played\nif you hit the button.
+;
+MSG_HELP_PlaySound (//)
+Listen to the\nselected sound.
+;
+MSG_HELP_Volume (//)
+The sound's volume.
+;
+MSG_HELP_Stack (//)
+The size of the stack\nin bytes which the program will\nreceive when launched.
+;
+MSG_HELP_Priority (//)
+Priority at which the\nprogramm will be launched.
+;
+MSG_HELP_CurrentDir (//)
+Working directory for the program.
+;
+MSG_HELP_OutputFile (//)
+File to which the output of\nthe program will be redirected.
+;
+MSG_HELP_PublicScreen (//)
+Name of the PublicScreen\nwhich will be brought to front.
+;
+MSG_HELP_WBArgs (//)
+WB icons that are dropped on\nthe icon will be passed\nas arguments.
+;
+MSG_HELP_DrawFrame (//)
+Draw a frame around the image.
+;
+MSG_HELP_ToFront (//)
+Pop the screen entered in \n\"Public Screen\" to the front\nwhen the program is launched.
+;
+MSG_HELP_Editor (//)
+Edit the script file you\nentered in \"Program\".
+;
+MSG_HELP_NewLine (//)
+Add a line.
+;
+MSG_HELP_DeleteLine (//)
+Delete the currently\nselected line.
+;
+MSG_HELP_Clear (//)
+Delete the contents\nof the script.
+;
+MSG_HELP_InactiveIcons (//)
+This list contains Icons\nwhich are not used at\nthe moment.
+;
+MSG_HELP_ActiveIcons (//)
+This list constains the\ncurrently active icons.
+;
+MSG_HELP_NewIcon (//)
+Create a new icon.
+;
+MSG_HELP_RemoveIcon (//)
+Delete the active icon.
+;
+MSG_HELP_CopyIcon (//)
+Copy the active icon.
+;
+MSG_HELP_EditIcon (//)
+Edit the active icon.
+;
+MSG_HELP_DockName (//)
+Name of the dock
+;
+MSG_HELP_DockHotkey (//)
+Hotkey to open/close the dock
+;
+MSG_HELP_Rows (//)
+Determine the number of\nrows the window will\nuse to display the icons.
+;
+MSG_HELP_Font (//)
+The font used\nfor text buttons.
+;
+MSG_HELP_ButtonType (//)
+How the icons will\nbe displayed
+;
+MSG_HELP_Activate (//)
+Acticate the dock\nwindow when opened
+;
+MSG_HELP_PopUp (//)
+Open the dock window\nat startup
+;
+MSG_HELP_Backdrop (//)
+The dock window will\nalways be behind al others
+;
+MSG_HELP_Frontmost (//)
+The dock window will\nalways be the frontmost
+;
+MSG_HELP_Borderless (//)
+Draws no window border
+;
+MSG_HELP_DragBar (//)
+If the window is borderless\nyou might want to have a\ndragbar to drag it around.
+;
+MSG_HELP_MenuEntries (//)
+Menu Entries that will appear\nin the \"Tools\" menu of\nthe workbench window.
+;
+MSG_HELP_NewMenu (//)
+Add a news menu to the list.
+;
+MSG_HELP_DeleteMenu (//)
+Delete the currently\nselected menu.
+;
+MSG_HELP_MenuName (//)
+Enter a name for the\nselected menu.
+;
+MSG_HELP_Programs (//)
+List of programs that\nwill be executed when the menu\nis selected. Currently selected WB icons\nwill be passed as arguments.
+;
+MSG_HELP_NewProgram (//)
+Add a new program.
+;
+MSG_HELP_DeleteProgram (//)
+Delete the currently\nselected program.
+;
+MSG_HELP_Asynch (//)
+Run the program\nasynchron/synchron.
+;
+;
+;
+MSG_MENU_TIMELOG (//)
+TimeLog
+;
+MSG_TX_Want_Quit (//)
+Do you want to quit NetConnect ?
+;
+MSG_BT_Want_Quit (//)
+*_Quit|_No
+;
+MSG_TX_Already_Running (//)
+NetConnect is already running.
+;

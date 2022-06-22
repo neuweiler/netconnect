@@ -1,39 +1,31 @@
-STRPTR GetStr(STRPTR idstr);
-
-// amiga.c
-
-SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg);
+/// amiga.c
 ULONG __stdargs DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...);
 LONG xget(Object *obj, ULONG attribute);
-Object *MakeKeyLabel2(STRPTR label, STRPTR control_char);
-Object *MakeButton(STRPTR string);
-Object *MakeKeyString(STRPTR string, LONG len, STRPTR control_char);
-Object *MakeKeyCycle(STRPTR *array, STRPTR control_char);
-Object *MakeKeySlider(LONG min, LONG max, LONG level, STRPTR control_char);
-Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only);
-BOOL load_icon(struct Icon *icon);
-Object *create_bodychunk(struct Icon *icon, BOOL frame);
-VOID init_icon(struct Icon *icon, Object *list);
-LONG get_file_size(STRPTR file);
-STRPTR LoadFile(STRPTR file);
-int find_max(VOID);
-SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x);
-SAVEDS ASM LONG Editor_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x);
-SAVEDS ASM LONG Button_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x);
-BOOL editor_load(STRPTR file, Object *editor);
-BOOL editor_save(STRPTR file, Object *editor);
-BOOL editor_checksave(STRPTR file, Object *editor);
+SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg);
+STRPTR GetStr(STRPTR idstr);
 VOID play_sound(STRPTR file, LONG volume);
+ULONG BuildCommandLine(char *buf, struct Program *program, BPTR curdir, struct AppMessage *msg);
+BOOL StartCLIProgram(struct Program *program, struct AppMessage *msg);
+BOOL StartWBProgram(struct Program *program, struct AppMessage *msg);
 VOID StartProgram(struct Program *program, struct AppMessage *msg);
+VOID init_icon(struct Icon *icon);
+STRPTR update_string(STRPTR old, STRPTR source);
+BOOL load_config(VOID);
 
-// mui2.c
+///
+/// main.c
+ULONG check_date(VOID);
 
-SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
-SAVEDS ASM ULONG ProgramList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg);
-SAVEDS ASM ULONG MenuPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+///
+/// mui.c
+SAVEDS ASM ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Button_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Dock_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG MenuList_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 
-
-// fixpath.c
-
+///
+/// fixpath.c
 VOID __regargs DeleteCLI(struct CommandLineInterface *CLI);
 struct CommandLineInterface * __regargs CloneCLI(struct Message *Message);
+
+///

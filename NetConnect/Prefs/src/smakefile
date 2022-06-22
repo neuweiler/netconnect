@@ -1,56 +1,112 @@
 ###############################################################################
 #
-#	SMakefile
+#  SMakefile
 #
-#	Makefile for the `SMake' utility required to build `NetConnect Config'
+#  Makefile for the `SMake' utility required to build `NetConnectPrefs'
 #
-#	1996 by Michael Neuweiler
+#  1996-98 by Michael Neuweiler
 #
 ###############################################################################
 
 .c.o:
-	sc $(CFLAGS) $(GST) $(OPTIONS) NOEXTDEF $*.c
+   sc $(CFLAGS) $(GST) $(OPTIONS) $*.c
 
 .asm.o:
-	ASM -D $*.asm
+   ASM -D $*.asm
 
-CPU		= ANY
-#CPU		= 68030
+CPU      = ANY
+#CPU     = 68030
+DEMO     = DEF=DEMO
+#BETA    = DEF=BETA
+#DEBUG      = DBG=FULL
+OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 
-#OPTIMIZE	= OPT OPTTIME NOOPTINLOCAL
+OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
+GST      = GSTIMM GST=/includes.gst
 
-OPTIONS	= CPU=$(CPU) $(OPTIMIZE)
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG)
 
-GST		= GSTIMM GST=includes.gst
+LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
+#LFLAGS  = SC SD NOICONS MAXHUNK 100000
 
-CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS
-#CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ DEF=_M$(CPU) NOICONS DBG=FULL
+OBJS     = mui_About.o mui_DockPrefs.o mui_EditIcon.o mui_Editor.o amiga.o mui_IconList.o \
+           main.o globals.o mui_MainWindow.o mui_MenuPrefs.o mui_PagerList.o \
+           mui_ProgramList.o
+LIBS     = lib:amiga.lib lib:sc.lib
 
-#LFLAGS	= SC SD NOICONS
-LFLAGS	= ND SC SD NOICONS
+all:   /includes.gst /locale/Strings.h /locale/empty.ct /images/default_icon.h /images/logo.h /images/information.h /images/menus.h /images/dock.h NetConnectPrefs
 
-OBJS		= main.o globals.o mui.o
-LIBS		= lib:amiga.lib lib:sc.lib
+/includes.gst:  /includes.h
+      GST >NIL: UNLOAD $@
+      SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
+      GST $@
 
-all:	 includes.gst ConfigStrings.h Config
+/locale/Strings.h: /locale/Strings.cd
+   cat2h /locale/Strings.cd /locale/Strings.h
+/locale/empty.ct : /locale/Strings.cd
+   sc:c/FlexCat /locale/Strings.cd NEWCTFILE /locale/empty.ct
+#locale:catalogs/deutsch/AmiTCPPrefs.catalog : /locale/deutsch.ct
+#  sc:c/FlexCat /locale/Strings.cd /locale/deutsch.ct CATALOG locale:catalogs/deutsch/NetConnect.catalog
 
-includes.gst:	includes.h
-		GST >NIL: UNLOAD $@
-		SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ includes.h
-		GST $@
+/images/logo.h: /images/logo.iff
+   brush2c /images/logo.iff >/images/logo.h
+/images/default_icon.h: /images/default_icon.iff
+   brush2c /images/default_icon.iff >/images/default_icon.h
+/images/information.h: /images/information.iff
+   brush2c /images/information.iff >/images/information.h
+/images/menus.h: /images/menus.iff
+   brush2c /images/menus.iff >/images/menus.h
+/images/dock.h: /images/dock.iff
+   brush2c /images/dock.iff >/images/dock.h
 
-ConfigStrings.h: ConfigStrings.cd
-	cat2h ConfigStrings.cd ConfigStrings.h
+NetConnectPrefs:  $(OBJS)
+   SLINK WITH T:NetConnectPrefs.WITH <<!(T:NetConnectPrefs.WITH)
+      FROM  lib:c.o $(OBJS)
+      TO    NetConnectPrefs
+      LIB   $(LIBS)
+      MAP NetConnectPrefs.map H
+      $(LFLAGS)
+   <
 
-Config:	$(OBJS)
-   SLINK WITH T:Config.WITH <<!(T:Config.WITH)
-		FROM	lib:c.o $(OBJS)
-		TO		Config
-		LIB	$(LIBS)
-		$(LFLAGS)
-	<
+amiga.o: amiga.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+ mui_DockPrefs.h protos.h /images/default_icon.h
 
-globals.o:	globals.c	Config.h ConfigStrings.h
-	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
-main.o:		main.c		Config.h ConfigStrings.h globals.c
-mui.o:		mui.c			Config.h ConfigStrings.h globals.c
+main.o: main.c /includes.h /NetConnect.h /locale/Strings.h mui.h mui_About.h\
+ mui_DockPrefs.h mui_EditIcon.h mui_Editor.h mui_IconList.h mui_MainWindow.h\
+ mui_MenuPrefs.h mui_PagerList.h mui_ProgramList.h protos.h rev.h
+
+globals.o: globals.c /includes.h /NetConnect.h /locale/Strings.h mui.h protos.h\
+ /images/default_icon.h /images/logo.h /images/information.h /images/menus.h\
+ /images/dock.h
+
+mui_Editor.o: mui_Editor.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+ mui_Editor.h protos.h
+
+mui_EditIcon.o: mui_EditIcon.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+ mui_EditIcon.h mui_DockPrefs.h protos.h
+
+mui_About.o: mui_About.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+ mui_About.h mui_MainWindow.h protos.h rev.h /images/logo.h
+
+mui_ProgramList.o: mui_ProgramList.c /includes.h /NetConnect.h /locale/Strings.h\
+ mui.h mui_ProgramList.h mui_MenuPrefs.h protos.h
+
+mui_MenuPrefs.o: mui_MenuPrefs.c /includes.h /NetConnect.h /locale/Strings.h\
+ mui.h mui_MenuPrefs.h mui_MainWindow.h\
+ mui_ProgramList.h protos.h
+
+mui_PagerList.o: mui_PagerList.c /includes.h /NetConnect.h /locale/Strings.h\
+ mui.h mui_PagerList.h protos.h /images/information.h\
+ /images/menus.h /images/dock.h
+
+mui_MainWindow.o: mui_MainWindow.c /includes.h /NetConnect.h /locale/Strings.h\
+ mui.h mui_MainWindow.h mui_DockPrefs.h\
+ mui_MenuPrefs.h mui_IconList.h protos.h rev.h /images/logo.h
+
+mui_DockPrefs.o: mui_DockPrefs.c /includes.h /NetConnect.h /locale/Strings.h\
+ mui.h mui_DockPrefs.h mui_IconList.h mui_EditIcon.h\
+ mui_MainWindow.h protos.h
+
+mui_IconList.o: mui_IconList.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+ mui_IconList.h mui_MainWindow.h mui_DockPrefs.h protos.h
+
