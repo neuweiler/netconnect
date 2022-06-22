@@ -20,35 +20,51 @@ DEMO		= DEF=DEMO
 #BETA		= DEF=BETA
 #DEBUG	= DBG=LINE
 OPTIMIZE	= OPT OPTTIME NOOPTINLOCAL
+#NETCOM	= DEF=NETCOM
 
 OPTIONS	= CPU=$(CPU) $(OPTIMIZE)
 GST		= GSTIMM GST=includes.gst
 
-CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG)
+CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG) $(NETCOM)
 
 LFLAGS	= ND SC SD NOICONS MAXHUNK 100000
 #LFLAGS	= SC SD NOICONS MAXHUNK 100000
 
-OBJS		= globals.o main.o Stackcall.o mui1.o mui2.o amiga.o
+OBJS		= globals.o main.o Stackcall.o mui1.o mui2.o mui3.o amiga.o
 LIBS		= lib:amiga.lib lib:sc.lib
 
-all:	 includes.gst locale/Strings.h locale/empty.ct locale:catalogs/deutsch/AmiTCPPrefs.catalog logo.bh AmiTCPPrefs
+all:	 includes.gst locale/Strings.h images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh AmiTCPPrefs
+#all:	 includes.gst locale/Strings.h locale/empty.ct locale:catalogs/deutsch/AmiTCPPrefs.catalog images/logo.bh AmiTCPPrefs
 
 includes.gst:	includes.h
 		GST >NIL: UNLOAD $@
 		SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ includes.h
 		GST $@
 
-logo.bh: logo.iff
-	brush2c logo.iff >logo.bh
+images/logo.bh: images/logo.iff
+	brush2c images/logo.iff >images/logo.bh
+images/information.bh: images/information.iff
+	brush2c images/information.iff >images/information.bh
+images/provider.bh: images/provider.iff
+	brush2c images/provider.iff >images/provider.bh
+images/user.bh: images/user.iff
+	brush2c images/user.iff >images/user.bh
+images/modem.bh: images/modem.iff
+	brush2c images/modem.iff >images/modem.bh
+images/groups.bh: images/groups.iff
+	brush2c images/groups.iff >images/groups.bh
+images/databases.bh: images/databases.iff
+	brush2c images/databases.iff >images/databases.bh
+images/paths.bh: images/paths.iff
+	brush2c images/paths.iff >images/paths.bh
 
 locale/Strings.h: locale/Strings.cd
 	cat2h locale/Strings.cd locale/Strings.h
-locale/empty.ct : locale/Strings.cd
-	sc:c/FlexCat locale/Strings.cd NEWCTFILE locale/empty.ct
-locale:catalogs/deutsch/AmiTCPPrefs.catalog : locale/deutsch.ct
-	sc:c/FlexCat locale/Strings.cd locale/deutsch.ct CATALOG locale:catalogs/deutsch/AmiTCPPrefs.catalog
-	c:avail >nil: flush
+#locale/empty.ct : locale/Strings.cd
+#	sc:c/FlexCat locale/Strings.cd NEWCTFILE locale/empty.ct
+#locale:catalogs/deutsch/AmiTCPPrefs.catalog : locale/deutsch.ct
+#	sc:c/FlexCat locale/Strings.cd locale/deutsch.ct CATALOG locale:catalogs/deutsch/AmiTCPPrefs.catalog
+#	c:avail >nil: flush
 
 AmiTCPPrefs:	$(OBJS)
    SLINK WITH T:AmiTCPPrefs.WITH <<!(T:AmiTCPPrefs.WITH)
@@ -59,9 +75,10 @@ AmiTCPPrefs:	$(OBJS)
 		$(LFLAGS)
 	<
 
-globals.o:	globals.c	mui.h rev.h AmiTCPPrefs.h locale/Strings.h
+globals.o:	globals.c	mui.h rev.h AmiTCPPrefs.h locale/Strings.h images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
 	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
 main.o:		main.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
-mui1.o:		mui1.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
-mui2.o:		mui2.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
+mui1.o:		mui1.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
+mui2.o:		mui2.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
+mui3.o:		mui3.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
 amiga.o:		amiga.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c

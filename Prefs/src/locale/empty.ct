@@ -62,13 +62,13 @@ MSG_BT_New
 
 ;_New
 ;
-MSG_BT_Delete
+MSG_BT_Remove
 
-;_Delete
+;_Remove
 ;
-MSG_BT_Clear
+MSG_BT_Default
 
-;C_lear
+;De_fault
 ;
 ;
 ; Provider page
@@ -96,7 +96,7 @@ MSG_ProviderRegister1
 ;
 MSG_ProviderRegister2
 
-;Protocol
+;Configuration
 ;
 MSG_ProviderRegister3
 
@@ -104,7 +104,7 @@ MSG_ProviderRegister3
 ;
 MSG_ProviderRegister4
 
-;Dialscript
+;Loginscript
 ;
 MSG_RA_Connection0
 
@@ -293,6 +293,39 @@ MSG_LA_FTPServer
 MSG_CC_FTPServer
 
 ;f
+;
+MSG_LA_IRCServer
+
+;IRC Server :
+;
+MSG_CC_IRCServer
+
+;c
+;
+MSG_LA_ProxyServer
+
+;Proxy Server :
+;
+MSG_CC_ProxyServer
+
+;p
+;
+MSG_LA_ProxyPort
+
+;Port :
+;
+MSG_CC_ProxyPort
+
+;t
+;
+MSG_LA_TimeServer
+
+;Time Server :
+;
+MSG_CC_TimeServer
+
+;i
+;
 ;
 ; User page
 ;
@@ -511,11 +544,15 @@ MSG_MENU_PROJECT
 ;
 MSG_MENU_ABOUT
 
-;About
+;About...
 ;
 MSG_MENU_QUIT
 
 ;Quit
+;
+MSG_MENU_IMPORT
+
+;Import
 ;
 MSG_MENU_SETTINGS
 
@@ -641,21 +678,17 @@ MSG_Help_FTPServer
 
 ;Enter the name of your\nproviders FTP-Server
 ;
-MSG_Help_DialScript
+MSG_Help_LoginScript
 
-;This is the AREXX script that will\nbe used to login at your provider.\nYou can use drag & drop to move\nlines in this list\n\nRemember: ARexx-Scripts DO have to\nstart with a comment in the first line !!
+;This is the AREXX script that will\nbe used to login at your provider.\nYou can use drag & drop to move\nlines in this list\n
 ;
 MSG_Help_New
 
-;Add a new line at the end of the script.\nYou can use drag & drop to move the lines in the list
+;Add a new entry to the list.\nYou can use drag & drop to move the lines in the list
 ;
-MSG_Help_Delete
+MSG_Help_Remove
 
-;Delete the active line.
-;
-MSG_Help_Clear
-
-;Clear the entire script.
+;Remove the active entry.
 ;
 MSG_Help_LoginName
 
@@ -760,4 +793,60 @@ MSG_Help_FileIn
 MSG_Help_FileOut
 
 ;Drawer to upload files from.
+;
+MSG_Help_Users_List
+
+;This list contains\nyour system's users.
+;
+MSG_Help_Users_Username
+
+;The name of the selected user.
+;
+MSG_Help_Users_Fullname
+
+;The full name of\nthe selected user.
+;
+MSG_Help_Users_HomeDir
+
+;The user's home directory.\nThis is where the user will be after loging in.
+;
+MSG_Help_Users_Shell
+
+;The shell for the user.\nUsed for remote login with telnet.
+;
+MSG_Help_Users_Disable
+
+;Disable the user.\nThe user can't login anymore.
+;
+MSG_Help_Users_UserID
+
+;The user's ID number.\nMake sure every user has a unique one.
+;
+MSG_Help_Users_ChangePassword
+
+;Change the user's password.
+;
+MSG_Help_Users_RemovePassword
+
+;Remove the user's password.\nBe warned: It is dangerous if a user has no\npassword since everyone might login using this\nuser's account.
+;
+MSG_Help_Users_GroupID
+
+;The user's group id.\nYou can drag & drop a group from\nthe list below into this field.
+;
+MSG_Help_Groups_List
+
+;This list contains\nthe system's groups.
+;
+MSG_Help_Groups_Name
+
+;The name of the selected group.
+;
+MSG_Help_Groups_Number
+
+;The id number of the selected group.\nMake sure every group has its own id !
+;
+MSG_Help_Groups_Members
+
+;The group's members.\nTo add members drag & drop a user from\nthe above user list into this list.
 ;

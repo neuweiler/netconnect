@@ -7,7 +7,8 @@
 # Precompiled files
 *.gst
 *.gst.info
-NetConnectStrings.h
+*Strings.h
+*.bh
 
 # Compiled libraries
 *.libraray

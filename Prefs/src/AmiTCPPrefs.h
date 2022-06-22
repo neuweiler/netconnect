@@ -3,6 +3,7 @@
 #define SAVEDS __saveds
 #define MAKE_ID(a,b,c,d) ((ULONG) (a)<<24 | (ULONG) (b)<<16 | (ULONG) (c)<<8 | (ULONG) (d))
 #define MAXPATHLEN 256
+#define VVSpace MUI_NewObject(MUIC_Rectangle, MUIA_FixWidth, 1, TAG_DONE)
 
 struct pc_Data
 {
@@ -51,4 +52,53 @@ struct PoP
 {
 	char Name[81];
 	char Phone[81];
+};
+
+struct Protocol
+{
+	char Name[41];
+	WORD ID;
+	char Aliases[81];
+};
+
+struct Service
+{
+	char Name[41];
+	WORD Port;
+	char Protocol[41];
+	char Aliases[81];
+};
+
+struct Inetd
+{
+	char Service[41];
+	BYTE Socket;
+	char Protocol[41];
+	BYTE Wait;
+	char User[41];
+	char Server[81];
+	char Args[81];
+
+	BOOL Active;
+};
+
+struct Host
+{
+	char Addr[21];
+	char Name[41];
+	char Aliases[81];
+};
+
+struct Network
+{
+	char Name[41];
+	ULONG Number;
+	char Aliases[81];
+};
+
+struct Rpc
+{
+	char Name[41];
+	ULONG Number;
+	char Aliases[81];
 };

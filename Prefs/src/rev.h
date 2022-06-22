@@ -1,5 +1,5 @@
-#define VERSION	"0"
-#define REVISION	"59"
+#define VERSION	"1"
+#define REVISION	"02"
 #ifdef BETA
 #define BETAVERS	" -BETA-"
 #else

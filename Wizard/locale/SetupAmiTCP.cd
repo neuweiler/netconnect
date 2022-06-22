@@ -1,0 +1,51 @@
+#language english
+#version 1
+#lengthbytes 0
+;
+;
+;
+MSG_TX_About1 (//)
+\033c\n© 1996 Michael Neuweiler & Active Software\n\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler
+;
+MSG_TX_About2 (//)
+\033cAmiTCP Prefs uses:\nMUI - Copyright © Stefan Stuntz
+;
+MSG_TX_InvalidProgram (//)
+Sorry, program has become invalid !
+;
+MSG_BT_Sigh (//)
+\033b_Sigh..
+;
+MSG_TX_DemoVersion (//)
+\033bTHIS IS A DEMO VERSION !
+;
+MSG_TX_DemoWarning (//)
+DEMO VERSION !\n\nThis program will become invalid after 30 days.\nThen you will have to buy the full\nversion if you want to continue using it.\nAlso some functions are disabled in the demo version.
+;
+MSG_MEN_PROJECT (//)
+Project
+;
+MSG_MEN_ABOUT (//)
+About...
+;
+MSG_MEN_SHORT_ABOUT (/1/1)
+?
+;
+MSG_MEN_ABOUT_MUI (//)
+About MUI...
+;
+MSG_MEN_QUIT (//)
+Quit
+;
+MSG_MEN_SHORT_QUIT (/1/1)
+Q
+;
+MSG_MEN_SETTINGS (//)
+Settings
+;
+MSG_MEN_MUI (//)
+MUI Settings...
+;
+MSG_MEN_SHORT_MUI (/1/1)
+M
+;

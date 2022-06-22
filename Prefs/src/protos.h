@@ -2,9 +2,6 @@ STRPTR GetStr(STRPTR idstr);
 VOID ParseEnd(struct pc_Data *pc_data);
 ULONG __stdargs DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...);
 LONG xget(Object *obj, ULONG attribute);
-SAVEDS ASM LONG sortfunc(REG(a1) STRPTR str1, REG(a2) STRPTR str2);
-SAVEDS ASM LONG strobjfunc(REG(a2) Object *list, REG(a1) Object *str);
-SAVEDS ASM LONG txtobjfunc(REG(a2) Object *list, REG(a1) Object *str);
 Object *MakeKeyLabel1(STRPTR label, STRPTR control_char);
 Object *MakeKeyLabel2(STRPTR label, STRPTR control_char);
 Object *MakeButton(STRPTR string);
@@ -21,13 +18,22 @@ BOOL ParseNext(struct pc_Data *pc_data);
 BOOL ParseNextLine(struct pc_Data *pc_data);
 VOID ParseEnd(struct pc_Data *pc_data);
 BOOL CopyFile(STRPTR infile, STRPTR outfile);
+STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep);
+char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save);
 
+SAVEDS ASM ULONG MemberList_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG GroupIDString_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG Users_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG AmiTCPPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
 SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
 SAVEDS ASM ULONG InfoWindow_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
 SAVEDS ASM ULONG Provider_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
 SAVEDS ASM ULONG User_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
 SAVEDS ASM ULONG Modem_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
 SAVEDS ASM ULONG Paths_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG Databases_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG Events_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG PagerList_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
 
 // StackCall.asm
 

@@ -20,6 +20,12 @@ SAVEDS ASM LONG sortfunc(REG(a1) STRPTR str1, REG(a2) STRPTR str2)
 }
 
 
+SAVEDS ASM VOID des_func(REG(a2) APTR pool, REG(a1) APTR ptr)
+{
+	if(ptr)
+		FreeVec(ptr);
+}
+
 SAVEDS ASM LONG strobjfunc(REG(a2) Object *list, REG(a1) Object *str)
 {
 	char *x, *s;
@@ -33,14 +39,14 @@ SAVEDS ASM LONG strobjfunc(REG(a2) Object *list, REG(a1) Object *str)
 		DoMethod(list, MUIM_List_GetEntry, i, &x);
 		if(!x)
 		{
-			nnset(list, MUIA_List_Active, MUIV_List_Active_Off);
+			set(list, MUIA_List_Active, MUIV_List_Active_Off);
 			break;
 		}
 		else
 		{
 			if(!stricmp(x, s))
 			{
-				nnset(list, MUIA_List_Active, i);
+				set(list, MUIA_List_Active, i);
 				break;
 			}
 		}
@@ -63,14 +69,14 @@ SAVEDS ASM LONG txtobjfunc(REG(a2) Object *list, REG(a1) Object *str)
 		DoMethod(list, MUIM_List_GetEntry, i, &x);
 		if(!x)
 		{
-			nnset(list, MUIA_List_Active, MUIV_List_Active_Off);
+			set(list, MUIA_List_Active, MUIV_List_Active_Off);
 			break;
 		}
 		else
 		{
 			if(!stricmp(x, s))
 			{
-				nnset(list, MUIA_List_Active, i);
+				set(list, MUIA_List_Active, i);
 				break;
 			}
 		}
@@ -341,7 +347,6 @@ BOOL ParseNext(struct pc_Data *pc_data)
 		else
 			pc_data->Current = NULL;
 	}
-
 	return(success);
 }
 
@@ -406,4 +411,86 @@ BOOL CopyFile(STRPTR infile, STRPTR outfile)
 		Close(in);
 	}
 	return(success);
+}
+
+
+STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep)
+{
+	STRPTR ptr1, ptr2;
+
+	strncpy(buffer, string, len);
+
+	ptr1 = strchr(buffer, (sep ? sep : ' '));
+	ptr2 = strchr(buffer, 9);
+
+	if(ptr2 && ((ptr2 < ptr1) || !ptr1))
+		ptr1 = ptr2;
+	if(ptr1)
+		*ptr1 = NULL;
+
+	string += strlen(buffer);
+
+	while(*string == ' ' || *string == 9 || (sep ? *string == sep : NULL))
+		string++;
+
+	return((*string ? string : NULL));
+}
+
+SAVEDS ASM VOID IntuiMsgFunc(REG(a1) struct IntuiMessage *imsg,REG(a2) struct FileRequester *req)
+{
+	if(imsg->Class == IDCMP_REFRESHWINDOW)
+		DoMethod(req->fr_UserData, MUIM_Application_CheckRefresh);
+}
+
+char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
+{
+	static char buf[512];
+	struct FileRequester *req;
+	struct Window *w;
+	static LONG left=-1,top=-1,width=-1,height=-1;
+	char *res = NULL;
+	static const struct Hook IntuiMsgHook = { { 0,0 }, (VOID *)IntuiMsgFunc, NULL, NULL };
+
+	get(win, MUIA_Window_Window, &w);
+	if(left == -1)
+	{
+		left		= w->LeftEdge+w->BorderLeft + 2;
+		top		= w->TopEdge+w->BorderTop + 2;
+		width		= w->Width-w->BorderLeft-w->BorderRight - 4;
+		height	= w->Height-w->BorderTop-w->BorderBottom - 4;
+	}
+
+	if(req = MUI_AllocAslRequestTags(ASL_FileRequest,
+		ASLFR_Window			, w,
+		ASLFR_TitleText		, title,
+		ASLFR_InitialLeftEdge, left,
+		ASLFR_InitialTopEdge	, top,
+		ASLFR_InitialWidth	, width,
+		ASLFR_InitialHeight	, height,
+//		ASLFR_InitialDrawer	, (drawer ? drawer : (STRPTR)"PROGDIR:"),
+		ASLFR_InitialFile		, (file ? file : (STRPTR)""),
+		ASLFR_DoSaveMode		, save,
+		ASLFR_RejectIcons		, TRUE,
+		ASLFR_UserData			, app,
+		ASLFR_IntuiMsgFunc	, &IntuiMsgHook,
+		TAG_DONE))
+	{
+		set(app, MUIA_Application_Sleep, TRUE);
+		if(MUI_AslRequestTags(req, TAG_DONE))
+		{
+			if(*req->fr_File)
+			{
+				res = buf;
+				stccpy(buf, req->fr_Drawer, sizeof(buf));
+				AddPart(buf, req->fr_File, sizeof(buf));
+			}
+			left		= req->fr_LeftEdge;
+			top		= req->fr_TopEdge;
+			width		= req->fr_Width;
+			height	= req->fr_Height;
+		}
+		MUI_FreeAslRequest(req);
+		set(app, MUIA_Application_Sleep, FALSE);
+	}
+	return(res);
 }

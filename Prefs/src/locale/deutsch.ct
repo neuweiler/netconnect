@@ -70,6 +70,10 @@ MSG_BT_Clear
 _Löschen
 ;C_lear
 ;
+MSG_BT_Default
+_Vordefiniert
+;De_fault
+;
 ;
 ; Provider page
 ;
@@ -103,8 +107,8 @@ Dienste
 ;Services
 ;
 MSG_ProviderRegister4
-Wähl-Script
-;Dialscript
+Login-Script
+;Loginscript
 ;
 MSG_RA_Connection0
 Dynamisch
@@ -510,7 +514,7 @@ Projekt
 ;Project
 ;
 MSG_MENU_ABOUT
-Über
+Über...
 ;About
 ;
 MSG_MENU_QUIT
@@ -641,9 +645,9 @@ MSG_Help_FTPServer
 Der Name des FTP-Servers.
 ;Enter the name of your\nproviders FTP-Server
 ;
-MSG_Help_DialScript
-Dies ist das AREXX Skript, das benutzt\nwird, um sich beim Provider einzuloggen.\nMit drag & drop können die Zeilen\nverschoben werden.\n\nBeachte: Arexx-Skripte MÜSSEN IMMER mit einer\nKommentar-Zeile beginnen !!
-;This is the AREXX script that will\nbe used to login at your provider.\nYou can use drag & drop to move\nlines in this list\n\nRemember: ARexx-Scripts DO have to\nstart with a comment in the first line !!
+MSG_Help_LoginScript
+Dies ist das AREXX Skript, das benutzt\nwird, um sich beim Provider einzuloggen.\nMit drag & drop können die Zeilen\nverschoben werden.\n
+;This is the AREXX script that will\nbe used to login at your provider.\nYou can use drag & drop to move\nlines in this list\n
 ;
 MSG_Help_New
 Füge eine neue Zeile am Ende des Skripts ein.\nSie kann mit drag & drop verschoben werden.

@@ -1,0 +1,83 @@
+###############################################################################
+#
+#  SMakefile
+#
+#  Makefile for the `SMake' utility required to build `SetupAmiTCP'
+#
+#  1997 by Michael Neuweiler
+#
+###############################################################################
+
+.c.o:
+	sc $(CFLAGS) $(GST) $(OPTIONS) NOEXTDEF $*.c
+
+.asm.o:
+	ASM -D $*.asm
+
+CPU      = ANY
+#CPU     = 68030
+DEMO     = DEF=DEMO
+#BETA    = DEF=BETA
+DEBUG   = DBG=LINE
+#OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
+#NETCOM  = DEF=NETCOM
+
+OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
+GST      = GSTIMM GST=/includes.gst
+
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG) $(NETCOM)
+
+#LFLAGS   = ND SC NOICONS MAXHUNK 100000
+LFLAGS  = SC NOICONS MAXHUNK 100000
+
+OBJS     = mui_MainWindow.o mui_InfoWindow.o main.o globals.o amiga.o stackcall.o fixpath.o globals2.o
+LIBS     = lib:amiga.lib lib:sc.lib
+
+all:   /includes.gst /locale/SetupAmiTCP.h /images/setup_page0.bh /images/setup_page1.bh /images/setup_page2.bh /images/setup_page3.bh /images/setup_page4.bh /images/setup_page5.bh /images/setup_page6.bh /images/setup_page7.bh /images/setup_page8.bh SetupAmiTCP
+
+/includes.gst:  /includes.h
+		GST >NIL: UNLOAD includes.gst
+		SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
+		GST $@
+
+/images/setup_page0.bh: /images/setup_page0.iff
+	brush2c /images/setup_page0.iff >/images/setup_page0.bh
+/images/setup_page1.bh: /images/setup_page1.iff
+	brush2c /images/setup_page1.iff >/images/setup_page1.bh
+/images/setup_page2.bh: /images/setup_page2.iff
+	brush2c /images/setup_page2.iff >/images/setup_page2.bh
+/images/setup_page3.bh: /images/setup_page3.iff
+	brush2c /images/setup_page3.iff >/images/setup_page3.bh
+/images/setup_page4.bh: /images/setup_page4.iff
+	brush2c /images/setup_page4.iff >/images/setup_page4.bh
+/images/setup_page5.bh: /images/setup_page5.iff
+	brush2c /images/setup_page5.iff >/images/setup_page5.bh
+/images/setup_page6.bh: /images/setup_page6.iff
+	brush2c /images/setup_page6.iff >/images/setup_page6.bh
+/images/setup_page7.bh: /images/setup_page7.iff
+	brush2c /images/setup_page7.iff >/images/setup_page7.bh
+/images/setup_page8.bh: /images/setup_page8.iff
+	brush2c /images/setup_page8.iff >/images/setup_page8.bh
+
+/locale/SetupAmiTCP.h: /locale/SetupAmiTCP.cd
+	cat2h /locale/SetupAmiTCP.cd $@
+
+SetupAmiTCP:   $(OBJS)
+	SLINK WITH T:SetupAmiTCP.WITH <<!(T:SetupAmiTCP.WITH)
+		FROM  lib:start.o $(OBJS)
+		TO    SetupAmiTCP
+		LIB   $(LIBS)
+		MAP   SetupAmiTCP.map H
+		$(LFLAGS)
+	<
+
+globals.o:  globals.c   mui.h rev.h SetupAmiTCP.h /locale/SetupAmiTCP.h
+	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
+globals2.o:  globals2.c /images/setup_page0.bh /images/setup_page1.bh /images/setup_page2.bh /images/setup_page3.bh /images/setup_page4.bh /images/setup_page5.bh /images/setup_page6.bh /images/setup_page7.bh /images/setup_page8.bh
+	sc DATA=FAR $(CFLAGS) $(GST) $(OPTIONS) globals2.c
+main.o:           main.c      mui.h rev.h SetupAmiTCP.h /locale/SetupAmiTCP.h globals.c
+mui_MainWindow.o: mui_MainWindow.c mui.h rev.h SetupAmiTCP.h /locale/SetupAmiTCP.h globals.c globals2.c /images/setup_page0.bh /images/setup_page1.bh /images/setup_page2.bh /images/setup_page3.bh /images/setup_page4.bh /images/setup_page5.bh /images/setup_page6.bh /images/setup_page7.bh /images/setup_page8.bh
+mui_InfoWindow.o: mui_InfoWindow.c mui.h rev.h SetupAmiTCP.h /locale/SetupAmiTCP.h globals.c
+amiga.o:          amiga.c     mui.h rev.h SetupAmiTCP.h /locale/SetupAmiTCP.h globals.c
+fixpath.o:        fixpath.c
+

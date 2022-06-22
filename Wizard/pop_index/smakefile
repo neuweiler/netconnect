@@ -1,0 +1,45 @@
+###############################################################################
+#
+#  SMakefile
+#
+#  Makefile for the `SMake' utility required to build `pop_index'
+#
+#  1997 by Michael Neuweiler
+#
+###############################################################################
+
+.c.o:
+	sc $(CFLAGS) $(GST) $(OPTIONS) $*.c
+
+#DEBUG   = DBG=LINE
+#OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
+
+OPTIONS  = $(OPTIMIZE)
+GST      = GSTIMM GST=/includes.gst
+
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG) $(NETCOM)
+
+LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
+#LFLAGS  = SC SD NOICONS MAXHUNK 100000
+
+OBJS     = main.o
+LIBS     = lib:amiga.lib lib:sc.lib
+
+all:   /includes.gst pop_index
+
+/includes.gst:  /includes.h
+		GST >NIL: UNLOAD includes.gst
+		SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
+		GST $@
+
+pop_index:   $(OBJS)
+	SLINK WITH T:pop_index.WITH <<!(T:pop_index.WITH)
+		FROM  lib:start.o $(OBJS)
+		TO    pop_index
+		LIB   $(LIBS)
+		MAP   pop_index.map H
+		$(LFLAGS)
+	<
+
+main.o:  main.c
+
