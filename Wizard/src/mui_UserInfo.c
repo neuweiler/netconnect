@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
@@ -11,6 +10,7 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern struct MUI_CustomClass  *CL_MainWindow;
 extern struct Config Config;
 extern struct ISP ISP;
@@ -39,7 +39,7 @@ ULONG UserInfo_AddPhone(struct IClass *cl, Object *obj, struct MUIP_UserInfo_Add
       }
    }
    DoMethod(data->PO_PhoneNumber, MUIM_Popstring_Close, TRUE);
-   set(data->STR_AddPhone, MUIA_String_Contents, "");
+   setstring(data->STR_AddPhone, NULL);
 
    return(NULL);
 }
@@ -112,7 +112,7 @@ ULONG UserInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// UserInfo_Dispatcher
-SAVEDS ULONG UserInfo_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG UserInfo_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

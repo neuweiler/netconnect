@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -19,7 +18,7 @@ extern struct Hook des_hook;
 ///
 
 /// GroupsList_ConstructFunc
-struct Group * SAVEDS GroupsList_ConstructFunc(register __a2 APTR pool, register __a1 struct Group *src)
+SAVEDS ASM struct Group *GroupsList_ConstructFunc(register __a2 APTR pool, register __a1 struct Group *src)
 {
    struct Group *new;
 
@@ -32,31 +31,29 @@ struct Group * SAVEDS GroupsList_ConstructFunc(register __a2 APTR pool, register
 
 ///
 /// GroupsList_DisplayFunc
-SAVEDS LONG GroupsList_DisplayFunc(register __a2 char **array, register __a1 struct Group *group)
+SAVEDS ASM LONG GroupsList_DisplayFunc(register __a2 char **array, register __a1 struct Group *group)
 {
    if(group)
    {
       static char buf[7];
 
       *array++ = group->Name;
-//      *array++ = group->Password;
       sprintf(buf, "%ld", group->ID);
       *array++ = buf;
       *array   = group->Members;
    }
    else
    {
-      *array++ = GetStr("  \033bName");
-//      *array++ = GetStr("  \033bencr. Password");
-      *array++ = GetStr("  \033bID");
-      *array   = GetStr("  \033bMembers");
+      *array++ = GetStr(MSG_TX_Name);
+      *array++ = GetStr(MSG_TX_ID);
+      *array   = GetStr(MSG_TX_Members);
    }
    return(NULL);
 }
 
 ///
 /// ProtocolList_ConstructFunc
-struct Protocol * SAVEDS ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct Protocol *src)
+SAVEDS ASM struct Protocol *ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct Protocol *src)
 {
    struct Protocol *new;
 
@@ -67,7 +64,7 @@ struct Protocol * SAVEDS ProtocolList_ConstructFunc(register __a2 APTR pool, reg
 
 ///
 /// ProtocolList_DisplayFunc
-SAVEDS LONG ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct Protocol *protocol)
+SAVEDS ASM LONG ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct Protocol *protocol)
 {
    if(protocol)
    {
@@ -89,7 +86,7 @@ SAVEDS LONG ProtocolList_DisplayFunc(register __a2 char **array, register __a1 s
 
 ///
 /// ServiceList_ConstructFunc
-struct Service * SAVEDS ServiceList_ConstructFunc(register __a2 APTR pool, register __a1 struct Service *src)
+SAVEDS ASM struct Service *ServiceList_ConstructFunc(register __a2 APTR pool, register __a1 struct Service *src)
 {
    struct Service *new;
 
@@ -100,7 +97,7 @@ struct Service * SAVEDS ServiceList_ConstructFunc(register __a2 APTR pool, regis
 
 ///
 /// ServiceList_DisplayFunc
-SAVEDS LONG ServiceList_DisplayFunc(register __a2 char **array, register __a1 struct Service *service)
+SAVEDS ASM LONG ServiceList_DisplayFunc(register __a2 char **array, register __a1 struct Service *service)
 {
    if(service)
    {
@@ -124,7 +121,7 @@ SAVEDS LONG ServiceList_DisplayFunc(register __a2 char **array, register __a1 st
 
 ///
 /// InetAccessList_ConstructFunc
-struct InetAccess * SAVEDS InetAccessList_ConstructFunc(register __a2 APTR pool, register __a1 struct InetAccess *src)
+SAVEDS ASM struct InetAccess *InetAccessList_ConstructFunc(register __a2 APTR pool, register __a1 struct InetAccess *src)
 {
    struct InetAccess *new;
 
@@ -135,28 +132,28 @@ struct InetAccess * SAVEDS InetAccessList_ConstructFunc(register __a2 APTR pool,
 
 ///
 /// InetAccessList_DisplayFunc
-SAVEDS LONG InetAccessList_DisplayFunc(register __a2 char **array, register __a1 struct InetAccess *inet_access)
+SAVEDS ASM LONG InetAccessList_DisplayFunc(register __a2 char **array, register __a1 struct InetAccess *inet_access)
 {
    if(inet_access)
    {
       *array++ = inet_access->Service;
       *array++ = inet_access->Host;
       *array++ = (inet_access->Access ? "allow" : "deny");
-      *array   = (inet_access->Log ? "Log" : "");
+      *array   = (inet_access->Log ? "log" : "");
    }
    else
    {
       *array++ = GetStr(MSG_TX_Service);
-      *array++ = "\033bHost/Mask";
-      *array++ = "\033bAccess";
-      *array   = "\033bLog";
+      *array++ = GetStr(MSG_TX_HostMask);
+      *array++ = GetStr(MSG_TX_Access);
+      *array   = GetStr(MSG_TX_Log);
    }
    return(NULL);
 }
 
 ///
 /// InetdList_ConstructFunc
-struct Inetd * SAVEDS InetdList_ConstructFunc(register __a2 APTR pool, register __a1 struct Inetd *src)
+SAVEDS ASM struct Inetd *InetdList_ConstructFunc(register __a2 APTR pool, register __a1 struct Inetd *src)
 {
    struct Inetd *new;
 
@@ -167,7 +164,7 @@ struct Inetd * SAVEDS InetdList_ConstructFunc(register __a2 APTR pool, register 
 
 ///
 /// InetdList_DisplayFunc
-SAVEDS LONG InetdList_DisplayFunc(register __a2 char **array, register __a1 struct Inetd *inetd)
+SAVEDS ASM LONG InetdList_DisplayFunc(register __a2 char **array, register __a1 struct Inetd *inetd)
 {
    if(inetd)
    {
@@ -177,6 +174,7 @@ SAVEDS LONG InetdList_DisplayFunc(register __a2 char **array, register __a1 stru
       *array++ = (inetd->Wait ? (inetd->Wait == 2 ? "dos" : "wait") : "nowait");
       *array++ = inetd->User;
       *array++ = inetd->Server;
+      *array++ = inetd->CliName;
       *array++ = inetd->Args;
       *array   = (inetd->Active ? GetStr(MSG_TX_Enabled) : GetStr(MSG_TX_Disabled));
    }
@@ -188,6 +186,7 @@ SAVEDS LONG InetdList_DisplayFunc(register __a2 char **array, register __a1 stru
       *array++ = GetStr(MSG_TX_Wait);
       *array++ = GetStr(MSG_TX_User);
       *array++ = GetStr(MSG_TX_Server);
+      *array++ = GetStr(MSG_TX_CliName);
       *array++ = GetStr(MSG_TX_Args);
       *array   = GetStr(MSG_TX_Status);
    }
@@ -196,7 +195,7 @@ SAVEDS LONG InetdList_DisplayFunc(register __a2 char **array, register __a1 stru
 
 ///
 /// HostList_ConstructFunc
-struct Host * SAVEDS HostList_ConstructFunc(register __a2 APTR pool, register __a1 struct Host *src)
+SAVEDS ASM struct Host *HostList_ConstructFunc(register __a2 APTR pool, register __a1 struct Host *src)
 {
    struct Host *new;
 
@@ -207,7 +206,7 @@ struct Host * SAVEDS HostList_ConstructFunc(register __a2 APTR pool, register __
 
 ///
 /// HostList_DisplayFunc
-SAVEDS LONG HostList_DisplayFunc(register __a2 char **array, register __a1 struct Host *host)
+SAVEDS ASM LONG HostList_DisplayFunc(register __a2 char **array, register __a1 struct Host *host)
 {
    if(host)
    {
@@ -226,7 +225,7 @@ SAVEDS LONG HostList_DisplayFunc(register __a2 char **array, register __a1 struc
 
 ///
 /// NetworkList_ConstructFunc
-struct Network * SAVEDS NetworkList_ConstructFunc(register __a2 APTR pool, register __a1 struct Network *src)
+SAVEDS ASM struct Network *NetworkList_ConstructFunc(register __a2 APTR pool, register __a1 struct Network *src)
 {
    struct Network *new;
 
@@ -237,7 +236,7 @@ struct Network * SAVEDS NetworkList_ConstructFunc(register __a2 APTR pool, regis
 
 ///
 /// NetworkList_DisplayFunc
-SAVEDS LONG NetworkList_DisplayFunc(register __a2 char **array, register __a1 struct Network *network)
+SAVEDS ASM LONG NetworkList_DisplayFunc(register __a2 char **array, register __a1 struct Network *network)
 {
    if(network)
    {
@@ -259,7 +258,7 @@ SAVEDS LONG NetworkList_DisplayFunc(register __a2 char **array, register __a1 st
 
 ///
 /// RpcList_ConstructFunc
-struct Rpc * SAVEDS RpcList_ConstructFunc(register __a2 APTR pool, register __a1 struct Rpc *src)
+SAVEDS ASM struct Rpc *RpcList_ConstructFunc(register __a2 APTR pool, register __a1 struct Rpc *src)
 {
    struct Rpc *new;
 
@@ -270,7 +269,7 @@ struct Rpc * SAVEDS RpcList_ConstructFunc(register __a2 APTR pool, register __a1
 
 ///
 /// RpcList_DisplayFunc
-SAVEDS LONG RpcList_DisplayFunc(register __a2 char **array, register __a1 struct Rpc *rpc)
+SAVEDS ASM LONG RpcList_DisplayFunc(register __a2 char **array, register __a1 struct Rpc *rpc)
 {
    if(rpc)
    {
@@ -461,6 +460,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
             set(data->STR_InetdService, MUIA_String_Contents, inetd->Service);
             set(data->STR_InetdUser, MUIA_String_Contents, inetd->User);
             set(data->PA_InetdServer, MUIA_String_Contents, inetd->Server);
+            set(data->STR_InetdCliName, MUIA_String_Contents, inetd->CliName);
             set(data->STR_InetdArgs, MUIA_String_Contents, inetd->Args);
             set(data->CH_InetdActive, MUIA_Selected, inetd->Active);
             set(data->LV_InetdProtocol, MUIA_NList_Active, protocol_pos(data->LV_InetdProtocol, inetd->Protocol));
@@ -472,6 +472,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
             set(data->STR_InetdService, MUIA_String_Contents, NULL);
             set(data->STR_InetdUser, MUIA_String_Contents, NULL);
             set(data->PA_InetdServer, MUIA_String_Contents, NULL);
+            set(data->STR_InetdCliName, MUIA_String_Contents, NULL);
             set(data->STR_InetdArgs, MUIA_String_Contents, NULL);
             set(data->CH_InetdActive, MUIA_Selected, FALSE);
             set(data->LV_InetdProtocol, MUIA_NList_Active, MUIV_NList_Active_Off);
@@ -482,6 +483,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
          set(data->STR_InetdService, MUIA_Disabled, !inetd);
          set(data->STR_InetdUser, MUIA_Disabled, !inetd);
          set(data->PA_InetdServer, MUIA_Disabled, !inetd);
+         set(data->STR_InetdCliName, MUIA_Disabled, !inetd);
          set(data->STR_InetdArgs, MUIA_Disabled, !inetd);
          set(data->CH_InetdActive, MUIA_Disabled, !inetd);
          set(data->LV_InetdProtocol, MUIA_Disabled, !inetd);
@@ -740,6 +742,14 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
+      case MUIV_Databases_Modification_InetdCliName:
+         DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
+         if(inetd)
+         {
+            strcpy(inetd->CliName, (STRPTR)xget(data->STR_InetdCliName, MUIA_String_Contents));
+            DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
+         }
+         break;
       case MUIV_Databases_Modification_InetdArgs:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
@@ -916,11 +926,21 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
    static const struct Hook NetworkList_DisplayHook   = { { 0,0 }, (VOID *)NetworkList_DisplayFunc , NULL, NULL };
    static const struct Hook RpcList_ConstructHook= { { 0,0 }, (VOID *)RpcList_ConstructFunc  , NULL, NULL };
    static const struct Hook RpcList_DisplayHook = { { 0,0 }, (VOID *)RpcList_DisplayFunc  , NULL, NULL };
-   static STRPTR STR_CY_Pages[] = { "Group", "Hosts", "Protocols", "Services", "Access", "Inetd", "Networks", "Rpc", NULL };
+   static STRPTR STR_CY_Pages[9];
    static STRPTR STR_CY_Access[3];
    static STRPTR STR_CY_Socket[3];
    static STRPTR STR_CY_Wait[4];
    struct Databases_Data tmp;
+
+   STR_CY_Pages[0] = GetStr(MSG_CY_DatabasePage1);
+   STR_CY_Pages[1] = GetStr(MSG_CY_DatabasePage2);
+   STR_CY_Pages[2] = GetStr(MSG_CY_DatabasePage3);
+   STR_CY_Pages[3] = GetStr(MSG_CY_DatabasePage4);
+   STR_CY_Pages[4] = GetStr(MSG_CY_DatabasePage5);
+   STR_CY_Pages[5] = GetStr(MSG_CY_DatabasePage6);
+   STR_CY_Pages[6] = GetStr(MSG_CY_DatabasePage7);
+   STR_CY_Pages[7] = GetStr(MSG_CY_DatabasePage8);
+   STR_CY_Pages[8] = NULL;
 
    STR_CY_Access[0] = "allow";
    STR_CY_Access[1] = "deny";
@@ -957,7 +977,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewGroup    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewGroup    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveGroup = MakeButton(MSG_BT_Remove),
                End,
             End,
@@ -972,8 +992,8 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   MUIA_String_MaxLen   , 7,
                   MUIA_String_Accept   , "-1234567890",
                End,
-               Child, MakeKeyLabel2(MSG_LA_GroupMembers, "  m"),
-               Child, tmp.STR_GroupMembers = MakeKeyString(NULL, 1023, "  m"),
+               Child, MakeKeyLabel2(MSG_LA_GroupMembers, MSG_CC_GroupMembers),
+               Child, tmp.STR_GroupMembers = MakeKeyString(NULL, 1023, MSG_CC_GroupMembers),
             End,
          End,
          Child, tmp.GR_Hosts = VGroup,
@@ -994,7 +1014,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewHost    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewHost    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveHost = MakeButton(MSG_BT_Remove),
                End,
             End,
@@ -1031,7 +1051,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewProtocol    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewProtocol    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveProtocol = MakeButton(MSG_BT_Remove),
                End,
             End,
@@ -1068,7 +1088,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewService    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewService    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveService = MakeButton(MSG_BT_Remove),
                End,
             End,
@@ -1117,7 +1137,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewInetAccess    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewInetAccess    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveInetAccess = MakeButton(MSG_BT_Remove),
                End,
             End,
@@ -1125,13 +1145,13 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                Child, ColGroup(2),
                   Child, MakeKeyLabel2(MSG_LA_Service, MSG_CC_Service),
                   Child, tmp.STR_InetAccessService   = MakeKeyString(NULL, 40, MSG_CC_Service),
-                  Child, MakeKeyLabel2("  Host:", "  h"),
-                  Child, tmp.STR_InetAccessHost      = MakeKeyString(NULL, 80, "  h"),
-                  Child, MakeKeyLabel2("  Access:", "  a"),
+                  Child, MakeKeyLabel2(MSG_LA_Host, MSG_CC_Host),
+                  Child, tmp.STR_InetAccessHost      = MakeKeyString(NULL, 80, MSG_CC_Host),
+                  Child, MakeKeyLabel2(MSG_LA_Access, MSG_CC_Access),
                   Child, HGroup,
-                     Child, tmp.CY_InetAccess = Cycle(STR_CY_Access),
-                     Child, MakeKeyLabel2("  Log:", "  l"),
-                     Child, tmp.CH_InetAccessLog = MakeKeyCheckMark(TRUE, "  l"),
+                     Child, tmp.CY_InetAccess = MakeKeyCycle(STR_CY_Access, MSG_CC_Access),
+                     Child, MakeKeyLabel2(MSG_LA_Log, MSG_CC_Log),
+                     Child, tmp.CH_InetAccessLog = MakeKeyCheckMark(TRUE, MSG_CC_Log),
                   End,
                End,
             End,
@@ -1148,31 +1168,32 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                      MUIA_NList_DisplayHook   , &InetdList_DisplayHook,
                      MUIA_NList_ConstructHook , &InetdList_ConstructHook,
                      MUIA_NList_DestructHook  , &des_hook,
-                     MUIA_NList_Format        , "BAR,BAR,BAR,BAR,BAR,BAR,BAR,",
+                     MUIA_NList_Format        , "BAR,BAR,BAR,BAR,BAR,BAR,BAR,BAR,",
                      MUIA_NList_Title         , TRUE,
                   End,
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewInetd    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewInetd    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveInetd = MakeButton(MSG_BT_Remove),
                End,
             End,
             Child, HGroup,
                Child, ColGroup(2),
                   Child, MakeKeyLabel2(MSG_LA_Service, MSG_CC_Service),
-                  Child, tmp.STR_InetdService   = MakeKeyString(NULL, 40, MSG_CC_Service),
+                  Child, HGroup,
+                     Child, tmp.STR_InetdService   = MakeKeyString(NULL, 40, MSG_CC_Service),
+                     Child, MakeKeyLabel1(MSG_LA_Enabled, MSG_CC_Enabled),
+                     Child, tmp.CH_InetdActive     = MakeKeyCheckMark(TRUE, MSG_CC_Enabled),
+                  End,
                   Child, MakeKeyLabel2(MSG_LA_User, MSG_CC_User),
                   Child, tmp.STR_InetdUser      = MakeKeyString(NULL, 40, MSG_CC_User),
                   Child, MakeKeyLabel2(MSG_LA_Server, MSG_CC_Server),
                   Child, tmp.PA_InetdServer     = MakePopAsl(tmp.STR_InetdServer = MakeKeyString(NULL, 80, MSG_CC_Server), GetStr(MSG_LA_Server), FALSE),
+                  Child, MakeKeyLabel2(MSG_LA_CliName, MSG_CC_CliName),
+                  Child, tmp.STR_InetdCliName   = MakeKeyString(NULL, 80, MSG_CC_CliName),
                   Child, MakeKeyLabel2(MSG_LA_Args, MSG_CC_Args),
                   Child, tmp.STR_InetdArgs      = MakeKeyString(NULL, 80, MSG_CC_Args),
-                  Child, MakeKeyLabel1(MSG_LA_Enabled, MSG_CC_Enabled),
-                  Child, HGroup,
-                     Child, tmp.CH_InetdActive = MakeKeyCheckMark(TRUE, MSG_CC_Enabled),
-                     Child, HVSpace,
-                  End,
                End,
                Child, BalanceObject, End,
                Child, VGroup,
@@ -1206,7 +1227,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewNetwork    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewNetwork    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveNetwork = MakeButton(MSG_BT_Remove),
                End,
             End,
@@ -1243,7 +1264,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                End,
                Child, HGroup,
                   GroupSpacing(0),
-                  Child, tmp.BT_NewRpc    = MakeButton(MSG_BT_New),
+                  Child, tmp.BT_NewRpc    = MakeButton(MSG_BT_Add),
                   Child, tmp.BT_RemoveRpc = MakeButton(MSG_BT_Remove),
                End,
             End,
@@ -1278,6 +1299,8 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->STR_NetworkName , MUIA_String_AttachedList, data->LV_Networks);
       set(data->STR_RpcName     , MUIA_String_AttachedList, data->LV_Rpcs);
 
+      set(data->CY_Pager        , MUIA_CycleChain, 1);
+
       set(data->CY_InetAccess   , MUIA_CycleChain, 1);
       set(data->CH_InetAccessLog, MUIA_CycleChain, 1);
 
@@ -1291,7 +1314,6 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->STR_HostAddr       , MUIA_ShortHelp, GetStr(MSG_Help_Hosts_IPAddr));
       set(data->STR_HostName       , MUIA_ShortHelp, GetStr(MSG_Help_Name));
       set(data->STR_HostAliases    , MUIA_ShortHelp, GetStr(MSG_Help_Aliases));
-
 
       set(data->LV_Groups          , MUIA_ShortHelp, GetStr(MSG_Help_Groups_List));
       set(data->BT_NewGroup        , MUIA_ShortHelp, GetStr(MSG_Help_New));
@@ -1315,12 +1337,21 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->STR_ServiceAliases , MUIA_ShortHelp, GetStr(MSG_Help_Aliases));
       set(data->LV_ServiceProtocol , MUIA_ShortHelp, GetStr(MSG_Help_Protocol));
 
+      set(data->LV_InetAccess          , MUIA_ShortHelp, GetStr(MSG_Help_InetAccess));
+      set(data->BT_NewInetAccess       , MUIA_ShortHelp, GetStr(MSG_Help_New));
+      set(data->BT_RemoveInetAccess    , MUIA_ShortHelp, GetStr(MSG_Help_Remove));
+      set(data->STR_InetAccessService  , MUIA_ShortHelp, GetStr(MSG_Help_InetAccessService));
+      set(data->STR_InetAccessHost     , MUIA_ShortHelp, GetStr(MSG_Help_InetAccessHost));
+      set(data->CY_InetAccess          , MUIA_ShortHelp, GetStr(MSG_Help_InetAccessAllow));
+      set(data->CH_InetAccessLog       , MUIA_ShortHelp, GetStr(MSG_Help_InetAccessLog));
+
       set(data->LV_Inetd           , MUIA_ShortHelp, GetStr(MSG_Help_Inetd));
       set(data->BT_NewInetd        , MUIA_ShortHelp, GetStr(MSG_Help_New));
       set(data->BT_RemoveInetd     , MUIA_ShortHelp, GetStr(MSG_Help_Remove));
       set(data->STR_InetdService   , MUIA_ShortHelp, GetStr(MSG_Help_Service));
       set(data->STR_InetdUser      , MUIA_ShortHelp, GetStr(MSG_Help_Inetd_User));
       set(data->PA_InetdServer     , MUIA_ShortHelp, GetStr(MSG_Help_Inetd_Server));
+      set(data->STR_InetdCliName   , MUIA_ShortHelp, GetStr(MSG_Help_Inetd_CliName));
       set(data->STR_InetdArgs      , MUIA_ShortHelp, GetStr(MSG_Help_Args));
       set(data->CH_InetdActive     , MUIA_ShortHelp, GetStr(MSG_Help_Enabled));
       set(data->LV_InetdProtocol   , MUIA_ShortHelp, GetStr(MSG_Help_Protocol));
@@ -1411,7 +1442,8 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
       DoMethod(data->STR_InetAccessService, MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetAccessHost);
       DoMethod(data->STR_InetdService     , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdUser);
       DoMethod(data->STR_InetdUser        , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdServer);
-      DoMethod(data->STR_InetdServer      , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdArgs);
+      DoMethod(data->STR_InetdServer      , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdCliName);
+      DoMethod(data->STR_InetdCliName     , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdArgs);
       DoMethod(data->STR_NetworkName      , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_NetworkID);
       DoMethod(data->STR_NetworkID        , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_NetworkAliases);
       DoMethod(data->STR_RpcName          , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_RpcID);
@@ -1422,7 +1454,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Databases_Dispatcher
-SAVEDS ULONG Databases_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Databases_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

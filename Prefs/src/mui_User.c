@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -22,13 +21,13 @@ extern BOOL changed_passwd;
 ULONG User_SetStates(struct IClass *cl, Object *obj, Msg msg)
 {
    struct User_Data *data = INST_DATA(cl, obj);
-   struct User *user;
+   struct Prefs_User *p_user;
 
    changed_passwd = TRUE;
 
-   DoMethod(data->LI_User   , MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &user);
-   set(data->BT_Delete, MUIA_Disabled, !user);
-   set(data->BT_Edit  , MUIA_Disabled, !user);
+   DoMethod(data->LI_User   , MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &p_user);
+   set(data->BT_Delete, MUIA_Disabled, !p_user);
+   set(data->BT_Edit  , MUIA_Disabled, !p_user);
 
    return(NULL);
 }
@@ -38,18 +37,18 @@ ULONG User_SetStates(struct IClass *cl, Object *obj, Msg msg)
 ULONG User_NewUser(struct IClass *cl, Object *obj, Msg msg)
 {
    struct User_Data *data = INST_DATA(cl, obj);
-   struct User *user, *tmp_user;
+   struct Prefs_User *p_user, *tmp_user;
    ULONG pos;
    BOOL found;
 
    DoMethod(data->LI_User, MUIM_List_InsertSingle, -1, MUIV_List_Insert_Bottom);
    set(data->LI_User, MUIA_List_Active, MUIV_List_Active_Bottom);
 
-   DoMethod(data->LI_User, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &user);
-   if(user)
+   DoMethod(data->LI_User, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &p_user);
+   if(p_user)
    {
-      user->us_uid = 100;
-      user->us_gid = 100;
+      p_user->pu_uid = 100;
+      p_user->pu_gid = 100;
 
       do    // find free user ID
       {
@@ -60,14 +59,14 @@ ULONG User_NewUser(struct IClass *cl, Object *obj, Msg msg)
             DoMethod(data->LI_User, MUIM_List_GetEntry, pos++, &tmp_user);
             if(!tmp_user)
                break;
-            if((user->us_uid == tmp_user->us_uid) && (user != tmp_user))
+            if((p_user->pu_uid == tmp_user->pu_uid) && (p_user != tmp_user))
                found = TRUE;
          }
          if(found)
-            user->us_uid++;
+            p_user->pu_uid++;
       }  while(found);
 
-      strcpy(user->us_shell, "noshell");
+      strcpy(p_user->pu_shell, "noshell");
    }
    DoMethod(obj, MUIM_User_Edit);
 
@@ -79,10 +78,10 @@ ULONG User_NewUser(struct IClass *cl, Object *obj, Msg msg)
 ULONG User_Edit(struct IClass *cl, Object *obj, Msg msg)
 {
    struct User_Data *data = INST_DATA(cl, obj);
-   struct User *user;
+   struct Prefs_User *p_user;
 
-   DoMethod(data->LI_User, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &user);
-   if(user)
+   DoMethod(data->LI_User, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &p_user);
+   if(p_user)
    {
       Object *window;
 
@@ -90,8 +89,8 @@ ULONG User_Edit(struct IClass *cl, Object *obj, Msg msg)
       if(window = NewObject(CL_UserWindow->mcc_Class, NULL, MUIA_Genesis_Originator, obj, TAG_DONE))
       {
          DoMethod(app, OM_ADDMEMBER, window);
-         DoMethod(window, MUIM_UserWindow_Init, user);
-         set(window, MUIA_Window_Title, user->us_login);
+         DoMethod(window, MUIM_UserWindow_Init, p_user);
+         set(window, MUIA_Window_Title, p_user->pu_login);
          set(window, MUIA_Window_Open, TRUE);
       }
    }
@@ -123,12 +122,12 @@ ULONG User_EditFinish(struct IClass *cl, Object *obj, struct MUIP_User_EditFinis
 /// user_consfunc
 SAVEDS ASM APTR user_consfunc(REG(a2) APTR pool, REG(a1) struct User *src)
 {
-   struct User *new;
+   struct Prefs_User *new;
 
-   if(new = (struct User *)AllocVec(sizeof(struct User), MEMF_ANY | MEMF_CLEAR))
+   if(new = (struct Prefs_User *)AllocVec(sizeof(struct Prefs_User), MEMF_ANY | MEMF_CLEAR))
    {
       if(src && ((LONG)src != -1))
-         memcpy(new, src, sizeof(struct User));
+         memcpy(new, src, sizeof(struct Prefs_User));
    }
 
    return(new);
@@ -137,32 +136,32 @@ static struct Hook user_conshook = {{NULL, NULL}, (VOID *)user_consfunc, NULL, N
 
 ///
 /// user_dspfunc
-SAVEDS ASM LONG user_dspfunc(REG(a2) char **array, REG(a1) struct User *user)
+SAVEDS ASM LONG user_dspfunc(REG(a2) char **array, REG(a1) struct Prefs_User *p_user)
 {
-   if(user)
+   if(p_user)
    {
       static char buf1[16], buf2[16];
 
-      sprintf(buf1, "%ld", user->us_uid);
-      sprintf(buf2, "%ld", user->us_gid);
+      sprintf(buf1, "%ld", p_user->pu_uid);
+      sprintf(buf2, "%ld", p_user->pu_gid);
 
-      *array++ = user->us_login;
-      *array++ = user->us_realname;
+      *array++ = p_user->pu_login;
+      *array++ = p_user->pu_realname;
       *array++ = buf1;
       *array++ = buf2;
-      *array++ = user->us_homedir;
-      *array++ = user->us_shell;
-      *array   = (((user->us_password[0] == '*') && (user->us_password[1] == NULL)) ? "disabled" : (!*user->us_password ? "\033bno password\033n" : "normal"));
+      *array++ = p_user->pu_homedir;
+      *array++ = p_user->pu_shell;
+      *array   = (((p_user->pu_password[0] == '*') && (p_user->pu_password[1] == NULL)) ? GetStr(MSG_TX_Disabled) : (!*p_user->pu_password ? GetStr(MSG_TX_NoPasswd) : GetStr(MSG_TX_Normal)));
    }
    else
    {
-      *array++ = "\033bUser";
-      *array++ = "\033bReal Name";
-      *array++ = "\033bUID";
-      *array++ = "\033bGID";
-      *array++ = "\033bHome Dir";
-      *array++ = "\033bShell";
-      *array   = "\033bStatus";
+      *array++ = GetStr(MSG_TX_User);
+      *array++ = GetStr(MSG_TX_RealName);
+      *array++ = GetStr(MSG_TX_UID);
+      *array++ = GetStr(MSG_TX_GID);
+      *array++ = GetStr(MSG_TX_HomeDir);
+      *array++ = GetStr(MSG_TX_Shell);
+      *array   = GetStr(MSG_TX_Status);
    }
 
    return(NULL);
@@ -194,9 +193,9 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
          End,
          Child, HGroup,
             GroupSpacing(0),
-            Child, tmp.BT_New    = MakeButton("  Ne_w"),
-            Child, tmp.BT_Delete = MakeButton("  _Delete"),
-            Child, tmp.BT_Edit   = MakeButton("  _Edit"),
+            Child, tmp.BT_New    = MakeButton(MSG_BT_New),
+            Child, tmp.BT_Delete = MakeButton(MSG_BT_Delete),
+            Child, tmp.BT_Edit   = MakeButton(MSG_BT_Edit),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -205,8 +204,13 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       *data = tmp;
 
-      set(data->BT_Delete        , MUIA_Disabled, TRUE);
-      set(data->BT_Edit          , MUIA_Disabled, TRUE);
+      set(data->BT_Delete  , MUIA_Disabled, TRUE);
+      set(data->BT_Edit    , MUIA_Disabled, TRUE);
+
+      set(data->LV_User    , MUIA_ShortHelp, GetStr(MSG_Help_UserList));
+      set(data->BT_New     , MUIA_ShortHelp, GetStr(MSG_Help_New));
+      set(data->BT_Delete  , MUIA_ShortHelp, GetStr(MSG_Help_Delete));
+      set(data->BT_Edit    , MUIA_ShortHelp, GetStr(MSG_Help_Edit));
 
       DoMethod(data->BT_New    , MUIM_Notify, MUIA_Pressed, FALSE, obj, 1, MUIM_User_NewUser);
       DoMethod(data->BT_Delete , MUIM_Notify, MUIA_Pressed, FALSE, data->LI_User, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
@@ -219,7 +223,7 @@ ULONG User_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// User_Dispatcher
-SAVEDS ULONG User_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG User_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

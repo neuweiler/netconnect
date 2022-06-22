@@ -1,12 +1,11 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "mui.h"
 #include "mui_SerialModem.h"
 #include "mui_ModemStrings.h"
@@ -15,7 +14,9 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern Object *win, *app;
+extern struct GenesisBase *GenesisBase;
 extern struct MUI_CustomClass  *CL_MainWindow;
 
 extern struct Hook strobjhook, sorthook, txtobjhook, deshook, objstrhook, objtxthook;
@@ -26,7 +27,7 @@ extern struct Hook strobjhook, sorthook, txtobjhook, deshook, objstrhook, objtxt
 ULONG SerialModem_LoadData(struct IClass *cl, Object *obj, Msg msg)
 {
    struct SerialModem_Data *data = INST_DATA(cl, obj);
-   struct pc_Data pc_data;
+   struct ParseConfig_Data pc_data;
    struct FileInfoBlock *fib;
    BPTR lock;
 
@@ -60,10 +61,10 @@ ULONG SerialModem_LoadData(struct IClass *cl, Object *obj, Msg msg)
       DoMethod(data->LV_Modems, MUIM_List_Clear);
       while(ParseNext(&pc_data))
       {
-         if(!stricmp(pc_data.Argument, "Modem"))
-            DoMethod(data->LV_Modems, MUIM_List_InsertSingle, pc_data.Contents, MUIV_List_Insert_Sorted);
+         if(!stricmp(pc_data.pc_argument, "Modem"))
+            DoMethod(data->LV_Modems, MUIM_List_InsertSingle, pc_data.pc_contents, MUIV_List_Insert_Sorted);
       }
-      DoMethod(data->LV_Modems, MUIM_List_InsertSingle, "Generic", MUIV_List_Insert_Top);
+      DoMethod(data->LV_Modems, MUIM_List_InsertSingle, GetStr(MSG_TX_ModemNameGeneric), MUIV_List_Insert_Top);
       set(data->LV_Modems, MUIA_List_Quiet, FALSE);
       ParseEnd(&pc_data);
    }
@@ -131,7 +132,7 @@ ULONG SerialModem_New(struct IClass *cl, Object *obj, struct opSet *msg)
          MUIA_Popstring_String      , tmp.TX_ModemName = TextObject,
             TextFrame,
             MUIA_Background, MUII_TextBack,
-            MUIA_Text_Contents, "Generic",
+            MUIA_Text_Contents, GetStr(MSG_TX_ModemNameGeneric),
          End,
          MUIA_Popstring_Button      , PopButton(MUII_PopUp),
          MUIA_Popobject_StrObjHook  , &txtobjhook,
@@ -169,7 +170,7 @@ ULONG SerialModem_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// SerialModem_Dispatcher
-SAVEDS ULONG SerialModem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG SerialModem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

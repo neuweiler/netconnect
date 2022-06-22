@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
@@ -11,17 +10,19 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern Object *win, *app;
-extern int addr_assign, dst_assign, dns_assign, domainname_assign;
+extern int addr_assign, dst_assign, dns_assign, domainname_assign, gw_assign;
 extern struct Hook deshook;
 extern struct Config Config;
 extern struct ISP ISP;
 extern struct Interface Iface;
+extern BOOL use_modem;
 
 ///
 
 /// ScriptList_ConstructFunc
-struct ScriptLine * SAVEDS ScriptList_ConstructFunc(register __a2 APTR pool, register __a1 struct ScriptLine *src)
+SAVEDS ASM struct ScriptLine *ScriptList_ConstructFunc(register __a2 APTR pool, register __a1 struct ScriptLine *src)
 {
    struct ScriptLine *new;
 
@@ -36,7 +37,7 @@ static const struct Hook ScriptList_ConstructHook= { { 0,0 }, (VOID *)ScriptList
 
 ///
 /// ScriptList_DisplayFunc
-SAVEDS LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 struct ScriptLine *script_line)
+SAVEDS ASM LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 struct ScriptLine *script_line)
 {
    if(script_line)
    {
@@ -45,8 +46,8 @@ SAVEDS LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 str
    }
    else
    {
-      *array++ = GetStr("  \033bCommand");
-      *array   = GetStr("  \033bString");
+      *array++ = GetStr(MSG_TX_LoginScriptTitleCommand);
+      *array   = GetStr(MSG_TX_LoginScriptTitleString);
    }
    return(NULL);
 }
@@ -56,9 +57,9 @@ static const struct Hook ScriptList_DisplayHook= { { 0,0 }, (VOID *)ScriptList_D
 /// Finished_ShowConfig
 ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
 {
-   struct Finished_Data *data = INST_DATA(cl, obj);
+//   struct Finished_Data *data = INST_DATA(cl, obj);
    Object *window, *script;
-   char ip_info[41], dest_info[41], dns1_info[41], dns2_info[41], device_info[81], domain_info[81];
+   char ip_info[41], dest_info[41], gw_info[41], dns1_info[41], dns2_info[41], device_info[81], domain_info[81];
 
    if(addr_assign == CNF_Assign_Static)
       sprintf(ip_info, "%ls (%ls)", Iface.if_addr, GetStr(MSG_TX_Static));
@@ -74,6 +75,14 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
    {
       strcpy(dest_info, GetStr(MSG_TX_Dynamic));
       strcat(dest_info, (dst_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
+   }
+
+   if(gw_assign == CNF_Assign_Static)
+      sprintf(gw_info, "%ls (%ls)", Iface.if_gateway, GetStr(MSG_TX_Static));
+   else
+   {
+      strcpy(gw_info, GetStr(MSG_TX_Dynamic));
+      strcat(gw_info, (gw_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
    }
 
    *dns1_info = *dns2_info = NULL;
@@ -111,10 +120,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
    if(!*domain_info)
       strcpy(domain_info, GetStr(MSG_TX_Undefined));
 
-   if(strcmp(Iface.if_name, "ppp") && strcmp(Iface.if_name, "slip"))
-      sprintf(device_info, "%ls, unit %ld", FilePart(Iface.if_sana2device), Iface.if_sana2unit);
-   else
-      sprintf(device_info, "%ls, unit %ld", Config.cnf_serialdevice, Config.cnf_serialunit);
+   sprintf(device_info, "%ls, unit %ld", FilePart(Iface.if_sana2device), Iface.if_sana2unit);
 
    if(window = WindowObject,
       MUIA_Window_Title , GetStr(MSG_TX_ShowConfigWindowTitle),
@@ -122,56 +128,42 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
       WindowContents    , VGroup,
          Child, CLabel(GetStr(MSG_LA_ShowConfigTitle)),
          Child, ColGroup(2),
-            Child, ColGroup(2),
-               GroupFrame,
-               MUIA_Background, MUII_GroupBack,
-               Child, Label(GetStr(MSG_BLA_Device)),
-               Child, MakeText(device_info),
-               Child, Label(GetStr(MSG_BLA_Modem)),
-               Child, MakeText(Config.cnf_modemname),
-               Child, Label(GetStr(MSG_BLA_Phone)),
-               Child, MakeText(ISP.isp_phonenumber),
-               Child, Label(GetStr(MSG_BLA_LoginName)),
-               Child, MakeText(ISP.isp_login),
-            End,
-            Child, ColGroup(2),
-               GroupFrame,
-               MUIA_Background, MUII_GroupBack,
-               Child, Label(GetStr(MSG_BLA_Speed)),
-               Child, MakeText("38'400 baud"),
-               Child, Label(GetStr(MSG_BLA_InitString)),
-               Child, MakeText(Config.cnf_initstring),
-               Child, Label(GetStr(MSG_BLA_DialPrefix)),
-               Child, MakeText(Config.cnf_dialprefix),
-               Child, VVSpace,
-               Child, HVSpace,
-            End,
-            Child, ColGroup(2),
-               GroupFrame,
-               MUIA_Background, MUII_GroupBack,
-               Child, Label(GetStr(MSG_BLA_LocalIPAddr)),
-               Child, MakeText(ip_info),
-               Child, Label(GetStr(MSG_BLA_RemoteIPAddr)),
-               Child, MakeText(dest_info),
-               Child, Label(GetStr(MSG_BLA_Netmask)),
-               Child, MakeText((*Iface.if_netmask ? (STRPTR)Iface.if_netmask : GetStr(MSG_TX_Undefined))),
-            End,
-            Child, ColGroup(2),
-               GroupFrame,
-               MUIA_Background, MUII_GroupBack,
-               Child, Label(GetStr(MSG_BLA_DNS1IPAddr)),
-               Child, MakeText(dns1_info),
-               Child, Label(GetStr(MSG_BLA_DNS2IPAddr)),
-               Child, MakeText(dns2_info),
-               Child, Label(GetStr(MSG_BLA_DomainName)),
-               Child, MakeText(domain_info),
-            End,
+            GroupFrame,
+            MUIA_Background, MUII_GroupBack,
+            Child, Label(GetStr(MSG_LA_IfaceName)),
+            Child, MakeText(Iface.if_name),
+            Child, Label(GetStr(MSG_LA_Sana2Device)),
+            Child, MakeText(device_info),
+         End,
+         Child, ColGroup(2),
+            GroupFrame,
+            MUIA_Background, MUII_GroupBack,
+            Child, Label(GetStr(MSG_LA_IPAddr)),
+            Child, MakeText(ip_info),
+            Child, Label(GetStr(MSG_LA_Destination)),
+            Child, MakeText(dest_info),
+            Child, Label(GetStr(MSG_LA_Gateway)),
+            Child, MakeText(gw_info),
+            Child, Label(GetStr(MSG_LA_Netmask)),
+            Child, MakeText((*Iface.if_netmask ? (STRPTR)Iface.if_netmask : GetStr(MSG_TX_Undefined))),
+         End,
+         Child, ColGroup(2),
+            GroupFrame,
+            MUIA_Background, MUII_GroupBack,
+            Child, Label(GetStr(MSG_LA_DNS1IPAddr)),
+            Child, MakeText(dns1_info),
+            Child, Label(GetStr(MSG_LA_DNS2IPAddr)),
+            Child, MakeText(dns2_info),
+            Child, Label(GetStr(MSG_LA_DomainName)),
+            Child, MakeText(domain_info),
+            Child, Label(GetStr(MSG_LA_HostName)),
+            Child, MakeText((*ISP.isp_hostname ? (STRPTR)ISP.isp_hostname : GetStr(MSG_TX_Undefined))),
          End,
          Child, script = ListviewObject,
-            MUIA_ShowMe    , (!strcmp(Iface.if_name, "ppp") || !strcmp(Iface.if_name, "slip")),
-            MUIA_FrameTitle, GetStr(MSG_LA_LoginScript_List),
-            MUIA_Listview_Input, FALSE,
-            MUIA_Listview_List, ListObject,
+            MUIA_ShowMe          , use_modem,
+            MUIA_FrameTitle      , GetStr(MSG_LA_LoginScript_List),
+            MUIA_Listview_Input  , FALSE,
+            MUIA_Listview_List   , ListObject,
                ReadListFrame,
                MUIA_List_ConstructHook, &ScriptList_ConstructHook,
                MUIA_List_DisplayHook  , &ScriptList_DisplayHook,
@@ -269,7 +261,7 @@ ULONG Finished_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Finished_Dispatcher
-SAVEDS ULONG Finished_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Finished_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

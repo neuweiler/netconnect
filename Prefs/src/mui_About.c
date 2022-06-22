@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "rev.h"
@@ -64,7 +63,7 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 #ifdef DEMO
                Child, TextObject,
                   MUIA_Text_PreParse, "\033b\033c\n",
-                  MUIA_Text_Contents, GetStr(MSG_TX_DemoWarning),
+                  MUIA_Text_Contents, "DEMO VERSION !\n\nThis program will become invalid after 30 days.\nThen you will have to buy the full\nversion if you want to continue using it.",
                End,
 #endif
                Child, TextObject,
@@ -102,7 +101,7 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 
 ///
 /// About_Dispatcher
-SAVEDS ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    if(msg->MethodID == OM_NEW)
       return(About_New(cl,obj,(APTR)msg));

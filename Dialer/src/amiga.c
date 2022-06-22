@@ -3,20 +3,19 @@
 /// includes
 #include "/includes.h"
 #include <workbench/WBStart.h>
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
 #include "mui.h"
 #include "sana.h"
 #include "protos.h"
 
 ///
 /// external variables
-extern struct Library *LocaleBase, *LockSocketBase;
+extern struct Library *LocaleBase, *LockSocketBase, *GenesisBase;
 extern struct ExecBase *SysBase;
 extern struct Catalog *cat;
 extern struct MUI_CustomClass *CL_MainWindow;
@@ -78,55 +77,6 @@ STRPTR GetStr(STRPTR idstr)
       return((STRPTR)GetCatalogStr(cat, *(UWORD *)idstr, local));
 
    return(local);
-}
-
-///
-/// GetEnvDOS
-LONG GetEnvDOS(STRPTR name, STRPTR buffer, LONG max_len)
-{
-   char  file[MAXPATHLEN];
-   LONG  size;
-   BPTR  fh;
-
-   if(name && buffer)
-   {
-      *buffer = NULL;
-      strcpy(file, "Env:");
-      AddPart(file, name, MAXPATHLEN);
-      if(fh = Open(file, MODE_OLDFILE))
-      {
-         size = Read(fh, buffer, max_len);
-         Close(fh);
-         if(size >= 0)
-            buffer[size] = NULL;
-      }
-      return((LONG)strlen(buffer));
-   }
-   return(NULL);
-}
-
-///
-/// SetEnvDOS
-BOOL SetEnvDOS(STRPTR name, STRPTR string, LONG len, BOOL save)
-{
-   char  file[MAXPATHLEN];
-   BPTR  fh;
-   BOOL  success = FALSE;
-
-   if(name && string)
-   {
-      strcpy(file, (save ? "EnvArc:": "Env:"));
-      AddPart(file, name, MAXPATHLEN);
-      if(fh = Open(file, MODE_NEWFILE))
-      {
-         if(len == -1)
-            len = strlen(string);
-         if(Write(fh, string, len) == len)
-            success = TRUE;
-         Close(fh);
-      }
-   }
-   return(success);
 }
 
 ///
@@ -503,7 +453,7 @@ VOID exec_command(STRPTR command, int how)
          run_wb(command);
          break;
       case 2: // SCRIPT
-         strcpy(buf, "c:Execute ");
+         strcpy(buf, "C:Execute ");
          strncat(buf, command, MAXPATHLEN);
          SystemTags(buf, TAG_DONE);
          break;
@@ -556,7 +506,7 @@ BOOL launch_amitcp(VOID)
          MUIA_Window_SizeGadget  , FALSE,
          MUIA_Window_DragBar     , FALSE,
          WindowContents, VGroup,
-            Child, TX_Info = MakeText("\n     Loading AmiTCP kernel     \n", TRUE),
+            Child, TX_Info = MakeText(GetStr(MSG_TX_LoadingAmiTCP), TRUE),
          End,
       End)
       {
@@ -568,7 +518,7 @@ BOOL launch_amitcp(VOID)
 
    if(!FindPort((STRPTR)AmiTCP_PortName))
    {
-      if(SysBase->AttnFlags & AFF_68020)
+      if((SysBase->AttnFlags & AFF_68020) && (GetFileSize("AmiTCP:kernel/AmiTCP.020") > 0))
          run_async((Config.cnf_flags & CFL_Debug ? "AmiTCP:kernel/AmiTCP.020 debug" : "AmiTCP:kernel/AmiTCP.020"));
       else
          run_async((Config.cnf_flags & CFL_Debug ? "AmiTCP:kernel/AmiTCP debug" : "AmiTCP:kernel/AmiTCP"));
@@ -591,7 +541,7 @@ BOOL launch_amitcp(VOID)
             struct DosList *dlist;
 
             if(TX_Info)
-               set(TX_Info, MUIA_Text_Contents, "\nConfiguring loopback device lo0");
+               set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringLoopback));
             config_lo0();
 
             if(dlist = LockDosList(LDF_DEVICES | LDF_READ))
@@ -603,15 +553,15 @@ BOOL launch_amitcp(VOID)
             if(mount_tcp)
             {
                if(TX_Info)
-                  set(TX_Info, MUIA_Text_Contents, "\nMounting TCP:");
+                  set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_MountingTCP));
                run_async("C:Mount TCP: from AmiTCP:Devs/Inet-mountlist");
             }
 
             if(TX_Info)
-               set(TX_Info, MUIA_Text_Contents, "\nLaunching Inetd");
+               set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_LaunchingInetd));
             run_async("AmiTCP:bin/inetd");
             if(TX_Info)
-               set(TX_Info, MUIA_Text_Contents, "\nLoading configuration");
+               set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_LoadingConfiguration));
 
             SocketBase = NULL;
             success = TRUE;
@@ -651,7 +601,7 @@ LONG amirexx_do_command(const char *fmt, ...)
    struct RexxMsg *rmsg;
    LONG rc = 20;         /* fail */
 
-   vsprintf(buf, fmt, (va_list)(&fmt + (va_list)1));
+   vsprintf(buf, fmt, (STRPTR)(&fmt + 1));
 
    if(port = CreateMsgPort())
    {
@@ -798,7 +748,7 @@ VOID set_window(Object *window, int state)
 ///
 
 /// txtobjfunc
-SAVEDS LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt)
+SAVEDS ASM LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt)
 {
    char *x, *s;
    int i;
@@ -831,7 +781,7 @@ struct Hook txtobj_hook = { { 0,0 }, (VOID *)txtobjfunc , NULL, NULL };
 
 ///
 /// objtxtfunc
-VOID SAVEDS objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
+SAVEDS ASM VOID objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
 {
    char *x;
 
@@ -843,7 +793,7 @@ struct Hook objtxt_hook = { { 0,0 }, (VOID *)objtxtfunc , NULL, NULL };
 
 ///
 /// des_func
-VOID SAVEDS des_func(register __a2 APTR pool, register __a1 APTR ptr)
+SAVEDS ASM VOID des_func(register __a2 APTR pool, register __a1 APTR ptr)
 {
    if(ptr)
       FreeVec(ptr);

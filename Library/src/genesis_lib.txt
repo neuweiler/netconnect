@@ -1,0 +1,53 @@
+History of genesis.library
+--------------------------
+
+2.0.0 (12.5.98)
+---------------
+
+* completely new api.
+* first release that works with users defined in amitcp:db/passwd.
+* added window for user authentication.
+
+2.0.1 (15.5.98)
+---------------
+
+* added popup list for usernames
+* now only users get loaded into userlist that aren't disabled.
+
+2.0.2 (03.6.98)
+---------------
+
+* added functions ReadFile() and WriteFile() since they're used
+  internally anyway
+* corrected nasty bug: when setting global user the usergroup.lib
+  was opened but the lib base pointer wasn't set => for amitcp
+  stuff the user was always 'nobody'.
+* enabled compiler optimizer => smaller code
+
+2.0.3 (05.6.98)
+---------------
+
+* added an argument to GetUser(): title, which allows you to place
+  some text into the requester. Please refer to the doc or test.c
+* removed argument "app" from GetUser() since not enogh registers
+  were available. this value can be extracted from the given
+  window object anyway.
+* modified GetGlobalUser() api. no arguments are required anymore.
+  will return user if globaluser is set or NULL => no longer opens
+  user requester automatically. this allows to check if globaluser
+  is set without opening a req. You can use GetUser() and
+  SetGlobalUser() instead.
+
+2.0.4 (07.06.98)
+----------------
+
+* now GetUser() opens muimaster.library itself and creates its own
+  mui application to create the login requester. This solves the
+  problem with crashes (hopefully) and also allows non-mui
+  applications to use the login requester.
+* as a result the number of arguments passed to GetUser shrinked
+  and "username" and "title" are passed in different registers.
+  => correct your application's code (remove MUIMasterBase pointer
+  and the pointer to your mui window and recompile).
+* added new argument to GetUser() : flags. Please refer to
+  libraries/genesis.h for possible values.

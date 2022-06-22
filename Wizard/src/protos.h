@@ -7,12 +7,12 @@ Object *MakeText(STRPTR string);
 Object *MakeFloatText(STRPTR string);
 Object *MakeString(STRPTR string, LONG len);
 Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only);
-VOID desfunc(register __a2 APTR pool, register __a1 APTR *entry);
-LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2);
-LONG strobjfunc(register __a2 Object *list, register __a1 Object *str);
-LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt);
-VOID SAVEDS objstrfunc(register __a2 Object *list,register __a1 Object *str);
-VOID SAVEDS objtxtfunc(register __a2 Object *list,register __a1 Object *txt);
+SAVEDS ASM VOID desfunc(register __a2 APTR pool, register __a1 APTR *entry);
+SAVEDS ASM LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2);
+SAVEDS ASM LONG strobjfunc(register __a2 Object *list, register __a1 Object *str);
+SAVEDS ASM LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt);
+SAVEDS ASM VOID objstrfunc(register __a2 Object *list,register __a1 Object *str);
+SAVEDS ASM VOID objtxtfunc(register __a2 Object *list,register __a1 Object *txt);
 STRPTR GetStr(STRPTR idstr);
 LONG GetEnvDOS(STRPTR name, STRPTR buffer, LONG max_len);
 STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep);
@@ -36,22 +36,22 @@ VOID HandleMainMethod(struct MsgPort *port);
 
 ///
 /// mui?.c
-SAVEDS ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG ModemDetect_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG ModemProtocol_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG ModemWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Online_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Welcome_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG SerialSana_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG SerialModem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG ModemStrings_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG UserInfo_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Protocol_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG LoginScript_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Finished_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Sana2_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG SanaConfig_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Request_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG ModemDetect_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG ModemProtocol_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG ModemWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Online_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Welcome_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG SerialSana_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG SerialModem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG ModemStrings_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG UserInfo_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Protocol_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG LoginScript_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Finished_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Sana2_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG SanaConfig_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Request_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 
 ///
 /// mui_LoginScript.c

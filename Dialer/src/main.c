@@ -1,17 +1,17 @@
-// WARNING: catalog doesn't get opened, GetStr() crashes on a500
-
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include <libraries/owndevunit.h>
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
+#include "/genesis.lib/pragmas/nc_lib.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
+#include "mui_MainWindow.h"
+#include "mui_Online.h"
 #include "mui_IfaceReq.h"
 #include "mui_Led.h"
 #include "protos.h"
@@ -22,7 +22,7 @@ extern struct Process *proc;
 extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 extern struct Catalog    *cat;
-extern struct Library    *MUIMasterBase, *LockSocketBase, *OwnDevUnitBase;
+extern struct Library    *MUIMasterBase, *LockSocketBase, *OwnDevUnitBase, *GenesisBase;
 extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led;
 extern struct MsgPort     *MainPort;
 extern struct timerequest *TimeReq;
@@ -34,8 +34,14 @@ extern Object *app, *win;
 extern struct Config Config;
 extern ULONG sigs;
 extern char config_file[], connectspeed[];
+extern struct CommandLineInterface *LocalCLI;
+extern BPTR OldCLI;
+
 #ifdef DEMO
 extern struct Library *BattClockBase;
+#endif
+#ifdef NETCONNECT
+extern struct Library *NetConnectBase;
 #endif
 
 ///
@@ -47,6 +53,10 @@ VOID exit_libs(VOID)
       CloseCatalog(cat);
    cat = NULL;
 
+   if(GenesisBase)
+      CloseLibrary(GenesisBase);
+   GenesisBase = NULL;
+
    if(OwnDevUnitBase)
       CloseLibrary(OwnDevUnitBase);
    OwnDevUnitBase = NULL;
@@ -54,20 +64,41 @@ VOID exit_libs(VOID)
    if(MUIMasterBase)
       CloseLibrary(MUIMasterBase);
    MUIMasterBase = NULL;
+
+#ifdef NETCONNECT
+   if(NetConnectBase)
+      CloseLibrary(NetConnectBase);
+   NetConnectBase = NULL;
+#endif
 }
 
 ///
 /// init_libs
 BOOL init_libs(VOID)
 {
-//   if(LocaleBase)
-//      cat = OpenCatalog(NULL, "Genesis.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
+   if(LocaleBase)
+      cat = OpenCatalog(NULL, "Genesis.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
+#ifdef NETCONNECT
+   if(!(NetConnectBase = OpenLibrary("netconnect.library", 0)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "netconnect.library\n");
+#endif
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
-      Printf("Could not open muimaster.library\n");
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "muimaster.library\n");
    OwnDevUnitBase = OpenLibrary(ODU_NAME, 0);
+   if(!(GenesisBase = OpenLibrary(GENESISNAME, 2)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "genesis.library (ver 2.0+)\n");
 
-   if(MUIMasterBase)
+#ifdef NETCONNECT
+   if(MUIMasterBase && GenesisBase && NetConnectBase)
+   {
+      if(NCL_GetOwner())
+         return(TRUE);
+      Printf("NetConnect registration failed.\n");
+   }
+#else
+   if(MUIMasterBase && GenesisBase)
       return(TRUE);
+#endif
 
    exit_libs();
    return(FALSE);
@@ -157,7 +188,7 @@ BOOL check_date(VOID)
 
    if(BattClockBase = OpenResource("battclock.resource"))
    {
-      if(ReadBattClock() < 644407784)
+      if(ReadBattClock() < 647390515)
          return(TRUE);
    }
    return(FALSE);
@@ -209,7 +240,7 @@ VOID HandleMainMethod(struct MsgPort *port)
       }
       else if(message->MethodID == MUIM_Genesis_Get)
       {
-         message->result = xget(message->obj, (ULONG)message->data1);
+         message->result = xget(message->obj, (LONG)message->data1);
       }
       message->MethodID = MUIM_Genesis_Handshake;
       ReplyMsg((struct Message *)message);
@@ -243,6 +274,7 @@ VOID Handler(VOID)
             End)
             {
                struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
+               struct User *user;
 
                DoMethod(app, MUIM_Notify, MUIA_Application_DoubleStart, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_ReturnID, ID_DOUBLESTART);
 
@@ -283,55 +315,64 @@ VOID Handler(VOID)
                   if(Config.cnf_flags & CFL_StartupOpenWin)
                      set(win, MUIA_Window_Open, TRUE);
 
+                  if(!(user = GetGlobalUser()))
+                     user = GetUser(NULL, NULL, NULL);
+                  if(user)
+                  {
+                     SetGlobalUser(user);
+                     set(data->TX_User, MUIA_Text_Contents, user->us_name);
+                     FreeUser(user);
+
 #ifdef DEMO
-                  if(!check_date())
-                     MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
-                  else
-                  {
+                     if(!check_date())
+                        MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
+                     else
+                     {
 #endif
-                  // put always_online online since it wasn't done in MainWindow_ChangeProvider cause AmiTCP wasn't running then
-                  iterate_ifacelist(&data->isp.isp_ifaces, 1);
-                  DoMethod(win, MUIM_MainWindow_PutOnline);
+                     // put always_online online since it wasn't done in MainWindow_ChangeProvider cause AmiTCP wasn't running then
+                     iterate_ifacelist(&data->isp.isp_ifaces, 1);
+                     DoMethod(win, MUIM_MainWindow_PutOnline);
 
-                  if(Config.cnf_startup)
-                     exec_command(Config.cnf_startup, Config.cnf_startuptype);
+                     if(Config.cnf_startup)
+                        exec_command(Config.cnf_startup, Config.cnf_startuptype);
 
-                  while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
-                  {
-                     if(id == ID_DOUBLESTART)
+                     while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
                      {
-                        if(!xget(win, MUIA_Window_Open))
-                           set(win, MUIA_Window_Open, TRUE);
-                        MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Okay), "Genesis is already running");
-                     }
-
-                     if(sigs)
-                     {
-                        sigs = Wait(sigs | SIGBREAKF_CTRL_C | 1L << MainPort->mp_SigBit | 1L << LogNotifySignal | 1L << ConfigNotifySignal );
-
-                        if(sigs & SIGBREAKF_CTRL_C)
-                           break;
-                        if(sigs & (1L << MainPort->mp_SigBit))
-                           HandleMainMethod(MainPort);
-                        if(sigs & (1L << LogNotifySignal))
-                           DoMethod(win, MUIM_MainWindow_UpdateLog);
-                        if(sigs & (1L << ConfigNotifySignal))
+                        if(id == ID_DOUBLESTART)
                         {
-                           Delay(20);  // to give some time when saving
-                           DoMethod(win, MUIM_MainWindow_LoadConfig);
+                           if(!xget(win, MUIA_Window_Open))
+                              set(win, MUIA_Window_Open, TRUE);
+                           MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_GenesisAlreadyRunning));
+                        }
+
+                        if(sigs)
+                        {
+                           sigs = Wait(sigs | SIGBREAKF_CTRL_C | 1L << MainPort->mp_SigBit | 1L << LogNotifySignal | 1L << ConfigNotifySignal );
+
+                           if(sigs & SIGBREAKF_CTRL_C)
+                              break;
+                           if(sigs & (1L << MainPort->mp_SigBit))
+                              HandleMainMethod(MainPort);
+                           if(sigs & (1L << LogNotifySignal))
+                              DoMethod(win, MUIM_MainWindow_UpdateLog);
+                           if(sigs & (1L << ConfigNotifySignal))
+                           {
+                              Delay(20);  // to give some time when saving
+                              DoMethod(win, MUIM_MainWindow_LoadConfig);
+                           }
                         }
                      }
-                  }
 #ifdef DEMO
-                  }
+                     }
 #endif
-                  set(win, MUIA_Window_Open, FALSE);
+                     set(win, MUIA_Window_Open, FALSE);
 
-                  if(Config.cnf_shutdown)
-                     exec_command(Config.cnf_shutdown, Config.cnf_shutdowntype);
-   
-                  iterate_ifacelist(&data->isp.isp_ifaces, 0);
-                  DoMethod(win, MUIM_MainWindow_PutOffline);
+                     if(Config.cnf_shutdown)
+                        exec_command(Config.cnf_shutdown, Config.cnf_shutdowntype);
+
+                     iterate_ifacelist(&data->isp.isp_ifaces, 0);
+                     DoMethod(win, MUIM_MainWindow_PutOffline);
+                  }
 
                   if(LockSocketBase)      // gets opened in launch_amitcp()
                      CloseLibrary(LockSocketBase);
@@ -362,9 +403,8 @@ VOID Handler(VOID)
          exit_classes();
       }
       else
-         MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), "Could not create MUI classes.");
+         MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), GetStr(MSG_TX_CouldNotCreateMUIClasses));
 
-      SetCurrentUser(-1);
       exit_libs();
    }
 }
@@ -375,14 +415,17 @@ VOID Handler(VOID)
 /// main
 int main(int argc, char *argv[])
 {
-   if(SysBase->LibNode.lib_Version < 37)
-   {
-      static UBYTE AlertData[] = "\0\214\020Genesis requires kickstart v37+ !!!\0\0";
-
-      DisplayAlert(RECOVERY_ALERT, AlertData, 30);
-      exit(30);
-   }
    proc = (struct Process *)FindTask(NULL);
+
+   if(!proc->pr_CLI)
+   {
+      if(LocalCLI = CloneCLI(&WBenchMsg->sm_Message))
+      {
+         OldCLI = proc->pr_CLI;
+         proc->pr_CLI = MKBADDR(LocalCLI);
+      }
+   }
+
    if(((ULONG)proc->pr_Task.tc_SPUpper - (ULONG)proc->pr_Task.tc_SPLower) < NEWSTACK_SIZE)
    {
       if(!(StackSwapper.stk_Lower = AllocVec(NEWSTACK_SIZE, MEMF_ANY)))
@@ -398,6 +441,12 @@ int main(int argc, char *argv[])
    }
    else
       Handler();
+
+   if(LocalCLI)
+   {
+      proc->pr_CLI = OldCLI;
+      DeleteCLI(LocalCLI);
+   }
 }
 
 ///

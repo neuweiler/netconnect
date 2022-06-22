@@ -1,14 +1,10 @@
-// WARNING !!! Catalog doesn't get opened because GetStr() crashes
-//             on Amiga 500 !!  Workaround ?!?
-
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
@@ -24,7 +20,7 @@
 #include "mui_IfaceWindow.h"
 #include "mui_UserWindow.h"
 #include "protos.h"
-#include "mui/Grouppager_mcc.h"
+#include "mui/grouppager_mcc.h"
 
 ///
 /// external variables
@@ -45,6 +41,7 @@ extern Object *win;
 extern char config_file[MAXPATHLEN];
 extern BOOL changed_passwd, changed_group, changed_hosts, changed_protocols,
             changed_services, changed_inetd, changed_networks, changed_rpc, changed_inetaccess;
+extern BOOL root_authenticated;
 
 ///
 
@@ -64,13 +61,13 @@ VOID exit_libs(VOID)
 /// init_libs
 BOOL init_libs(VOID)
 {
-//   if(LocaleBase)
-//      cat = OpenCatalog(NULL, "GenesisPrefs.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
+   if(LocaleBase)
+      cat = OpenCatalog(NULL, "GenesisPrefs.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
 
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
-      Printf("Could not open muimaster.library\n");
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "muimaster.library\n");
    if(!(GenesisBase = OpenLibrary(GENESISNAME, 0)))
-      Printf("Could not open " GENESISNAME ".\n");
+      Printf(GetStr(MSG_TX_CouldNotOpenX), GENESISNAME ".\n");
 
    if(MUIMasterBase && GenesisBase)
       return(TRUE);
@@ -146,8 +143,12 @@ STRPTR GetStr(STRPTR idstr)
 VOID LocalizeNewMenu(struct NewMenu *nm)
 {
    for (;nm->nm_Type!=NM_END;nm++)
+   {
       if (nm->nm_Label != NM_BARLABEL)
          nm->nm_Label = GetStr(nm->nm_Label);
+      if(nm->nm_CommKey)
+         nm->nm_CommKey = GetStr(nm->nm_CommKey);
+   }
 }
 
 ///
@@ -161,7 +162,7 @@ BOOL check_date(VOID)
 
    if(BattClockBase = OpenResource("battclock.resource"))
    {
-      if(ReadBattClock() < 644407784)
+      if(ReadBattClock() < 647390515)
          return(TRUE);
    }
    return(FALSE);
@@ -211,6 +212,7 @@ VOID Handler(VOID)
                changed_passwd   = changed_group = changed_hosts    = changed_protocols =
                changed_services = changed_inetd = changed_networks = changed_rpc       =
                changed_inetaccess = FALSE;
+               root_authenticated = FALSE;
 
 #ifdef DEMO
                DoMethod(win, MUIM_MainWindow_About);

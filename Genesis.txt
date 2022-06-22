@@ -122,3 +122,23 @@ History for Genesis
 * added SynClock functionality (gettime / savetime).
 * launches 68020 version of AmiTCP if available and applicable.
 
+2.1.9 (7.6.98)
+---------------
+
+* moved back from stormc to sasc => 31% smaller code..
+* localized everything and added help bubbles.
+* user now log in by using genesis.library
+* also asks for user at startup
+* moved some internal functions to genesis.lib => requires at least
+  genesis.library from 7.6.1998
+
+2.1.10 (8.6.98)
+---------------
+
+* user popup now has its own user list again. so if no password is
+  set, no requester will appear at all when changing user.
+* corrected display bugs when certain gagdets in main window are
+  hidden.
+* workaround to prevent term.mcc causing a massive enforcer hit
+  attack when its window isn't opened or its MUIA_ShowMe was FALSE.
+

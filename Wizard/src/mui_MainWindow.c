@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "rev.h"
 #include "Strings.h"
@@ -25,6 +24,7 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern Object *app, *win, *status_win;
 extern struct Config Config;
 extern struct IOExtSer  *SerReadReq;
@@ -54,7 +54,11 @@ extern UBYTE *bodies[NUM_PAGES];
 /// MainWindow_About
 ULONG MainWindow_About(struct IClass *cl, Object *obj, Msg msg)
 {
+#ifdef DEMO
+   MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033b\033cGenesis Wizard\033n\033c\n" VERTAG "\n\n%ls\n\n\033bTHIS IS A DEMO VERSION !\033n\n\nAREXX port: '%ls'", GetStr(MSG_TX_About), xget(app, MUIA_Application_Base));
+#else
    MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033b\033cGenesis Wizard\033n\033c\n" VERTAG "\n\n%ls\n\nAREXX port: '%ls'", GetStr(MSG_TX_About), xget(app, MUIA_Application_Base));
+#endif
    return(NULL);
 }
 
@@ -109,18 +113,20 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(Iface.if_sana2device, "DEVS:Networks/aslip.device");
             Iface.if_sana2unit = 0;
             strcpy(Iface.if_sana2config, "ENV:Sana2/aslip0.config");
-            sprintf(sana2configtext, "%ls %ld %ld Shared 0.0.0.0 CD 7Wire MTU=%ld", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate, Iface.if_MTU);
+            sprintf(sana2configtext, "%ls %ld %ld Shared %%a CD 7Wire MTU=%ld ", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate, Iface.if_MTU);
             Iface.if_sana2configtext = sana2configtext;
             strcpy(Iface.if_name, "slip");
+            Iface.if_flags |= IFL_SLIP;
          }
          else
          {
             strcpy(Iface.if_sana2device, "DEVS:Networks/appp.device");
             Iface.if_sana2unit = 0;
             strcpy(Iface.if_sana2config, "ENV:Sana2/appp0.config");
-            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress 0.0.0.0\ncd yes\nuser %ls\nsecret %ls\ndebug = 1\ndebug_window = 0\nlog_file = T:appp.log\n", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate, ISP.isp_login, ISP.isp_password);
+            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %%a\ncd yes\nuser %%u\nsecret %%p\ndebug = 1\ndebug_window = 1\nlog_file = AmiTCP:log/appp.log\ncon_window = NIL:\n", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate);
             Iface.if_sana2configtext = sana2configtext;
             strcpy(Iface.if_name, "ppp");
+            Iface.if_flags |= IFL_PPP;
          }
          break;
       }
@@ -156,6 +162,7 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
          Iface.if_sana2configtext = sana2configtext;
          strcpy(configparams, (STRPTR)xget(sc_data->STR_ConfigParams, MUIA_String_Contents));
          Iface.if_configparams = configparams;
+         Iface.if_flags = NULL;
       }
    }
    return(NULL);
@@ -188,7 +195,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
          {
             if(!serial_dsr())
             {
-               if(MUI_Request(app, win, NULL, NULL, GetStr("  *_Ignore|_Cancel"), "Could not detect the DSR (data set ready)\nsignal from your modem. If it wasn't\nswitched on, please switch it on now and\nchoose cancel."))
+               if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_IgnoreCancel), GetStr(MSG_TX_NoDSR)))
                {
                   Config.cnf_flags |= CFL_IgnoreDSR;
                   data->Page = PAGE_ModemStrings;
@@ -231,10 +238,10 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
                   if(serial_waitfor("OK", NULL, NULL, 2))
                      data->Page = PAGE_UserInfo;
                   else
-                     MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "Your modem is not responding with \"OK\"\nto the init string. Please make sure the\ninit string is entered correctly.\nRefer to the manual of your modem.");
+                     MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_NoOKOnInit));
                }
                else
-                  MUI_Request(app, win, NULL,  NULL, GetStr(MSG_ReqBT_Okay), "Your modem is not responding to basic commands.\nPlease make sure the modem is switched on,\nproperly connected and the correct driver\nwas chosen.");
+                  MUI_Request(app, win, NULL,  NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_NoOKOnAT));
 
                set(app, MUIA_Application_Sleep, FALSE);
             }
@@ -310,7 +317,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
       }
       case PAGE_SanaConfig:
       {
-         struct SanaConfig_Data *sc_data = INST_DATA(CL_SanaConfig->mcc_Class, data->GR_SanaConfig);
+//         struct SanaConfig_Data *sc_data = INST_DATA(CL_SanaConfig->mcc_Class, data->GR_SanaConfig);
 
          set(app, MUIA_Application_Sleep, TRUE);
          if(status_win = NewObject(CL_Online->mcc_Class, NULL, TAG_DONE))
@@ -354,7 +361,7 @@ ULONG MainWindow_BackPage(struct IClass *cl, Object *obj, Msg msg)
          if(use_modem)
          {
             if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_BackCancel), GetStr(MSG_TX_GoBack)))
-               data->Page = PAGE_Protocol;
+               data->Page = PAGE_LoginScript;
          }
          else
             data->Page = PAGE_SanaConfig;
@@ -372,7 +379,6 @@ ULONG MainWindow_BackPage(struct IClass *cl, Object *obj, Msg msg)
 ULONG MainWindow_SetPage(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data = INST_DATA(cl, obj);
-   APTR new_class = NULL;
    Object *new_pic;
 
    if(data->Page < 0)
@@ -594,7 +600,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
             Child, HSpace(0),
             Child, tmp.BT_Abort   = MakeButton(MSG_BT_Abort),
-            Child, tmp.BT_Help    = MakeButton("  _Help"),
+            Child, tmp.BT_Help    = MakeButton(MSG_BT_Help),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -637,6 +643,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
          set(data->BT_Back    , MUIA_ShortHelp, GetStr(MSG_HELP_Back));
          set(data->BT_Next    , MUIA_ShortHelp, GetStr(MSG_HELP_Next));
          set(data->BT_Abort   , MUIA_ShortHelp, GetStr(MSG_HELP_Abort));
+         set(data->BT_Help    , MUIA_ShortHelp, GetStr(MSG_HELP_Help));
 
          DoMethod(obj              , MUIM_Notify, MUIA_Window_CloseRequest, TRUE, obj, 1, MUIM_MainWindow_Quit);
          DoMethod(data->BT_Next    , MUIM_Notify, MUIA_Pressed   , FALSE  , obj, 1, MUIM_MainWindow_NextPage);
@@ -660,7 +667,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// MainWindow_Dispatcher
-SAVEDS ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

@@ -1,11 +1,10 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "Strings.h"
 #include "mui.h"
 #include "protos.h"
@@ -44,14 +43,14 @@ LONG xget(Object *obj, ULONG attribute)
 
 ///
 /// sortfunc
-SAVEDS LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
+SAVEDS ASM LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
 {
    return(stricmp(str1, str2));
 }
 
 ///
 /// des_func
-VOID SAVEDS des_func(register __a2 APTR pool, register __a1 APTR ptr)
+SAVEDS ASM VOID des_func(register __a2 APTR pool, register __a1 APTR ptr)
 {
    if(ptr)
       FreeVec(ptr);
@@ -59,7 +58,7 @@ VOID SAVEDS des_func(register __a2 APTR pool, register __a1 APTR ptr)
 
 ///
 /// strobjfunc
-SAVEDS LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
+SAVEDS ASM LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
 {
    char *x, *s;
    int i;
@@ -91,7 +90,7 @@ SAVEDS LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
 
 ///
 /// objstrfunc
-VOID SAVEDS objstrfunc(register __a2 Object *list,register __a1 Object *str)
+SAVEDS ASM VOID objstrfunc(register __a2 Object *list,register __a1 Object *str)
 {
    char *x;
 
@@ -210,7 +209,7 @@ STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep)
 
 ///
 /// IntuiMsgFunc
-VOID SAVEDS IntuiMsgFunc(register __a1 struct IntuiMessage *imsg,register __a2 struct FileRequester *req)
+SAVEDS ASM VOID IntuiMsgFunc(register __a1 struct IntuiMessage *imsg,register __a2 struct FileRequester *req)
 {
    if(imsg->Class == IDCMP_REFRESHWINDOW)
       DoMethod(req->fr_UserData, MUIM_Application_CheckRefresh);
@@ -224,7 +223,7 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
    struct FileRequester *req;
    struct Window *w;
    static LONG left=-1,top=-1,width=-1,height=-1;
-   char *res = NULL, *ptr = NULL;
+   STRPTR res = NULL, ptr = NULL;
    static const struct Hook IntuiMsgHook = { { 0,0 }, (VOID *)IntuiMsgFunc, NULL, NULL };
 
    get(win, MUIA_Window_Window, &w);
@@ -273,24 +272,7 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
       set(app, MUIA_Application_Sleep, FALSE);
    }
 
-   return(res);
-}
-
-///
-/// realloc_copy
-STRPTR realloc_copy(STRPTR *old, STRPTR src)
-{
-   if(*old)
-      FreeVec(*old);
-   *old = NULL;
-
-   if(src && *src)
-   {
-      if(*old = AllocVec(strlen(src) + 1, MEMF_ANY))
-         strcpy(*old, src);
-   }
-
-   return(*old);
+   return((char *)res);
 }
 
 ///

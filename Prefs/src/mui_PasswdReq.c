@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -52,7 +51,7 @@ ULONG PasswdReq_OldActive(struct IClass *cl, Object *obj, Msg msg)
    }
    else
    {
-      MUI_Request(app, obj, NULL, NULL, GetStr(MSG_BT_Okay), "Could not open usergroup.library.\nChanging password not possible at the moment.");
+      MUI_Request(app, obj, NULL, NULL, GetStr(MSG_BT_Okay), GetStr(MSG_TX_NoUserGroup));
       DoMethod(app, MUIM_Application_PushMethod, data->originator, 3, MUIM_Genesis_Finish, obj, 0);
    }
 
@@ -70,7 +69,7 @@ ULONG PasswdReq_Pw2Active(struct IClass *cl, Object *obj, Msg msg)
 
    if(strcmp(pw1, pw2))
    {
-      MUI_Request(app, obj, NULL, NULL, "*_Okay", "The passwords you have\nentered are not equal.");
+      MUI_Request(app, obj, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_PasswdNotEqual));
       setstring(data->STR_pw1, NULL);
       setstring(data->STR_pw2, NULL);
       set(data->BT_Okay, MUIA_Disabled, TRUE);
@@ -88,7 +87,7 @@ ULONG PasswdReq_Pw2Active(struct IClass *cl, Object *obj, Msg msg)
          !strchr(pw1, '#') && !strchr(pw1, '*') && !strchr(pw1, '=') && !strchr(pw1, '(') &&
          !strchr(pw1, ')') && !strchr(pw1, '\"')))
       {
-         MUI_Request(app, obj, NULL, NULL, "*_Okay", "The new password must be at least 8 characters long and\ncontain at least one digit or one of the following characters: \n\033c- / % & + , . ; : $ ! < > ( ) @ # * \" \033n");
+         MUI_Request(app, obj, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_PasswdRequirements));
          setstring(data->STR_pw1, NULL);
          setstring(data->STR_pw2, NULL);
          set(data->BT_Okay, MUIA_Disabled, TRUE);
@@ -112,7 +111,7 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
    tmp.originator = (Object *)GetTagData(MUIA_Genesis_Originator, 0, msg->ops_AttrList);
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title    , "Change password",
+      MUIA_Window_Title    , GetStr(MSG_TX_PasswdReqTitle),
       MUIA_Window_ID       , MAKE_ID('P','A','S','S'),
       MUIA_Window_Height   , MUIV_Window_Height_MinMax(0),
       MUIA_Window_Width    , MUIV_Window_Width_MinMax(10),
@@ -122,9 +121,9 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
             MUIA_Background, MUII_GroupBack,
             Child, tmp.GR_old_pw = VGroup,
                Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  Old password:", "  o"),
+                  Child, MakeKeyLabel2(MSG_LA_OldPasswd, MSG_CC_OldPasswd),
                   Child, tmp.STR_old_pw = TextinputObject,
-                     MUIA_ControlChar        , *GetStr("  o"),
+                     MUIA_ControlChar        , *GetStr(MSG_CC_OldPasswd),
                      MUIA_CycleChain         , 1,
                      MUIA_Frame              , MUIV_Frame_String,
                      MUIA_Textinput_Secret   , TRUE,
@@ -137,18 +136,18 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
                Child, HVSpace,
             End,
             Child, ColGroup(2),
-               Child, MakeKeyLabel2("  New password:", "  p"),
+               Child, MakeKeyLabel2(MSG_LA_NewPasswd, MSG_CC_NewPasswd),
                Child, tmp.STR_pw1 = TextinputObject,
-                  MUIA_ControlChar        , *GetStr("  p"),
+                  MUIA_ControlChar        , *GetStr(MSG_CC_NewPasswd),
                   MUIA_CycleChain         , 1,
                   MUIA_Frame              , MUIV_Frame_String,
                   MUIA_Textinput_Secret   , TRUE,
                   MUIA_Textinput_Multiline, FALSE,
                   MUIA_Textinput_MaxLen   , 40,
                End,
-               Child, MakeKeyLabel2("  Verify password:", "  v"),
+               Child, MakeKeyLabel2(MSG_LA_VerifyPasswd, MSG_CC_VerifyPasswd),
                Child, tmp.STR_pw2 = TextinputObject,
-                  MUIA_ControlChar        , *GetStr("  v"),
+                  MUIA_ControlChar        , *GetStr(MSG_CC_VerifyPasswd),
                   MUIA_CycleChain         , 1,
                   MUIA_Frame              , MUIV_Frame_String,
                   MUIA_Textinput_Secret   , TRUE,
@@ -159,8 +158,8 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
          End,
          Child, MUI_MakeObject(MUIO_HBar, 2),
          Child, HGroup,
-            Child, tmp.BT_Okay   = MakeButton("  _Okay"),
-            Child, tmp.BT_Cancel = MakeButton("  _Cancel"),
+            Child, tmp.BT_Okay   = MakeButton(MSG_BT_Okay),
+            Child, tmp.BT_Cancel = MakeButton(MSG_BT_Cancel),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -170,7 +169,7 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
       *data = tmp;
 
       data->old_password = (STRPTR)GetTagData(MUIA_PasswdReq_OldPassword, 0, msg->ops_AttrList);
-      if(!data->old_password || !*data->old_password)
+      if(!data->old_password || !*data->old_password || !strcmp(data->old_password, "*"))
       {
          set(data->GR_old_pw, MUIA_ShowMe, FALSE);
          set(obj, MUIA_Window_ActiveObject, data->STR_pw1);
@@ -200,7 +199,7 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// PasswdReq_Dispatcher
-SAVEDS ULONG PasswdReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG PasswdReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

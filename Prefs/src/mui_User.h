@@ -5,6 +5,17 @@
 
 struct MUIP_User_EditFinish   { ULONG MethodID; Object *win; LONG ok; };
 
+struct Prefs_User
+{
+   char   pu_login[41];
+   char   pu_realname[81];
+   char   pu_password[41];
+   LONG   pu_uid;
+   LONG   pu_gid;
+   char   pu_homedir[MAXPATHLEN];
+   char   pu_shell[81];
+};
+
 struct User_Data
 {
    Object *LV_User;

@@ -1,11 +1,10 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "Strings.h"
 #include "mui.h"
 #include "mui_ProviderWindow.h"
@@ -18,6 +17,7 @@
 extern struct Hook strobjhook, des_hook;
 extern Object *win, *app;
 extern struct MUI_CustomClass  *CL_IfaceWindow;
+extern struct Library *GenesisBase;
 
 ///
 
@@ -237,10 +237,10 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
             memcpy(iface2, iface1, sizeof(struct Interface));
             iface2->if_sana2configtext = NULL;
             if(iface1->if_sana2configtext)
-               realloc_copy((STRPTR *)&iface2->if_sana2configtext, iface1->if_sana2configtext);
+               ReallocCopy((STRPTR *)&iface2->if_sana2configtext, iface1->if_sana2configtext);
             iface2->if_configparams = NULL;
             if(iface1->if_configparams)
-               realloc_copy((STRPTR *)&iface2->if_configparams, iface1->if_configparams);
+               ReallocCopy((STRPTR *)&iface2->if_configparams, iface1->if_configparams);
             if(iface2->if_userdata = (APTR)AllocVec(sizeof(struct PrefsPPPIface), MEMF_ANY))
                memcpy(iface2->if_userdata, iface1->if_userdata, sizeof(struct PrefsPPPIface));
             NewList((struct List *)&iface2->if_events);
@@ -324,7 +324,7 @@ ULONG ProviderWindow_EditIface(struct IClass *cl, Object *obj, Msg msg)
 /// ProviderWindow_EditIfaceFinish
 ULONG ProviderWindow_EditIfaceFinish(struct IClass *cl, Object *obj, struct MUIP_ProviderWindow_EditIfaceFinish *msg)
 {
-   struct Provider_Data *data = INST_DATA(cl, obj);
+//   struct Provider_Data *data = INST_DATA(cl, obj);
 
    set(msg->win, MUIA_Window_Open, FALSE);
    if(msg->ok)
@@ -501,7 +501,7 @@ ULONG ProviderWindow_Modification(struct IClass *cl, Object *obj, struct MUIP_Pr
 ///
 
 /// ScriptList_ConstructFunc
-struct ScriptLine * SAVEDS ScriptList_ConstructFunc(register __a2 APTR pool, register __a1 struct ScriptLine *src)
+SAVEDS ASM struct ScriptLine *ScriptList_ConstructFunc(register __a2 APTR pool, register __a1 struct ScriptLine *src)
 {
    struct ScriptLine *new;
 
@@ -516,7 +516,7 @@ static const struct Hook ScriptList_ConstructHook= { { 0,0 }, (VOID *)ScriptList
 
 ///
 /// ScriptList_DisplayFunc
-SAVEDS LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 struct ScriptLine *script_line)
+SAVEDS ASM LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 struct ScriptLine *script_line)
 {
    if(script_line)
    {
@@ -525,8 +525,8 @@ SAVEDS LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 str
    }
    else
    {
-      *array++ = GetStr("  \033bCommand");
-      *array   = GetStr("  \033bString");
+      *array++ = GetStr(MSG_TX_Command);
+      *array   = GetStr(MSG_TX_String);
    }
    return(NULL);
 }
@@ -534,7 +534,7 @@ static const struct Hook ScriptList_DisplayHook= { { 0,0 }, (VOID *)ScriptList_D
 
 ///
 /// ServerList_ConstructFunc
-struct ServerEntry * SAVEDS ServerList_ConstructFunc(register __a2 APTR pool, register __a1 struct ServerEntry *src)
+SAVEDS ASM struct ServerEntry *ServerList_ConstructFunc(register __a2 APTR pool, register __a1 struct ServerEntry *src)
 {
    struct ServerEntry *new;
 
@@ -547,7 +547,7 @@ static const struct Hook ServerList_ConstructHook= { { 0,0 }, (VOID *)ServerList
 
 ///
 /// ServerList_DisplayFunc
-SAVEDS LONG ServerList_DisplayFunc(register __a2 char **array, register __a1 struct ServerEntry *server)
+SAVEDS ASM LONG ServerList_DisplayFunc(register __a2 char **array, register __a1 struct ServerEntry *server)
 {
    if(server)
       *array = server->se_name;
@@ -560,7 +560,7 @@ static const struct Hook ServerList_DisplayHook= { { 0,0 }, (VOID *)ServerList_D
 
 ///
 /// IfaceList_ConstructFunc
-struct Interface * SAVEDS IfaceList_ConstructFunc(register __a2 APTR pool, register __a1 struct Interface *src)
+SAVEDS ASM struct Interface *IfaceList_ConstructFunc(register __a2 APTR pool, register __a1 struct Interface *src)
 {
    struct Interface *new;
 
@@ -572,12 +572,12 @@ struct Interface * SAVEDS IfaceList_ConstructFunc(register __a2 APTR pool, regis
          if(src->if_sana2configtext)
          {
             new->if_sana2configtext = NULL;
-            realloc_copy((STRPTR *)&new->if_sana2configtext, src->if_sana2configtext);
+            ReallocCopy((STRPTR *)&new->if_sana2configtext, src->if_sana2configtext);
          }
          if(src->if_configparams)
          {
             new->if_configparams = NULL;
-            realloc_copy((STRPTR *)&new->if_configparams, src->if_configparams);
+            ReallocCopy((STRPTR *)&new->if_configparams, src->if_configparams);
          }
          NewList((struct List *)&new->if_events);
          if(src->if_events.mlh_TailPred != (struct MinNode *)&src->if_events)
@@ -624,7 +624,7 @@ static const struct Hook IfaceList_ConstructHook= { { 0,0 }, (VOID *)IfaceList_C
 
 ///
 /// IfaceList_DestructFunc
-VOID SAVEDS IfaceList_DestructFunc(register __a2 APTR pool, register __a1 struct Interface *iface)
+SAVEDS ASM VOID IfaceList_DestructFunc(register __a2 APTR pool, register __a1 struct Interface *iface)
 {
    if(iface)
    {
@@ -642,7 +642,7 @@ static const struct Hook IfaceList_DestructHook= { { 0,0 }, (VOID *)IfaceList_De
 
 ///
 /// IfaceList_DisplayFunc
-SAVEDS LONG IfaceList_DisplayFunc(register __a2 char **array, register __a1 struct Interface *iface)
+SAVEDS ASM LONG IfaceList_DisplayFunc(register __a2 char **array, register __a1 struct Interface *iface)
 {
    if(iface)
    {
@@ -652,14 +652,14 @@ SAVEDS LONG IfaceList_DisplayFunc(register __a2 char **array, register __a1 stru
       *array++ = iface->if_name;
       *array++ = iface->if_sana2device;
       *array++ = buf;
-      *array   = (*iface->if_addr ? iface->if_addr : "dynamic");
+      *array   = (*iface->if_addr ? (STRPTR)iface->if_addr : GetStr(MSG_TX_Dynamic));
    }
    else
    {
-      *array++ = GetStr("  \033bName");
-      *array++ = GetStr("  \033bDevice");
-      *array++ = GetStr("  \033bUnit");
-      *array   = GetStr("  \033bIP Address");
+      *array++ = GetStr(MSG_TX_Name);
+      *array++ = GetStr(MSG_TX_Device);
+      *array++ = GetStr(MSG_TX_Unit);
+      *array   = GetStr(MSG_TX_Address);
    }
    return(NULL);
 }
@@ -671,36 +671,44 @@ static const struct Hook IfaceList_DisplayHook= { { 0,0 }, (VOID *)IfaceList_Dis
 ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    static STRPTR STR_CY_Dynamic[3];
-   static STRPTR ARR_Pages[] = { "ISP", "Resolv", "Interfaces", "Services", "LoginScript", NULL };
+   static STRPTR ARR_Pages[6];
    struct ProviderWindow_Data tmp;
    Object *originator;
 
    originator = (Object *)GetTagData(MUIA_Genesis_Originator, 0, msg->ops_AttrList);
 
-   STR_CY_Dynamic[0] = GetStr(MSG_CY_Address0);
-   STR_CY_Dynamic[1] = GetStr(MSG_CY_Address1);
+   ARR_Pages[0] = GetStr(MSG_TX_ProviderPage1);
+   ARR_Pages[1] = GetStr(MSG_TX_ProviderPage2);
+   ARR_Pages[2] = GetStr(MSG_TX_ProviderPage3);
+   ARR_Pages[3] = GetStr(MSG_TX_ProviderPage4);
+   ARR_Pages[4] = GetStr(MSG_TX_ProviderPage5);
+   ARR_Pages[5] = NULL;
+
+   STR_CY_Dynamic[0] = GetStr(MSG_TX_Dynamic);
+   STR_CY_Dynamic[1] = GetStr(MSG_TX_Static);
    STR_CY_Dynamic[2] = NULL;
 
    if(obj = tmp.GR_TCPIP = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title    , "Edit ISP",
+      MUIA_Window_Title    , GetStr(MSG_TX_EditISP),
       MUIA_Window_ID       , MAKE_ID('I','S','P','E'),
       MUIA_Window_Height   , MUIV_Window_Height_MinMax(0),
       WindowContents       , VGroup,
          Child, RegisterGroup(ARR_Pages),
+            MUIA_CycleChain, 1,
             Child, VGroup,
                Child, HVSpace,
-               Child, MUI_MakeObject(MUIO_BarTitle, "ISP information"),
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_ISPInformation)),
                Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  Name:", "  n"),
-                  Child, tmp.STR_Name    = MakeKeyString(NULL, 40, "  n"),
-                  Child, MakeKeyLabel2("  Comment:", "  o"),
-                  Child, tmp.STR_Comment = MakeKeyString(NULL, 40, "  o"),
+                  Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
+                  Child, tmp.STR_Name    = MakeKeyString(NULL, 40, MSG_CC_Name),
+                  Child, MakeKeyLabel2(MSG_LA_Comment, MSG_CC_Comment),
+                  Child, tmp.STR_Comment = MakeKeyString(NULL, 40, MSG_CC_Comment),
                End,
                Child, HVSpace,
-               Child, MUI_MakeObject(MUIO_BarTitle, "Authentication"),
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Authentication)),
                Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  Login:", "  l"),
-                  Child, tmp.STR_Login    = MakeKeyString(NULL, 40, "  l"),
+                  Child, MakeKeyLabel2(MSG_LA_Login, MSG_CC_Login),
+                  Child, tmp.STR_Login    = MakeKeyString(NULL, 40, MSG_CC_Login),
                   Child, MakeKeyLabel2(MSG_LA_Password, MSG_CC_Password),
                   Child, tmp.STR_Password = TextinputObject,
                      StringFrame,
@@ -715,8 +723,8 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
             Child, VGroup,
                Child, HVSpace,
                Child, ColGroup(2),
-                  Child, MUI_MakeObject(MUIO_BarTitle, "Domain Name Servers"),
-                  Child, MUI_MakeObject(MUIO_BarTitle, "Domain Names"),
+                  Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_DNS)),
+                  Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_DomainNames)),
                   Child, VGroup,
                      GroupSpacing(0),
                      Child, tmp.LV_NameServers = ListviewObject,
@@ -732,8 +740,8 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                      End,
                      Child, HGroup,
                         GroupSpacing(0),
-                        Child, tmp.BT_AddNameServer    = MakeButton("  _Add"),
-                        Child, tmp.BT_RemoveNameServer = MakeButton("  _Remove"),
+                        Child, tmp.BT_AddNameServer    = MakeButton(MSG_BT_Add),
+                        Child, tmp.BT_RemoveNameServer = MakeButton(MSG_BT_Remove),
                      End,
                      Child, tmp.STR_NameServer = TextinputObject,
                         StringFrame,
@@ -757,8 +765,8 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                      End,
                      Child, HGroup,
                         GroupSpacing(0),
-                        Child, tmp.BT_AddDomainName    = MakeButton("  A_dd"),
-                        Child, tmp.BT_RemoveDomainName = MakeButton("  R_emove"),
+                        Child, tmp.BT_AddDomainName    = MakeButton(MSG_BT_Add2),
+                        Child, tmp.BT_RemoveDomainName = MakeButton(MSG_BT_Remove2),
                      End,
                      Child, tmp.STR_DomainName = TextinputObject,
                         StringFrame,
@@ -768,12 +776,12 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   End,
                End,
                Child, HGroup,
-                  Child, MakeKeyLabel2("  Configuration:", "  n"),
-                  Child, tmp.CY_Resolv = MakeKeyCycle(STR_CY_Dynamic, "  n"),
+                  Child, MakeKeyLabel2(MSG_LA_Configuration, MSG_CC_Configuration),
+                  Child, tmp.CY_Resolv = MakeKeyCycle(STR_CY_Dynamic, MSG_CC_Configuration),
                   Child, HVSpace,
                End,
                Child, HVSpace,
-               Child, MUI_MakeObject(MUIO_BarTitle, "Local configuration"),
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_LocalConfiguration)),
                Child, ColGroup(2),
                   Child, MakeKeyLabel2(MSG_LA_HostName, MSG_CC_HostName),
                   Child, HGroup,
@@ -782,8 +790,8 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   End,
                End,
                Child, HGroup,
-                  Child, MakeKeyLabel2("  Don't query host and domain name", "  q"),
-                  Child, tmp.CH_DontQueryHostname = MakeKeyCheckMark(FALSE, "  q"),
+                  Child, MakeKeyLabel2(MSG_LA_DontQueryHostname, MSG_CC_DontQueryHostname),
+                  Child, tmp.CH_DontQueryHostname = MakeKeyCheckMark(FALSE, MSG_CC_DontQueryHostname),
                   Child, HVSpace,
                End,
                Child, HVSpace,
@@ -808,39 +816,39 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   End,
                   Child, HGroup,
                      GroupSpacing(0),
-                     Child, tmp.BT_AddIface    = MakeButton("  _Add"),
-                     Child, tmp.BT_DeleteIface = MakeButton("  _Delete"),
-                     Child, tmp.BT_EditIface   = MakeButton("  _Edit"),
+                     Child, tmp.BT_AddIface    = MakeButton(MSG_BT_New),
+                     Child, tmp.BT_DeleteIface = MakeButton(MSG_BT_Delete),
+                     Child, tmp.BT_EditIface   = MakeButton(MSG_BT_Edit),
                   End,
                End,
             End,
 
             Child, tmp.GR_Server = VGroup,
                Child, HVSpace,
-               Child, MUI_MakeObject(MUIO_BarTitle, "Time"),
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Time)),
                Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  Sync clock", "  y"),
+                  Child, MakeKeyLabel2(MSG_LA_SyncClock, MSG_CC_SyncClock),
                   Child, HGroup,
-                     Child, tmp.CH_GetTime = MakeKeyCheckMark(FALSE, "  y"),
+                     Child, tmp.CH_GetTime = MakeKeyCheckMark(FALSE, MSG_CC_SyncClock),
                      Child, HVSpace,
-                     Child, MakeKeyLabel2("  Save time", "  a"),
-                     Child, tmp.CH_SaveTime = MakeKeyCheckMark(FALSE, "  a"),
+                     Child, MakeKeyLabel2(MSG_LA_SaveTime, MSG_CC_SaveTime),
+                     Child, tmp.CH_SaveTime = MakeKeyCheckMark(FALSE, MSG_CC_SaveTime),
                   End,
                   Child, MakeKeyLabel2(MSG_LA_TimeServer, MSG_CC_TimeServer),
                   Child, tmp.STR_TimeServer     = MakeKeyString(NULL, 64, MSG_CC_TimeServer),
                End,
                Child, HVSpace,
-               Child, MUI_MakeObject(MUIO_BarTitle, "BOOTP"),
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Bootp)),
                Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  Use BOOTP:", "  u"),
+                  Child, MakeKeyLabel2(MSG_LA_UseBootp, MSG_CC_UseBootp),
                   Child, HGroup,
-                     Child, tmp.CH_BOOTP = MakeKeyCheckMark(FALSE, "  u"),
+                     Child, tmp.CH_BOOTP = MakeKeyCheckMark(FALSE, MSG_CC_UseBootp),
                      Child, HVSpace,
                   End,
-                  Child, MakeKeyLabel2("  BOOTP Server:", MSG_CC_BOOTP),
+                  Child, MakeKeyLabel2(MSG_LA_BootpServer, MSG_CC_BootpServer),
                   Child, tmp.STR_BootpServer    = TextinputObject,
                      StringFrame,
-                     MUIA_ControlChar     , *GetStr(MSG_CC_BOOTP),
+                     MUIA_ControlChar     , *GetStr(MSG_CC_BootpServer),
                      MUIA_CycleChain      , 1,
                      MUIA_String_Accept   , "0123456789.",
                      MUIA_String_MaxLen   , 16,
@@ -867,8 +875,8 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   End,
                   Child, HGroup,
                      GroupSpacing(0),
-                     Child, tmp.BT_Add    = MakeButton("  _Add"),
-                     Child, tmp.BT_Remove = MakeButton("  _Delete"),
+                     Child, tmp.BT_Add    = MakeButton(MSG_BT_Add),
+                     Child, tmp.BT_Remove = MakeButton(MSG_BT_Remove),
                   End,
                End,
                Child, HGroup,
@@ -876,17 +884,17 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   Child, tmp.STR_String = MakeKeyString(NULL, MAXPATHLEN, "  l"),
                End,
                Child, HGroup,
-                  Child, MakeKeyLabel2("  Phone numbers:", "  p"),
+                  Child, MakeKeyLabel2(MSG_LA_PhoneNumbers, MSG_CC_PhoneNumbers),
                   Child, tmp.PO_Phone = PopobjectObject,
-                     MUIA_Popstring_String      , tmp.STR_Phone = MakeKeyString(NULL, 100, "  p"),
+                     MUIA_Popstring_String      , tmp.STR_Phone = MakeKeyString(NULL, 100, MSG_CC_PhoneNumbers),
                      MUIA_Popstring_Button      , PopButton(MUII_PopUp),
                      MUIA_Popobject_Object      , VGroup,
                         MUIA_Frame, MUIV_Frame_Group,
-                        Child, KeyLLabel("Add number...", 'n'),
-                        Child, tmp.STR_AddPhone = MakeKeyString(NULL, 30, "  n"),
+                        Child, KeyLLabel(GetStr(MSG_LA_AddNumber), *GetStr(MSG_CC_AddNumber)),
+                        Child, tmp.STR_AddPhone = MakeKeyString(NULL, 30, MSG_CC_AddNumber),
                         Child, HGroup,
-                           Child, tmp.BT_AddPhone = MakeButton("  _Add"),
-                           Child, tmp.BT_CancelPhone = MakeButton("  _Cancel"),
+                           Child, tmp.BT_AddPhone = MakeButton(MSG_BT_Add),
+                           Child, tmp.BT_CancelPhone = MakeButton(MSG_BT_Cancel),
                         End,
                      End,
                   End,
@@ -895,8 +903,8 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
          End,
          Child, HGroup,
-            Child, tmp.BT_Okay   = MakeButton("  _Okay"),
-            Child, tmp.BT_Cancel = MakeButton("  _Cancel"),
+            Child, tmp.BT_Okay   = MakeButton(MSG_BT_Okay),
+            Child, tmp.BT_Cancel = MakeButton(MSG_BT_Cancel),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -931,16 +939,15 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       set(data->CH_BOOTP        , MUIA_CycleChain, 1);
       set(data->CY_Resolv       , MUIA_CycleChain, 1);
+      set(data->CY_HostName     , MUIA_CycleChain, 1);
+      set(data->CY_Command      , MUIA_CycleChain, 1);
 
       set(data->STR_Login       , MUIA_ShortHelp, GetStr(MSG_Help_LoginName));
 //      set(data->STR_Comment     , MUIA_ShortHelp, GetStr(MSG_Help_Comment));
       set(data->STR_Password    , MUIA_ShortHelp, GetStr(MSG_Help_Password));
-//      set(data->STR_DomainName  , MUIA_ShortHelp, GetStr(MSG_Help_DomainName));
-//      set(data->STR_NameServer1 , MUIA_ShortHelp, GetStr(MSG_Help_NameServer1));
-//      set(data->STR_NameServer2 , MUIA_ShortHelp, GetStr(MSG_Help_NameServer2));
       set(data->STR_HostName    , MUIA_ShortHelp, GetStr(MSG_Help_HostName));
-
       set(data->STR_TimeServer  , MUIA_ShortHelp, GetStr(MSG_Help_TimeServer));
+      set(data->STR_Phone       , MUIA_ShortHelp, GetStr(MSG_Help_Phone));
 
       DoMethod(obj                 , MUIM_Notify, MUIA_Window_CloseRequest, TRUE            , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_Provider_EditISPFinish, obj, 0);
       DoMethod(data->BT_Cancel     , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_Provider_EditISPFinish, obj, 0);
@@ -983,7 +990,7 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// ProviderWindow_Dispatcher
-SAVEDS ULONG ProviderWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG ProviderWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

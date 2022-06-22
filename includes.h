@@ -19,13 +19,13 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include <pragma/dos_lib.h>
-#include <pragma/exec_lib.h>
-#include <pragma/intuition_lib.h>
-#include <pragma/locale_lib.h>
-#include <pragma/rexxsyslib_lib.h>
-#include <pragma/utility_lib.h>
-#include <pragma/muimaster_lib.h>
+#include <proto/dos.h>
+#include <proto/exec.h>
+#include <proto/intuition.h>
+#include <proto/locale.h>
+#include <proto/rexxsyslib.h>
+#include <proto/utility.h>
+#include <proto/muimaster.h>
 
 #include <clib/macros.h>
 #include <clib/alib_protos.h>

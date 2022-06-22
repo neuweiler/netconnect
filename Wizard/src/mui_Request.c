@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -11,6 +10,7 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern Object *win, *app;
 
 ///
@@ -60,8 +60,8 @@ ULONG Request_New(struct IClass *cl, Object *obj, struct opSet *msg)
          Child, tmp.STR_Input = MakeString(NULL, 80),
          Child, MUI_MakeObject(MUIO_HBar, 2),
          Child, HGroup,
-            Child, tmp.BT_Okay   = MakeButton("  _Okay"),
-            Child, tmp.BT_Cancel = MakeButton("  _Cancel"),
+            Child, tmp.BT_Okay   = MakeButton(MSG_BT_Okay),
+            Child, tmp.BT_Cancel = MakeButton(MSG_BT_Cancel),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -85,7 +85,7 @@ ULONG Request_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Request_Dispatcher
-SAVEDS ULONG Request_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Request_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

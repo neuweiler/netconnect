@@ -1,6 +1,5 @@
 /// includes & defines
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -85,9 +84,8 @@ int route_delete(int fd, u_long from)
    if(ioctl(fd, SIOCDELRT, (char *)&rte) < 0)
    {
       if(errno != ESRCH) /* requested route not found */
-      {
          syslog_AmiTCP(LOG_ERR, "route_delete: SIOCDELRT: %m");
-      }
+
       return(errno);
    }
    return(0);
@@ -173,7 +171,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
             {
                switch(*ptr)
                {
-                  case '%%':
+                  case '%':
                      ptr++;
                      switch(*ptr)
                      {
@@ -231,6 +229,10 @@ Printf("query device info\n");
          iface_data->ifd_s2->s2_hwtype == S2WireType_CSLIP)
       {
 Printf("is a device that operates over serial line\n");
+Printf("put iface offline\n");
+         if(!iface_offline(iface_data))
+            goto fail;
+
 Printf("put iface online\n");
          if(!iface_online(iface_data))
             goto fail;
@@ -252,7 +254,7 @@ Printf("close sana2 dev\n");
    }
 
    if(data->abort)   goto fail;
-   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Configuring the interface", NULL);
+   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConfigIface), NULL);
    if(data->abort)   goto fail;
 Printf("getaddr, flags, etc.\n");
 
@@ -431,19 +433,12 @@ VOID iface_cleanup_bootp(struct Interface_Data *iface_data, struct Config *conf)
 /// iface_online
 BOOL iface_online(struct Interface_Data *iface_data)
 {
-Printf("1\n");
-   if(iface_data)
+   if(sana2_online(iface_data->ifd_s2) == FALSE)
    {
-Printf("2\n");
-      if(sana2_online(iface_data->ifd_s2) == FALSE)
-      {
-Printf("12\n");
-         Printf("Could not get %ls (unit %lu) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
-         return(FALSE);
-      }
-      Printf("Put Sana2 device %ls (unit: %ld) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
+      Printf("Could not get %ls (unit %lu) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
+      return(FALSE);
    }
-Printf("13\n");
+   Printf("Put Sana2 device %ls (unit: %ld) online.\n", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
 
    return(TRUE);
 }

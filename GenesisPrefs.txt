@@ -99,3 +99,15 @@ History for GenesisPrefs
 
 * added possibility to set get-time and save-time in isp section.
 
+2.1.9 (07.6.98)
+---------------
+
+* moved back from stormc to sasc => 27% smaller code..
+* localized everything and added bubble help
+* "CliName" wasn't included in the inetd database.
+* moved some internal functions to genesis.lib => requires at least
+  genesis.library from 7.6.1998
+* minor changes/rearrangements in the gui (options section).
+* a passwd can only be changed now when the old passwd is entered.
+* a passwd can only be removed when the user enters the root passwd.
+

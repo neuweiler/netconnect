@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
@@ -12,6 +11,7 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern Object *app, *win, *status_win;
 extern struct Config Config;
 extern struct MUI_CustomClass  *CL_Online;
@@ -357,7 +357,7 @@ ULONG LoginScript_HangUp(struct IClass *cl, Object *obj, Msg msg)
 /// LoginScript_SendLogin
 ULONG LoginScript_SendLogin(struct IClass *cl, Object *obj, Msg msg)
 {
-   struct LoginScript_Data *data = INST_DATA(cl, obj);
+//   struct LoginScript_Data *data = INST_DATA(cl, obj);
    char buffer[101];
 
    dialing_try = 0;
@@ -375,7 +375,7 @@ ULONG LoginScript_SendLogin(struct IClass *cl, Object *obj, Msg msg)
 /// LoginScript_SendPassword
 ULONG LoginScript_SendPassword(struct IClass *cl, Object *obj, Msg msg)
 {
-   struct LoginScript_Data *data = INST_DATA(cl, obj);
+//   struct LoginScript_Data *data = INST_DATA(cl, obj);
    char buffer[101];
 
    dialing_try = 0;
@@ -502,7 +502,7 @@ ULONG LoginScript_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// LoginScript_Dispatcher
-SAVEDS ULONG LoginScript_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG LoginScript_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
@@ -10,6 +9,7 @@
 #include "images/logo.h"
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern ULONG logo_colors[];
 extern UBYTE logo_body[];
 
@@ -64,7 +64,7 @@ ULONG Welcome_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Welcome_Dispatcher
-SAVEDS ULONG Welcome_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Welcome_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

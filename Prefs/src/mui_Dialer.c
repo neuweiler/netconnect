@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -22,35 +21,60 @@ extern Object *app;
 ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct Dialer_Data tmp;
-   static STRPTR ARR_CY_Window[] = { "-", "open", "close", "iconify", NULL };
-   static STRPTR ARR_Dialer_Register[] = { "Misc", "Display", "Execute", NULL };
+   static STRPTR ARR_Dialer_Register[4];
+   static STRPTR ARR_MainWindow[4];
    static STRPTR ARR_LaunchMode[] = { "CLI", "WB", "Script", "AREXX", NULL };
+
+   ARR_Dialer_Register[0] = GetStr(MSG_DialerRegister1);
+   ARR_Dialer_Register[1] = GetStr(MSG_DialerRegister2);
+   ARR_Dialer_Register[2] = GetStr(MSG_DialerRegister3);
+   ARR_Dialer_Register[3] = NULL;
+
+   ARR_MainWindow[0] = GetStr(MSG_TX_OpenStartup);
+   ARR_MainWindow[1] = GetStr(MSG_TX_IconifyStartup);
+   ARR_MainWindow[2] = GetStr(MSG_TX_ClosedStartup);
+   ARR_MainWindow[3] = NULL;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Register_Titles, ARR_Dialer_Register,
+      MUIA_CycleChain, 1,
       Child, VGroup,
          Child, HVSpace,
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_MainWindowDisplayOptions)),
+         Child, ColGroup(5),
+            Child, HVSpace,
+            Child, ColGroup(2),
+               Child, tmp.CH_ShowOnlineTime  = MakeKeyCheckMark(TRUE, MSG_CC_ShowOnlineTime),
+               Child, KeyLLabel1(GetStr(MSG_LA_ShowOnlineTime), *GetStr(MSG_CC_ShowOnlineTime)),
+               Child, tmp.CH_ShowConnect     = MakeKeyCheckMark(TRUE, MSG_CC_ShowSpeed),
+               Child, KeyLLabel1(GetStr(MSG_LA_ShowSpeed), *GetStr(MSG_CC_ShowSpeed)),
+               Child, tmp.CH_ShowNetwork     = MakeKeyCheckMark(TRUE, MSG_CC_ShowProviders),
+               Child, KeyLLabel1(GetStr(MSG_LA_ShowProviders), *GetStr(MSG_CC_ShowProviders)),
+               Child, tmp.CH_ShowButtons     = MakeKeyCheckMark(TRUE, MSG_CC_ShowButtons),
+               Child, KeyLLabel1(GetStr(MSG_LA_ShowButtons), *GetStr(MSG_CC_ShowButtons)),
+            End,
+            Child, HVSpace,
+            Child, VGroup,
+               Child, ColGroup(2),
+                  Child, tmp.CH_ShowLamps       = MakeKeyCheckMark(TRUE, MSG_CC_ShowLeds),
+                  Child, KeyLLabel1(GetStr(MSG_LA_ShowLeds), *GetStr(MSG_CC_ShowLeds)),
+                  Child, tmp.CH_ShowLog         = MakeKeyCheckMark(TRUE, MSG_CC_ShowLog),
+                  Child, KeyLLabel1(GetStr(MSG_LA_ShowLog), *GetStr(MSG_CC_ShowLog)),
+                  Child, tmp.CH_ShowUser        = MakeKeyCheckMark(TRUE, MSG_CC_ShowUsers),
+                  Child, KeyLLabel1(GetStr(MSG_LA_ShowUsers), *GetStr(MSG_CC_ShowUsers)),
+               End,
+               Child, tmp.CY_MainWindow = Cycle(ARR_MainWindow),
+            End,
+         End,
+         Child, HVSpace,
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_StatusWindows)),
          Child, ColGroup(7),
             Child, HVSpace,
-            Child, tmp.CH_QuickReconnect  = MakeKeyCheckMark(FALSE, "  q"),
-            Child, KeyLLabel1(GetStr("  Quick reconnect"), *GetStr("  q")),
+            Child, tmp.CH_ShowStatusWin   = MakeKeyCheckMark(TRUE, MSG_CC_StatusWindows),
+            Child, KeyLLabel1(GetStr(MSG_LA_StatusWindows), *GetStr(MSG_CC_StatusWindows)),
             Child, HVSpace,
-            Child, tmp.CH_ConfirmOffline  = MakeKeyCheckMark(FALSE, "  o"),
-            Child, KeyLLabel1(GetStr("  Confirm Disconnection"), *GetStr("  o")),
-            Child, HVSpace,
-            Child, HVSpace,
-            Child, tmp.CH_StartupOpenWin  = MakeKeyCheckMark(TRUE, "  w"),
-            Child, KeyLLabel1(GetStr("  Open main window"), *GetStr("  w")),
-            Child, HVSpace,
-            Child, tmp.CH_StartupIconify  = MakeKeyCheckMark(FALSE, "  i"),
-            Child, KeyLLabel1(GetStr("  Iconified at startup"), *GetStr("  i")),
-            Child, HVSpace,
-            Child, HVSpace,
-            Child, tmp.CH_ShowStatusWin   = MakeKeyCheckMark(TRUE, "  w"),
-            Child, KeyLLabel1(GetStr("  Status windows"), *GetStr("  w")),
-            Child, HVSpace,
-            Child, tmp.CH_Debug           = MakeKeyCheckMark(FALSE, "  d"),
-            Child, KeyLLabel1(GetStr("  Debug mode"), *GetStr("  d")),
+            Child, tmp.CH_ShowSerialInput = MakeKeyCheckMark(TRUE, MSG_CC_ShowSerialInput),
+            Child, KeyLLabel1(GetStr(MSG_LA_ShowSerialInput), *GetStr(MSG_CC_ShowSerialInput)),
             Child, HVSpace,
          End,
          Child, HVSpace,
@@ -58,34 +82,21 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       Child, VGroup,
          Child, HVSpace,
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Control)),
          Child, ColGroup(7),
             Child, HVSpace,
-            Child, tmp.CH_ShowLog         = MakeKeyCheckMark(TRUE, "  l"),
-            Child, KeyLLabel1(GetStr("  Show log"), *GetStr("  l")),
+            Child, tmp.CH_QuickReconnect  = MakeKeyCheckMark(FALSE, MSG_CC_QuickReconnect),
+            Child, KeyLLabel1(GetStr(MSG_LA_QuickReconnect), *GetStr(MSG_CC_QuickReconnect)),
             Child, HVSpace,
-            Child, tmp.CH_ShowLamps       = MakeKeyCheckMark(TRUE, "  e"),
-            Child, KeyLLabel1(GetStr("  Show interface leds"), *GetStr("  e")),
-            Child, HVSpace,
-            Child, HVSpace,
-            Child, tmp.CH_ShowConnect     = MakeKeyCheckMark(TRUE, "  p"),
-            Child, KeyLLabel1(GetStr("  Show speed"), *GetStr("  p")),
-            Child, HVSpace,
-            Child, tmp.CH_ShowOnlineTime  = MakeKeyCheckMark(TRUE, "  o"),
-            Child, KeyLLabel1(GetStr("  Show online time"), *GetStr("  o")),
+            Child, tmp.CH_ConfirmOffline  = MakeKeyCheckMark(FALSE, MSG_CC_ConfirmDisconnect),
+            Child, KeyLLabel1(GetStr(MSG_LA_ConfirmDisconnect), *GetStr(MSG_CC_ConfirmDisconnect)),
             Child, HVSpace,
             Child, HVSpace,
-            Child, tmp.CH_ShowButtons     = MakeKeyCheckMark(TRUE, "  b"),
-            Child, KeyLLabel1(GetStr("  Show buttons"), *GetStr("  b")),
+            Child, tmp.CH_Debug           = MakeKeyCheckMark(FALSE, MSG_CC_DebugMode),
+            Child, KeyLLabel1(GetStr(MSG_LA_DebugMode), *GetStr(MSG_CC_DebugMode)),
             Child, HVSpace,
-            Child, tmp.CH_ShowNetwork     = MakeKeyCheckMark(TRUE, "  n"),
-            Child, KeyLLabel1(GetStr("  Show network"), *GetStr("  n")),
-            Child, HVSpace,
-            Child, HVSpace,
-            Child, tmp.CH_ShowUser        = MakeKeyCheckMark(TRUE, "  u"),
-            Child, KeyLLabel1(GetStr("  Show user"), *GetStr("  u")),
-            Child, HVSpace,
-            Child, tmp.CH_ShowSerialInput = MakeKeyCheckMark(TRUE, "  r"),
-            Child, KeyLLabel1(GetStr("  Show serial input"), *GetStr("  r")),
+            Child, VVSpace,
+            Child, VVSpace,
             Child, HVSpace,
          End,
          Child, HVSpace,
@@ -93,15 +104,15 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       Child, VGroup,
          Child, HVSpace,
-         Child, MUI_MakeObject(MUIO_BarTitle, "Startup"),
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Startup)),
          Child, HGroup,
-            Child, tmp.PA_Startup = MakePopAsl(tmp.STR_Startup = MakeKeyString(NULL, MAXPATHLEN, "  t"), "  Choose file", FALSE),
+            Child, tmp.PA_Startup = MakePopAsl(tmp.STR_Startup = MakeKeyString(NULL, MAXPATHLEN, "  r"), MSG_TX_ChooseFile, FALSE),
             Child, tmp.CY_Startup = Cycle(ARR_LaunchMode),
          End,
          Child, HVSpace,
-         Child, MUI_MakeObject(MUIO_BarTitle, "Shutdown"),
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Shutdown)),
          Child, HGroup,
-            Child, tmp.PA_Shutdown = MakePopAsl(tmp.STR_Shutdown = MakeKeyString(NULL, MAXPATHLEN, "  t"), "  Choose file", FALSE),
+            Child, tmp.PA_Shutdown = MakePopAsl(tmp.STR_Shutdown = MakeKeyString(NULL, MAXPATHLEN, "  d"), MSG_TX_ChooseFile, FALSE),
             Child, tmp.CY_Shutdown = Cycle(ARR_LaunchMode),
          End,
          Child, HVSpace,
@@ -112,17 +123,39 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       *data = tmp;
 
+      set(data->CY_MainWindow , MUIA_CycleChain, 1);
+      set(data->CY_Startup    , MUIA_CycleChain, 1);
+      set(data->CY_Shutdown   , MUIA_CycleChain, 1);
+
       set(data->CY_Startup , MUIA_Weight, 0);
       set(data->CY_Shutdown, MUIA_Weight, 0);
 set(data->CH_ConfirmOffline, MUIA_Disabled, TRUE);
 set(data->CH_QuickReconnect, MUIA_Disabled, TRUE);
+
+      set(data->CH_ShowOnlineTime   , MUIA_ShortHelp, GetStr(MSG_Help_ShowOnlineTime));
+      set(data->CH_ShowConnect      , MUIA_ShortHelp, GetStr(MSG_Help_ShowSpeed));
+      set(data->CH_ShowNetwork      , MUIA_ShortHelp, GetStr(MSG_Help_ShowProviders));
+      set(data->CH_ShowButtons      , MUIA_ShortHelp, GetStr(MSG_Help_ShowButtons));
+      set(data->CH_ShowLamps        , MUIA_ShortHelp, GetStr(MSG_Help_ShowLeds));
+      set(data->CH_ShowLog          , MUIA_ShortHelp, GetStr(MSG_Help_ShowLog));
+      set(data->CH_ShowUser         , MUIA_ShortHelp, GetStr(MSG_Help_ShowUsers));
+      set(data->CY_MainWindow       , MUIA_ShortHelp, GetStr(MSG_Help_MainWindow));
+      set(data->CH_ShowStatusWin    , MUIA_ShortHelp, GetStr(MSG_Help_StatusWindows));
+      set(data->CH_ShowSerialInput  , MUIA_ShortHelp, GetStr(MSG_Help_ShowSerialInput));
+      set(data->CH_QuickReconnect   , MUIA_ShortHelp, GetStr(MSG_Help_QuickReconnect));
+      set(data->CH_ConfirmOffline   , MUIA_ShortHelp, GetStr(MSG_Help_ConfirmOffline));
+      set(data->CH_Debug            , MUIA_ShortHelp, GetStr(MSG_Help_Debug));
+      set(data->STR_Startup         , MUIA_ShortHelp, GetStr(MSG_Help_Startup));
+      set(data->CY_Startup          , MUIA_ShortHelp, GetStr(MSG_Help_LaunchMode));
+      set(data->STR_Shutdown        , MUIA_ShortHelp, GetStr(MSG_Help_Shutdown));
+      set(data->CY_Shutdown         , MUIA_ShortHelp, GetStr(MSG_Help_LaunchMode));
    }
    return((ULONG)obj);
 }
 
 ///
 /// Dialer_Dispatcher
-SAVEDS ULONG Dialer_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Dialer_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    if(msg->MethodID == OM_NEW)
       return(Dialer_New               (cl, obj, (APTR)msg));

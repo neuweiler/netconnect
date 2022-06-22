@@ -1,12 +1,11 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "mui.h"
 #include "mui_ModemStrings.h"
 #include "mui_MainWindow.h"
@@ -17,7 +16,9 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern Object *win;
+extern struct GenesisBase *GenesisBase;
 extern struct MUI_CustomClass  *CL_MainWindow;
 extern struct MUI_CustomClass  *CL_SerialModem;
 
@@ -26,7 +27,7 @@ extern struct Hook strobjhook, sorthook, txtobjhook, deshook, objstrhook;
 ///
 
 /// ProtocolList_ConstructFunc
-struct ModemProtocol * SAVEDS ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct ModemProtocol *src)
+SAVEDS ASM struct ModemProtocol *ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct ModemProtocol *src)
 {
    struct ModemProtocol *new;
 
@@ -37,7 +38,7 @@ struct ModemProtocol * SAVEDS ProtocolList_ConstructFunc(register __a2 APTR pool
 
 ///
 /// ProtocolList_DisplayFunc
-SAVEDS LONG ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct ModemProtocol *modem_protocol)
+SAVEDS ASM LONG ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct ModemProtocol *modem_protocol)
 {
    if(modem_protocol)
    {
@@ -54,7 +55,7 @@ SAVEDS LONG ProtocolList_DisplayFunc(register __a2 char **array, register __a1 s
 
 ///
 /// initstring_objstrfunc
-VOID SAVEDS initstring_objstrfunc(register __a2 Object *list,register __a1 Object *str)
+SAVEDS ASM VOID initstring_objstrfunc(register __a2 Object *list,register __a1 Object *str)
 {
    struct ModemProtocol *modem_protocol;
 
@@ -71,7 +72,7 @@ ULONG ModemStrings_LoadData(struct IClass *cl, Object *obj, Msg msg)
    struct ModemStrings_Data *data = INST_DATA(cl, obj);
    struct MainWindow_Data   *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
    struct SerialModem_Data *sm_data = INST_DATA(CL_SerialModem->mcc_Class, mw_data->GR_SerialModem);
-   struct pc_Data pc_data;
+   struct ParseConfig_Data pc_data;
    struct ModemProtocol *modem_protocol;
    int counter = 0;
    STRPTR modemname;
@@ -87,28 +88,28 @@ ULONG ModemStrings_LoadData(struct IClass *cl, Object *obj, Msg msg)
          modemname = (STRPTR)xget(sm_data->TX_ModemName, MUIA_Text_Contents);
          while(ParseNext(&pc_data))
          {
-            if(!stricmp(pc_data.Argument, "Modem"))
+            if(!stricmp(pc_data.pc_argument, "Modem"))
             {
-               if(!strcmp(pc_data.Contents, modemname))
+               if(!strcmp(pc_data.pc_contents, modemname))
                   break;
             }
          }
          while(ParseNext(&pc_data))
          {
-            if(!stricmp(pc_data.Argument, "Modem"))
+            if(!stricmp(pc_data.pc_argument, "Modem"))
                break;
 
-            if(!stricmp(pc_data.Argument, "Protocol"))
-               strncpy(modem_protocol->Name, pc_data.Contents, 40);
+            if(!stricmp(pc_data.pc_argument, "Protocol"))
+               strncpy(modem_protocol->Name, pc_data.pc_contents, 40);
 
-            if(!stricmp(pc_data.Argument, "InitString"))
+            if(!stricmp(pc_data.pc_argument, "InitString"))
             {
                if(!counter++)
-                  set(data->STR_InitString, MUIA_String_Contents, pc_data.Contents);
+                  set(data->STR_InitString, MUIA_String_Contents, pc_data.pc_contents);
 
-               strncpy(modem_protocol->InitString, pc_data.Contents, 40);
+               strncpy(modem_protocol->InitString, pc_data.pc_contents, 40);
                if(!*modem_protocol->Name)
-                  strcpy(modem_protocol->Name, "Default");
+                  strcpy(modem_protocol->Name, GetStr(MSG_TX_DefaultProtocolName));
                DoMethod(data->LV_Protocols, MUIM_List_InsertSingle, modem_protocol, MUIV_List_Insert_Bottom);
                modem_protocol->Name[0] = NULL;
             }
@@ -199,7 +200,7 @@ ULONG ModemStrings_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// ModemString_Dispatcher
-SAVEDS ULONG ModemStrings_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG ModemStrings_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

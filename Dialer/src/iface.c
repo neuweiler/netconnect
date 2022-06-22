@@ -1,11 +1,12 @@
 /// includes & defines
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
 #include "protos.h"
 #include "mui.h"
+#include "mui_MainWindow.h"
+#include "mui_Online.h"
 #include "mui_Led.h"
 #include "iface.h"
 #include "sana.h"
@@ -171,7 +172,7 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
                if(ptr = strchr(number_ptr, '|'))
                   *ptr = NULL;
 
-               sprintf(buf, "Dialing '%ls'\n(attempt %ld/%ld)", number_ptr, dial_tries, conf->cnf_redialattempts);
+               sprintf(buf, GetStr(MSG_TX_Dialing), number_ptr, dial_tries, conf->cnf_redialattempts);
                if(data->abort)   return(FALSE);
                DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buf, NULL);
                if(data->abort)   return(FALSE);
@@ -211,7 +212,7 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
 
                while(dly-- > 0)
                {
-                  sprintf(buf, "...%ld sec", dly + 1);
+                  sprintf(buf, GetStr(MSG_TX_Waiting), dly + 1);
                   if(data->abort)   return(FALSE);
                   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buf, NULL);
                   if(data->abort)   return(FALSE);
@@ -224,7 +225,7 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
          if(!ok)
             return(FALSE);
          if(!data->abort)
-            DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Connected to provider.\nExecuting login script.", NULL);
+            DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConnectedToProvider), NULL);
       }
       else if(script_line->sl_command == SL_GoOnline)
       {
@@ -233,7 +234,7 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
          if(data->abort)   return(FALSE);
          DoMainMethod(mw_data->GR_Led[(int)iface->if_userdata], MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Orange, NULL);
          if(data->abort)   return(FALSE);
-         DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Establishing network connection", NULL);
+         DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_EstablishingNetworkConnection), NULL);
          success = TRUE;
       }
       else if(script_line->sl_command == SL_SendLogin)
@@ -321,7 +322,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
             {
                switch(*ptr)
                {
-                  case '%%':
+                  case '%':
                      ptr++;
                      switch(*ptr)
                      {
@@ -422,7 +423,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
    }
 
    if(data->abort)   goto fail;
-   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, "Configuring the interface", NULL);
+   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringInterface), NULL);
    if(data->abort)   goto fail;
 
    // get the interface address

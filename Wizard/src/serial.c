@@ -1,6 +1,5 @@
 /// includes & defines
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -199,42 +198,6 @@ VOID serial_clear(VOID)
 }
 
 ///
-/// serial_hangup
-VOID serial_hangup(VOID)
-{
-   if(SerWriteReq)
-   {
-      SerWriteReq->IOSer.io_Command  = SIOCMD_SETCTRLLINES;
-      SerWriteReq->IOSer.io_Offset   = SIOB_DTRF;
-      SerWriteReq->IOSer.io_Length   = 0;
-
-      if(!DoIO((struct IORequest *)SerWriteReq))
-      {
-         Delay(50);
-
-         SerWriteReq->IOSer.io_Command  = SIOCMD_SETCTRLLINES;
-         SerWriteReq->IOSer.io_Offset   = SIOB_DTRF;
-         SerWriteReq->IOSer.io_Length   = SIOB_DTRF;
-
-         DoIO((struct IORequest *)SerWriteReq);
-      }
-   }
-
-   if(serial_carrier())
-   {
-      serial_send("+", 1);
-      Delay(10);
-      serial_send("+", 1);
-      Delay(10);
-      serial_send("+", 1);
-      Delay(10);
-      serial_send("ATH0\r", -1);
-   }
-   else
-      serial_send("\r", 1);
-}
-
-///
 
 /// serial_delete
 VOID serial_delete(VOID)
@@ -309,6 +272,48 @@ BOOL serial_create(STRPTR device, LONG unit)
    }
    serial_delete();
    return(FALSE);
+}
+
+///
+/// serial_hangup
+VOID serial_hangup(VOID)
+{
+   if(SerWriteReq)
+   {
+      SerWriteReq->IOSer.io_Command  = SIOCMD_SETCTRLLINES;
+      SerWriteReq->IOSer.io_Offset   = SIOB_DTRF;
+      SerWriteReq->IOSer.io_Length   = 0;
+
+      if(!DoIO((struct IORequest *)SerWriteReq))
+      {
+         Delay(50);
+
+         SerWriteReq->IOSer.io_Command  = SIOCMD_SETCTRLLINES;
+         SerWriteReq->IOSer.io_Offset   = SIOB_DTRF;
+         SerWriteReq->IOSer.io_Length   = SIOB_DTRF;
+
+         DoIO((struct IORequest *)SerWriteReq);
+      }
+      else
+      {
+         serial_delete();
+         Delay(50);
+         serial_create(Config.cnf_serialdevice, Config.cnf_serialunit);
+      }
+   }
+
+   if(serial_carrier())
+   {
+      serial_send("+", 1);
+      Delay(10);
+      serial_send("+", 1);
+      Delay(10);
+      serial_send("+", 1);
+      Delay(10);
+      serial_send("ATH0\r", -1);
+   }
+   else
+      serial_send("\r", 1);
 }
 
 ///

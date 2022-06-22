@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
@@ -11,6 +10,7 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern struct MUI_CustomClass  *CL_MainWindow;
 extern struct Config Config;
 
@@ -28,9 +28,9 @@ ULONG Sana2_New(struct IClass *cl, Object *obj, struct opSet *msg)
       GroupFrame,
       MUIA_Background, MUII_TextBack,
       Child, HVSpace,
-      Child, MakeText(GetStr("  Please enter the name of the \033bsana-II device\033n used to control\nyour network interface and the correct \033bunit\033n number.\nIf you press the pop-up button you will be able to choose the\ndevice with a file requester:")),
+      Child, MakeText(GetStr(MSG_TX_InfoSana2Device)),
       Child, HGroup,
-         Child, MakePopAsl(tmp.STR_SanaDevice = MakeString("DEVS:Networks/", MAXPATHLEN), "  Choose Sana II device driver", FALSE),
+         Child, MakePopAsl(tmp.STR_SanaDevice = MakeString("DEVS:Networks/", MAXPATHLEN), GetStr(MSG_ASL_ChooseSana2Device), FALSE),
          Child, Label2(GetStr(MSG_LA_Unit)),
          Child, tmp.SL_SanaUnit = NumericbuttonObject,
             MUIA_CycleChain      , 1,
@@ -47,6 +47,9 @@ ULONG Sana2_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       *data = tmp;
 
+      set(data->STR_SanaDevice, MUIA_ShortHelp, GetStr(MSG_HELP_SanaDevice));
+      set(data->SL_SanaUnit   , MUIA_ShortHelp, GetStr(MSG_HELP_SanaUnit));
+
       DoMethod(data->STR_SanaDevice      , MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, originator, 3, MUIM_Set, MUIA_Window_ActiveObject, mw_data->BT_Next);
    }
 
@@ -55,7 +58,7 @@ ULONG Sana2_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Sana2_Dispatcher
-SAVEDS ULONG Sana2_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Sana2_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

@@ -1,0 +1,57 @@
+#######################################################################
+#
+# Makefile for the `smake' utility required to build `genesis.library'
+#
+# Copyright © 1998 by Michael Neuweiler;   All Rights Reserved
+# 
+#######################################################################
+
+all: pragmas/genesis_lib.h genesis.library amitcp:libs/genesis.library test
+
+OBJS     = genesis_lib.o
+LIBS     = lib:amiga.lib lib:sc.lib
+
+CPU      = ANY
+#CPU     = 68030
+#DEMO    = DEF=DEMO
+DEBUG   = DBG=LINE
+OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
+
+OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
+GST      = GSTIMM GST=/includes.gst
+
+CFLAGS   = ERRREXX STRMERGE NOSTKCHK IDIR=netinclude: IDLEN=65 NOMINC CNEST NOICONS DEF=_M$(CPU) $(DEMO) $(DEBUG)
+LIBFLAGS = LIBCODE NOSTDIO
+LFLAGS   = SC SD NOICONS
+
+genesis.library : $(OBJS)
+      slink with T:genesislib.WITH <<!(t:genesislib.WITH)
+         FROM lib:libent.o lib:libinit.o $(OBJS)
+         TO genesis.library
+         LIBFD pragmas/genesis_lib.fd
+         LIB $(LIBS)
+         LIBVERSION 2 LIBREVISION 0
+         LIBID "genesis 2.0.4 (07.06.98)"
+         MAP genesis.library.map
+   <
+      slink from genesis.library to AmiTCP:libs/genesis.library nodebug noicons
+      run <>nil: flushlib genesis.library
+
+test : test.o
+      slink with T:test.WITH <<!(t:test.WITH)
+         FROM lib:c.o test.o
+         TO test
+         LIB $(LIBS)
+         MAP test.map
+   <
+
+pragmas/genesis_lib.h : pragmas/genesis_lib.fd
+   fd2pragma pragmas/genesis_lib.fd pragmas/genesis_lib.h
+
+.c.o:
+   sc $(CFLAGS) $(GST) $(LIBFLAGS) $(OPTIONS) $*.c
+
+genesis_lib.o  : genesis_lib.c  libraries/genesis.h pragmas/genesis_lib.h proto/genesis.h
+test.o         : test.c libraries/genesis.h pragmas/genesis_lib.h proto/genesis.h
+   sc $(CFLAGS) $(GST) $(OPTIONS) test.c
+

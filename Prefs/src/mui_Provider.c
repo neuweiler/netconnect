@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -75,7 +74,7 @@ ULONG Provider_EditISP(struct IClass *cl, Object *obj, Msg msg)
 /// Provider_EditISPFinish
 ULONG Provider_EditISPFinish(struct IClass *cl, Object *obj, struct MUIP_Provider_EditFinish *msg)
 {
-   struct Provider_Data *data = INST_DATA(cl, obj);
+//   struct Provider_Data *data = INST_DATA(cl, obj);
 
    set(msg->win, MUIA_Window_Open, FALSE);
    if(msg->ok)
@@ -100,7 +99,7 @@ SAVEDS ASM APTR isp_consfunc(REG(a2) APTR pool, REG(a1) struct ISP *src)
          memcpy(new, src, sizeof(struct ISP));
       if((LONG)src == -1)
       {
-         strcpy(new->isp_name, "New ISP");
+         strcpy(new->isp_name, GetStr(MSG_TX_NewISP));
       }
       NewList((struct List *)&new->isp_nameservers);
       NewList((struct List *)&new->isp_domainnames);
@@ -114,7 +113,7 @@ static struct Hook isp_conshook = {{NULL, NULL}, (VOID *)isp_consfunc, NULL, NUL
 
 ///
 /// isp_desfunc
-VOID SAVEDS isp_desfunc(register __a2 APTR pool, register __a1 struct ISP *isp)
+SAVEDS ASM VOID isp_desfunc(register __a2 APTR pool, register __a1 struct ISP *isp)
 {
    if(isp)
    {
@@ -205,8 +204,8 @@ SAVEDS ASM LONG isp_dspfunc(REG(a2) char **array, REG(a1) struct ISP *isp)
    }
    else
    {
-      *array++ = "\033bISP";
-      *array   = "\033bComment";
+      *array++ = GetStr(MSG_TX_ISP);
+      *array   = GetStr(MSG_TX_Comment);
    }
 
    return(NULL);
@@ -239,9 +238,9 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
          End,
          Child, HGroup,
             GroupSpacing(0),
-            Child, tmp.BT_New    = MakeButton("  Ne_w"),
-            Child, tmp.BT_Delete = MakeButton("  _Delete"),
-            Child, tmp.BT_Edit   = MakeButton("  _Edit"),
+            Child, tmp.BT_New    = MakeButton(MSG_BT_New),
+            Child, tmp.BT_Delete = MakeButton(MSG_BT_Delete),
+            Child, tmp.BT_Edit   = MakeButton(MSG_BT_Edit),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -264,7 +263,7 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Provider_Dispatcher
-SAVEDS ULONG Provider_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Provider_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

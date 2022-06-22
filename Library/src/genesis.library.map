@@ -1,0 +1,16 @@
+genesis.library         07-Jun-98 23:58:35  Hunk Section                Page 1-1
+
+ num hunk         size filename         punit    type         base  alv     size
+   0 text         1748 lib:libent.o     libent   code            0    0       20
+                       lib:libinit.o    libinit. code           20    0      138
+                       genesis_lib.o    genesis_ code          158    2     15a8
+                       lib:sc.lib       strchr   code         170c    0       18
+                       lib:sc.lib       strncpy  code         1724    0       24
+   1 data           10 lib:libinit.o    libinit. data            0    0       10
+   2 __MERGED       24 lib:libent.o     libent   data            0    0        4
+                       genesis_lib.o    genesis_ data            4    0       20
+                       lib:libinit.o    libinit. bss            24    0        4
+                       genesis_lib.o    genesis_ bss            28    0      440
+   3 <noname>       7c T:XUYR3.0000     __Libfun code            0    0       7c
+   4 _NewList       14 lib:amiga.lib    <noname> code            0    0       14
+   5 <noname>       d0 lib:amiga.lib    <noname> code            0    0       d0

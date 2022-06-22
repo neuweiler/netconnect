@@ -1,6 +1,5 @@
 /// Includes
 #include "/includes.h"
-#pragma header
 
 #define USE_SCRIPT_COMMANDS 1
 
@@ -39,7 +38,7 @@ struct MsgPort       *MainPort  = NULL;   /* port to comunicate with mainProcess
 ULONG sigs = NULL;
 const char AmiTCP_PortName[] = "AMITCP";
 
-int addr_assign = 0, dst_assign = 0, dns_assign = 0, domainname_assign = 0;
+int addr_assign = 0, dst_assign = 0, dns_assign = 0, domainname_assign = 0, gw_assign = 0;
 char sana2configtext[1024], configparams[MAXPATHLEN];
 
 int h_errno;
@@ -60,17 +59,17 @@ UBYTE *bodies[NUM_PAGES];
 /// MainMenu
 struct NewMenu MainMenu[] =
 {
-   { NM_TITLE  , MSG_MENU_PROJECT   , 0                  , 0, 0, (APTR)0               },
-   { NM_ITEM   , MSG_MENU_ABOUT     , "  ?", 0, 0, (APTR)MEN_ABOUT       },
-   { NM_ITEM   , NM_BARLABEL        , 0                  , 0, 0, 0                     },
-   { NM_ITEM   , MSG_MENU_ABOUT_MUI , 0                  , 0, 0, (APTR)MEN_ABOUT_MUI   },
-   { NM_ITEM   , NM_BARLABEL        , 0                  , 0, 0, 0                     },
-   { NM_ITEM   , MSG_MENU_QUIT      , "  Q" , 0, 0, (APTR)MEN_QUIT        },
+   { NM_TITLE  , MSG_MENU_PROJECT   , 0           , 0, 0, (APTR)0               },
+   { NM_ITEM   , MSG_MENU_ABOUT     , MSG_CC_ABOUT, 0, 0, (APTR)MEN_ABOUT       },
+   { NM_ITEM   , NM_BARLABEL        , 0           , 0, 0, 0                     },
+   { NM_ITEM   , MSG_MENU_ABOUT_MUI , 0           , 0, 0, (APTR)MEN_ABOUT_MUI   },
+   { NM_ITEM   , NM_BARLABEL        , 0           , 0, 0, 0                     },
+   { NM_ITEM   , MSG_MENU_QUIT      , MSG_CC_QUIT , 0, 0, (APTR)MEN_QUIT        },
 
-   { NM_TITLE  , MSG_MENU_SETTINGS  , 0                  , 0, 0, (APTR)0               },
-   { NM_ITEM   , MSG_MENU_MUI       , "  M"  , 0, 0, (APTR)MEN_MUI         },
+   { NM_TITLE  , MSG_MENU_SETTINGS  , 0           , 0, 0, (APTR)0               },
+   { NM_ITEM   , MSG_MENU_MUI       , MSG_CC_MUI  , 0, 0, (APTR)MEN_MUI         },
 
-   { NM_END    , NULL               , 0                  , 0, 0, (APTR)0               },
+   { NM_END    , NULL               , 0           , 0, 0, (APTR)0               },
 };
 ///
 

@@ -1,10 +1,10 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
 #include "mui.h"
+#include "mui_MainWindow.h"
 #include "mui_IfaceReq.h"
 #include "protos.h"
 
@@ -36,7 +36,7 @@ ULONG IfaceReq_BuildList(struct IClass *cl, Object *obj, struct MUIP_IfaceReq_Bu
       }
    }
 
-   return(xget(data->LI_Interfaces, MUIA_NList_Entries));
+   return((ULONG)xget(data->LI_Interfaces, MUIA_NList_Entries));
 }
 
 ///
@@ -79,7 +79,7 @@ ULONG IfaceReq_Finished(struct IClass *cl, Object *obj, struct MUIP_IfaceReq_Fin
 ///
 
 /// IfaceReq_DisplayFunc
-SAVEDS LONG IfaceReq_DisplayFunc(register __a2 char **array, register __a1 struct Interface *iface)
+SAVEDS ASM LONG IfaceReq_DisplayFunc(register __a2 char **array, register __a1 struct Interface *iface)
 {
    if(iface)
       *array   = iface->if_name;
@@ -96,7 +96,7 @@ ULONG IfaceReq_New(struct IClass *cl, Object *obj, Msg msg)
    struct IfaceReq_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title       , "Choose interface",
+      MUIA_Window_Title       , GetStr(MSG_TX_InterfaceRequester),
       MUIA_Window_ID          , MAKE_ID('I','F','A','C'),
       MUIA_Window_RefWindow   , win,
       MUIA_Window_LeftEdge    , MUIV_Window_LeftEdge_Centered,
@@ -105,7 +105,7 @@ ULONG IfaceReq_New(struct IClass *cl, Object *obj, Msg msg)
       MUIA_Window_Width       , MUIV_Window_Width_MinMax(0),
       WindowContents, VGroup,
          MUIA_Background, MUII_GroupBack,
-         MUIA_FrameTitle, "Please choose interface:",
+         MUIA_FrameTitle, GetStr(MSG_TX_ChooseInterface),
          Child, tmp.LV_Interfaces = NListviewObject,
             MUIA_CycleChain            , 1,
             MUIA_NListview_NList       , tmp.LI_Interfaces = NListObject,
@@ -115,8 +115,8 @@ ULONG IfaceReq_New(struct IClass *cl, Object *obj, Msg msg)
             End,
          End,
          Child, HGroup,
-            Child, tmp.BT_Okay = MakeButton("  _Okay"),
-            Child, tmp.BT_Cancel = MakeButton("  _Cancel"),
+            Child, tmp.BT_Okay = MakeButton(MSG_BT_Okay),
+            Child, tmp.BT_Cancel = MakeButton(MSG_BT_Cancel),
          End,
       End))
    {
@@ -133,7 +133,7 @@ ULONG IfaceReq_New(struct IClass *cl, Object *obj, Msg msg)
 
 ///
 /// IfaceReq_Dispatcher
-SAVEDS ULONG IfaceReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG IfaceReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch(msg->MethodID)
    {

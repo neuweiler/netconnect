@@ -23,7 +23,8 @@ BOOL launch_amitcp(VOID);
 VOID syslog_AmiTCP(ULONG level, const STRPTR format, ...);
 VOID decrypt(STRPTR in, STRPTR out);
 ULONG DoMainMethod(Object *obj, LONG MethodID, APTR data1, APTR data2, APTR data3);
-VOID SAVEDS des_func(register __a2 APTR pool, register __a1 APTR ptr);
+SAVEDS ASM VOID des_func(register __a2 APTR pool, register __a1 APTR ptr);
+LONG   get_file_size(STRPTR file);
 
 ///
 /// main.c
@@ -31,10 +32,10 @@ VOID HandleMainMethod(struct MsgPort *port);
 
 ///
 /// mui
-SAVEDS ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Online_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG IfaceReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Led_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Online_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG IfaceReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Led_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 
 ///
 /// serial.c
@@ -50,4 +51,10 @@ VOID serial_delete(VOID);
 
 ///
 BOOL config_lo0(VOID);
+
+/// fixpath.c
+
+VOID __regargs DeleteCLI(struct CommandLineInterface *CLI);
+struct CommandLineInterface * __regargs CloneCLI(struct Message *Message);
+///
 

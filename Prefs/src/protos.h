@@ -2,10 +2,10 @@
 STRPTR GetStr(STRPTR idstr);
 ULONG DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...);
 LONG xget(Object *obj, ULONG attribute);
-LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2);
-VOID des_func(register __a2 APTR pool, register __a1 APTR ptr);
-LONG strobjfunc(register __a2 Object *list, register __a1 Object *str);
-VOID objstrfunc(register __a2 Object *list,register __a1 Object *str);
+SAVEDS ASM LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2);
+SAVEDS ASM VOID des_func(register __a2 APTR pool, register __a1 APTR ptr);
+SAVEDS ASM LONG strobjfunc(register __a2 Object *list, register __a1 Object *str);
+SAVEDS ASM VOID objstrfunc(register __a2 Object *list,register __a1 Object *str);
 Object *MakeKeyLabel1(STRPTR label, STRPTR control_char);
 Object *MakeKeyLabel2(STRPTR label, STRPTR control_char);
 Object *MakeButton(STRPTR string);
@@ -22,18 +22,18 @@ VOID decrypt(STRPTR in, STRPTR out);
 
 ///
 /// mui?.c
-SAVEDS ULONG PasswdReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Provider_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG ProviderWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG User_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Dialer_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Paths_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Databases_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG Modem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG IfaceWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
-SAVEDS ULONG UserWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG PasswdReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Provider_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG ProviderWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG User_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Dialer_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Paths_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Databases_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG Modem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG IfaceWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG UserWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 
 ///
 

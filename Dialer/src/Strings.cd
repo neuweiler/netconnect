@@ -6,17 +6,8 @@
 ; general stuff
 ;
 ;
-MSG_AppDescription (//)
-Genesis
-;
 MSG_ReqBT_Okay (//)
 *_Okay
-;
-MSG_ReqBT_QuitCancel (//)
-_Quit|*_Cancel
-;
-MSG_ReqBT_Abort (//)
-*_Abort
 ;
 MSG_BT_Okay (//)
 _Okay
@@ -27,35 +18,177 @@ _Cancel
 MSG_BT_Abort (//)
 _Abort
 ;
-MSG_TX_MainWindowTitle (//)
-Genesis © 1997 by Michael Neuweiler, Active Software
+MSG_TX_CouldNotOpenX (//)
+Could not open %ls
 ;
-MSG_TX_NoDialtone (//)
-The modem reported it can't detect a dial tone.\nPlease make sure the modem is connected properly to\nthe phone line and that the line is free.\nThen try again.
+;
+; amiga.c
+;
+;
+MSG_TX_LoadingAmiTCP (//)
+\n     Loading AmiTCP kernel     \n
+;
+MSG_TX_ConfiguringLoopback (//)
+\nConfiguring loopback device lo0
+;
+MSG_TX_MountingTCP (//)
+\nMounting TCP:
+;
+MSG_TX_LaunchingInetd (//)
+\nLaunching Inetd
+;
+MSG_TX_LoadingConfiguration (//)
+\nLoading configuration
+;
+;
+; globals.c
+;
+;
+MSG_MENU_PROJECT (//)
+Project
+;
+MSG_MENU_ABOUT (//)
+About...
+;
+MSG_CC_ABOUT (/1/1)
+?
+;
+MSG_MENU_ABOUTMUI (//)
+About MUI...
+;
+MSG_MENU_QUIT (//)
+Quit
+;
+MSG_CC_QUIT (/1/1)
+Q
+;
+MSG_MENU_SETTINGS (//)
+Settings
+;
+MSG_MENU_GENESIS (//)
+Genesis...
+;
+MSG_CC_GENESIS (/1/1)
+G
+;
+MSG_MENU_MUI (//)
+MUI...
+;
+MSG_CC_MUI (/1/1)
+M
+;
+;
+; iface.c
+;
+;
+MSG_TX_Dialing (//)
+Dialing '%ls'\n(attempt %ld/%ld )
+;
+MSG_TX_Waiting (//)
+...%ld sec
+;
+MSG_TX_ConnectedToProvider (//)
+Connected to provider.
+;
+MSG_TX_EstablishingNetworkConnection (//)
+Establishing network connection
+;
+MSG_TX_ConfiguringInterface (//)
+Configuring the interface
+;
+;
+; main.c
+;
+;
+MSG_AppDescription (//)
+Genesis
+;
+MSG_TX_GenesisAlreadyRunning (//)
+Genesis is already running
+;
+MSG_TX_CouldNotCreateMUIClasses (//)
+Could not create MUI classes.
+;
+MSG_TX_ErrorAmiTCPLaunch (//)
+Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is running (like Miami).\n
+;
+;
+; mui_IfaceReq.c
+;
+;
+MSG_TX_InterfaceRequester (//)
+Interface requester
+;
+MSG_TX_ChooseInterface (//)
+Please choose interface:
+;
+;
+; mui_MainWindow.c
+;
+;
+MSG_ReqBT_QuitCancel (//)
+_Quit|*_Cancel
+;
+MSG_ReqBT_StayOnline (//)
+*\033b_Stay online|_Go offline and change
+;
+MSG_TX_ChangeProviderIfaceOnline (//)
+At least one interface is still online. Shall all interfaces\nbe put offline and the new configuration be loaded or would you\nlike to stay online and ignore the new settings for now?
+;
+MSG_TX_About (//)
+Main programming by Michael Neuweiler\n\n
+;
+MSG_TX_TimeOnline (//)
+Time Online:
+;
+MSG_TX_LogType (//)
+\033bType
+;
+MSG_TX_LogInformation (//)
+\033bInformation
+;
+MSG_TX_LogTime (//)
+\033bTime
+;
+MSG_BT_Connect (//)
+_Connect
+;
+MSG_BT_Disconnect (//)
+_Disconnect
+;
+MSG_TX_MainWindowTitle (//)
+Genesis © 1997,98 by Michael Neuweiler, Active Software
 ;
 MSG_TX_ReallyQuit (//)
 Do you really want to quit ?
 ;
-MSG_TX_About (//)
-Main programming by Michael Neuweiler\n\n\033bTHIS IS A DEMO VERSION !\033n
+MSG_HELP_Connect (//)
+Establish a connection.
 ;
-MSG_TX_CouldNotOpenDevice_Unit (//)
-Could not open %ls, unit %ld !\nPlease make sure the settings are correct.
+MSG_HELP_Disconnect (//)
+Close a connection.
 ;
-MSG_TX_CouldNotConnect (//)
-Could not connect to provider.\nPlease make sure all modem related information\nand the phone number is correct and then retry again.
+MSG_HELP_TimeOnline (//)
+Time passed since an\ninterface is online.
+;
+MSG_HELP_ConnectSpeed (//)
+Connect string returned\nby your modem.
+;
+MSG_HELP_Provider (//)
+Choose which provider\nconfiguration to use.
+;
+MSG_HELP_User (//)
+Login as a different user.
+;
+MSG_HELP_Log (//)
+Genesis event log
 ;
 ;
-; Online
+; mui_Online.c
 ;
 ;
 MSG_LA_PleaseWait (//)
 Please wait...
-;
-MSG_TX_GatherNetInfo (//)
-          gathering network information...          \n
-MSG_TX_LaunchingAmiTCP (//)
-launching AmiTCP...
 ;
 MSG_TX_InitDevice (//)
 initializing device...
@@ -78,18 +211,6 @@ obtaining host name\nand domain name...
 MSG_TX_Finished (//)
 finished
 ;
-MSG_TX_ClosingConnection (//)
-closing connection...
-;
-MSG_TX_ErrorTCPHandlerArgs (//)
-TCPHandler received invalid argument.
-;
-MSG_TX_ErrorAutoInterfaces (//)
-Could not create ENV:NetConfig/AutoInterfaces
-;
-MSG_TX_ErrorAmiTCPLaunch (//)
-Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is running (like Miami).\n3) Invalid AmiTCP.key in AmiTCP:key.
-;
 MSG_TX_ErrorBsdsocketLib (//)
 Could not open bsdsocket.library.\nPlease make sure the file AmiTCP can be found in AmiTCP:kernel/
 ;
@@ -99,9 +220,6 @@ Could not open ifconfig.library.\nIt looks like AmiTCP Genesis is not properly i
 MSG_TX_ErrorIfaceAlloc (//)
 Interface allocation failed.\nThis might be a result of memory shortage.
 ;
-MSG_TX_ErrorIfaceInit (//)
-Could not initialize the interface.\nThere might be various reasons for failing.\nPlease check RAM:Genesis.log and contact\nyour support site.
-;
 MSG_TX_WarningBOOTPMemory (//)
 Not enough memory for BOOTP.\nPlease retry when more memory is available.
 ;
@@ -110,9 +228,6 @@ Could not obtain local IP address.\nPlease refer to the logfile in RAM:Genesis.l
 ;
 MSG_TX_ErrorConfigIface (//)
 Could not configure interface %ls.
-;
-MSG_TX_ErrorResetResolv (//)
-Could not reset nameserver and domainname settings.
 ;
 MSG_TX_WarningNoDNS (//)
 Was unable to obtain DomainNameServer (DNS) IP-addresses.\nFalling back to root DNS servers but in order to\nget faster responses on queries you should enter the\ncorrect IP addresses of your provider manually in Genesis Preferences\nafter importing the config file created by this program.
@@ -134,57 +249,4 @@ Could not tell AmiTCP about our hostname '%ls'.\nHowever AmiTCP will work withou
 ;
 MSG_TX_ErrorLaunchSubtask (//)
 Was unable to launch sub task for\ngathering network information.\nUnable to finish setup.
-;
-MSG_TX_ErrorSaveConfig (//)
-Could not save configuration to %ls
-;
-MSG_TX_ErrorOpenX (//)
-Could not open %ls.
-;
-;
-;
-; Menus
-;
-;
-MSG_MENU_PROJECT (//)
-Project
-;
-MSG_MENU_ABOUT (//)
-About...
-;
-MSG_MENU_ABOUTMUI (//)
-About MUI...
-;
-MSG_MENU_QUIT (//)
-Quit
-;
-MSG_MENU_SETTINGS (//)
-Settings
-;
-MSG_MENU_GENESIS (//)
-Genesis...
-;
-MSG_MENU_MUI (//)
-MUI...
-;
-;
-;
-;
-MSG_BT_Dial (//)
-dial (f1)
-;
-MSG_BT_GoOnline (//)
-go online (f2)
-;
-MSG_BT_HangUp (//)
-hang up (f3)
-;
-MSG_BT_SendLogin (//)
-send login (f4)
-;
-MSG_BT_SendPassword (//)
-send password (f5)
-;
-MSG_BT_SendBreak (//)
-send break (f6)
 ;

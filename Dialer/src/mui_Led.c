@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "mui.h"
@@ -37,7 +36,7 @@
 ///
 
 /// Led_New
-ULONG ASM Led_New(struct IClass *cl, Object *obj, struct opSet *msg)
+ULONG Led_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Group_PageMode, TRUE,
@@ -114,7 +113,7 @@ ULONG ASM Led_New(struct IClass *cl, Object *obj, struct opSet *msg)
 ///
 
 /// Led Dispatcher
-SAVEDS ULONG Led_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Led_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    if(msg->MethodID == OM_NEW)
       return(Led_New(cl, obj, (APTR)msg));

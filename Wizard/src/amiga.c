@@ -1,8 +1,10 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
+#include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "Strings.h"
 #include "mui.h"
 #include "mui_MainWindow.h"
@@ -10,6 +12,8 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase, *GenesisBase;
+extern struct ExecBase *SysBase;
 extern struct Catalog          *cat;
 extern struct MUI_CustomClass  *CL_MainWindow;
 extern struct MsgPort          *WritePortSER;
@@ -18,10 +22,10 @@ extern struct MsgPort          *MainPort;
 extern struct IOExtSer         *WriteSER;
 extern struct IOExtSer         *ReadSER;
 extern char serial_in[];
-extern BOOL ReadQueued;
+extern BOOL ReadQueued, use_modem;
 extern Object *win;
 extern struct Config Config;
-extern int addr_assign, dst_assign, dns_assign, domainname_assign;
+extern int addr_assign, dst_assign, dns_assign, domainname_assign, gw_assign;
 extern const char AmiTCP_PortName[];
 
 ///
@@ -58,7 +62,7 @@ Object *MakeText(STRPTR string)
    Object *obj = TextObject,
 //      TextFrame,
 //      MUIA_Background, MUII_TextBack,
-      MUIA_Text_Contents,  string,
+      MUIA_Text_Contents,  string,     // don't use GetStr() here !! once and forever !
    End;
 
    return(obj);
@@ -68,19 +72,11 @@ Object *MakeText(STRPTR string)
 /// MakeString
 Object *MakeString(STRPTR string, LONG len)
 {
-/*   return(TextinputObject,
+   return(StringObject,
       StringFrame,
-      MUIA_CycleChain         , 1,
-      MUIA_Textinput_Multiline, FALSE,
-      MUIA_Textinput_Contents , string,
-      MUIA_Textinput_MaxLen   , len,
-      End);
-*/
-   return(StringObject,\
-      MUIA_CycleChain, 1,
-      StringFrame,
-      MUIA_String_MaxLen  , len,
-      MUIA_String_Contents, string,
+      MUIA_CycleChain      , 1,
+      MUIA_String_MaxLen   , len,
+      MUIA_String_Contents , string,
       End);
 }
 
@@ -109,27 +105,6 @@ STRPTR GetStr(STRPTR idstr)
       return((STRPTR)GetCatalogStr(cat, *(UWORD *)idstr, local));
 
    return(local);
-}
-
-///
-/// GetEnvDOS
-LONG GetEnvDOS(STRPTR name, STRPTR buffer, LONG max_len)
-{
-   char  file[MAXPATHLEN];
-   LONG  size;
-   BPTR  fh;
-
-   *buffer = NULL;
-   strcpy(file, "ENV:");
-   AddPart(file, name, MAXPATHLEN);
-   if(fh = Open(file, MODE_OLDFILE))
-   {
-      size = Read(fh, buffer, max_len);
-      Close(fh);
-      if(size >= 0)
-         buffer[size] = NULL;
-   }
-   return((LONG)strlen(buffer));
 }
 
 ///
@@ -371,7 +346,6 @@ VOID encrypt(STRPTR in, STRPTR out)
 /// save_config
 BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct Config *config)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
    BPTR fh;
    STRPTR ptr;
    char buff[110];
@@ -501,8 +475,8 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
          FPrintf(fh, "IPAddr          %ls\n", iface->if_addr);
       if(*iface->if_dst && dst_assign == CNF_Assign_Static)
          FPrintf(fh, "DestIP          %ls\n", iface->if_dst);
-//      if(*iface->if_gateway)
-//         FPrintf(fh, "Gateway         %ls\n", iface->if_gateway);
+      if(*iface->if_gateway && gw_assign == CNF_Assign_Static)
+         FPrintf(fh, "Gateway         %ls\n", iface->if_gateway);
       if(*iface->if_netmask)
          FPrintf(fh, "Netmask         %ls\n", iface->if_netmask);
 
@@ -534,46 +508,62 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
 /// print_config
 VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Config *config)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-
    FPrintf(fh, GetStr(MSG_TX_InfoTitle));
 
-   FPrintf(fh, "%ls %ls, unit %ld (38'400 baud)\n\n", GetStr(MSG_LA_Device), config->cnf_serialdevice, config->cnf_serialunit);
-
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_Modem), config->cnf_modemname);
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_InitString), config->cnf_initstring);
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_DialPrefix), config->cnf_dialprefix);
-
-   FPrintf(fh, "%ls %ls\n\n", GetStr(MSG_LA_Phone), isp->isp_phonenumber);
-
-   FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_LoginName), isp->isp_login);
-
-   FPrintf(fh, "%ls %ls\n\n\n", GetStr(MSG_LA_Protocol), iface->if_name);
-
-   if(addr_assign = CNF_Assign_Static)
-      FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_IPAddress), iface->if_addr);
-   else
-      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_IPAddress), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (addr_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
-   if(dst_assign = CNF_Assign_Static)
-      FPrintf(fh, "%ls %ls\n", GetStr(MSG_LA_RemoteIPAddress), iface->if_dst);
-   else
-      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_RemoteIPAddress), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (dst_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
-   FPrintf(fh, "%ls %ls\n\n", GetStr(MSG_LA_Netmask), iface->if_netmask);
-
-/*
-   FPrintf(fh, "%ls %ls (%ls %ls)\n\n", GetStr(MSG_LA_DomainName), isp->isp_domainname, GetStr(MSG_TX_ObtainedBy), (domainname_assign == CNF_Assign_BootP ? "BOOTP" : "DNSQuery"));
-
-   if(dns_assign == CNF_Assign_Root)
+   if(use_modem)
    {
-      FPrintf(fh, "%ls %ls (Root DNS)\n", GetStr(MSG_LA_DNS1IPAddr), isp->isp_dns1);
-      FPrintf(fh, "%ls %ls (Root DNS)\n", GetStr(MSG_LA_DNS2IPAddr), isp->isp_dns2);
+      FPrintf(fh, "%ls, unit %ld (38'400 baud)\n\n", config->cnf_serialdevice, config->cnf_serialunit);
+
+      FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_Modem), config->cnf_modemname);
+      FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_InitString), config->cnf_initstring);
+      FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_DialPrefix), config->cnf_dialprefix);
+
+      FPrintf(fh, "%-15ls %ls\n\n", GetStr(MSG_LA_Phone), isp->isp_phonenumber);
+
+      FPrintf(fh, "%-15ls %ls\n\n", GetStr(MSG_LA_LoginName), isp->isp_login);
    }
+
+   FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_IfaceName), iface->if_name);
+   FPrintf(fh, "%-15ls %ls, unit %ld\n", GetStr(MSG_LA_Sana2Device), iface->if_sana2device, iface->if_sana2unit);
+
+   if(addr_assign == CNF_Assign_Static)
+      FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_IPAddr), iface->if_addr);
    else
+      FPrintf(fh, "%-15ls %ls (%ls %ls)\n", GetStr(MSG_LA_IPAddr), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (addr_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
+   if(dst_assign == CNF_Assign_Static)
+      FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_Destination), iface->if_dst);
+   else
+      FPrintf(fh, "15%ls %ls (%ls %ls)\n", GetStr(MSG_LA_Destination), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (dst_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
+   if(gw_assign == CNF_Assign_Static && *iface->if_gateway)
+      FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_Gateway), iface->if_gateway);
+   FPrintf(fh, "%-15ls %ls\n\n", GetStr(MSG_LA_Netmask), iface->if_netmask);
+
+   if(isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&isp->isp_domainnames)
    {
-      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNS1IPAddr), isp->isp_dns1, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
-      FPrintf(fh, "%ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNS2IPAddr), isp->isp_dns2, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
+      struct ServerEntry *server;
+
+      server = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
+      while(server->se_node.mln_Succ)
+      {
+         FPrintf(fh, "%-15ls %ls (%ls %ls)\n\n", GetStr(MSG_LA_DomainName), server->se_name, GetStr(MSG_TX_ObtainedBy), (domainname_assign == CNF_Assign_BootP ? "BOOTP" : "DNSQuery"));
+         server = (struct ServerEntry *)server->se_node.mln_Succ;
+      }
    }
-*/
+
+   if(isp->isp_nameservers.mlh_TailPred != (struct MinNode *)&isp->isp_nameservers)
+   {
+      struct ServerEntry *server;
+
+      server = (struct ServerEntry *)isp->isp_nameservers.mlh_Head;
+      while(server->se_node.mln_Succ)
+      {
+         if(dns_assign == CNF_Assign_Root)
+            FPrintf(fh, "%-15ls %ls (Root DNS)\n", GetStr(MSG_LA_DNSIPAddr), server->se_name);
+         else
+            FPrintf(fh, "%-15ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNSIPAddr), server->se_name, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
+         server = (struct ServerEntry *)server->se_node.mln_Succ;
+      }
+   }
 
    if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
    {
@@ -584,7 +574,7 @@ VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Conf
       while(script_line->sl_node.mln_Succ)
       {
          if(*script_line->sl_contents)
-            FPrintf(fh, "%ls \"%ls\"\n", script_commands[script_line->sl_command], script_line->sl_contents);
+            FPrintf(fh, "%-10ls \"%ls\"\n", script_commands[script_line->sl_command], script_line->sl_contents);
          else
             FPrintf(fh, "%ls\n", script_commands[script_line->sl_command]);
          script_line = (struct ScriptLine *)script_line->sl_node.mln_Succ;
@@ -628,7 +618,12 @@ BOOL launch_amitcp(VOID)
    int i;
 
    if(!FindPort((STRPTR)AmiTCP_PortName))
-      run_async("AmiTCP:kernel/AmiTCP");
+   {
+      if((SysBase->AttnFlags & AFF_68020) && (GetFileSize("AmiTCP:kernel/AmiTCP.020") > 0))
+         run_async("AmiTCP:kernel/AmiTCP.020");
+      else
+         run_async("AmiTCP:kernel/AmiTCP");
+   }
 
    /* wait until AmiTCP is running */
    i = 0;
@@ -777,7 +772,7 @@ LONG amirexx_do_command(const char *fmt, ...)
    struct RexxMsg *rmsg;
    LONG rc = 20;         /* fail */
 
-   vsprintf(buf, fmt, (va_list)(&fmt + (va_list)1));
+   vsprintf(buf, fmt, (STRPTR)(&fmt + 1));
    if(port = CreateMsgPort())
    {
       port->mp_Node.ln_Name = "BOOTPCONFIG";
@@ -813,7 +808,7 @@ LONG amirexx_do_command(const char *fmt, ...)
 ///
 
 /// strobjfunc
-SAVEDS LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
+SAVEDS ASM LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
 {
    char *x, *s;
    int i;
@@ -845,7 +840,7 @@ SAVEDS LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
 
 ///
 /// txtobjfunc
-SAVEDS LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt)
+SAVEDS ASM LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt)
 {
    char *x, *s;
    int i;
@@ -876,7 +871,7 @@ SAVEDS LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt)
 
 ///
 /// objstrfunc
-VOID SAVEDS objstrfunc(register __a2 Object *list,register __a1 Object *str)
+SAVEDS ASM VOID objstrfunc(register __a2 Object *list,register __a1 Object *str)
 {
    char *x;
 
@@ -887,7 +882,7 @@ VOID SAVEDS objstrfunc(register __a2 Object *list,register __a1 Object *str)
 
 ///
 /// objtxtfunc
-VOID SAVEDS objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
+SAVEDS ASM VOID objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
 {
    char *x;
 
@@ -898,7 +893,7 @@ VOID SAVEDS objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
 
 ///
 /// desfunc
-VOID SAVEDS desfunc(register __a2 APTR pool, register __a1 APTR *entry)
+SAVEDS ASM VOID desfunc(register __a2 APTR pool, register __a1 APTR *entry)
 {
    if(entry)
       FreeVec(entry);
@@ -906,7 +901,7 @@ VOID SAVEDS desfunc(register __a2 APTR pool, register __a1 APTR *entry)
 
 ///
 /// sortfunc
-SAVEDS LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
+SAVEDS ASM LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
 {
    return(stricmp(str1, str2));
 }

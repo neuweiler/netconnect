@@ -1,12 +1,12 @@
 /// includes & defines
 #include "/includes.h"
-#pragma header
 
 #include <libraries/owndevunit.h>
-#include <pragma/owndevunit_lib.h>
+#include <pragmas/owndevunit_pragmas.h>
 #include "/Genesis.h"
 #include "Strings.h"
 #include "mui.h"
+#include "mui_Online.h"
 #include "protos.h"
 
 #define SERIAL_BUFSIZE 16384  /* default size */
@@ -79,9 +79,9 @@ BOOL serial_waitfor(STRPTR string, int secs)
    struct MsgPort *time_port;
    char ser_buf[5], buffer[1024];
    int buf_pos = 0;
-   BOOL timer_running = FALSE, window_open;
+   BOOL timer_running = FALSE, terminal_visible;
 
-   window_open = DoMainMethod(win, MUIM_Genesis_Get, (APTR)MUIA_Window_Open, NULL, NULL);
+   terminal_visible = ((DoMainMethod(status_win, MUIM_Genesis_Get, (APTR)MUIA_Window_Open, NULL, NULL) != NULL) && (Config.cnf_flags & CFL_ShowSerialInput));
 
    if(time_port = CreateMsgPort())
    {
@@ -109,7 +109,7 @@ BOOL serial_waitfor(STRPTR string, int secs)
                      buffer[buf_pos++] = ser_buf[0];
                      buffer[buf_pos] = NULL;
 
-                     if(!data->abort && window_open)
+                     if(!data->abort && terminal_visible)
                         DoMainMethod(data->TR_Terminal, TCM_WRITE, ser_buf, (APTR)1, NULL);
 
                      if(strstr(buffer, string))

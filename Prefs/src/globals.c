@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #define USE_SCRIPT_COMMANDS
 #define USE_EVENT_COMMANDS
@@ -8,7 +7,7 @@
 #include "Strings.h"
 #include "mui.h"
 #include "protos.h"
-#include "mui/Grouppager_mcc.h"
+#include "mui/grouppager_mcc.h"
 
 ///
 /// define images
@@ -75,28 +74,30 @@ BOOL changed_inetd;
 BOOL changed_networks;
 BOOL changed_rpc;
 
+BOOL root_authenticated = FALSE;
+
 ///
 
 /// Menu
 struct NewMenu MainWindowMenu[] =
 {
-   { NM_TITLE, (STRPTR)MSG_MENU_PROJECT   , 0 , 0, 0, (APTR)0           },
-   { NM_ITEM , (STRPTR)MSG_MENU_ABOUT     ,"?", 0, 0, (APTR)MEN_ABOUT   },
-   { NM_ITEM , (STRPTR)"  About MUI"      , 0, 0, 0,  (APTR)MEN_ABOUT_MUI },
-   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0 , 0, 0, (APTR)0           },
-   { NM_ITEM , (STRPTR)"  Iconify"        ,"C", 0, 0, (APTR)MEN_ICONIFY },
-   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0 , 0, 0, (APTR)0           },
-   { NM_ITEM , (STRPTR)MSG_MENU_QUIT      ,"Q", 0, 0, (APTR)MEN_QUIT    },
+   { NM_TITLE, (STRPTR)MSG_MENU_PROJECT   , 0               , 0, 0, (APTR)0            },
+   { NM_ITEM , (STRPTR)MSG_MENU_ABOUT     , MSG_CC_ABOUT    , 0, 0, (APTR)MEN_ABOUT    },
+   { NM_ITEM , (STRPTR)MSG_MENU_ABOUTMUI  , 0               , 0, 0, (APTR)MEN_ABOUT_MUI},
+   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },
+   { NM_ITEM , (STRPTR)MSG_MENU_ICONIFY   , MSG_CC_ICONIFY  , 0, 0, (APTR)MEN_ICONIFY  },
+   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },
+   { NM_ITEM , (STRPTR)MSG_MENU_QUIT      , MSG_CC_QUIT     , 0, 0, (APTR)MEN_QUIT     },
 
-   { NM_TITLE, (STRPTR)MSG_MENU_SETTINGS  , 0 , 0, 0, (APTR)0           },
-   { NM_ITEM , (STRPTR)"  Load"           ,"L", 0, 0, (APTR)MEN_LOAD    },
-   { NM_ITEM , (STRPTR)"  Import"         ,"I", 0, 0, (APTR)MEN_IMPORT  },
-   { NM_ITEM , (STRPTR)"  Save"           ,"S", 0, 0, (APTR)MEN_SAVE    },
-   { NM_ITEM , (STRPTR)"  Save as..."     ,"W", 0, 0, (APTR)MEN_SAVEAS  },
-   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0 , 0, 0, (APTR)0           },
-   { NM_ITEM , (STRPTR)MSG_MENU_MUI       ,"M", 0, 0, (APTR)MEN_MUI     },
+   { NM_TITLE, (STRPTR)MSG_MENU_SETTINGS  , 0               , 0, 0, (APTR)0            },
+   { NM_ITEM , (STRPTR)MSG_MENU_LOAD      , MSG_CC_LOAD     , 0, 0, (APTR)MEN_LOAD     },
+   { NM_ITEM , (STRPTR)MSG_MENU_IMPORT    , MSG_CC_IMPORT   , 0, 0, (APTR)MEN_IMPORT   },
+   { NM_ITEM , (STRPTR)MSG_MENU_SAVE      , MSG_CC_SAVE     , 0, 0, (APTR)MEN_SAVE     },
+   { NM_ITEM , (STRPTR)MSG_MENU_SAVEAS    , MSG_CC_SAVEAS   , 0, 0, (APTR)MEN_SAVEAS   },
+   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },
+   { NM_ITEM , (STRPTR)MSG_MENU_MUI       , MSG_CC_MUI      , 0, 0, (APTR)MEN_MUI      },
 
-   { NM_END  , NULL                       , 0 , 0, 0, (APTR)0           },
+   { NM_END  , NULL                       , 0               , 0, 0, (APTR)0            },
 
 };
 

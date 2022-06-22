@@ -5,32 +5,28 @@
 
 #define GENESISNAME "AmiTCP:libs/genesis.library"
 
-struct GenesisBase
+#define GUF_TextObject  1   /* use a TextObject for loginname instead of StringObject *
+                             * => user can't change it                                */
+
+struct User
 {
-   struct Library         LibNode;
-   long                   gb_CurrentUser;       /* read only */
-   struct SignalSemaphore gb_UserListSemaphore; /* private */
-   struct MinList         gb_UserList;          /* private */
+   UBYTE *us_name;   /* Username */
+   UBYTE *us_passwd; /* Encrypted password */
+   LONG   us_uid;    /* User ID */
+   LONG   us_gid;    /* Group ID */
+   UBYTE *us_gecos;  /* Real name etc */
+   UBYTE *us_dir;    /* Home directory */
+   UBYTE *us_shell;  /* Shell */
 };
 
-struct UserData
+struct ParseConfig_Data
 {
-   char ud_Name[41];          /* local login name, ENV:LOGNAME will contain this */
-   char ud_RealName[41];      /* the real name of the above user */
-   char ud_EMail[41];         /* the user's email address */
-   char ud_MailLogin[41];     /* login for the user's mail account */
-   char ud_MailPassword[41];  /* password for the mail account */
-   char ud_MailServer[41];    /* if the user needs a different mailserver, it's in here - otherwise it's empty */
-};
+   STRPTR pc_buffer;    /* buffer holding the file (internal use only) */
+   LONG   pc_size;      /* holding the size of the buffer (internal use only) */
+   STRPTR pc_current;   /* pointer to the current position (internal use only) */
 
-struct pc_Data
-{
-   STRPTR Buffer;    /* buffer holding the file (internal use only) */
-   LONG Size;        /* variable holding the size of the buffer (internal use only) */
-   STRPTR Current;   /* pointer to the current position (internal use only) */
-
-   STRPTR Argument;  /* pointer to the argument name */
-   STRPTR Contents;  /* pointer to the argument's contents */
+   STRPTR pc_argument;  /* pointer to the argument name */
+   STRPTR pc_contents;  /* pointer to the argument's contents */
 };
 
 

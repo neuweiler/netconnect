@@ -40,3 +40,20 @@ History for GenesisWizard
 * temporarely added debug information.. to locate the point where ominous
   crashes occur (no enforcer hits, only one big bang).
 
+2.1.2 (12.5.98)
+---------------
+
+* moved back from stormc to sasc => 12% smaller code..
+* modem now gets hungup with a dtr drop.
+* you can go back now and retry the login procedure.
+* corrected minor bug in saving prefs file.
+
+2.1.3 (7.6.98)
+---------------
+
+* localized everything, reworked catalog file.
+* now also pops up a requester when dest-ip is missing for point2point
+  device.
+* config details now get displayed in a different way (and printed).
+* moved some functions to genesis.library => use genesis.library from
+  7.6.1998 or later.

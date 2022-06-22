@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
@@ -9,6 +8,7 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 
 ///
 
@@ -18,15 +18,15 @@ ULONG SerialSana_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct SerialSana_Data tmp;
    static STRPTR ARR_RA_Interface[3];
 
-   ARR_RA_Interface[0] = GetStr("  \nUse a modem (analog/ISDN) to dialup\na provider.\n");
-   ARR_RA_Interface[1] = GetStr("  \nSpecify a Sana-II driver for your\nnetwork card or ISDN board.");
+   ARR_RA_Interface[0] = GetStr(MSG_TX_InterfaceType1);
+   ARR_RA_Interface[1] = GetStr(MSG_TX_InterfaceType2);
    ARR_RA_Interface[2] = NULL;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
       GroupFrame,
       MUIA_Background, MUII_TextBack,
       Child, HVSpace,
-      Child, MakeText(GetStr("  Analog modem: choose the first option\nISDN board: first one => bscisdn.device,\n    fossil.device or simmilar will be used.\n    second one => use sana2 driver like iwan.device\ndirect connections with network card\n(ariadne, etc.): choose 2nd option")),
+      Child, MakeText(GetStr(MSG_TX_InfoSerialSana)),
       Child, HGroup,
          Child, HVSpace,
          Child, tmp.RA_Interface = RadioObject,
@@ -41,6 +41,8 @@ ULONG SerialSana_New(struct IClass *cl, Object *obj, struct opSet *msg)
       struct SerialSana_Data *data = INST_DATA(cl, obj);
 
       *data = tmp;
+
+      set(data->RA_Interface, MUIA_ShortHelp, GetStr(MSG_HELP_SerialSana));
    }
 
    return((ULONG)obj);
@@ -48,11 +50,12 @@ ULONG SerialSana_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// SerialSana_Dispatcher
-SAVEDS ULONG SerialSana_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG SerialSana_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   if(msg->MethodID == OM_NEW)
-      return(SerialSana_New         (cl, obj, (APTR)msg));
-
+   switch((ULONG)msg->MethodID)
+   {
+      case OM_NEW       : return(SerialSana_New         (cl, obj, (APTR)msg));
+   }
    return(DoSuperMethodA(cl, obj, msg));
 }
 

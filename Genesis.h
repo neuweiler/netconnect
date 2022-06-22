@@ -135,19 +135,6 @@ struct ISP
 };
 
 ///
-/// User
-struct User
-{
-   char   us_login[41];
-   char   us_realname[81];
-   char   us_password[41];
-   LONG   us_uid;
-   LONG   us_gid;
-   char   us_homedir[MAXPATHLEN];
-   char   us_shell[81];
-};
-
-///
 /// PrefsPPPIface
 struct PrefsPPPIface
 {
@@ -254,6 +241,7 @@ struct Inetd
    BYTE Wait;
    char User[41];
    char Server[81];
+   char CliName[81];
    char Args[81];
 
    BOOL Active;
@@ -287,7 +275,7 @@ struct Rpc
 };
 
 ///
-
+/*
 /// struct pc_Data
 struct pc_Data
 {
@@ -300,4 +288,4 @@ struct pc_Data
 };
 
 ///
-
+*/

@@ -1,70 +1,87 @@
-
-#include <exec/libraries.h>
-#include <exec/semaphores.h>
-#include <pragma/exec_lib.h>
-#include <pragma/dos_lib.h>
-#include <pragma/intuition_lib.h>
-#include <pragma/muimaster_lib.h>
-#include <libraries/mui.h>
-#include <stdio.h>
-
 #include "libraries/genesis.h"
 #include "proto/genesis.h"
-#include "genesis_lib.h"
-
-#define MAKE_ID(a,b,c,d) ((ULONG) (a)<<24 | (ULONG) (b)<<16 | (ULONG) (c)<<8 | (ULONG) (d))
+#include "pragmas/genesis_lib.h"
 
 struct GenesisBase *GenesisBase;
-struct Library *MUIMasterBase;
 
 void main()
 {
    if(GenesisBase = (struct GenesisBase *) OpenLibrary(GENESISNAME, 1))
    {
       LONG pos=0;
-      struct UserData *ud;
+      struct User *user;
+      char buffer[81];
 
-      while(TRUE)
+      Printf("\nbrowsing username list:\n");
+      while(GetUserName(pos++, buffer, 80))
+         Printf("user: %ls\n", buffer);
+
+      Printf("\ntesting GetGlobalUser()\n");
+      if(user = GetGlobalUser())
       {
-         if(!(ud = GetUser(pos++)))
-            break;
-         Printf("User: %ls\nReal: %ls\nEMail: %ls\nMailLogin: %ls\nMailPassword: %ls\nMailServer: %ls\n\n", ud->ud_Name, ud->ud_RealName, ud->ud_EMail, ud->ud_MailLogin, ud->ud_MailPassword, ud->ud_MailServer);
+         Printf("GetGlobalUser was successful.\nUser: %ls\nPassword: %ls\nUID: %ld\nGID: %ld\nGecos: %ls\nHomeDir: %ls\nShell: %ls\n",
+            user->us_name, user->us_passwd, user->us_uid, user->us_gid, user->us_gecos,
+            user->us_dir, user->us_shell);
+         FreeUser(user);
       }
+      else
+         Printf("GetGlobalUser was NOT successful.\n");
 
-      if(MUIMasterBase = (struct Library *)OpenLibrary("muimaster.library", 0))
+      Printf("\ntesting normal GetUser(NULL)\n");
+      if(user = GetUser(NULL, "please identify yourself", NULL))
       {
-         Object *app, *win;
+         Printf("GetUser was successful.\nUser: %ls\nPassword: %ls\nUID: %ld\nGID: %ld\nGecos: %ls\nHomeDir: %ls\nShell: %ls\n",
+            user->us_name, user->us_passwd, user->us_uid, user->us_gid, user->us_gecos,
+            user->us_dir, user->us_shell);
 
-         if(app = ApplicationObject,
-            MUIA_Application_Author       , "Michael Neuweiler",
-            MUIA_Application_Base         , "genesis.library test",
-            MUIA_Application_Title        , "genesis.library test",
-            MUIA_Application_Window       , win = WindowObject,
-               MUIA_Window_Title    , "Genesis login",
-               MUIA_Window_ID       , MAKE_ID('m','a','i','n'),
-               WindowContents       , VGroup,
-                  Child, HVSpace,
-                  Child, CLabel("Just testin that funny AskForUser()"),
-                  Child, HVSpace,
-               End,
-            End,
-         End)
-         {
-            set(win, MUIA_Window_Open, TRUE);
-            if(ud = AskForUser(MUIMasterBase, app, win, NULL))
-               Printf("AskForUser() successful:\nUser: %ls\nReal: %ls\nEMail: %ls\nMailLogin: %ls\nMailPassword: %ls\nMailServer: %ls\n\n", ud->ud_Name, ud->ud_RealName, ud->ud_EMail, ud->ud_MailLogin, ud->ud_MailPassword, ud->ud_MailServer);
-            else
-               Printf("AskForUser() not successful\n");
+         Printf("setting global user to this user\n.");
+         SetGlobalUser(user);
 
-            MUI_DisposeObject(app);
-         }
-         CloseLibrary(MUIMasterBase);
+         FreeUser(user);
       }
+      else
+         Printf("GetUser was NOT successful.\n");
+
+      Printf("\nnow testing GetGlobalUser() again. This should return the user we've set before with SetGlobalUser()\n");
+      if(user = GetGlobalUser())
+      {
+         Printf("GetGlobalUser was successful.\nUser: %ls\nPassword: %ls\nUID: %ld\nGID: %ld\nGecos: %ls\nHomeDir: %ls\nShell: %ls\n",
+            user->us_name, user->us_passwd, user->us_uid, user->us_gid, user->us_gecos,
+            user->us_dir, user->us_shell);
+
+         FreeUser(user);
+      }
+      else
+         Printf("GetGlobalUser was NOT successful.\n");
+
+      Printf("\nclearing global user.\n");
+      SetGlobalUser(NULL);
+      Printf("calling GetGlobalUser() again. (after clearing it)\n");
+      if(user = GetGlobalUser())
+      {
+         Printf("GetGlobalUser was successful.\nUser: %ls\nPassword: %ls\nUID: %ld\nGID: %ld\nGecos: %ls\nHomeDir: %ls\nShell: %ls\n",
+            user->us_name, user->us_passwd, user->us_uid, user->us_gid, user->us_gecos,
+            user->us_dir, user->us_shell);
+
+         FreeUser(user);
+      }
+      else
+         Printf("GetGlobalUser was NOT successful.\n");
+
+      Printf("\ntesting GetUser() with given username \"root\"\n");
+      if(user = GetUser("root", NULL, GUF_TextObject))
+      {
+         Printf("GetUser(\"root\") was successful.\nUser: %ls\nPassword: %ls\nUID: %ld\nGID: %ld\nGecos: %ls\nHomeDir: %ls\nShell: %ls\n",
+            user->us_name, user->us_passwd, user->us_uid, user->us_gid, user->us_gecos,
+            user->us_dir, user->us_shell);
+
+         FreeUser(user);
+      }
+      else
+         Printf("GetUser(\"root\" was NOT successful.\n");
 
       CloseLibrary((struct Library *) GenesisBase);
    }
    else
-   {
       printf("unable to open \"genesis.library\".");
-   };
 }

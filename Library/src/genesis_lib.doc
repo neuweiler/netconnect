@@ -1,0 +1,210 @@
+A quick and dirty doc.. If something's not clear: dolphin@unizh.ch
+Not everything will be used.. but the additional functions might be
+handy.. (the are used in all genesis apps, so I included them here).
+
+also refer to test.c and test
+
+---------------------------------------------------
+
+LONG   GetFileSize(STRPTR file)
+
+Result: Size of file
+
+
+---------------------------------------------------
+
+BOOL   ParseConfig(STRPTR file, struct ParseConfig_Data *pc_data)
+
+Initialize the parsing of a config file with the following syntax:
+argument "contents ..."
+e.g.
+Phone    123 32 45
+
+file     - filename of the config file
+pc_data  - pointer to an empty ParseConfig_Data structure. It is used
+           to keep the temporary buffer and to access the data.
+Result   - success (opening file and allocating mem)
+
+---------------------------------------------------
+
+BOOL   ParseNext(struct ParseConfig_Data *pc_data)
+
+After initializing pc_data with ParseConfig() you can read the config file line
+by line. pc_data->pc_argument contains the line's argument and
+pc_data->pc_contents
+
+Example:
+
+struct ParseConfig_Data pc_data;
+
+if(ParseConfig("AmiTCP:db/genesis.conf", &pc_data))
+{
+   while(ParseNext(&pc_data);
+   {
+      Printf("argument: %ls   contents: %ls\n", pc_data->pc_argument,
+             pc_data->pc_contents);
+   }
+   ParseEnd(&pc_data);
+}
+
+
+
+---------------------------------------------------
+
+BOOL   ParseNextLine(struct ParseConfig_Data *pc_data)
+
+Reads the entire line into pc_data->pc_contents => can be used to simply parse a
+file line by line. pc_data->pc_argument will be empty.
+
+
+
+---------------------------------------------------
+
+VOID   ParseEnd(struct ParseConfig_Data *pc_data)
+
+Frees allocated space. Counterpart to ParseConfig().
+
+
+
+---------------------------------------------------
+
+STRPTR ReallocCopy(STRPTR *old, STRPTR src)
+
+Simmilar to strcpy(dst, src); but "old" is not a char [] but a pointer.
+So ReallocCopy() can be used to alloc memory and copy a string.
+If "old" is not NULL then the memory space it is pointing to will be freed by
+using FreeVec(). Then, memory will be allocated of the size of "src" + 1 and
+"src" will be copied to the new allocated buffer. This buffer's address is the
+result.
+Too compilcated ? Here an example.
+
+VOID any_func(STRPTR source1, source2)
+{
+   STRPTR huge_string = NULL;
+
+   ReallocCopy(&huge_string, source1);   // allocates mem and copies source1
+   ...
+   ReallocCopy(&huge_string, source2);   // frees huge_string, allocs mem for
+                                            source2 and copies it over.
+}
+
+
+
+---------------------------------------------------
+
+LONG   ReadFile(STRPTR file, STRPTR buffer, LONG len)
+
+Will load the contents of 'file' into the given buffer.
+
+
+file         - name of the file to load
+buffer       - buffer for its contents
+len          - size of the buffer
+Result       - bytes read into the buffer
+
+
+
+---------------------------------------------------
+
+BOOL   WriteFile(STRPTR file, STRPTR buffer, LONG len)
+
+Will save the contents of 'buffer' to a file.
+
+
+file         - name of the file
+buffer       - buffer holding file contents
+len          - bytes to be written or -1 for NULL terminated strings
+Result       - TRUE if successful
+
+
+
+---------------------------------------------------
+
+BOOL   GetUserName(LONG user_number, char *buffer, LONG len)
+
+Can be used to browse through user list and gather the names of all users or
+simply get one at a specific position.
+
+user_number  - position of user in database (0 to #users - 1)
+buffer       - buffer for name
+len          - size of the buffer
+Result       - was a user found at the specified position ?
+
+
+
+---------------------------------------------------
+
+struct User *GetUser(STRPTR name, STRPTR title, LONG flags)
+
+Used to login a user with password verification. You can specifiy a username to
+query the password for a specific user. If you specify a title, it will appear
+above the user/passwd gadgets as a TextObject (so you can use \n, etc.)
+Will open a mui window if necessary (if a password has to be entered).
+NOTE: This function will open muimaster.library and create a mui application
+automatically. So it can even be called from a non-mui application.
+
+name      - can be used to login a specific user. If NULL the user can enter
+            a name too. (optional)
+title     - some text which appears in the req or NULL. (optional)
+flags     - see libraries/genesis.h
+Result    - struct User containing all the user information if
+            authentication was successful.
+            use FreeUser() to free the memory space again.
+
+---------------------------------------------------
+
+struct User *GetGlobalUser(VOID)
+
+If a global user was set before (also by a different application) this
+function will return a copy of this global user. Otherwise NULL will be
+returned and you can use GetUser() and SetGlobalUser() to login somebody
+and setting the global user.
+You should use this function whenever possible so the user will be confronted
+with as little requesters as possible.
+Example:
+1. ContactManager opens the lib and uses GetGlobalUser(). It gets NULL as
+   result and therefore calls GetUser() and gives the result to SetGlobalUser().
+2. Genesis opens the lib and wants to login a user with GetGlobalUser(). The
+   user that previously logged in in ContactManager will be used without any
+   requester.
+3. Microdot does the same (GetGlobalUser()). But a different account should
+   be used (e.g. a different POP account shall be accessed). Microdot can then
+   use GetUser() to get a local user.. global user won't be changed.
+
+Result     - struct User containing all the user information of the global
+             user. Use FreeUser() to free the memory space again.
+
+
+---------------------------------------------------
+
+VOID   SetGlobalUser(struct User *user)
+
+Can be used to change the global user.
+
+user   - struct User pointer. Can be Zero to "logout" the global user.
+         next time GetGlobalUser() is called, the calling application will get
+         a copy of this user's structure without the need to call GetUser()
+         which opens a requester.
+         The user will be copied so you can free it after calling this function.
+
+
+---------------------------------------------------
+
+VOID   FreeUser(struct User *user)
+
+Free a user structure that was allocated with GetUser() or GetGlobalUser().
+
+
+
+---------------------------------------------------
+VOID   ClearUserList(VOID)
+
+Clear the librarie's internal username list.
+
+
+---------------------------------------------------
+BOOL   ReloadUserList(VOID)
+
+Reload the internal username list.
+
+

@@ -1,11 +1,10 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "Strings.h"
 #include "mui.h"
 #include "mui_IfaceWindow.h"
@@ -15,6 +14,7 @@
 ///
 /// external variables
 extern struct Hook strobjhook, des_hook;
+extern struct Library *GenesisBase;
 extern Object *win;
 
 ///
@@ -22,7 +22,7 @@ extern Object *win;
 /// set_ip_addr
 VOID set_ip_addr(STRPTR src, Object *str_obj, Object *cy_obj, STRPTR def)
 {
-   if(src && *src && strcmp(src, (def ? def : "0.0.0.0")))
+   if(src && *src && strcmp(src, (def ? def : (STRPTR)"0.0.0.0")))
    {
       setstring(str_obj , src);
       setcycle(cy_obj   , 1);
@@ -64,7 +64,7 @@ ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
          strncpy(data->iface->if_netmask, (STRPTR)xget(data->STR_Netmask, MUIA_String_Contents), sizeof(data->iface->if_netmask));
       else
          *data->iface->if_netmask = NULL;
-      realloc_copy((STRPTR *)&data->iface->if_configparams, (STRPTR)xget(data->STR_ConfigParams, MUIA_String_Contents));
+      ReallocCopy((STRPTR *)&data->iface->if_configparams, (STRPTR)xget(data->STR_ConfigParams, MUIA_String_Contents));
       data->iface->if_MTU = xget(data->STR_MTU, MUIA_String_Integer);
 
       value = xget(data->CY_Sana2Device, MUIA_Cycle_Active);
@@ -77,7 +77,7 @@ ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(data->iface->if_sana2device, "DEVS:Networks/appp.device");
             data->iface->if_sana2unit = 0;
             strcpy(data->iface->if_sana2config, "ENV:Sana2/appp0.config");
-            realloc_copy((STRPTR *)&data->iface->if_sana2configtext, "");
+            ReallocCopy((STRPTR *)&data->iface->if_sana2configtext, "");
             strcpy(data->iface->if_name, "ppp");
             data->iface->if_flags |= IFL_PPP;
             break;
@@ -86,7 +86,7 @@ ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(data->iface->if_sana2device, "DEVS:Networks/aslip.device");
             data->iface->if_sana2unit = 0;
             strcpy(data->iface->if_sana2config, "ENV:Sana2/aslip0.config");
-            realloc_copy((STRPTR *)&data->iface->if_sana2configtext, "");
+            ReallocCopy((STRPTR *)&data->iface->if_sana2configtext, "");
             strcpy(data->iface->if_name, "slip");
             data->iface->if_flags |= IFL_SLIP;
             break;
@@ -95,7 +95,7 @@ ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
             strncpy(data->iface->if_sana2device, (STRPTR)xget(data->STR_Sana2Device, MUIA_String_Contents), sizeof(data->iface->if_sana2device));
             data->iface->if_sana2unit = xget(data->STR_Sana2Unit, MUIA_String_Integer);
             strncpy(data->iface->if_sana2config, (STRPTR)xget(data->STR_Sana2ConfigFile, MUIA_String_Contents), sizeof(data->iface->if_sana2config));
-            realloc_copy((STRPTR *)&data->iface->if_sana2configtext, (STRPTR)xget(data->TI_Sana2ConfigText, MUIA_String_Contents));
+            ReallocCopy((STRPTR *)&data->iface->if_sana2configtext, (STRPTR)xget(data->TI_Sana2ConfigText, MUIA_String_Contents));
             break;
       }
       if(value < 2 && data->iface->if_configparams)
@@ -262,12 +262,11 @@ ULONG IfaceWindow_SanaActive(struct IClass *cl, Object *obj, Msg msg)
 ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct IfaceWindow_Data tmp;
-   static STRPTR STR_CY_Ping[4];
    static STRPTR STR_CY_Dynamic[3];
    static STRPTR STR_CY_Netmask[3];
    static STRPTR STR_CY_SanaDevice[4];
    static STRPTR STR_CY_EOF[3];
-   static STRPTR ARR_IfacePages[] = { "Interface", "Sana II", "Misc", "PPP", NULL };
+   static STRPTR ARR_IfacePages[5];
    static STRPTR STR_PO_Interfaces[] = { "ppp", "slip", "plip0", "magplip0", "ether0", "a2065", "a4066",
          "hydra", "wd80xx", "eb920", "quicknet","gg_3c503", "gg_ne1000", "gg_smc", "arcnet0", "a2060",
          "ax25", "liana0", "ariadne", "ariadneliana0", NULL };
@@ -275,39 +274,41 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
    originator = (Object *)GetTagData(MUIA_Genesis_Originator, 0, msg->ops_AttrList);
 
-   STR_CY_Dynamic[0] = GetStr(MSG_CY_Address0);
-   STR_CY_Dynamic[1] = GetStr(MSG_CY_Address1);
+   ARR_IfacePages[0] = GetStr(MSG_TX_IfaceWindowRegister1);
+   ARR_IfacePages[1] = GetStr(MSG_TX_IfaceWindowRegister2);
+   ARR_IfacePages[2] = GetStr(MSG_TX_IfaceWindowRegister3);
+   ARR_IfacePages[3] = GetStr(MSG_TX_IfaceWindowRegister4);
+   ARR_IfacePages[4] = NULL;
+
+   STR_CY_Dynamic[0] = GetStr(MSG_TX_Dynamic);
+   STR_CY_Dynamic[1] = GetStr(MSG_TX_Static);
    STR_CY_Dynamic[2] = NULL;
 
-   STR_CY_Netmask[0] = GetStr("  default");
-   STR_CY_Netmask[1] = GetStr("  specify");
+   STR_CY_Netmask[0] = GetStr(MSG_TX_Default);
+   STR_CY_Netmask[1] = GetStr(MSG_TX_Specify);
    STR_CY_Netmask[2] = NULL;
 
-   STR_CY_SanaDevice[0] = GetStr("  PPP");
-   STR_CY_SanaDevice[1] = GetStr("  SLIP");
-   STR_CY_SanaDevice[2] = GetStr("  specify sana-II device");
+   STR_CY_SanaDevice[0] = "PPP";
+   STR_CY_SanaDevice[1] = "SLIP";
+   STR_CY_SanaDevice[2] = GetStr(MSG_CY_SpecifySana);
    STR_CY_SanaDevice[3] = NULL;
 
-   STR_CY_Ping[0] = GetStr("  disabled");
-   STR_CY_Ping[1] = GetStr("  ICMP ping");
-   STR_CY_Ping[2] = GetStr("  PPP ping");
-   STR_CY_Ping[3] = NULL;
-
-   STR_CY_EOF[0] = GetStr("  auto");
-   STR_CY_EOF[1] = GetStr("  off");
+   STR_CY_EOF[0] = GetStr(MSG_CY_EOFMode1);
+   STR_CY_EOF[1] = GetStr(MSG_CY_EOFMode2);
    STR_CY_EOF[2] = NULL;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title    , "Edit Interface",
+      MUIA_Window_Title    , GetStr(MSG_TX_EditInterface),
       MUIA_Window_ID       , MAKE_ID('I','F','A','E'),
       MUIA_Window_Height   , MUIV_Window_Height_MinMax(0),
       WindowContents       , VGroup,
          Child, RegisterGroup(ARR_IfacePages),
+            MUIA_CycleChain, 1,
             Child, VGroup,
                Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  Name:", "  n"),
+                  Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
                   Child, tmp.PO_IfaceName = PopobjectObject,
-                     MUIA_Popstring_String      , tmp.STR_IfaceName = MakeKeyString(NULL, 16, "  n"),
+                     MUIA_Popstring_String      , tmp.STR_IfaceName = MakeKeyString(NULL, 16, MSG_CC_Name),
                      MUIA_Popstring_Button      , PopButton(MUII_PopUp),
                      MUIA_Popobject_StrObjHook  , &strobjhook,
                      MUIA_Popobject_Object      , tmp.LV_IfaceNames = ListviewObject,
@@ -320,10 +321,10 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                      End,
                   End,
                   Child, VGroup,
-                     Child, MakeKeyLabel2(MSG_LA_Address, MSG_CC_Address),
-                     Child, MakeKeyLabel2("  Destination:", "  d"),
-                     Child, MakeKeyLabel2("  Gateway:", "  y"),
-                     Child, MakeKeyLabel2("  Netmask:", "  e"),
+                     Child, MakeKeyLabel2(MSG_LA_Address    , MSG_CC_Address),
+                     Child, MakeKeyLabel2(MSG_LA_Destination, MSG_CC_Destination),
+                     Child, MakeKeyLabel2(MSG_LA_Gateway    , MSG_CC_Gateway),
+                     Child, MakeKeyLabel2(MSG_LA_Netmask    , MSG_CC_Netmask),
                   End,
                   Child, ColGroup(2),
                      Child, tmp.STR_Address = TextinputObject,
@@ -336,7 +337,7 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                      Child, tmp.CY_Address = Cycle(STR_CY_Dynamic),
                      Child, tmp.STR_Dest = TextinputObject,
                         StringFrame,
-                        MUIA_ControlChar     , *GetStr("  d"),
+                        MUIA_ControlChar     , *GetStr(MSG_CC_Destination),
                         MUIA_CycleChain      , 1,
                         MUIA_String_Accept   , "0123456789.",
                         MUIA_String_MaxLen   , 16,
@@ -344,7 +345,7 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                      Child, tmp.CY_Dest = Cycle(STR_CY_Dynamic),
                      Child, tmp.STR_Gateway = TextinputObject,
                         StringFrame,
-                        MUIA_ControlChar     , *GetStr("  y"),
+                        MUIA_ControlChar     , *GetStr(MSG_CC_Gateway),
                         MUIA_CycleChain      , 1,
                         MUIA_String_Accept   , "0123456789.",
                         MUIA_String_MaxLen   , 16,
@@ -352,7 +353,7 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                      Child, tmp.CY_Gateway = Cycle(STR_CY_Dynamic),
                      Child, tmp.STR_Netmask = TextinputObject,
                         StringFrame,
-                        MUIA_ControlChar     , *GetStr("  e"),
+                        MUIA_ControlChar     , *GetStr(MSG_CC_Netmask),
                         MUIA_CycleChain      , 1,
                         MUIA_String_Accept   , "0123456789.",
                         MUIA_String_MaxLen   , 16,
@@ -369,32 +370,31 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                         MUIA_String_MaxLen   , 6,
                         MUIA_String_Accept   , "1234567890",
                      End,
-                     Child, MakeKeyLabel2("  Params:", "  p"),
-                     Child, tmp.STR_ConfigParams = MakeKeyString(NULL, 1024, "  p"),
+                     Child, MakeKeyLabel2(MSG_LA_IfaceParams, MSG_CC_IfaceParams),
+                     Child, tmp.STR_ConfigParams = MakeKeyString(NULL, 1024, MSG_CC_IfaceParams),
                   End,
                End,
             End,
             Child, VGroup,
                Child, tmp.CY_Sana2Device = Cycle(STR_CY_SanaDevice),
                Child, HGroup,
-                  Child, tmp.PA_Sana2Device = MakePopAsl(tmp.STR_Sana2Device = MakeKeyString(NULL, MAXPATHLEN, "  d"), "Choose sana II device", FALSE),
-                  Child, MakeKeyLabel2("  Unit:", "  u"),
+                  Child, tmp.PA_Sana2Device = MakePopAsl(tmp.STR_Sana2Device = MakeKeyString(NULL, MAXPATHLEN, "   "), GetStr(MSG_TX_ChooseSanaDevice), FALSE),
+                  Child, MakeKeyLabel2(MSG_LA_Unit, MSG_CC_Unit),
                   Child, tmp.STR_Sana2Unit = TextinputObject,
                      StringFrame,
                      MUIA_Weight          , 2,
-                     MUIA_ControlChar     , *GetStr("  u"),
+                     MUIA_ControlChar     , *GetStr(MSG_CC_Unit),
                      MUIA_CycleChain      , 1,
                      MUIA_String_MaxLen   , 5,
                      MUIA_String_Accept   , "1234567890",
                   End,
                End,
-               Child, MUI_MakeObject(MUIO_BarTitle, "Config file"),
-               Child, tmp.PA_Sana2ConfigFile = MakePopAsl(tmp.STR_Sana2ConfigFile = MakeKeyString(NULL, MAXPATHLEN, "  f"), "Choose name for sana II config file", FALSE),
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_ConfigFile)),
+               Child, tmp.PA_Sana2ConfigFile = MakePopAsl(tmp.STR_Sana2ConfigFile = MakeKeyString(NULL, MAXPATHLEN, "  f"), GetStr(MSG_TX_ChooseSanaConfigFile), FALSE),
                Child, tmp.TI_Sana2ConfigText = TextinputscrollObject,
                   MUIA_Weight, 5,
                   StringFrame,
                   MUIA_CycleChain, 1,
-                  MUIA_ControlChar, GetStr("  o"),
                   MUIA_Textinput_Multiline, TRUE,
                   MUIA_Textinput_WordWrap, 512,
                   MUIA_Textinput_AutoExpand, TRUE,
@@ -403,15 +403,15 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
             Child, VGroup,
                Child, HVSpace,
                Child, ColGroup(2),
-                  Child, Label("Keep alive:"),
+                  Child, Label(GetStr(MSG_LA_KeepAlive)),
                   Child, HGroup,
-                     Child, Label("Ping every "),
+                     Child, Label(GetStr(MSG_TX_PingEvery)),
                      Child, tmp.SL_KeepAlive = MUI_MakeObject(MUIO_NumericButton, NULL, 0, 60, "%2ld"),
-                     Child, Label(" min"),
+                     Child, Label(GetStr(MSG_TX_Minutes)),
                   End,
-                  Child, MakeKeyLabel2("  Is always online:", "  o"),
+                  Child, MakeKeyLabel2(MSG_LA_AlwaysOnline, MSG_CC_AlwaysOnline),
                   Child, HGroup,
-                     Child, tmp.CH_AlwaysOnline = MakeKeyCheckMark(FALSE, "  o"),
+                     Child, tmp.CH_AlwaysOnline = MakeKeyCheckMark(FALSE, MSG_CC_AlwaysOnline),
                      Child, HVSpace,
                   End,
                End,
@@ -423,36 +423,36 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   Child, MakeKeyLabel2(MSG_LA_CarrierDetect, MSG_CC_CarrierDetect),
                   Child, tmp.CH_CarrierDetect = MakeKeyCheckMark(FALSE, MSG_CC_CarrierDetect),
                   Child, HVSpace,
-                  Child, MakeKeyLabel2("  EOF Mode:", "  e"),
-                  Child, tmp.CY_EOF = KeyCycle(STR_CY_EOF, GetStr("  e")),
-                  Child, MakeKeyLabel2("  MPP Compression:", "  m"),
-                  Child, tmp.CH_MPPCompression = MakeKeyCheckMark(FALSE, "  m"),
+                  Child, MakeKeyLabel2(MSG_LA_EOFMode, MSG_CC_EOFMode),
+                  Child, tmp.CY_EOF = MakeKeyCycle(STR_CY_EOF, MSG_CC_EOFMode),
+                  Child, MakeKeyLabel2(MSG_LA_MPPCompression, MSG_CC_MPPCompression),
+                  Child, tmp.CH_MPPCompression = MakeKeyCheckMark(FALSE, MSG_CC_MPPCompression),
                   Child, HVSpace,
-                  Child, MakeKeyLabel2("  BSD Compression:", "  b"),
+                  Child, MakeKeyLabel2(MSG_LA_BSDCompression, MSG_CC_BSDCompression),
                   Child, HGroup,
-                     Child, tmp.CH_BSDCompression = MakeKeyCheckMark(FALSE, "  b"),
+                     Child, tmp.CH_BSDCompression = MakeKeyCheckMark(FALSE, MSG_CC_BSDCompression),
                      Child, HVSpace,
                   End,
-                  Child, MakeKeyLabel2("  VJ Compression:", "  v"),
-                  Child, tmp.CH_VJCompression = MakeKeyCheckMark(FALSE, "  v"),
+                  Child, MakeKeyLabel2(MSG_LA_VJCompression, MSG_CC_VJCompression),
+                  Child, tmp.CH_VJCompression = MakeKeyCheckMark(FALSE, MSG_CC_VJCompression),
                   Child, HVSpace,
-                  Child, MakeKeyLabel2("  Deflate Compression:", "  d"),
+                  Child, MakeKeyLabel2(MSG_LA_DeflateCompression, MSG_CC_DeflateCompression),
                   Child, HGroup,
-                     Child, tmp.CH_DeflateCompression = MakeKeyCheckMark(FALSE, "  d"),
+                     Child, tmp.CH_DeflateCompression = MakeKeyCheckMark(FALSE, MSG_CC_DeflateCompression),
                      Child, HVSpace,
                   End,
                End,
                Child, HVSpace,
                Child, ColGroup(2),
-                  Child, MakeKeyLabel2("  Callback:", "  a"),
+                  Child, MakeKeyLabel2(MSG_LA_Callback, MSG_CC_Callback),
                   Child, HGroup,
                      GroupSpacing(1),
-                     Child, tmp.CH_Callback = MakeKeyCheckMark(FALSE, "  a"),
-                     Child, tmp.STR_Callback = MakeKeyString(NULL, 80, "  n"),
+                     Child, tmp.CH_Callback = MakeKeyCheckMark(FALSE, MSG_CC_Callback),
+                     Child, tmp.STR_Callback = MakeKeyString(NULL, 80, MSG_CC_Callback),
                   End,
-                  Child, MakeKeyLabel2("  Timeout:", "  t"),
+                  Child, MakeKeyLabel2(MSG_LA_Timeout, MSG_CC_Timeout),
                   Child, HGroup,
-                     Child, tmp.SL_ConnectTimeout = MUI_MakeObject(MUIO_NumericButton, NULL, 5, 360, "%2ld sec"),
+                     Child, tmp.SL_ConnectTimeout = MUI_MakeObject(MUIO_NumericButton, NULL, 5, 360, GetStr(MSG_TX_TimeoutSlider)),
                      Child, HVSpace,
                   End,
                End,
@@ -460,8 +460,8 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, HGroup,
-            Child, tmp.BT_Okay   = MakeButton("  _Okay"),
-            Child, tmp.BT_Cancel = MakeButton("  _Cancel"),
+            Child, tmp.BT_Okay   = MakeButton(MSG_BT_Okay),
+            Child, tmp.BT_Cancel = MakeButton(MSG_BT_Cancel),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -472,10 +472,20 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       data->iface = NULL;
 
+      set(data->SL_ConnectTimeout, MUIA_ControlChar, GetStr(MSG_CC_Timeout));
+
       set(data->CY_Address, MUIA_Weight, 0);
       set(data->CY_Dest   , MUIA_Weight, 0);
       set(data->CY_Gateway, MUIA_Weight, 0);
       set(data->CY_Netmask, MUIA_Weight, 0);
+
+      set(data->CY_Address       , MUIA_CycleChain, 1);
+      set(data->CY_Dest          , MUIA_CycleChain, 1);
+      set(data->CY_Gateway       , MUIA_CycleChain, 1);
+      set(data->CY_Netmask       , MUIA_CycleChain, 1);
+      set(data->CY_Sana2Device   , MUIA_CycleChain, 1);
+      set(data->SL_KeepAlive     , MUIA_CycleChain, 1);
+      set(data->SL_ConnectTimeout, MUIA_CycleChain, 1);
 
       set(data->STR_Address        , MUIA_Disabled, TRUE);
       set(data->STR_Dest           , MUIA_Disabled, TRUE);
@@ -506,7 +516,7 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// IfaceWindow_Dispatcher
-SAVEDS ULONG IfaceWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG IfaceWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "Strings.h"
@@ -19,7 +18,7 @@ extern Object *win;
 ///
 
 /// ModemList_ConstructFunc
-struct Modem * SAVEDS ModemList_ConstructFunc(register __a2 APTR pool, register __a1 struct Modem *src)
+SAVEDS ASM struct Modem *ModemList_ConstructFunc(register __a2 APTR pool, register __a1 struct Modem *src)
 {
    struct Modem *new;
 
@@ -30,7 +29,7 @@ struct Modem * SAVEDS ModemList_ConstructFunc(register __a2 APTR pool, register 
 
 ///
 /// Modem_ProtocolList_ConstructFunc
-struct ModemProtocol * SAVEDS Modem_ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct ModemProtocol *src)
+SAVEDS ASM struct ModemProtocol *Modem_ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct ModemProtocol *src)
 {
    struct ModemProtocol *new;
 
@@ -41,7 +40,7 @@ struct ModemProtocol * SAVEDS Modem_ProtocolList_ConstructFunc(register __a2 APT
 
 ///
 /// Modem_ProtocolList_DisplayFunc
-SAVEDS LONG Modem_ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct ModemProtocol *modem_protocol)
+SAVEDS ASM LONG Modem_ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct ModemProtocol *modem_protocol)
 {
    if(modem_protocol)
    {
@@ -50,8 +49,8 @@ SAVEDS LONG Modem_ProtocolList_DisplayFunc(register __a2 char **array, register 
    }
    else
    {
-      *array++ = GetStr("  \033bProtocol");
-      *array   = GetStr("  \033bInitString");
+      *array++ = GetStr(MSG_TX_Protocol);
+      *array   = GetStr(MSG_TX_InitString);
    }
    return(NULL);
 }
@@ -148,19 +147,24 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
    static const struct Hook Modem_ProtocolList_DisplayHook= { { 0,0 }, (VOID *)Modem_ProtocolList_DisplayFunc , NULL, NULL };
    static STRPTR ARR_BaudRates[] = { "9600", "14400", "19200", "38400", "57600", "76800", "115200", "230400", "345600", "460800" , NULL };
    static STRPTR ARR_DialPrefix[] = { "ATDT", "ATDP", "ATD0w", "ATD0,", NULL };
-   static STRPTR ARR_Modem_Register[] = { "Modem / TA", "Device", NULL };
+   static STRPTR ARR_Modem_Register[3];
    static STRPTR ARR_Handshake[] = { "RTS/CTS", "Xon/Xoff", "none", NULL };
    struct Modem_Data tmp;
 
+   ARR_Modem_Register[0] = GetStr(MSG_TX_ModemRegister1);
+   ARR_Modem_Register[1] = GetStr(MSG_TX_ModemRegister2);
+   ARR_Modem_Register[2] = NULL;
+
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Register_Titles, ARR_Modem_Register,
+      MUIA_CycleChain, 1,
       Child, VGroup,
          Child, HVSpace,
-         Child, MUI_MakeObject(MUIO_BarTitle, "Modem / TA settings"),
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_ModemTATitle)),
          Child, ColGroup(2),
-            Child, MakeKeyLabel2(MSG_LA_ModemType, "  m"),
+            Child, MakeKeyLabel2(MSG_LA_ModemType, MSG_CC_ModemType),
             Child, tmp.PO_Modem = PopobjectObject,
-               MUIA_Popstring_String      , tmp.STR_Modem = MakeKeyString("Generic", 80, "  m"),
+               MUIA_Popstring_String      , tmp.STR_Modem = MakeKeyString("Generic", 80, MSG_CC_ModemType),
                MUIA_Popstring_Button      , PopButton(MUII_PopUp),
                MUIA_Popobject_StrObjHook  , &strobjhook,
                MUIA_Popobject_Object      , tmp.LV_Modems = ListviewObject,
@@ -210,11 +214,11 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   End,
                End,
             End,
-            Child, MakeKeyLabel2("  Dial suffix:", "  u"),
-            Child, tmp.STR_DialSuffix = MakeKeyString(NULL, 40, "  u"),
+            Child, MakeKeyLabel2(MSG_LA_DialSuffix, MSG_CC_DialSuffix),
+            Child, tmp.STR_DialSuffix = MakeKeyString(NULL, 40, MSG_CC_DialSuffix),
          End,
          Child, HVSpace,
-         Child, MUI_MakeObject(MUIO_BarTitle, "Redial settings"),
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_RedialSettings)),
          Child, ColGroup(2),
             Child, MakeKeyLabel2(MSG_LA_RedialAttempts, MSG_CC_RedialAttempts),
             Child, tmp.SL_RedialAttempts  = MakeKeySlider(0, 99, 15, MSG_CC_RedialAttempts),
@@ -226,7 +230,7 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       Child, VGroup,
          Child, HVSpace,
-         Child, MUI_MakeObject(MUIO_BarTitle, "Device settings"),
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_DeviceSettings)),
          Child, ColGroup(2),
             Child, MakeKeyLabel2(MSG_LA_Device, MSG_CC_Device),
             Child, tmp.PO_SerialDevice = PopobjectObject,
@@ -276,10 +280,10 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   End,
                End,
             End,
-            Child, MakeKeyLabel2("  Buffer size:", "  b"),
+            Child, MakeKeyLabel2(MSG_LA_BufferSize, MSG_CC_BufferSize),
             Child, tmp.STR_SerBufLen = TextinputObject,
                StringFrame,
-               MUIA_ControlChar     , *GetStr("  b"),
+               MUIA_ControlChar     , *GetStr(MSG_CC_BufferSize),
                MUIA_CycleChain      , 1,
                MUIA_String_MaxLen   , 7,
                MUIA_String_Integer  , 16384,
@@ -287,22 +291,22 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
          End,
          Child, HVSpace,
-         Child, MUI_MakeObject(MUIO_BarTitle, "Options"),
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_SerialOptions)),
          Child, HGroup,
             Child, HVSpace,
             Child, ColGroup(2),
-               Child, tmp.CH_RadBoogie    = MakeKeyCheckMark(TRUE, "  h"),
-               Child, KeyLLabel1(GetStr("  Highspeed mode"), *GetStr("  h")),
-               Child, tmp.CH_IgnoreDSR  = MakeKeyCheckMark(FALSE, "  i"),
-               Child, KeyLLabel1(GetStr("  Ignore DSR"), *GetStr("  i")),
-               Child, tmp.CH_OwnDevUnit  = MakeKeyCheckMark(FALSE, "  o"),
-               Child, KeyLLabel1(GetStr("  Use OwnDevUnit"), *GetStr("  o")),
+               Child, tmp.CH_RadBoogie    = MakeKeyCheckMark(TRUE, MSG_CC_HighspeedMode),
+               Child, KeyLLabel1(GetStr(MSG_LA_HighspeedMode), *GetStr(MSG_CC_HighspeedMode)),
+               Child, tmp.CH_IgnoreDSR  = MakeKeyCheckMark(FALSE, MSG_CC_IgnoreDSR),
+               Child, KeyLLabel1(GetStr(MSG_LA_IgnoreDSR), *GetStr(MSG_CC_IgnoreDSR)),
+               Child, tmp.CH_OwnDevUnit  = MakeKeyCheckMark(FALSE, MSG_CC_OwnDevUnit),
+               Child, KeyLLabel1(GetStr(MSG_LA_OwnDevUnit), *GetStr(MSG_CC_OwnDevUnit)),
             End,
             Child, HVSpace,
             Child, VGroup,
                Child, HGroup,
-                  Child, MakeKeyLabel2("  Flow control:", "  f"),
-                  Child, tmp.CY_Handshake = MakeKeyCycle(ARR_Handshake, "  f"),
+                  Child, MakeKeyLabel2(MSG_LA_FlowControl, MSG_CC_FlowControl),
+                  Child, tmp.CY_Handshake = MakeKeyCycle(ARR_Handshake, MSG_CC_FlowControl),
                End,
                Child,HVSpace,
             End,
@@ -321,15 +325,20 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->CY_Handshake  , MUIA_CycleChain, 1);
 
       set(data->STR_Modem        , MUIA_ShortHelp, GetStr(MSG_Help_Modem));
-      set(data->STR_DialPrefix   , MUIA_ShortHelp, GetStr(MSG_Help_DialPrefix));
       set(data->STR_InitString   , MUIA_ShortHelp, GetStr(MSG_Help_InitString));
+      set(data->STR_DialPrefix   , MUIA_ShortHelp, GetStr(MSG_Help_DialPrefix));
+      set(data->STR_DialSuffix   , MUIA_ShortHelp, GetStr(MSG_Help_DialSuffix));
       set(data->SL_RedialAttempts, MUIA_ShortHelp, GetStr(MSG_Help_RedialAttempts));
       set(data->SL_RedialDelay   , MUIA_ShortHelp, GetStr(MSG_Help_RedialDelay));
 
       set(data->STR_SerialDevice, MUIA_ShortHelp, GetStr(MSG_Help_SerialDevice));
       set(data->STR_SerialUnit  , MUIA_ShortHelp, GetStr(MSG_Help_SerialUnit));
       set(data->STR_BaudRate    , MUIA_ShortHelp, GetStr(MSG_Help_BaudRate));
-//      set(data->CH_7Wire        , MUIA_ShortHelp, GetStr(MSG_Help_7Wire));
+      set(data->STR_SerBufLen   , MUIA_ShortHelp, GetStr(MSG_Help_BufferSize));
+      set(data->CH_RadBoogie    , MUIA_ShortHelp, GetStr(MSG_Help_HighspeedMode));
+      set(data->CH_IgnoreDSR    , MUIA_ShortHelp, GetStr(MSG_Help_IgnoreDSR));
+      set(data->CH_OwnDevUnit   , MUIA_ShortHelp, GetStr(MSG_Help_UseOwnDevUnit));
+      set(data->CY_Handshake    , MUIA_ShortHelp, GetStr(MSG_Help_FlowControl));
 
       DoMethod(data->LV_Modems     , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , obj, 2, MUIM_Modem_PopString_Close, MUIV_Modem_PopString_Modem);
       DoMethod(data->LV_Protocols  , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , obj, 2, MUIM_Modem_PopString_Close, MUIV_Modem_PopString_Protocol);
@@ -349,7 +358,7 @@ ULONG Modem_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Modem_Dispatcher
-SAVEDS ULONG Modem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Modem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

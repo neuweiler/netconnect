@@ -1,6 +1,5 @@
 /// includes
 #include "/includes.h"
-#pragma header
 
 #include "Strings.h"
 #include "/Genesis.h"
@@ -11,6 +10,7 @@
 
 ///
 /// external variables
+extern struct Library *MUIMasterBase;
 extern struct MUI_CustomClass  *CL_MainWindow;
 
 ///
@@ -45,7 +45,6 @@ ULONG Protocol_New(struct IClass *cl, Object *obj, struct opSet *msg)
    TAG_MORE, msg->ops_AttrList))
    {
       struct Protocol_Data *data = INST_DATA(cl, obj);
-      struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, originator);
 
       *data = tmp;
 
@@ -60,7 +59,7 @@ ULONG Protocol_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Protocol_Dispatcher
-SAVEDS ULONG Protocol_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Protocol_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

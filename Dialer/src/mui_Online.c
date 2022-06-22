@@ -1,13 +1,14 @@
 /// includes & defines
 #include "/includes.h"
-#pragma header
 
 #include "/Genesis.h"
 #include "/genesis.lib/libraries/genesis.h"
+#include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/genesis_lib.h"
 #include "Strings.h"
 #include "mui.h"
+#include "mui_Online.h"
+#include "mui_MainWindow.h"
 #include "mui_Led.h"
 #include "protos.h"
 #include "bootpc.h"
@@ -18,6 +19,7 @@
 
 ///
 /// external variables
+extern struct Library *GenesisBase;
 extern int errno;
 extern struct Config Config;
 extern Object *app, *win, *status_win;
@@ -166,7 +168,7 @@ BOOL config_complete(struct Interface_Data *iface_data, struct Interface *iface,
 
 ///
 /// TCPHandler
-VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
+SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
 {
    struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
    struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
@@ -214,17 +216,17 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
                if(data->abort)   goto abort;
                DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_InitDevice), NULL);
                if(data->abort)   goto abort;
-               if(DoMainMethod(win, MUIM_Genesis_Get, (APTR)MUIA_Window_Open, NULL, NULL))
+               if(DoMainMethod(status_win, MUIM_Genesis_Get, (APTR)MUIA_Window_Open, NULL, NULL) && (Config.cnf_flags & CFL_ShowSerialInput))
                   DoMainMethod(data->TR_Terminal, TCM_INIT, NULL, NULL, NULL);
                if(data->abort)   goto abort;
                if(!(iface_init(iface_data, iface, &mw_data->isp, &Config)))
                   goto abort;
 
                // get appp.device's ms-dns addresses
-               GetEnvDOS("APPPdns1", buffer, 20);
+               ReadFile("ENV:APPPdns1", buffer, 20);
                if(!find_server_by_name(&mw_data->isp.isp_nameservers, buffer))
                   add_server(&mw_data->isp.isp_nameservers, buffer);
-               GetEnvDOS("APPPdns2", buffer, 20);
+               ReadFile("ENV:APPPdns2", buffer, 20);
                if(!find_server_by_name(&mw_data->isp.isp_nameservers, buffer))
                   add_server(&mw_data->isp.isp_nameservers, buffer);
 
@@ -362,7 +364,7 @@ VOID SAVEDS TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
                   {
                      if(amirexx_do_command("ADD START HOST %ls %ls", iface->if_addr, mw_data->isp.isp_hostname) != RETURN_OK)
                         syslog_AmiTCP(LOG_WARNING, GetStr(MSG_TX_WarningSetHostname), mw_data->isp.isp_hostname);
-                     SetEnvDOS("HOSTNAME", mw_data->isp.isp_hostname, -1, FALSE);
+                     WriteFile("ENV:HOSTNAME", mw_data->isp.isp_hostname, -1);
                   }
 
                   if(data->abort)   goto abort;
@@ -528,6 +530,7 @@ ULONG Online_New(struct IClass *cl, Object *obj, struct opSet *msg)
          Child, tmp.GR_Terminal = HGroup,
             GroupSpacing(0),
             InnerSpacing(0, 0),
+            MUIA_ShowMe, Config.cnf_flags & CFL_ShowSerialInput,
             Child, tmp.TR_Terminal = TermObject,
                MUIA_CycleChain, 1,
                InputListFrame,
@@ -567,7 +570,7 @@ ULONG Online_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Online_Dispatcher
-SAVEDS ULONG Online_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+SAVEDS ASM ULONG Online_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {

@@ -6,11 +6,12 @@
 #define MUIM_UserWindow_NameActive     (TAGBASE_PREFS | 0x1095)
 #define MUIM_UserWindow_HomeDirActive  (TAGBASE_PREFS | 0x1096)
 
-struct MUIP_UserWindow_Init                { ULONG MethodID; struct User *user; };
+struct MUIP_UserWindow_Init                { ULONG MethodID; struct Prefs_User *p_user; };
 
 struct UserWindow_Data
 {
-   struct User *user;
+   struct Prefs_User *p_user;
+   char password[41];
 
    Object *STR_Name;
    Object *STR_RealName;

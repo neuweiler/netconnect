@@ -1,27 +1,21 @@
-#ifndef LIB_PROTOS_H
-#define LIB_PROTOS_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef GENESIS_LIB_PROTOS_H
+#define GENESIS_LIB_PROTOS_H
 
 LONG   GetFileSize(STRPTR file);
-BOOL   ParseConfig(STRPTR file, struct pc_Data *pc_data);
-BOOL   ParseNext(struct pc_Data *pc_data);
-BOOL   ParseNextLine(struct pc_Data *pc_data);
-BOOL   ParseEnd(struct pc_Data *pc_data);
-VOID   FreeUserData(struct UserData *ud);
-struct UserData *GetUser(LONG user_number);
-struct UserData *GetCurrentUser(VOID);
-struct UserData *GetUserByName(STRPTR username);
-BOOL   SetCurrentUser(long user_number);
-BOOL   SetCurrentUserByName(char *name);
-struct UserData *AskForUser(struct Library *muilib, Object *app, Object *win, STRPTR name);
-VOID   ClearUserList(VOID);
-BOOL   LoadUserList(STRPTR file);
+BOOL   ParseConfig(STRPTR file, struct ParseConfig_Data *pc_data);
+BOOL   ParseNext(struct ParseConfig_Data *pc_data);
+BOOL   ParseNextLine(struct ParseConfig_Data *pc_data);
+VOID   ParseEnd(struct ParseConfig_Data *pc_data);
+VOID   FreeUser(struct User *user);
+STRPTR ReallocCopy(STRPTR *old, STRPTR src);
+LONG   ReadFile(STRPTR file, STRPTR buffer, LONG len);
+BOOL   WriteFile(STRPTR file, STRPTR buffer, LONG len);
 
-#ifdef __cplusplus
-};
-#endif
+BOOL   GetUserName(LONG user_number, char *buffer, LONG len);
+struct User *GetUser(STRPTR name, STRPTR title, LONG flags);
+struct User *GetGlobalUser(VOID);
+VOID   SetGlobalUser(struct User *user);
+VOID   ClearUserList(VOID);
+BOOL   ReloadUserList(VOID);
 
 #endif

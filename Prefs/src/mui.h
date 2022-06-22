@@ -10,6 +10,7 @@ enum { MEN_ABOUT = 1, MEN_ABOUT_MUI, MEN_ICONIFY, MEN_QUIT, MEN_LOAD, MEN_IMPORT
 
 struct MUIP_Genesis_Finish              { ULONG MethodID; Object *obj; LONG status; };
 
+
 /*
 Genesis        : 1000
 MainWindow     : 1010
