@@ -1,6 +1,49 @@
-#include "globals.c"
-#include "protos.h"
+/// includes
+#include "/includes.h"
+#pragma header
 
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_DataBase.h"
+#include "mui_Dialer.h"
+#include "mui_MainWindow.h"
+#include "mui_Modem.h"
+#include "mui_PasswdReq.h"
+#include "mui_Provider.h"
+#include "mui_User.h"
+#include "protos.h"
+#include "mui/Grouppager_mcc.h"
+#include "images/information.h"
+#include "images/databases.h"
+#include "images/dialer.h"
+#include "images/modem.h"
+#include "images/provider.h"
+#include "images/user.h"
+#include "images/logo.h"
+
+///
+/// external variables
+extern struct MUI_CustomClass  *CL_Provider;
+extern struct MUI_CustomClass  *CL_User;
+extern struct MUI_CustomClass  *CL_Dialer;
+extern struct MUI_CustomClass  *CL_Modem;
+extern struct MUI_CustomClass  *CL_Databases;
+extern struct MUI_CustomClass  *CL_About;
+extern char config_file[];
+extern BOOL changed_passwd, changed_group, changed_hosts, changed_protocols,
+            changed_services, changed_inetd, changed_networks, changed_rpc, changed_inetaccess;
+extern Object *win;
+extern Object *app;
+extern struct NewMenu MainWindowMenu[];
+
+extern struct BitMapHeader information_header, provider_header, user_header, modem_header, dialer_header, databases_header, logo_header;
+extern ULONG information_colors[], provider_colors[], user_colors[], modem_colors[], dialer_colors[], databases_colors[], logo_colors[];
+extern UBYTE information_body[], provider_body[], user_body[], modem_body[], dialer_body[], databases_body[], logo_body[];
+
+///
+            
 /// create_bodychunk
 Object *create_bodychunk(struct BitMapHeader *bmhd, ULONG *cols, UBYTE *body)
 {
@@ -56,11 +99,6 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
             setstring(user_data->STR_LoginName     , pc_data.Contents);
          else if(!stricmp(pc_data.Argument, "Password"))
             setstring(user_data->STR_Password      , pc_data.Contents);
-         else if(!stricmp(pc_data.Argument, "UserName"))
-         {
-            setstring(user_data->STR_UserName      , pc_data.Contents);
-            setcycle(user_data->CY_UserName, 1);
-         }
          else if(!stricmp(pc_data.Argument, "RealName"))
             setstring(user_data->STR_RealName      , pc_data.Contents);
          else if(!stricmp(pc_data.Argument, "EMail"))
@@ -236,34 +274,42 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
 
          else if(!stricmp(pc_data.Argument, "LoginScript"))
          {
+            struct ScriptLine *script_line;
+
             DoMethod(dialer_data->LI_Script, MUIM_List_Clear);
-            while(ParseNextLine(&pc_data))
+            if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
             {
-               if(!stricmp(pc_data.Contents, "EOS"))
-                  break;
-               DoMethod(dialer_data->LI_Script, MUIM_List_InsertSingle, pc_data.Contents, MUIV_List_Insert_Bottom);
-            }
-         }
-         else if(!stricmp(pc_data.Argument, "UserStartNet"))
-         {
-            set(user_data->TI_UserStartnet, MUIA_Textinput_Contents, "");
-            while(ParseNextLine(&pc_data))
-            {
-               if(!stricmp(pc_data.Contents, "EOS"))
-                  break;
-               DoMethod(user_data->TI_UserStartnet, MUIM_Textinput_AppendText, pc_data.Contents, strlen(pc_data.Contents));
-               DoMethod(user_data->TI_UserStartnet, MUIM_Textinput_AppendText, "\n", 1);
-            }
-         }
-         else if(!stricmp(pc_data.Argument, "UserStopNet"))
-         {
-            set(user_data->TI_UserStopnet, MUIA_Textinput_Contents, "");
-            while(ParseNextLine(&pc_data))
-            {
-               if(!stricmp(pc_data.Contents, "EOS"))
-                  break;
-               DoMethod(user_data->TI_UserStopnet, MUIM_Textinput_AppendText, pc_data.Contents, strlen(pc_data.Contents));
-               DoMethod(user_data->TI_UserStopnet, MUIM_Textinput_AppendText, "\n", 1);
+               while(ParseNext(&pc_data))
+               {
+                  if(!stricmp(pc_data.Argument, "EOS"))
+                     break;
+
+                  if(!stricmp(pc_data.Argument, script_commands[SL_Send]))
+                     script_line->sl_command = SL_Send;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_WaitFor]))
+                     script_line->sl_command = SL_WaitFor;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_Dial]))
+                     script_line->sl_command = SL_Dial;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_GoOnline]))
+                     script_line->sl_command = SL_GoOnline;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendLogin]))
+                     script_line->sl_command = SL_SendLogin;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendPassword]))
+                     script_line->sl_command = SL_SendPassword;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_SendBreak]))
+                     script_line->sl_command = SL_SendBreak;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_Exec]))
+                     script_line->sl_command = SL_Exec;
+                  else if(!stricmp(pc_data.Argument, script_commands[SL_Pause]))
+                     script_line->sl_command = SL_Pause;
+                  else
+                     script_line->sl_command = 0;
+
+                  strncpy(script_line->sl_contents, pc_data.Contents, 250);
+
+                  DoMethod(dialer_data->LI_Script, MUIM_NList_InsertSingle, script_line, MUIV_NList_Insert_Bottom);
+               }
+               FreeVec(script_line);
             }
          }
       }
@@ -271,7 +317,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
    }
 
    /**** load the ModemSettings into the List ****/
-   if(ParseConfig("NetConnect:Data/Misc/ModemDatabase", &pc_data))
+   if(ParseConfig("AmiTCP:db/modems", &pc_data))
    {
       struct Modem *modem;
       int protocol_nr = 0;
@@ -534,6 +580,48 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
    DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Services);
 
 
+   /**** parse the inet.access file ****/
+
+   set(db_data->LV_InetAccess, MUIA_List_Quiet, TRUE);
+   if(ParseConfig("AmiTCP:db/inet.access", &pc_data))
+   {
+      struct InetAccess *inet_access;
+
+      if(inet_access = AllocVec(sizeof(struct InetAccess), MEMF_ANY))
+      {
+         while(ParseNextLine(&pc_data))
+         {
+            if(ptr = strchr(pc_data.Contents, '#'))
+               *ptr = NULL;
+            if(ptr = strchr(pc_data.Contents, ';'))
+               *ptr = NULL;
+
+            if(pc_data.Contents = extract_arg(pc_data.Contents, inet_access->Service, 40, NULL))
+            {
+               if(pc_data.Contents = extract_arg(pc_data.Contents, inet_access->Host, 80, NULL))
+               {
+                  if(pc_data.Contents = extract_arg(pc_data.Contents, buffer, 40, NULL))
+                  {
+                     inet_access->Access = (stricmp(buffer, "allow") ? 0 : 1);
+                     inet_access->Log = (stricmp(pc_data.Contents, "LOG") ? 0 : 1);
+                  }
+                  else
+                  {
+                     inet_access->Access = (stricmp(pc_data.Contents, "allow") ? 0 : 1);
+                     inet_access->Log = FALSE;
+                  }
+                  DoMethod(db_data->LV_InetAccess, MUIM_List_InsertSingle, inet_access, MUIV_List_Insert_Bottom);
+               }
+            }
+         }
+         FreeVec(inet_access);
+      }
+      ParseEnd(&pc_data);
+   }
+   set(db_data->LV_InetAccess, MUIA_List_Quiet, FALSE);
+   DoMethod(data->GR_Databases, MUIM_Databases_SetStates, MUIV_Databases_SetStates_InetAccess);
+
+
    /**** parse the inetd.conf file ****/
 
    set(db_data->LV_Inetd, MUIA_List_Quiet, TRUE);
@@ -712,6 +800,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
    struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
    struct Dialer_Data      *dialer_data      = INST_DATA(CL_Dialer->mcc_Class    , data->GR_Dialer);
    struct Databases_Data   *db_data          = INST_DATA(CL_Databases->mcc_Class , data->GR_Databases);
+   struct ScriptLine *script_line;
    BPTR fh;
    STRPTR ptr;
    LONG pos;
@@ -723,10 +812,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
    {
          FPrintf(fh, "LoginName       %ls\n", xget(user_data->STR_LoginName    , MUIA_String_Contents));
          FPrintf(fh, "Password        %ls\n", xget(user_data->STR_Password     , MUIA_String_Contents));
-         if(xget(user_data->CY_UserName, MUIA_Cycle_Active))
-            FPrintf(fh, "UserName        %ls\n", xget(user_data->STR_UserName     , MUIA_String_Contents));
-         else
-            FPrintf(fh, "RealName        %ls\n", xget(user_data->STR_RealName     , MUIA_String_Contents));
+         FPrintf(fh, "RealName        %ls\n", xget(user_data->STR_RealName     , MUIA_String_Contents));
          FPrintf(fh, "EMail           %ls\n", xget(user_data->STR_EMail        , MUIA_String_Contents));
          FPrintf(fh, "Organisation    %ls\n\n", xget(user_data->STR_Organisation , MUIA_String_Contents));
 
@@ -746,55 +832,59 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          FPrintf(fh, "RedialAttempts  %ld\n", xget(modem_data->SL_RedialAttempts, MUIA_Numeric_Value));
          FPrintf(fh, "RedialDelay     %ld\n\n", xget(modem_data->SL_RedialDelay  , MUIA_Numeric_Value));
 
+         ptr = NULL;
          switch(xget(provider_data->CY_Sana2Device, MUIA_Cycle_Active))
          {
             case 0:
                FPrintf(fh, "Sana2Device     DEVS:Networks/appp.device\nSana2Unit       0\n");
-               FPrintf(fh, "Sana2Config     ENV:Sana2/appp0.config\nSana2ConfigText %ls\n", get_configcontents(TRUE));
-               FPrintf(fh, "Interface       ppp\n");
+               FPrintf(fh, "Sana2Config     ENV:Sana2/appp0.config\n");
+               ptr = get_configcontents(TRUE);
                break;
             case 1:
                FPrintf(fh, "Sana2Device     DEVS:Networks/aslip.device\nSana2Unit       0\n");
-               FPrintf(fh, "Sana2Config     ENV:Sana2/aslip0.config\nSana2ConfigText %ls\n", get_configcontents(FALSE));
-               FPrintf(fh, "Interface       slip\n");
+               FPrintf(fh, "Sana2Config     ENV:Sana2/aslip0.config\n");
+               ptr = get_configcontents(FALSE);
                break;
             default:
                FPrintf(fh, "Sana2Device     %ls\n", xget(provider_data->STR_Sana2Device        , MUIA_String_Contents));
                FPrintf(fh, "Sana2Unit       %ls\n", xget(provider_data->STR_Sana2Unit          , MUIA_String_Contents));
                FPrintf(fh, "Sana2Config     %ls\n", xget(provider_data->STR_Sana2ConfigFile    , MUIA_String_Contents));
                ptr = (STRPTR)xget(provider_data->TI_Sana2ConfigContents , MUIA_Textinput_Contents);
-               if(strchr(ptr, '\n'))
-               {
-                  STRPTR buf, ptr2;
-
-                  FPrintf(fh, "Sana2ConfigText ");
-                  if(buf = AllocVec(strlen(ptr + 1), MEMF_ANY))
-                  {
-                     memcpy(buf, ptr, strlen(ptr) + 1);
-
-                     ptr = buf;
-                     FOREVER
-                     {
-                        if(ptr2 = strchr(ptr, '\n'))
-                           *ptr2 = NULL;
-                        FPrintf(fh, "%ls", ptr);
-                        if(ptr2)
-                           FPrintf(fh, "\\n");
-                        else
-                           break;
-                        ptr = ptr2 + 1;
-                     }
-                     FreeVec(buf);
-                  }
-                  FPrintf(fh, "\n");
-               }
-               else
-                  FPrintf(fh, "Sana2ConfigText %ls\n", ptr);
-               FPrintf(fh, "Interface       %ls\n", xget(provider_data->STR_IfaceName          , MUIA_String_Contents));
-               if(strlen((STRPTR)xget(provider_data->STR_IfaceConfigParams  , MUIA_String_Contents)))
-                  FPrintf(fh, "IfConfigParams  %ls\n", xget(provider_data->STR_IfaceConfigParams  , MUIA_String_Contents));
                break;
          }
+         if(ptr)
+         {
+            if(strchr(ptr, '\n'))
+            {
+               STRPTR buf, ptr2;
+
+               FPrintf(fh, "Sana2ConfigText ");
+               if(buf = AllocVec(strlen(ptr) + 1, MEMF_ANY))
+               {
+                  memcpy(buf, ptr, strlen(ptr) + 1);
+
+                  ptr = buf;
+                  FOREVER
+                  {
+                     if(ptr2 = strchr(ptr, '\n'))
+                        *ptr2 = NULL;
+                     FPrintf(fh, "%ls", ptr);
+                     if(ptr2)
+                        FPrintf(fh, "\\n");
+                     else
+                        break;
+                     ptr = ptr2 + 1;
+                  }
+                  FreeVec(buf);
+               }
+               FPrintf(fh, "\n");
+            }
+            else
+               FPrintf(fh, "Sana2ConfigText %ls\n", ptr);
+         }
+         FPrintf(fh, "Interface       %ls\n", xget(provider_data->STR_IfaceName          , MUIA_String_Contents));
+         if(strlen((STRPTR)xget(provider_data->STR_IfaceConfigParams  , MUIA_String_Contents)))
+            FPrintf(fh, "IfConfigParams  %ls\n", xget(provider_data->STR_IfaceConfigParams  , MUIA_String_Contents));
          FPrintf(fh, "MTU             %ls\n", xget(provider_data->STR_MTU      , MUIA_String_Contents));
          if(xget(provider_data->CY_Ping, MUIA_Cycle_Active))
          {
@@ -855,25 +945,12 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          pos = 0;
          FOREVER
          {
-            DoMethod(dialer_data->LV_Script, MUIM_List_GetEntry, pos++, &ptr);
-            if(!ptr)
+            DoMethod(dialer_data->LV_Script, MUIM_List_GetEntry, pos++, &script_line);
+            if(!script_line)
                break;
-            FPrintf(fh, "%ls\n", ptr);
+            FPrintf(fh, "%ls %ls\n", script_commands[script_line->sl_command], script_line->sl_contents);
          }
          FPrintf(fh, "EOS\n\n");
-
-         ptr = (STRPTR)xget(user_data->TI_UserStartnet, MUIA_Textinput_Contents);
-         FPrintf(fh, "UserStartNet\n%ls", ptr);
-         if(ptr[strlen(ptr) - 1] != '\n')
-            FPrintf(fh, "\n");
-         FPrintf(fh, "EOS\n\n");
-
-         ptr = (STRPTR)xget(user_data->TI_UserStopnet, MUIA_Textinput_Contents);
-         FPrintf(fh, "UserStopNet\n%ls", ptr);
-         if(ptr[strlen(ptr) - 1] != '\n')
-            FPrintf(fh, "\n");
-         FPrintf(fh, "EOS\n\n");
-
 
       Close(fh);
    }
@@ -920,14 +997,14 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       {
          struct Host *host;
 
-         FPrintf(fh, "## This file was generated by AmiTCP Prefs\n##\n");
+         FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n");
          pos = 0;
          FOREVER
          {
             DoMethod(db_data->LI_Hosts, MUIM_List_GetEntry, pos++, &host);
             if(!host)
                break;
-            FPrintf(fh, "%ls     %ls", host->Addr, host->Name);
+            FPrintf(fh, "%-18ls %ls", host->Addr, host->Name);
             if(*host->Aliases)
                FPrintf(fh, "  %ls", host->Aliases);
             FPrintf(fh, "\n");
@@ -942,14 +1019,14 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       {
          struct Protocol *protocol;
 
-         FPrintf(fh, "## This file was generated by AmiTCP Prefs\n##\n");
+         FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n");
          pos = 0;
          FOREVER
          {
             DoMethod(db_data->LI_Protocols, MUIM_List_GetEntry, pos++, &protocol);
             if(!protocol)
                break;
-            FPrintf(fh, "%ls  %ld", protocol->Name, protocol->ID);
+            FPrintf(fh, "%-10ls %ld", protocol->Name, protocol->ID);
             if(*protocol->Aliases)
                FPrintf(fh, "  %ls", protocol->Aliases);
             FPrintf(fh, "\n");
@@ -964,16 +1041,38 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       {
          struct Service *service;
 
-         FPrintf(fh, "## This file was generated by AmiTCP Prefs\n##\n");
+         FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n");
          pos = 0;
          FOREVER
          {
             DoMethod(db_data->LI_Services, MUIM_List_GetEntry, pos++, &service);
             if(!service)
                break;
-            FPrintf(fh, "%ls     %ld/%ls", service->Name, service->Port, service->Protocol);
+            FPrintf(fh, "%-15ls %4ld/%-5ls", service->Name, service->Port, service->Protocol);
             if(*service->Aliases)
-               FPrintf(fh, "     %ls", service->Aliases);
+               FPrintf(fh, "  %ls", service->Aliases);
+            FPrintf(fh, "\n");
+         }
+         Close(fh);
+      }
+   }
+
+   if(changed_inetaccess)
+   {
+      if(fh = Open("AmiTCP:db/inet.access", MODE_NEWFILE))
+      {
+         struct InetAccess *inet_access;
+
+         FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n");
+         pos = 0;
+         FOREVER
+         {
+            DoMethod(db_data->LI_InetAccess, MUIM_List_GetEntry, pos++, &inet_access);
+            if(!inet_access)
+               break;
+            FPrintf(fh, "%-15ls %-20ls %-5ls", inet_access->Service, inet_access->Host, (inet_access->Access ? "allow" : "deny"));
+            if(inet_access->Log)
+               FPrintf(fh, " LOG");
             FPrintf(fh, "\n");
          }
          Close(fh);
@@ -986,7 +1085,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       {
          struct Inetd *inetd;
 
-         FPrintf(fh, "## This file was generated by AmiTCP Prefs\n##\n");
+         FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n");
          pos = 0;
          FOREVER
          {
@@ -995,7 +1094,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                break;
             if(!inetd->Active)
                FPrintf(fh, "#");
-            FPrintf(fh, "%ls     %ls   %ls   %ls   %ls   %ls", inetd->Service, (inetd->Socket ? "dgram" : "stream"), inetd->Protocol, (inetd->Wait ? (inetd->Wait == 2 ? "dos" : "wait") : "nowait"), inetd->User, inetd->Server);
+            FPrintf(fh, "%-15ls %-6ls %-5ls %-6ls %-8ls %ls", inetd->Service, (inetd->Socket ? "dgram" : "stream"), inetd->Protocol, (inetd->Wait ? (inetd->Wait == 2 ? "dos" : "wait") : "nowait"), inetd->User, inetd->Server);
             if(*inetd->Args)
                FPrintf(fh, "  %ls", inetd->Args);
             FPrintf(fh, "\n");
@@ -1010,7 +1109,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       {
          struct Network *network;
 
-         FPrintf(fh, "## This file was generated by AmiTCP Prefs\n##\n");
+         FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n");
          pos = 0;
          FOREVER
          {
@@ -1032,14 +1131,14 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       {
          struct Rpc *rpc;
 
-         FPrintf(fh, "## This file was generated by AmiTCP Prefs\n##\n");
+         FPrintf(fh, "## This file was generated by Genesis Prefs\n##\n");
          pos = 0;
          FOREVER
          {
             DoMethod(db_data->LI_Rpcs, MUIM_List_GetEntry, pos++, &rpc);
             if(!rpc)
                break;
-            FPrintf(fh, "%ls     %ld", rpc->Name, rpc->Number);
+            FPrintf(fh, "%-15ls %10ld", rpc->Name, rpc->Number);
             if(*rpc->Aliases)
                FPrintf(fh, "  %ls", rpc->Aliases);
             FPrintf(fh, "\n");
@@ -1114,7 +1213,12 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
    {
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Info"), data->GR_Info, NULL, NULL);
    }
+   if(data->GR_User        = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
+   {
+      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
 
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_Pages3), data->GR_User, NULL, NULL);
+   }
    if(data->GR_Provider    = NewObject(CL_Provider->mcc_Class  , NULL, TAG_DONE))
    {
       struct Provider_Data *p_data = INST_DATA(CL_Provider->mcc_Class, data->GR_Provider);
@@ -1124,19 +1228,11 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_ProviderRegister3), p_data->GR_Interface      , data->GR_Provider, NULL);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_ProviderRegister4), p_data->GR_Server         , data->GR_Provider, NULL);
    }
-   if(data->GR_User        = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
-   {
-      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
-
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_Pages3), data->GR_User, NULL, GPE_LIST);
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_UserRegister2), u_data->GR_UserStartnet , data->GR_User, NULL);
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_UserRegister3), u_data->GR_UserStopnet  , data->GR_User, NULL);
-   }
    if(data->GR_Modem       = NewObject(CL_Modem->mcc_Class     , NULL, TAG_DONE))
    {
       struct Modem_Data *m_data = INST_DATA(CL_Modem->mcc_Class, data->GR_Modem);
 
-      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Modem"), m_data->GR_Modem , NULL, GPE_LIST);
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Modem / TA"), m_data->GR_Modem , NULL, GPE_LIST);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_ModemRegister2), m_data->GR_Serial , data->GR_Modem, NULL);
    }
    if(data->GR_Dialer       = NewObject(CL_Dialer->mcc_Class     , NULL, TAG_DONE))
@@ -1156,6 +1252,7 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_DatabasesRegister1), d_data->GR_Hosts      , data->GR_Databases, NULL);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_DatabasesRegister2), d_data->GR_Protocols  , data->GR_Databases, NULL);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_DatabasesRegister3), d_data->GR_Services   , data->GR_Databases, NULL);
+      DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr("  Access"), d_data->GR_InetAccess      , data->GR_Databases, NULL);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_DatabasesRegister4), d_data->GR_Inetd      , data->GR_Databases, NULL);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_DatabasesRegister5), d_data->GR_Networks   , data->GR_Databases, NULL);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, GetStr(MSG_DatabasesRegister6), d_data->GR_Rpc        , data->GR_Databases, NULL);
@@ -1181,10 +1278,10 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 {
    static STRPTR provider_titles[] = { "TCP/IP", "Sana2", "Interface", "Services", NULL };
-   static STRPTR user_titles[] = { "Settings", "Startnet", "Stopnet", NULL };
-   static STRPTR modem_titles[] = { "Modem", "Serial", NULL };
+   static STRPTR user_titles[] = { "Settings", NULL };
+   static STRPTR modem_titles[] = { "Modem / TA", "Device", NULL };
    static STRPTR dialer_titles[] = { "Script", "Events", "Misc", NULL };
-   static STRPTR databases_titles[] = { "Passwd", "Group", "Hosts", "Protocols", "Services", "Inetd", "Networks", "Rpc", NULL };
+   static STRPTR databases_titles[] = { "Passwd", "Group", "Hosts", "Protocols", "Services", "Access", "Inetd", "Networks", "Rpc", NULL };
 
    struct MainWindow_Data *data = INST_DATA(cl, obj);
    Object *tmp_group, *bodychunk;
@@ -1199,7 +1296,17 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
       bodychunk = create_bodychunk((struct BitMapHeader *)&information_header, (ULONG *)information_colors , (UBYTE *)information_body);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Info"), data->GR_Info, NULL, NULL, bodychunk);
    }
+   if(data->GR_User        = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
+   {
+      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
 
+      bodychunk = create_bodychunk((struct BitMapHeader *)&user_header, (ULONG *)user_colors , (UBYTE *)user_body);
+      if(tmp_group = RegisterGroup(user_titles),
+         MUIA_CycleChain      , 1,
+         Child, u_data->GR_User,
+      End)
+         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_Pages3), tmp_group, NULL, NULL, bodychunk);
+   }
    if(data->GR_Provider = NewObject(CL_Provider->mcc_Class  , NULL, TAG_DONE))
    {
       struct Provider_Data *p_data = INST_DATA(CL_Provider->mcc_Class, data->GR_Provider);
@@ -1213,19 +1320,6 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
          Child, p_data->GR_Server,
       End)
          DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr("  Provider"), tmp_group, NULL, NULL, bodychunk);
-   }
-   if(data->GR_User        = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
-   {
-      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
-
-      bodychunk = create_bodychunk((struct BitMapHeader *)&user_header, (ULONG *)user_colors , (UBYTE *)user_body);
-      if(tmp_group = RegisterGroup(user_titles),
-         MUIA_CycleChain      , 1,
-         Child, u_data->GR_User,
-         Child, u_data->GR_UserStartnet,
-         Child, u_data->GR_UserStopnet,
-      End)
-         DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_Pages3), tmp_group, NULL, NULL, bodychunk);
    }
    if(data->GR_Modem      = NewObject(CL_Modem->mcc_Class    , NULL, TAG_DONE))
    {
@@ -1264,6 +1358,7 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
          Child, d_data->GR_Hosts,
          Child, d_data->GR_Protocols,
          Child, d_data->GR_Services,
+         Child, d_data->GR_InetAccess,
          Child, d_data->GR_Inetd,
          Child, d_data->GR_Networks,
          Child, d_data->GR_Rpc,
@@ -1308,7 +1403,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                MUIA_Background, MUII_GroupBack,
                Child, HVSpace,
                Child, HVSpace,
-               Child, CLabel("loading..."),
+               Child, CLabel("                    loading...                    "),
                Child, HVSpace,
                Child, CLabel("please wait"),
                Child, HVSpace,
@@ -1335,7 +1430,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       if(!(data->GR_Info = VGroup,
          GroupFrame,
-         MUIA_Background, MUII_RegisterBack,
+         MUIA_Background, "2:9c9c9c9c,9c9c9c9c,9c9c9c9c",
          Child, HVSpace,
          Child, HGroup,
             Child, HVSpace,
@@ -1349,12 +1444,11 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                MUIA_Bodychunk_Compression, LOGO_COMPRESSION,
                MUIA_Bodychunk_Masking    , LOGO_MASKING,
                MUIA_Bitmap_SourceColors  , (ULONG *)logo_colors,
-               MUIA_Bitmap_Transparent   , 0,
+//               MUIA_Bitmap_Transparent   , 0,
             End,
             Child, HVSpace,
          End,
-         Child, HVSpace,
-         Child, CLabel(VERS),
+         Child, CLabel("Preferences "VSTRING" ("__DATE__")"),
          Child, HVSpace,
 #ifdef DEMO
          Child, CLabel(GetStr(MSG_TX_DemoVersion)),
@@ -1384,18 +1478,22 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// MainWindow_Dispatcher
-SAVEDS ASM ULONG MainWindow_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
-   {
-      case OM_NEW                        : return(MainWindow_New           (cl, obj, (APTR)msg));
-      case MUIM_MainWindow_InitGroups    : return(MainWindow_InitGroups    (cl, obj, (APTR)msg));
-      case MUIM_MainWindow_Finish        : return(MainWindow_Finish        (cl, obj, (APTR)msg));
-      case MUIM_MainWindow_LoadConfig    : return(MainWindow_LoadConfig    (cl, obj, (APTR)msg));
-      case MUIM_MainWindow_SaveConfig    : return(MainWindow_SaveConfig    (cl, obj, (APTR)msg));
-      case MUIM_MainWindow_About         : return(MainWindow_About         (cl, obj, (APTR)msg));
-      case MUIM_MainWindow_AboutFinish   : return(MainWindow_AboutFinish   (cl, obj, (APTR)msg));
-   }
+   if(msg->MethodID == OM_NEW)
+      return(MainWindow_New           (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_MainWindow_InitGroups)
+      return(MainWindow_InitGroups    (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_MainWindow_Finish)
+      return(MainWindow_Finish        (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_MainWindow_LoadConfig)
+      return(MainWindow_LoadConfig    (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_MainWindow_SaveConfig)
+      return(MainWindow_SaveConfig    (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_MainWindow_About)
+      return(MainWindow_About         (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_MainWindow_AboutFinish)
+      return(MainWindow_AboutFinish   (cl, obj, (APTR)msg));
 
    return(DoSuperMethodA(cl, obj, msg));
 }

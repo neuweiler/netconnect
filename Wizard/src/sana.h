@@ -30,7 +30,7 @@ struct sana2 {
   UWORD              s2_addrbits;/* size of the hw address in bits */
 };
 
-struct sana2 * sana2_create(struct ifconfig *ifc);
+struct sana2 * sana2_create(struct config *conf);
 void sana2_delete(struct sana2 *s2);
 void sana2_print(struct sana2 *s2);
 BOOL    sana2_getaddresses(struct sana2 *s2, struct config * conf);

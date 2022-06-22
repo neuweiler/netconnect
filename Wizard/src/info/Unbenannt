@@ -1,0 +1,5 @@
+_Wiz Forbid();   /*  Remove the device from memory   */
+<Olli> dolphin, hm, ja
+_Wiz if( dev = (struct Device *)FindName( &SysBase->DeviceList, Device ))
+_Wiz     RemDevice( dev );
+_Wiz Permit();

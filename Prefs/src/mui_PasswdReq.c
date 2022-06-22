@@ -1,5 +1,15 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_PasswdReq.h"
 #include "protos.h"
+
+///
 
 /// PasswdReq_New
 ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
@@ -7,7 +17,7 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct PasswdReq_Data tmp;
    Object *originator;
 
-   originator = (Object *)GetTagData(MUIA_AmiTCP_Originator, 0, msg->ops_AttrList);
+   originator = (Object *)GetTagData(MUIA_Genesis_Originator, 0, msg->ops_AttrList);
 
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Window_Title    , "Change password",
@@ -49,11 +59,11 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(obj, MUIA_Window_ActiveObject, data->STR_pw1);
 
       DoMethod(obj              , MUIM_Notify, MUIA_Window_CloseRequest, TRUE            ,
-         MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator   , 3, MUIM_AmiTCP_Finish, obj, 0);
+         MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator   , 3, MUIM_Genesis_Finish, obj, 0);
       DoMethod(data->BT_Cancel  , MUIM_Notify, MUIA_Pressed            , FALSE           ,
-         MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator   , 3, MUIM_AmiTCP_Finish, obj, 0);
+         MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator   , 3, MUIM_Genesis_Finish, obj, 0);
       DoMethod(data->BT_Okay    , MUIM_Notify, MUIA_Pressed            , FALSE           ,
-         MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator   , 3, MUIM_AmiTCP_Finish, obj, 1);
+         MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator   , 3, MUIM_Genesis_Finish, obj, 1);
       DoMethod(data->STR_pw1    , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime  , obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_pw2);
       DoMethod(data->STR_pw2    , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime  , obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->BT_Okay);
    }
@@ -62,12 +72,10 @@ ULONG PasswdReq_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// PasswdReq_Dispatcher
-SAVEDS ASM ULONG PasswdReq_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ULONG PasswdReq_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
-   {
-      case OM_NEW                        : return(PasswdReq_New           (cl, obj, (APTR)msg));
-   }
+   if(msg->MethodID == OM_NEW)
+      return(PasswdReq_New           (cl, obj, (APTR)msg));
 
    return(DoSuperMethodA(cl, obj, msg));
 }

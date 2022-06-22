@@ -1,0 +1,77 @@
+.key IPADDRESS,NODIAL/S
+.bra {
+.ket }
+.def IPADDRESS 0.0.0.0
+
+; log in
+echo
+
+;echo login: simone
+;AmiTCP:bin/login -f simone
+
+AmiTCP:bin/umask 022
+AmiTCP:AmiTCP
+WaitForPort AMITCP
+
+; Dial
+If Not {NODIAL}
+  IPDial AmiTCP:db/Login.IPDial
+  Run >NIL: AmiTCP:bin/Scatti.rexx i 2
+Else
+  Echo "Using the last IP address"
+  Copy AmiTCP:logs/LastIP ENV:IPADDRESS
+EndIf
+
+
+; Configure loop-back device
+AmiTCP:bin/ifconfig lo0 localhost
+; Assure that ENV:Sana2 exists
+if not exists ENV:Sana2
+  makedir ENV:Sana2
+endif
+
+; BackUp IP Address
+Echo "`GetEnv IPADDRESS`" >AmiTCP:logs/LastIP
+
+; Create ppp0 configuration file
+Echo "artser.device 0 57600 `GetEnv IPADDRESS` " NOLINE >T:cfg
+Echo "MTU=`GetEnv MTU` EOFMODE CD 7WIRE ONLINE " >>T:cfg
+Move T:cfg ENV:Sana2/ppp0.config
+
+; Configure ppp0
+SetEnv ppp0IPRemote 151.1.34.200
+SetEnv ppp0IPLocale `GetEnv IPADDRESS`
+
+AmiTCP:bin/online ppp0
+AmiTCP:bin/ifconfig ppp0 $ppp0IPLocale $ppp0IPRemote
+
+; Add IP address entry for this host
+rx "address AMITCP; 'ADD HOST `GetEnv IPADDRESS` pragmanet.it '"
+
+; Add route to this host
+AmiTCP:bin/route add `GetEnv IPADDRESS` localhost
+
+; Add route to the default gateway
+AmiTCP:bin/route add default $ppp0IPRemote
+
+SetEnv HOSTNAME `AmiTCP:bin/hostname`
+
+Assign TCP: Exists >NIL:
+IF Warn
+  Mount TCP: from AmiTCP:devs/Inet-Mountlist
+EndIf
+
+; Start the internet `super server'
+Run <>NIL: AmiTCP:bin/inetd
+
+; Start the SMTP daemon
+AmiTCP:bin/StartSMTPd
+
+Assign INet: AmiTCP:
+Assign UULib: AmiTCP:usr
+Assign UUMail: AmiTCP:usr/mail
+;Assign UUNews: AmiTCP:usr/news
+
+
+; Start WatchThor
+Run <>NIL: Thor:Bin/WatchThor "Demon" checkdelay 3 runcommand "Play16 >NIL: Varie:Music/Samples/NewMail"

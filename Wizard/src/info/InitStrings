@@ -1,0 +1,7719 @@
+@Database "Init strings for modems"
+
+@Node main "Init strings for modems"
+
+Abaton Interfax 24/96 (ARA 1.0)
+InitString=AT&FE0\N1
+AnswerInit=AT&FE0\N1S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+Aceex Designer 9600 
+AT&F1X4 &C1 &D2 &R0 &Y0 %C1\J0 \N3 \Q3 W1 &K3 
+
+Aceex Designer 9600 - Auto Reliable 
+Aceex 96-Auto 
+AT&F1X4&C1&D2&R0\J0\N3\Q3W1&K3ATS7=60S11=55 
+
+Aceex Designer 9600 - MNP-4 mode 
+AT&F1%C0X4&C1&D2&R0\J0\N3\Q3W1&K3S7=60S11=55 
+
+Accex Designer 14400 
+AT&F1X4 &C1 &D2 &R0 &Y0 %C1\J0\N3\Q3W1&K3 
+
+Aceex Designer 14400 - Auto Reliable 
+AT&F1X4&C1&D2&R0\J0\N3\Q3W1&K3S7=60S11=55 
+
+Aceex Designer 14400 - MNP-4 mode 
+AT&F1%C0X4&C1&D2&R0\J0\N3\Q3W1&K3S7=60S11=55 
+
+Aceex 1496 
+AT&F&C1&D2%C1S7=60S11=55\J0\N3\Q3\V1W1&K3S95=46 
+
+Aceex 1496 - Auto Reliable 
+AT&F&C1&D2%C1\J0\N3\Q3\V1W1&K3S95=46S7=60S11=55 
+
+Aceex Designer 1496 - MNP-4 mode 
+AT&F&C1&D2%C1\J0\N3\Q3\V1W1&K3S95=46S7=60S11=55S48=128%C0 
+
+Aceex Designer 1496 - Normal (No Error Correction) 
+AT&F&C1&D2%C1\J0\N0\Q3\V1W1&K3S7=60S11=55 
+
+Adtech Hi-Per 96/144 
+AT&F&C1&D2&K3\J0S7=60S11=60 
+
+Adtech Hi-Per 96/144 - Auto Reliable 
+AT&F&C1&D2&K3\J0S7=60S11=60 
+
+Adtech Hi-Per 96/144 - MNP4 mode 
+AT&F&C1&D2&K3%C0\J0S7=60S11=60 
+
+Adtech Hi-Per 96/96 
+AT&F&C1&D2&K3\J0S7=60S11=60 
+
+Adtech Hi-Per 96/96 - Auto Reliable 
+AT&F&C1&D2&K3\J0S7=60S11=60 
+
+Adtech Hi-Per 96/96 - MNP4 mode 
+AT&F&C1&D2&K3%C0\J0S7=60S11=60 
+
+Adtech Micro 2400 V.42bis 
+AT&F&C1&D2\N3\Q3\V1W0S7=60S11=60 
+
+Adtech Micro 2400 V.42bis - Auto Reliable 
+AT&F&C1&D2\N3\Q3\V1W0S7=60S11=60 
+
+Adtech Micro 2400 V.42bis - MNP-4 mode 
+AT&F&C1&D2\N3\Q3\V1W0%C1S7=60S11=60 
+
+Adtech Micro Systems, Other
+AT E1Q0V1X4
+
+Adtech Micro Systems, Smart Connect 14.4 ve
+AT E1Q0V1X4&K3
+
+Adtech Micro Systems, Smart Connect 14.4 vi
+AT E1Q0V1X4&K3
+
+Adtran ISU 128 (ISDN)
+InitString=AT&C1&D2&R0&S2\Q3S34=15
+AnswerInit=AT&C1&D2&R0&S2\Q3S34=15S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+ISDN=Yes 
+LongDTRDrop=Yes
+
+Adtran ISU 128 (ISDN Sync Clear Channel)
+InitString=AT
+AnswerInit=AT
+BPSRate=9600
+FlowControl=Hardware
+
+Adtran ISU Express (ISDN)
+InitString=AT&C1&D2&R0&S2\Q3S34=15
+AnswerInit=AT&C1&D2&R0&S2\Q3S34=15S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+ISDN=Yes
+
+Advanced Micro Computer System Inc., All
+AT E1Q0V1X4
+
+Altima 4XX Internal Fax/Data 
+AT&F&C1 &D2 L3 W1 \G1 \K1 S7=60 S11=60 
+
+Altima 4XX Internal Fax/Data - Auto Reliable 
+AT&F&C1 &D2 L3 W1 \G1 \K1 S7=60 S11=60 
+
+Amber Logic Mistral 9600
+InitString=AT&FW2&C1&D3&E5&K1\C5\Q0
+AnswerInit=AT&FW2&C1&D3&E5&K1\C5\Q0S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Amber Logic Mistral 14400
+InitString=AT&FW2&C1&D3&E5&K1\C5\Q0
+AnswerInit=AT&FW2&C1&D3&E5&K1\C5\Q0S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Amber Logic Mistral FX 14400i
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Amberlogic, Other
+AT E1Q0V1X4
+
+American Data Technology, All
+AT E1Q0V1X4
+
+Amiga 1200RS 
+ATE1Q0V1X2 S7=60 S11=55 S0=0 
+
+Amstrad, Other
+AT E1Q0V1X4
+
+Amstrad, PC Modem
+AT&F E1V1Q0
+
+Amstrad SM2400 (UK) 
+ATZAT&C1&D2X2S7=59S11=68 
+
+Amstrad SM2400 - Auto Reliable 
+ATZAT&C1&D2X2S7=59S11=68 
+
+Amstrad SM2400 - V.23 mode 
+ATZATB23&C1&D2X2S7=59S11=68 
+
+AMT, 1442E
+AT E1Q0V1X4 &C1&D2 
+
+AMT, 1442EF
+AT E1Q0V1X4 &C1&D2 
+
+AMT, 1442I
+AT E1Q0V1X4 &C1&D2 
+
+AMT, 1442IF
+AT E1Q0V1X4 &C1&D2 
+
+AMT, 9632E
+AT E1Q0V1X4 &C1&D2 
+
+AMT, 9632I
+AT E1Q0V1X4 &C1&D2 
+
+AMT, 9642E
+AT E1Q0V1X4 &C1&D2
+
+AMT, 9642I
+AT E1Q0V1X4 &C1&D2
+
+AMT, Other
+AT E1Q0V1X4
+
+AMT Star 1442 
+AT&F2&C1&D2\V2 S0=0&Y0 
+
+AMT Star 1442 - Auto Reliable 
+AT&F2\V2S0=0S7=60 S11=60 
+
+AMT Star 1442 - V.42 mode 
+AT&F2%C0\V2S0=0S7=60 S11=60 
+
+AMT Star 1442 - MNP-4 mode 
+AT&F1\V2S0=0S7=60 S11=60 
+
+AMT STAR 9600 
+AT&F2&C1&D2\V2 S0=0 
+
+AMT STAR 9600 - Auto Reliable 
+AT&F2\V2S0=0S7=60 S11=60 
+
+AMT STAR 9600 - V.42 mode 
+AT&F2%C0\V2S0=0S7=60 S11=60 
+
+AMT STAR 9600 - MNP-4 mode 
+AT&F1\V2S0=0S7=60 S11=60 
+
+Anchor Volksmodem 1200 
+ATE1Q0V1X1 S0=0 
+
+Anchor 2400E 
+ATE1Q0V1X4 &C1&D2 S7=30 S0=0 
+
+Anchor, 96E4
+AT Q0 V1 X4&C1\N3\V1%C0\Q3
+
+Anchor, Other
+AT E1Q0V1X4
+
+Anchor 96E5 
+AT&F&C1&D2\N5\Q3\V2%C3S11=60S0=0 
+
+Anchor 96E5 - Auto Reliable 
+AT&F&C1&D2\N5\Q3\V2%C3S11=60S0=0 
+
+Anchor 96E5 - MNP-4 mode 
+AT&F&C1&D2\N5\Q3\V2%C0S11=60S0=0 
+
+Anderson-Jacobson 96/32 STH 
+AT&F&C1 &D2 *C1 *LG2 *M2 *E1 
+
+Anderson-Jacobson 96/32 STH - Auto Reliable 
+AT&F&C1&D2 *C1 *LG2 *M2 *E1 
+
+Andest Fax/Data Modem 14.4 
+AT&F&C1&D2&K3\J0\N7\V1 
+
+Andest Fax/Data Modem 14.4 - Auto Reliable 
+AT&F&C1&D2&K3\J0\N7\V1 
+
+Andest Fax/Data Modem 14.4 - MNP-4 mode 
+AT&F&C1&D2&K3&Q5%C0\J0\N7\V1 
+
+Andest Fax/Data Modem 14.4 - 2400-Compatible mode 
+AT&F2&C1&D2&K3\J0S37=6 
+
+Angia Communications 14.4 - TD (V.42 bis)
+InitString=AT&FW1&C1&D2X4\J0\N7%C1S7=60
+AnswerInit=AT&FW1&C1&D2\J0\N7%C1S7=60S0=1
+BPSRate=57600
+FlowControl=Hardware
+
+Angia DataSTAR/FaxSTAR 14400 
+AT&F&C1 &D2 %C1 S7=60 S11=60 
+
+Angia DataStar/FaxSTAR 14400 - Auto Reliable 
+AT&F&C1 &D2 %C1 S7=60 S11=60 
+
+Angia DataStar/FaxSTAR 14400 - MNP-4 mode 
+AT&F%C0&C1 &D2 S7=60 S11=60 
+
+Angia DataStar/FaxSTAR 14400 - 2400-Direct mode 
+AT&F2&C1 &D2 S7=60 S11=60 
+
+Angia DataSTAR/FaxSTAR 9600 
+AT&F&C1 &D2 %C1 S7=60 S11=60 
+
+Angia DataStar/FaxSTAR 9600 - Auto Reliable 
+AT&F&C1 &D2 %C1 S7=60 S11=60 
+
+Angia DataStar/FaxSTAR 9600 - MNP-4 mode 
+AT&F%C0&C1 &D2 S7=60 S11=60 
+
+Angia DataStar/FaxSTAR 9600 - 2400-Direct mode 
+AT&F2&C1 &D2 S7=60 S11=60 
+
+Apex Data V.32bis Fax Modem 
+AT&F&C1&D2%C1\J0\N7\Q3\V2S7=60S11=55 
+
+Apex Data V.32/V.32bis Data/Fax
+InitString=AT&FW2&C1&D3&K3&Q5\J0\N7\Q2\V2%C1S7=60
+AnswerInit=AT&FW2&C1&D3&K3&Q5\J0\N7\Q2\V2%C1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Apex Data V.32bis Fax Modem - Auto Reliable 
+AT&F&C1&D2%C1\J0\N7\Q3\V2S7=60S11=55 
+
+Apex Data V.32bis Fax Modem - MNP-10 mode 
+AT&F&C1&D2-C1\J0\N3\Q3\V2S7=60S11=55 
+
+Apex Data V.32bis Fax Modem - MNP-5 mode 
+AT&F&C1&D2%C1\J0\N3\Q3\V2S7=60S11=55 
+
+Apex Data V.32bis Fax Modem - MNP-4 mode 
+AT&F&C1&D2%C0\J0\N3\Q3\V2S7=60S11=55 
+
+Apex Data V.32bis Fax Modem - Direct mode 
+AT&F&C1&D2%C0\J0\N0\Q3\V2S7=60S11=55 
+
+Apex Data V.32 Fax Modem 
+AT&F&C1&D2%C1\J0\N7\Q3\V2S7=60S11=55 
+
+Apex Data V.32 Fax Modem - Auto Reliable 
+AT&F&C1&D2%C1\J0\N7\Q3\V2S7=60S11=55 
+
+Apex Data V.32 Fax Modem - MNP-10 mode 
+AT&F&C1&D2-C1\J0\N3\Q3\V2S7=60S11=55 
+
+Apex Data V.32 Fax Modem - MNP-5 mode 
+AT&F&C1&D2%C1\J0\N3\Q3\V2S7=60S11=55 
+
+Apex Data V.32 Fax Modem - MNP-4 mode 
+AT&F&C1&D2%C0\J0\N3\Q3\V2S7=60S11=55 
+
+Apex Data V.32 Fax Modem - Direct mode 
+AT&F&C1&D2%C0\J0\N0\Q3\V2S7=60S11=55 
+
+Apex Data Freedom V.32bis Fax Modem 
+AT&F&C1&D2%C1\J0&Q6&K3\V2S7=60S11=55 
+
+Apex Data Freedom V.32bis Fax Modem - Auto Reliable 
+AT&F&C1&D2%C1\J0&Q6&K3\V2S7=60S11=55 
+
+Apex Data Freedom V.32bis Fax Modem - MNP-4 mode 
+AT&F&C1&D2%C0\J0\N3&K3\V2S7=60S11=55 
+
+Apex Data Freedom V.32bis Fax Modem - Direct mode 
+AT&F&C1&D2%C1\J0&Q0&K3\V2S7=60S11=55 
+
+Apex Data Freedom V.32 Fax Modem 
+AT&F&C1&D2%C1\J0&Q6&K3\V2S7=60S11=55 
+
+Apex Data Freedom V.32 Fax Modem - Auto Reliable 
+AT&F&C1&D2%C1\J0&Q6&K3\V2S7=60S11=55 
+
+Apex Data Freedom V.32 Fax Modem - MNP-4 mode 
+AT&F&C1&D2%C0\J0\N3&K3\V2S7=60S11=55 
+
+Apex Data Freedom V.32 Fax Modem - Direct mode 
+AT&F&C1&D2%C1\J0&Q0&K3\V2S7=60S11=55 
+
+Apple Modem 2400 (ARA 1.0)
+InitString=AT&FE0\N1&K0
+AnswerInit=AT&FE0\N1&K0S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+April Technologies Series 9600 
+AT&F&C1 &D2 %C1 \J0 \N9 \Q3 
+
+April Technologies Series 9600 - Auto Reliable 
+AT&F&C1&D2\J0\N9\Q3S7=60S11=60 
+
+April Technologies Series 9600 - MNP-4 mode 
+AT&F&C1&D2\J0\N9\Q3S7=60S11=60 
+
+April Technologies Series 14400 
+AT&F&C1 &D2 %C1 \J0 \N9 \Q3 
+
+April Technologies Series 14400 - Auto Reliable 
+AT&F&C1&D2\J0\N9\Q3S7=60S11=60 
+
+April Technologies Series 14400 - MNP-4 mode 
+AT&F&C1&D2\J0\N9\Q3S7=60S11=60 
+
+Arch Tek America Corp., All
+AT E1Q0V1X4
+
+Archtek SmartLink 14.4 
+AT&F&C1&D2&K3\N3S7=60S11=55 
+
+Archtek SmartLink 14.4 - Auto Reliable 
+AT&F&C1&D2&K3\N3S7=60S11=55 
+
+Archtek SmartLink 14.4 - MNP4 mode 
+AT&F&C1&D2&K3\N3-J0%C0S7=60S11=55 
+
+Archtek SmartLink 14.4 - Normal mode 
+AT&F&C1&D2&K3\N0S7=60S11=55 
+
+AT&T 2224 CEO 
+AT&F&C1&D2\C1\G0\J0\N3\Q3\V1 
+
+AT&T 2224 CEO - Auto Reliable 
+AT&C1&D2\G0 \J0 \N3 \Q3 \V1 
+
+AT&T, 4000
+AT Q0 V1 X4F1&C1
+
+AT&T, 4024
+AT Q0 V1 X1&C1
+
+AT&T, DataPort 14.4
+ATX7E1Q0V1 &C1&D2
+
+AT&T, Other
+AT E1Q0V1X4
+
+AT&T, Paradyne 14.4
+ATX7E1Q0V1 &C1&D2
+
+AT&T Model 4000 
+ATE1Q0V1X1S7=60 S0=0 
+
+AT&T Paradyne Comsphere 3820 
+AT&F&C1 &D2 \N5 \D1 \Q3 S7=60 
+
+A&T Paradyne Comsphere 3820 - Auto Reliable 
+AT&F&C1&D2\D1\N5\Q3S7=60 
+
+AT&T Paradyne Comsphere 3820 - V.42 mode 
+AT&F&C1&D2\D1\N5\Q3S7=60 
+
+AT&T Paradyne Comsphere 3820 - MNP4 mode 
+AT&F%C0\N3&C1&D2\D1\Q3S7=60 
+
+AT&T Dataport 14.4/FAX 
+AT&F&C1&D2%C1X6\D1\N7\Q3S0=0S7=60 
+
+AT&T Dataport 14.4/FAX - Auto Reliable 
+AT&F&C1&D2%C1X6\D1\N7\Q3S0=0S7=60 
+
+AT&T Dataport 14.4/FAX - MNP4 mode 
+AT&F&C1&D2%C0X6\D1\N7\Q3S0=0S7=60 
+
+AT&T Dataport 14.4/FAX - 2400 mode 
+AT&F&C1&D2%B2400%C0X6\D1\N0\Q0S0=0S7=60 
+
+AT&T KeepinTouch Card Modem 
+AT&F&C1&D2%C1X6\D1\N7\Q3S0=0S7=60 
+
+AT&T KeepinTouch Card Modem - Auto Reliable 
+AT&F&C1&D2%C1X6\D1\N7\Q3S0=0S7=60 
+
+A&T KeepinTouch Card Modem - MNP4 mode 
+AT&F&C1&D2%C0X6\D1\N7\Q3S0=0S7=60 
+
+AT&T KeepinTouch Card Modem - 2400 mode 
+AT&F&C1&D2%B2400%C0X6\D1\N0\Q0S0=0S7=60 
+
+ATI Technologies Inc., 14400 ETC-E
+AT&F2  Q0V1W1X4 &C1&D2&K3&U0
+
+ATI Technologies Inc., 14400 ETC-I
+AT&F2  Q0V1W1X4 &C1&D2&K3&U0
+
+ATI Technologies Inc., 14400 PCMCIA
+AT&F2  Q0V1W1X4 &C1&D2&K3&U0
+
+ATI Technologies Inc., 19200 ETC-E
+AT&F2  Q0V1W1X4 &C1&D2&K3&U0
+
+ATI Technologies Inc., 19200 ETC-I
+AT&F2  Q0V1W1X4 &C1&D2&K3&U0
+
+ATI Technologies Inc., 9600 ETC-E
+AT Q0V1W1X4 &C1&D2&K3&U0
+
+ATI Technologies Inc., 9600 ETC-I
+AT Q0V1W1X4 &C1&D2&K3&U0
+
+ATI Technologies Inc., Other
+AT E1Q0V1X4
+
+Attel, All
+AT E1Q0V1X4
+
+Attel MX24 
+AT&F&C1&D2\Q3\N3%C1 
+
+Attel MX24 - Auto Reliable 
+AT&F&C1&D2\Q3\N3%C1 
+
+Attel MX24 - MNP-4 mode 
+AT&F%C0&C1&D2\Q3\N3%C1 
+
+Attel MX24 - Direct mode 
+AT&F&C1&D2\Q0\N1 
+
+Attel MX96144 
+AT&F&C1&D2\Q3\N3%C1 
+
+Attel MX96144 - Auto Reliable 
+AT&F&C1&D2\Q3\N3%C1 
+
+Attel MX96144 - MNP-4 mode 
+AT&F%C0&C1&D2\Q3\N3%C1 
+
+Attel MX96144 - Direct mode 
+AT&F&C1&D2\Q0\N1 
+
+AT&T Comsphere 3820 Plus
+InitString=AT&F0X4Z3&C1&D3\D3\G1\N5%C1S7=60
+AnswerInit=AT&F0X4Z3&C1&D3\D3\G1\N5%C1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+AT&T ComSphere 3830
+InitString=AT&FX6&C1&D2\N5\Q2%C1"H3S7=60
+AnswerInit=AT&FX6&C1&D2\N5\Q2%C1"H3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+AT&T Dataport 288 V.34
+InitString=AT&FX4&C1&D3S7=60
+AnswerInit=AT&FX4&C1&D3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+AT&T DataPort (ARA 1.0)
+InitString=AT&F0&D0&C1\N0%C0
+AnswerInit=AT&F0&D0&C1\N0%C0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+AT&T Paradyne 3830 (ARA 1.0)
+InitString=AT&F0&D0&C1\N0%C0
+AnswerInit=AT&F0&D0&C1\N0%C0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+AT&T ComSphere 3800 Series (V.42bis)
+InitString=AT&FX6&C1&D2\N5\Q2%C1"H3S7=60
+AnswerInit=AT&FX6&C1&D2\N5\Q2%C1"H3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+AT&T ComSphere 3810 Plus
+InitString=AT&FX6&C1&D2\N5\Q2%C1"H3S7=60
+AnswerInit=AT&FX6&C1&D2\N5\Q2%C1"H3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Attel MX96192 
+AT&F&C1&D2\Q3\N3%C1 
+
+Attel MX96192 - Auto Reliable 
+AT&F&C1&D2\Q3\N3%C1 
+
+Attel MX96192 - MNP-4 mode 
+AT&F%C0&C1&D2\Q3\N3%C1 
+
+Attel MX96192 - Direct mode 
+AT&F&C1&D2\Q0\N1 
+
+ATi 2400etc/i and 2400etc/e (V.42bis)
+InitString=AT&FW2&B1&C1&D3&K3&Q6&U1S7=60
+AnswerInit=AT&FW2&B1&C1&D3&K3&Q6&U1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+ATi 2400etc/Fax (V.42bis)
+InitString=AT&FW2&B1&C1&D3&K3&Q6&U1S7=60
+AnswerInit=AT&FW2&B1&C1&D3&K3&Q6&U1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+ATi 9600etc/e (V.42bis)
+InitString=AT&FW2&B1&C1&D3&K3&Q6&U1S7=60
+AnswerInit=AT&FW2&B1&C1&D3&K3&Q6&U1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+ATI 2400etc 
+AT&F1&C1&D2W2X6S7=60S11=60 
+
+ATI 2400etc - MNP-5 mode 
+AT&F1&C1 &D2 X6 S7=60 S11=60 
+
+ATI 2400etc - non-MNP mode 
+AT&F&C1 &D2 X6 S7=60 S11=60 
+
+ATI 2400etc V.42 
+AT&F2&C1&D2W2X6S7=60S11=60 
+
+ATI 2400etc V.42 - V.42 mode 
+AT&F2&C1 &D2 X6 S7=60 S11=60 
+
+ATI 2400etc V.42 - MNP-5 mode 
+AT&F1&C1 &D2 X6 S7=60 S11=60 
+
+ATI 2400etc V.42 - MNP-4 mode 
+AT&F1 &U0 &C1 &D2 X6 S7=60 S11=60 
+
+ATI 2400etc V.42 - non-MNP mode 
+AT&F&C1 &D2 X6 S7=60 S11=60 
+
+ATI 9600etc 
+AT&F2&C1&D2X6S7=60S11=60 
+
+ATI 9600etc - V.42bis Mode 
+AT&F2&C1&D2X6&Q6&U1 S7=60 S11=60 
+
+ATI 9600etc - MNP4 Mode 
+AT&F2&C1&D2X6&Q5&U0 S7=60 S11=60 
+
+ATI 9600etc - V.42 Mode 
+AT&F2&C1&D2X6&Q6&U0 S7=60 S11=60 
+
+ATI 9600etc - MNP5 Mode 
+AT&F2&C1&D2X6&Q5&U1 S7=60 S11=60 
+
+ATT Comsphere 3800 (ARA 1.0)
+InitString=AT&F0&C1&D1E0\N0M0\Q3%C0"H0
+AnswerInit=AT&F0&C1&D1E0\N0M0\Q3%C0"H0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Avatech 2400E 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Bausch Datacom 3522 
+ATE1Q0V1X4&C1&D2 S0=0 
+
+Bausch Datacom 3522 V.42 
+AT&F\Q3 \N3 \J0 \V1 \C1 
+
+Bausch Datacom 3522 V.42 - Auto Reliable 
+AT&F\Q3\N3\J0\V1\C1S0=0 
+
+Bausch Datacom 3522 V.42 - MNP-4 mode 
+AT&F%C0\Q3\N3\J0\V1\C1S0=0 
+
+Bay Connection, All
+AT E1Q0V1X4
+
+Best Data Products Inc., All
+AT E1Q0V1X4
+
+Best D.P. 9624 FQ 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Best D.P. 2400/2400Fax 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Best D.P. Smart One 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Best D.P. Smart One 1442 
+AT&F&C1&D2W2S7=60S11=60 
+
+Best D.P. Smart One 1442 - Auto Reliable 
+AT&F&C1&D2W2 S7=60S11=60 
+
+Best D.P. Smart One 1442 - MNP-4 mode 
+AT&F&C1&D2W2 S7=60S11=60%C0 
+
+Best D.P. Smart One 9642 
+AT&F&C1 &D2 W2 S7=60 S11=55 
+
+Best D.P. Smart One 9642 - Auto Reliable 
+AT&F&C1&D2W2 S7=60S11=55 
+
+Best D.P. Smart One 9642 - MNP-4 mode 
+AT&F&C1&D2W2 S7=60S11=55%C0 
+
+BizComp 2400 Intellimodem (no MNP or V.42)
+InitString=ATQ0V1X4&C1&D3S7=60
+AnswerInit=ATQ0V1X4&C1&D3S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+Black Box 144FX/144FX-PC 
+AT&F&C1&D2&K3&Q5\N3S95=43S7=60S11=55 
+
+Black Box 144FX/144FX-PC - Auto Reliable 
+AT&F&C1&D2&K3&Q5\N3S95=43S7=60S11=55 
+
+Black Box 144FX/144FX-PC - MNP-4 mode 
+AT&F&C1&D2&K3&Q5\N3S95=43%C0S48=128ATS7=60S11=55 
+
+Black Box 144FX/144FX-PC - 2400 Compatible mode 
+AT&F&C1&D2&K3&Q6S95=43S7=60S11=55 
+
+Boca Modem 14.4K/V.32bis (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5%C1\N3S7=60S36=7S46=138S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5%C1\N3S7=60S36=7S46=138S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Boca V.Fast Class BocaModem
+InitString=AT&F&C1&D3&K3&Q5\N3%C3S7=60S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5\N3%C3S7=60S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Boca V.34 BocaModem
+InitString=AT&FW1&C1&D3&K3\N3%C3S7=60S95=67
+AnswerInit=AT&FW1&C1&D3&K3\N3%C3S7=60S95=67S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Boca Research 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=60 S0=0 
+
+Boca Research M2400i 
+AT&F3&C1&D2S7=60 
+
+Boca Research 2400 V.42bis 
+AT&F3&C1&D2 
+
+Boca Research 2400 V.42bis - Auto Reliable 
+AT&F3&C1&D2 S7=60 S11=60 
+
+Boca Research 2400 V.42bis - MNP-4 mode 
+AT&F2&C1&D2%C0 S7=60 S11=60 
+
+Boca Research 14.4 
+AT&F&C1&D2&K3%C1%E1\N3S11=60S95=47S7=60 
+
+Boca Research 14.4 - Auto Reliable 
+AT&F&C1&D2&K3%C1%E1\N3S11=60S7=60S95=47 
+
+Boca Research 14.4 - MNP-4 mode 
+AT&F&C1&D2&K3%C1%E1\N3S11=60S7=60S95=47%C0 
+
+Boca Research, Other
+AT E1Q0V1X4
+
+BSM, Other
+AT E1Q0V1X4
+
+BSM, Quick Com MNP
+AT E1Q0V1X4&K3
+
+BSM Quik Com MNP 
+AT&F\Q3\J0\N3%C1&C1&D2S7=60S0=0 
+
+BSM Quik Com MNP - Auto Reliable 
+AT&F\Q3\J0\N3%C1&C1&D2 S7=60 S11=60 
+
+BT, Other
+AT E1Q0V1X4
+
+BT, V32
+AT Q0 V1 E1&EO&K0
+
+CALCOM 14400 Fax & Data Modem
+InitString=AT&F&C1&D3&K3&M5\N5\Q3\V1%C1S7=60S36=7S46=138S48=7S95=47
+AnswerString=AT&F&C1&D3&K3&M5\N5\Q3\V1%C1S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Calcom, Other
+AT E1Q0V1X4
+
+Calcom, PC1414MX
+AT E1Q0V1X4&K3
+
+CALPAK MXE-9600
+InitString=AT&F&C1&D3S7=60S95=47
+AnswerInit=AT&F&C1&D3S7=60S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Calculus, All
+AT E1Q0V1X4
+
+Calpak Corp., All
+AT E1Q0V1X4
+
+Cambridge Telecom Inc., All
+AT E1Q0V1X4
+
+Cardinal Technologies Inc., MVP Series
+AT&F E1Q0V1X4 &C1&D2
+
+Cardinal Technologies Inc., MVP192i
+AT&F E1Q0V1X4 &C1&D2
+
+Cardinal Technologies Inc., Other
+AT E1Q0V1X4
+
+Cardinal 2450MNP (MNP 5)
+InitString=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Cardinal 2400V42 (V.42bis)
+InitString=AT&F&C1&D3\J0\N3\Q2\V2%C1"H3-J1S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V2%C1"H3-J1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Cardinal 9650V32 (MNP)
+InitString=AT&F&B1&C1&D3&H1&I1&M6S7=60
+AnswerInit=AT&F&B1&C1&D3&H1&I1&M6S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Cardinal 9600V42 (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5\N3%C1%M3S7=60S46=138S48=7S95=3
+AnswerInit=AT&FW2&C1&D3&K3&Q5\N3%C1%M3S7=60S46=138S48=7S95=3S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Cardinal 14400 (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5\N3%C1%M3S7=60S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5\N3%C1%M3S7=60S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Cardinal MVP144DSP-C
+InitString=AT&FW1&C1&D3&K3&Q5\N5%C1S7=60
+AnswerInit=AT&FW1&C1&D3&K3&Q5\N5%C1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Cardinal MVP 28.8XP V.FC/V.34
+InitString=AT&FQ1W2&D3&K3S7=60S95=47
+AnswerInit=AT&FQ1W2&D3&K3S7=60S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Cardinal MB2210/MB2450 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Cardinal MB2296SR 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Cardinal 2400 V42 
+AT&F&C1&D2\N3\Q3\J0\C2\V2S7=60S11=60 
+
+Cardinal 2400 V42 - Auto Reliable 
+AT&F&C1&D2\N3\Q3\J0\C2\V2S7=60S11=60 
+
+Cardinal 2400 V42 - MNP-4 mode 
+AT&F&C1&D2%C0\N3\Q3\J0\C2\V2S7=60S11=60 
+
+Cardinal 2400 V42 - 2400-Compatible mode (Direct) 
+AT&F&C1&D2%C0\N0\Q0\J1\C2\V2S7=60S11=60 
+
+Cardinal 2450 V42 
+AT&F&C1&D2\N3\Q3\J0\C2\V2S7=60S11=60 
+
+Cardinal 2450 V42 - Auto Reliable 
+AT&F&C1&D2\N3\Q3\J0\C2\V2S7=60S11=60 
+
+Cardinal 2450 V42 - MNP-4 mode 
+AT&F&C1&D2%C0\N3\Q3\J0\C2\V2S7=60S11=60 
+
+Cardinal 2450 V42 - 2400-Compatible mode (Direct) 
+AT&F&C1&D2%C0\N0\Q0\J1\C2\V2S7=60S11=60 
+
+Cardinal 9600 V.42 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 9600 V.42 - Auto Reliable 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 9600 V.42 - MNP-4 mode 
+AT&F %C0 &C1&D2 S7=60 S11=60 S95=41 
+
+Cardinal 9600 V.42 - 2400-Compatible (Direct) mode 
+AT&F&Q0&K0&C1&D2S7=60S11=60S95=41 
+
+Cardinal 9650 V.42 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 9650 V.42 - Auto Reliable 
+AT&F &C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 9650 V.42 - MNP-4 mode 
+AT&F %C0 &C1&D2 S7=60 S11=60 S95=41 
+
+Cardinal 9650 V.42 - 2400-Compatible (Direct) mode 
+AT&F&Q0&K0&C1&D2S7=60S11=60S95=41 
+
+Cardinal 14400 V32bis 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 14400 V32bis - Auto Reliable 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 14400 V32bis - MNP-4 mode 
+AT&F%C0 &C1&D2 S7=60 S11=60 S95=41 
+
+Cardinal 14400 V32bis - 2400-Compatible (Direct) mode 
+AT&F&Q0&K0&C1&D2S7=60S11=60S95=41 
+
+Cardinal 14450 V32bis 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 14450 V32bis - Auto Reliable 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Cardinal 14450 V32bis - MNP-4 mode 
+AT&F%C0 &C1&D2 S7=60 S11=60 S95=41 
+
+Cardinal 14450 V32bis - 2400-Compatible (Direct) mode 
+AT&F&Q0&K0&C1&D2S7=60S11=60S95=41 
+
+Cermetek 1200 Modem/1200 SPC/Security Modem 
+ATE1Q0V1X2 S7=60 S11=55 S0=0 
+
+Cermetek 2400 R/2400 SPC 
+ATE1Q0V1X4S7=60 S11=55 S0=0 
+
+Cermetek, Other
+AT E1Q0V1X4
+
+Cettlan Corp., All
+AT E1Q0V1X4
+
+Choice Technology Group Ltd., All
+AT E1Q0V1X4
+
+CMS, All
+AT E1Q0V1X4
+
+Companion CTS212AH 
+Q 
+
+COM 1 MV 213 
+ATE1Q0V1X4&E5 S0=0 S7=60 
+
+COM 1 MV 214 
+ATE1Q0V1X4&E5 &E1 S0=0 S7=60 
+
+COM 1 MV 223 / MV 224 
+ATE1Q0V1X4&E5 &E1 S0=0 S7=60 
+
+Compaq, All
+AT E1Q0V1X4
+
+Compaq Enhanced Internal Modem 
+AT&F&C1&D2X4W1S7=60S11=60&Q5S46=2&K3S36=7&Y0 
+
+Compaq Enhanced - Auto Reliable mode 
+AT&F&C1&D2X4S36=7 S46=2S7=60 S11=60 
+
+Compaq SpeedPAQ 144 Modem 
+AT&F&C1&D2W2\V1S7=60S11=60 
+
+Compaq SpeedPAQ 144 - Auto Reliable mode 
+AT&F&C1&D2W2\V1S7=60S11=60 
+
+Compaq SpeedPAQ 144 - MNP-4 mode 
+AT&F%C0&C1&D2W2\V1S7=60S11=60 
+
+Compaq SpeedPAQ 144 - 2400 mode 
+AT&F%C0&C1&D2W2\V1S37=6S7=60S11=60 
+
+Complete Communicator 
+ATE1Q0V1X4&C1&D2 S0=0 
+
+Complete Communicator V.42 
+AT&F&C1&D2\Q3\N3\J0\V1\C1 
+
+Complete Communicator - Auto Reliable 
+AT&F&C1&D2\Q3\N3\J0\V1 S7=60 S11=60 
+
+Complete Communicator - MNP-4 mode 
+AT&F&C1&D2%C0\Q3\N3\J0\V1 S7=60 S11=60 
+
+Complete Communicator GOLD 
+AT&F&C1&D2&K3&Q5\N3%C1S7=60S11=60 
+
+Complete Communicator GOLD - Auto Reliable 
+AT&F&C1&D2&K3&Q5\N3%C1S7=60 S11=60 
+
+Complete Communicator GOLD - MNP-4 mode 
+AT&F&C1&D2&K3&Q5\N3%C0S7=60 S11=60 
+
+Complete Communicator GOLD - 2400-Compatible mode 
+AT&F&C1&D2&K3\N0S7=60 S11=60 
+
+Complete FAX/9624 
+AT&FW1&C1&D2\J0\N3\Q3\V1S7=60S11=55 
+
+Complete FAX/9624 - Auto Reliable 
+AT&F3W1&C1&D2\J0\N3\Q3\V1S7=60S11=55 
+
+Complete FAX/9624 - MNP-4 mode 
+AT&F3W1&C1&D2\J0\N3\Q3\V1S7=60S11=55%C0 
+
+Complete FAX/9624 - 2400-Compatible mode 
+AT&FW1&C1&D2\J1\N0\Q0S7=60S11=55 
+
+Complete Modem Plus 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Complete PC TurboModem Plus 
+AT&F2&C1 &D2 \V1 S7=60 S11=60 
+
+Complete PC TurboModem Plus - Auto Reliable 
+AT&F2 &C1 &D2 \V1 S7=60 S11=60 
+
+Complete PC TurboModem Plus - MNP-4 mode 
+AT&F2%C0 &C1 &D2 \V1 S7=60 S11=60 
+
+Compuadd 9600 MNP5 
+AT&FX4&C1&D2%C1\J0\N3\Q3\V1S7=60S11=55 
+
+Compuadd 9600 MNP5 - Auto Reliable 
+AT&FX4&C1&D2%C1\J0\N3\Q3\V1S7=60S11=55 
+
+Compuadd 9600 MNP5 - MNP-4 mode 
+AT&FX4&C1&D2%C0\J0\N3\Q3\V1S7=60S11=55 
+
+CompuCom Speedmodem 
+AT&F2*H1\N3\Q3%C1&C1&D2S7=60S11=60S0=0 
+
+CompuCom Speedmodem - Auto Reliable 
+AT&F2&C1&D2*H1\N3\Q3%C1S7=60S11=60 
+
+CompuCom Speedmodem - CSP-EC mode 
+AT&F2&C1&D2*H2\N3\Q3%C1S7=60S11=60 
+
+CompuCom Speedmodem - MNP-4 mode 
+AT&F2&C1&D2*H1\N3\Q3%C0S7=60S11=60 
+
+CompuCom Speedmodem - 2400 mode 
+AT&F2&C1&D2*H1\N0\Q3%C0S7=60S11=60 
+
+CompuCom Speedmodem STAR 
+AT&F2*H2 \J0 \N3 \Q3 %C1 &C1 &D2 S7=60 S11=60 S0=0 
+
+CompuCom Speedmodem STAR - Auto Reliable 
+AT&F2&C1&D2*H2\J0\N3\Q3%C1S7=60S11=60 
+
+CompuCom Speedmodem STAR - MNP-4 mode 
+AT&F2&C1&D2*H2\J0\N3\Q3%C0S7=60S11=60 
+
+CompuCom Speedmodem STAR - 2400 mode 
+AT&F2&C1&D2*H2\J0\N0\Q3%C0S7=60S11=60 
+
+Compudyne 9642 
+AT&F&C1&D2S7=60S95=44S11=60 
+
+Compudyne 9642 - Auto Reliable 
+AT&F&C1&D2S7=60S11=60S95=44 
+
+Compudyne 9642 - MNP-4 mode 
+AT&F&Q9&C1&D2S7=60S11=60S95=44 
+
+Compudyne 9642 - 2400-Compatible 
+AT&F&Q0&C1&D2S7=60S11=60S95=44 
+
+Computer Peripherals Inc., Other
+AT E1Q0V1X4
+
+Computer Peripherals Inc., VIVA 14.4 /FAXVC
+AT&F E1Q0V1X4 &C1&D2
+
+Computer Peripherals Inc., VIVA 14.4 Series
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Computer Peripherals Inc., VIVA 9642E
+AT&F E1Q0V1X4 &C1&D2&K3
+
+ControlWare Citam (ISDN)
+InitString=ATZ&C0&D1&M0&R1&S0S8=1
+AnswerInit=ATZ&C0&D1&M0&R1&S0S8=1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+ISDN=Yes
+
+CTK Shorty 2400 
+ATE1Q0V1X4&C1&D2S0=0 
+
+CTK FaxManager 
+AT&F\Q3\N3%C1\J0 
+
+CTK FaxManager - Auto Reliable 
+AT&F\Q3\N3%C1\J0 
+
+CTK FaxManager - MNP-4 modus 
+AT&F\Q3\N3%C0\J0 
+
+CTK FaxManager - Direkt modus 
+AT&F\J1\N1\Q0%C0 
+
+CTK Shorty V.42bis + Fax 
+AT&F&K3\N3%C3\J0 
+
+CTK Shorty V.42bis + Fax - Auto Reliable 
+AT&F&K3\N3%C3\J0 
+
+CTK Shorty V.42bis + Fax - MNP-4 modus 
+AT&F&K3\N3%C0\J0 
+
+CTK Shorty V.42bis + Fax - Direkt modus 
+AT&F&K0\N1\J1 
+
+CTK Shorty 14400 + Fax 
+AT&F2\Q3\N6%C1\C1\J0 
+
+CTK Shorty 14400 + Fax - Auto Reliable 
+AT&F2\Q3\N6%C1\C1\J0 
+
+CTK Shorty 14400 + Fax - MNP-4 modus 
+AT&F2\Q3\N6%C0\C1\J0 
+
+CXR Telcom Corp, AJ Series
+AT&F E1Q0V1X4 &C1&D2 *LG2*E0
+
+CXR Telcom Corp, Other
+AT E1Q0V1X4
+
+Dacom FASTLANE V32 
+AT&F&C1&D2&R0*E1*F3*S1S0=0S7=60 
+
+Dacom FASTLANE V32 - Auto Reliable Mode 
+AT&F&C1&D2&R0*E1*F3*S1S0=0S7=60 
+
+Dacom FASTLANE V32 - Direct Mode 
+AT&F&C1&D2&R0*E0*F0*S1S0=0S7=60 
+
+Dallas,  Fax 14.4
+AT E1Q0V1X4&K3
+
+Dallas,  Fax 96/96
+AT E1Q0V1X4&K3
+
+Dallas, Other
+AT E1Q0V1X4
+
+Dallas Fax 96/96 
+AT&F&C1 &D2 W1 S95=41 
+
+Dallas Fax 96/96 - Auto Reliable 
+AT&F&C1 &D2 W1 S7=60 S11=60 S95=41 
+
+Dallas Fax 96/96 - V.42 mode 
+AT&F&C1&D2%C0W1S7=60S11=60S95=41 
+
+Dallas Fax 96/96 - MNP-5 mode 
+AT&F&C1&D2%C1W1S7=60S11=60S95=41 
+
+Dallas Fax 96/96 - MNP-4 mode 
+AT&F&C1&D2%C0W1S7=60S11=60S95=41 
+
+Dallas Fax 14.4 / 14.4 Pro Plus 
+AT&F&C1 &D2 S95=41 
+
+Dallas Fax 14.4 - Auto Reliable 
+AT&F&C1 &D2 S7=60 S11=60 S95=41 
+
+Dallas Fax 14.4 - V.42 mode 
+AT&F&C1&D2%C0S7=60S11=60S95=41 
+
+Dallas Fax 14.4 - MNP -5 mode 
+AT&F&C1&D2%C1S7=60S11=60S95=41 
+
+Dallas Fax 14.4 - MNP-4 mode 
+AT&F&C1&D2%C0S7=60S11=60S95=41 
+
+Dataflex, Domfax II
+AT Q0V1 X1 \N0 %C0 &Q0
+
+Dataflex, Dynalink
+AT Q0V1B0
+
+Dataflex, Other
+AT E1Q0V1X4
+
+Dataflex Pocket Comfax II 
+AT&F3&C1&D2\G0\N3\Q3S7=60 
+
+Dataflex Pocket Comfax II - Auto Reliable 
+AT&F AT&C1&D2\G0\N3\Q3S7=60 
+
+Dataflex Pocket Comfax II - MNP-4 mode 
+AT&F&C1&D2%C0\G0\N3\Q3S7=60 
+
+Dataflex Pocket Comfax II - Direct mode 
+AT&F&C1&D2\G0\N1\Q0S7=60 
+
+Dataflex Pocket Quadcom II 
+AT&F3&C1&D2\G0&Q5\N3\Q3S7=60 
+
+Dataflex Pocket Quadcom II - Auto Reliable 
+AT&F&C1&D2\G0&Q5\N3\Q3S7=60 
+
+Dataflex Pocket Quadcom II - MNP-4 mode 
+AT&F&C1&D2%C0\G0&Q5\N3\Q3S7=60 
+
+Dataflex Pocket Quadcom II - Direct mode 
+AT&F AT&C1&D2\G0&Q5\N1\Q0S7=60 
+
+Dataflex Pocket Quadsync II 
+AT&F3&C1&D2\G0&Q5\N3\Q3S7=60 
+
+Dataflex Pocket Quadsync II - Auto Reliable 
+AT&F&C1&D2\G0&Q5\N3\Q3S7=60 
+
+Dataflex Pocket Quadsync II - MNP-4 mode 
+AT&F&C1&D2%C0\G0&Q5\N3\Q3S7=60 
+
+Dataflex Pocket Quadsync II - Direct mode 
+AT&F&C1&D2\G0&Q5\N1\Q0S7=60 
+
+Dataflex Rapier 9600 
+AT&F&C1&D2%C1&I1\N3\Q2S7=60 
+
+Dataflex Rapier 9600 - Auto Reliable 
+AT&F&C1&D2%C1&I1\N3\Q2S7=60 
+
+Dataflex Rapier 9600 - MNP-4 mode 
+AT&F&C1&D2%C0&I1\N3\Q2S7=60 
+
+Dataflex Rapier 9600 - Direct mode 
+AT&F&C1&D2&I0\N1\Q0S7=60 
+
+DataRace, All
+AT E1Q0V1X4
+
+Datarace 24/96V Fax/Modem
+InitString=AT&FW2&C1&D3&K3\J0\N5\Q2%C1S7=60
+AnswerInit=AT&FW2&C1&D3&K3\J0\N5\Q2%C1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Datarace RediMODEM V.32/V.32bis
+InitString=AT&F&C1&D3&K3&Q6\J0\N7\Q3\V2%C1S7=60
+AnswerInit=AT&F&C1&D3&K3&Q6\J0\N7\Q3\V2%C1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Data Race Action 24 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=5 
+
+Data Race Action 24 - Auto Reliable 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=5 
+
+Data Race Action 24 - MNP-4 mode 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=0 
+
+Data Race Action 24 - No Error Correction 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=3 
+
+Data Race Action 32 / 32L 
+AT&F&C1&D2W1&K3S0=0S7=60S11=55S64=5 
+
+Data Race Action 32 / 32L - Auto Reliable 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=5 
+
+Data Race Action 32 / 32L - MNP-4 mode 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=0 
+
+Data Race Action 32 / 32L - No Error Correction 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=3 
+
+Data Race Action 1496 
+AT&F&C1&D2W1&K3S0=0S7=60S11=55S64=5 
+
+Data Race Action 1496 - Auto Reliable 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=5 
+
+Data Race Action 1496 - MNP-4 mode 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=0 
+
+Data Race Action 1496 - No Error Correction 
+AT&F&C1&D2&K3S0=0S7=60S11=55S64=3 
+
+Data Race RediMODEM 14400 
+AT&F&C1&D2\N7\J0\Q3\V2S7=60S11=55 
+
+Data Race RediMODEM 14400 - Auto Reliable 
+AT&F&C1&D2\N7\J0\Q3\V2S7=60S11=55 
+
+Data Race RediMODEM 14400 - MNP-4 mode 
+AT&F&C1&D2\N7\J0\Q3\V2%C0S7=60S11=55 
+
+Data Race RediMODEM 9600 
+AT&F&C1&D2\N7\J0\Q3\V2S7=60S11=55 
+
+Data Race RediMODEM 9600 - Auto Reliable 
+AT&F&C1&D2\N7\J0\Q3\V2S7=60S11=55 
+
+Data Race RediMODEM 9600 - MNP-4 mode 
+AT&F&C1&D2\N7\J0\Q3\V2%C0S7=60S11=55 
+
+DataTrek 624 
+AT&F&C1&D2\N3\Q3\V1\J1 S11=75 
+
+DataTrek 624 UK - Auto Reliable mode 
+AT&F&C1&D2\N3\Q3\J1\V1 S7=60 S11=75 
+
+DataTrek 624 UK 
+AT&F&C1&D2&P1\N3\Q3\V1\J1 S11=75 
+
+DataTrek 624 UK - Auto Reliable mode 
+AT&F&C1&D2\N3\Q3\J1\V1&P1 S7=60 S11=75 
+
+DataTrek 2424 (MNP) 
+AT&F&C1&D2&P1\N3\Q3\J1 S11=75 
+
+DataTrek 2424 - Auto Reliable mode 
+AT&F&C1&D2\N3\Q3\J1 S7=60 S11=60 
+
+DataTrek V.32 
+AT&F&C1&D2&Y0\J0\N3\Q3\V1%C2S134=5S7=60S11=55 
+
+DataTrek V.32 - Auto Reliable 
+AT&F&C1&D2\J0\N3\V1%C2S134=5S7=60S11=60 
+
+DataTrek V.32 - V.42 mode 
+AT&F&C1&D2\J0\N3\V1%C1S134=4S7=60S11=60 
+
+DataTrek V.32 - MNP-5 mode 
+AT&F&C1&D2\J0\N3\V1%C2S134=5S7=60S11=60 
+
+DataTrek V.32 - MNP-4 mode 
+AT&F&C1&D2\J0\N3\V1%C1S134=4S7=60S11=60 
+
+DataTrek Elite M/FM/SFM 
+AT&F&C1&D2&Y0\J0\N3\Q3\V1%C2S134=5 
+
+DataTrek Elite M/FM/SFM - Auto Reliable 
+AT&F&C1&D2\Q3\J0\N3\V1%C2S134=5ATS7=60S11=55 
+
+DataTrek Elite M/FM/SFM - MNP-5 mode 
+AT&F&C1&D2\Q3\J0\N3\V1%C2S134=5ATS7=60S11=55 
+
+DataTrek Elite M/FM/SFM - MNP-4 mode 
+AT&F&C1&D2\Q3\J0\N3\V1%C1S134=4ATS7=60S11=55 
+
+DataTrek 2496CFM PCMCIA 
+AT&F&C1&D2&Y0\J0\N3\Q3\V1%C2S134=5S7=60S11=55 
+
+DataTrek 2496CFM PCMCIA - Auto Reliable 
+AT&F&C1&D2\Q3\J0\N3\V1%C2S134=5S7=60S11=55 
+
+DataTrek 2496CFM PCMCIA - MNP-5 mode 
+AT&F&C1&D2\Q3\J0\N3\V1%C2S134=5S7=60S11=55 
+
+DataTrek 2496CFM PCMCIA - MNP-4 mode 
+AT&F&C1&D2\Q3\J0\N3\V1%C1S134=4S7=60S11=55 
+
+DEC DF296-DA (DECmodem V32) 
+AT&F&C1 &D2 %A1 %F2 $M2 $C1 
+
+DEC DF296-DA (DECmodem V32 - Auto Reliable 
+AT&F&C1&D2%A1%F2$M2$C1S7=60 
+
+DEC DF296-DA (DECmodem V32 - MNP-4 Mode 
+AT&F&C1&D2%A1%F2$M2$C0S7=60 
+
+Dell Data/Fax 24/96V 
+AT&F&C1 &D2 &K3\V1 S7=60 S11=60 
+
+Dell Data/Fax 24/96V - Auto Reliable 
+AT&F&C1&D2&K3\V1S7=60S11=60 
+
+Dell Data/Fax 96/96V 
+AT&F1&C1 &D2 \N7 \Q3\V2 S7=60 S11=60 
+
+Dell Data/Fax 96/96V - Auto Reliable 
+AT&F&C1&D2\N7\Q3\V2S7=60S11=60 
+
+Delta Gold DM 1200 
+ATE1Q0V1X4 S7=60 S11=55 S0=0 
+
+Delta, Other
+AT E1Q0V1X4
+
+Digicom DSI 9624LE 
+AT&FS7=60S0=0*F3 
+
+Digicom 9624LE - Auto Reliable 
+AT&FS7=60S0=0*F3 
+
+Digicom 9624LE - MNP-5 mode 
+AT&FS7=60S0=0*F3*E1 
+
+Digicom 9624LE - MNP-4 mode 
+AT&FS7=60S0=0*F3*E3 
+
+Digicom 9624LE Plus 
+AT&FS7=60S0=0*F3 
+
+Digicom 9624LE Plus - Auto Reliable 
+AT&FS7=60S0=0*F3 
+
+Digicom 9624LE Plus- V.42 mode 
+AT&FS7=60S0=0*F3*E7 
+
+Digicom 9624LE Plus - MNP-5 mode 
+AT&FS7=60S0=0*F3*E1 
+
+Digicom 9624LE Plus - MNP-4 mode 
+AT&FX4S7=60S0=0*F3*E3 
+
+Digicom 9624PC 
+AT&F&C1&D2&R0*E1*F3*M1*S0S7=60S0=0 
+
+Digicom 9624PC - Auto Reliable 
+AT&F&C1&D2&R0*E1*F3*M1*S0S7=60S0=0 
+
+Digicom 9624PC - MNP-4 mode 
+AT&F&C1&D2&R0*E3*F3*M1*S0S7=60S0=0 
+
+Digicom Connection 96+ 
+AT&F&C1&D2&K3\N5S7=60 
+
+Digicom Connection 96+ - Auto Reliable 
+AT&F&C1&D2&K3\N5S7=60 
+
+Digicom Connection 96+ - MNP-4 mode 
+AT&F&C1&D2&K3\N3S7=60 
+
+Digicom Connection 96+ - 2400-Compatible mode 
+AT&F&C1&D2&K3\N1S7=60 
+
+Digicom Eagle V.32 
+AT&F&C1&D2&R0*E9*F3*M2*N3*S1S7=60S0=0 
+
+Digicom Eagle V.32 - Auto Reliable 
+AT&F&C1&D2&R0*E9*F3*M2*N3*S1S7=60S0=0 
+
+Digicom Eagle V.32 - MNP-4 mode 
+AT&F&C1&D2&R0*E3*F3*M2*N3*S1S7=60S0=0 
+
+Digicom Eagle V.32 - 2400-Compatible mode 
+AT&F&C1&D2&R0*E0*F0*N1*S1S7=60S0=0 
+
+Digicom Eagle V.32+ 
+AT&F&C1&D2&R0*E9*F3*M2*N6*S1S7=60S0=0 
+
+Digicom Eagle V.32+ - Auto Reliable 
+AT&F&C1&D2&R0*E9*F3*M2*N6*S1S7=60S0=0 
+
+Digicom Eagle V.32+ - MNP-4 mode 
+AT&F&C1&D2&R0*E3*F3*M2*N6*S1S7=60S0=0 
+
+Digicom Eagle V.32 - 2400-Compatible mode 
+AT&F&C1&D2&R0*E0*F0*N1*S1S7=60S0=0 
+
+Digicom Scout V.32 
+AT&F&C1&D2&R0*E9*F3*M2*N3*S0S7=60S0=0 
+
+Digicom Scout V.32 - Auto Reliable 
+AT&F&C1&D2&R0*E9*F3*M2*N3*S0S7=60S0=0 
+
+Digicom Scout V.32 - MNP-4 mode 
+AT&F&C1&D2&R0*E3*F3*M2*N3*S0S7=60S0=0 
+
+Digicom Scout V.32 - 2400-Compatible mode 
+AT&F&C1&D2&R0*E0*F0*N1*S0S7=60S0=0 
+
+Digicom Scout Plus 
+AT&F&C1&D2&R0*E9*F3*M2*N6*S0S7=60S0=0 
+
+Digicom Scout Plus - Auto Reliable 
+AT&F&C1&D2&R0*E9*F3*M2*N6*S0S7=60S0=0 
+
+Digicom Scout Plus - MNP-4 mode 
+AT&F&C1&D2&R0*E3*F3*M2*N6*S0S7=60S0=0 
+
+Digicom Scout Plus - 2400-Compatible mode 
+AT&F&C1&D2&R0*E0*F0*N1*S0S7=60S0=0 
+
+Digicom Systems (DSI) 9624LE/9624PC (MNP 5)
+InitString=AT&F&C1&D3*E1*F3*S1S7=60
+AnswerInit=AT&F&C1&D3*E1*F3*S1S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Digicom Systems (DSI) 9624LE+ (V.42bis)
+InitString=AT&F&C1&D3*E9*F3*N6*S1S7=60
+AnswerInit=AT&F&C1&D3*E9*F3*N6*S1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Digicom Systems Connection 14.4+FAX
+InitString=AT&F&C1&D3&K3\N5%C1S48=7S7=60
+AnswerInit=AT&F&C1&D3&K3\N5%C1S48=7S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Digicom Systems Inc., Connection 144+
+AT E1Q0V1X4 &C1&D2&K3 
+
+Digicom Systems Inc., Connection 96+
+AT E1Q0V1X4 &C1&D2&K3 
+
+Digicom Systems Inc., Eagle
+AT E1Q0V1X4 &C1&D2&K3 
+
+Digicom Systems Inc., Other
+AT E1Q0V1X4
+
+Digicom Systems Inc., Scout
+AT E1Q0V1X4 &C1&D2&K3 
+
+Digitan, All
+AT E1Q0V1X4
+
+Digital Scholar Plus 
+ENAT&F&C1 &D2 %A1 %F2 
+
+Digital Scholar Plus - Auto Reliable 
+ENAT&F AT&C1&D2%A1%F2 
+
+Digitan Hi-IQ (ZX1896) Fax Modem 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Digitan DS92M Fax Modem 
+AT&F&C1&D2\Q3\N7\V1S7=60S11=55 
+
+Digitan DS92M Fax Modem - Auto Reliable 
+AT&F&C1&D2\Q3\N7\V1 S7=60S11=55 
+
+DoveFax 144E
+InitString=AT&F&C1&D3*E1*E5*E9*F3*M2*N6*S1S7=60
+AnswerInit=AT&F&C1&D3*E1*E5*E9*F3*M2*N6*S1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Dowty, Jaquar Quartet L
+AT&F  Q0V1E1
+
+Dowty, Maze
+AT&F &C1 &Q6 X4 E0
+
+Dowty, Other
+AT E1Q0V1X4
+
+Dowty, Quattro 96
+AT E1V1 
+
+Dowty, Quattro SB2422
+AT&F  Q0 V1E1X1
+
+Dowty Mayze 96/96R 
+AT&FX4 &C1 &D2 &Q6 %R1 S0=0 S7=60 AT%K2 -E5 %C1 
+
+Dowty Mayze 96/96R - Auto-Reliable mode 
+AT&FX4&C1&D2&Q6%R1S7=60%K2-E5%C1 
+
+Dowty Mayze 96/96R - MNP-5 mode 
+AT&FX4&C1&D2&Q6%R1S7=60%K2-E3%C1 
+
+Dowty Mayze 96/96R - MNP-4 mode 
+AT&FX4&C1&D2&Q6%R1S7=60%K2-E3%C0 
+
+Dowty Quantum 96 
+AT&F&C1 &D2 &I1 &K2 &E1 S7=60 
+
+Dowty Quantum 96 - Auto-Reliable mode 
+AT&F&C1&D2&I1&K2&E1S7=60 
+
+Dowty Quantum 96 - MNP-5 mode 
+AT&F&E4%C1&C1&D2&I1&K2S7=60 
+
+Dowty Quantum 96 - MNP-4 mode 
+AT&F&E4%C0&C1&D2&I1&K2S7=60 
+
+Dowty Quattro PC Half-Card 
+AT&F&C1 &D2 &E1 &K2 S0=0 
+
+Dowty Quattro PC Half-Card - auto 
+AT&F&C1&D2&E1&K2S0=0 
+
+Dowty Quattro PC Half-Card - MNP5 
+AT&F&C1&D2&E4&K2S0=0%C1 
+
+Dowty Quattro PC Half-Card - MNP4 
+AT&F&C1&D2&E4&K2S0=0%C0 
+
+Dr. Neuhaus Fury PC Junior/Fax 2400 
+ATE1Q0V1X4&C1&D2S0=0 
+
+Dr. Neuhaus Fury 2400 PC/TI 
+ATE1Q0V1X4&C1&D2S0=0 
+
+Dr. Neuhaus Fury 2400 PC/TI + MNP 
+AT&F\Q3\N3\J0\V1\T0 
+
+Dr. Neuhaus Fury 2400 PC/TI + MNP - Auto Reliable 
+AT&F\Q3\N3\J0\V1\T0 
+
+Dr. Neuhaus Fury 2400 PC/TI + MNP - MNP-4 modus 
+AT&F%C0\Q3\N3\J0\V1\T0 
+
+Dr. Neuhaus Fury 2400 PC/TI + MNP - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 2402 TI 
+AT&F\Q3\N3\J0\V1 
+
+Dr. Neuhaus Fury 2402 TI - Auto Reliable 
+AT&F\Q3\N3\J0\V1 
+
+Dr. Neuhaus Fury 2402 TI - MNP-4 modus 
+AT&F%C0\Q3\N3\J0\V1 
+
+Dr. Neuhaus Fury 2402 TI - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 2403 TI 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury 2403 TI - Auto Reliable 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury 2403 TI - MNP-4 modus 
+AT&F3&C1&D2%C0 
+
+Dr. Neuhaus Fury 2403 TI - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 2400 Pocket/Fax 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury 2400 Pocket/Fax - Auto Reliable 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury 2400 Pocket/Fax - MNP-4 modus 
+AT&F3&C1&D2%C0 
+
+Dr. Neuhaus Fury 2400 Pocket/Fax - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 2400 PC/Fax 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury 2400 PC/Fax - Auto Reliable 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury 2400 PC/Fax - MNP-4 modus 
+AT&F3&C1&D2%C0 
+
+Dr. Neuhaus Fury 2400 PC/Fax - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury Card 2400 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury Card 2400 - Auto Reliable 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Fury Card 2400 - MNP-4 modus 
+AT&F3&C1&D2%C0 
+
+Dr. Neuhaus Fury Card 2400 - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Faxy 9600 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Faxy 9600 - Auto Reliable 
+AT&F3&C1&D2 
+
+Dr. Neuhaus Faxy 9600 - MNP-4 modus 
+AT&F3&C1&D2%C0 
+
+Dr. Neuhaus Faxy 9600 - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 9600 TI 
+AT&F&C1&D2\N6\V1\Q3 
+
+Dr. Neuhaus Fury 9600 TI - Auto Reliable 
+AT&C1&D2\N6\V1\Q3 
+
+Dr. Neuhaus Fury 9600 TI - MNP-4 modus 
+AT&F%C0&C1&D2\N6\V1\Q3 
+
+Dr. Neuhaus Fury 9600 TI - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 9601 TI 
+AT&C1&D2\N3\V1\Q3 
+
+Dr. Neuhaus Fury 9601 TI - Auto Reliable 
+AT&C1&D2\N3\V1\Q3 
+
+Dr. Neuhaus Fury 9601 TI - MNP-4 modus 
+AT&F%C0&C1&D2\N3\V1\Q3 
+
+
+Dr. Neuhaus Fury 9601 TI - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 14.4 TI 
+AT&F&C1&D2\N6\V1\Q3 
+
+Dr. Neuhaus Fury 14.4 TI - Auto Reliable 
+AT&C1&D2\N6\V1\Q3 
+
+Dr. Neuhaus Fury 14.4 TI - MNP-4 modus 
+AT&F%C0&C1&D2\N6\V1\Q3 
+
+Dr. Neuhaus Fury 14.4 TI - Direkt modus 
+AT&F\Q0\N0\J1 
+
+Dr. Neuhaus Fury 14.4 TI/SL 
+AT&F&C1&D2\N3\V1\Q3 
+
+Dr. Neuhaus Fury 14.4 TI/SL - Auto Reliable 
+A&C1&D2\N3\V1\Q3 
+
+
+Dr. Neuhaus Fury 14.4 TI/SL - MNP-4 modus 
+AT&F%C0&C1&D2\N3\V1\Q3 
+
+Dr. Neuhaus Fury 14.4 TI/SL - Direkt modus 
+AT&F\Q0\N0\J1 
+
+DSI 9624 LE (ARA 1.0)
+InitString=AT&F&D3E0*F0*E0*S0
+AnswerInit=AT&F&D3E0*F0*E0*S0S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+DSI 9624 LE Plus (ARA 1.0)
+InitString=AT&F&D3E0*F0*E0*S0
+AnswerInit=AT&F&D3E0*F0*E0*S0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+DTronix, All
+AT E1Q0V1X4
+
+Dynalink 1414VH 
+AT&F&C1&D2\N3%C1&K3&Q9S7=60S11=55S95=43 
+
+Dynalink 1414VH - Auto Reliable 
+AT&F&C1&D2\N3%C1&K3&Q9S7=60S11=55S95=43 
+
+Dynalink 1414VH - MNP-4 mode 
+AT&F&C1&D2\N3%C0&K3&Q9S7=60S11=55S95=43 
+
+Dynalink 1414VH - Direct mode 
+AT&F&C1&D2\N0%C0&K3S7=60S11=55S95=43 
+
+Dynalink 9696VH 
+AT&F&C1&D2\N3%C1&K3&Q9S7=60S11=55S95=43 
+
+Dynalink 9696VH - Auto Reliable 
+AT&F&C1&D2\N3%C1&K3&Q9S7=60S11=55S95=43 
+
+Dynalink 9696VH - MNP-4 mode 
+AT&F&C1&D2\N3%C0&K3&Q9S7=60S11=55S95=43 
+
+Dynalink 9696VH - Direct mode 
+AT&F&C1&D2\N0%C0&K3S7=60S11=55S95=43 
+
+E-Tech Research In., 14.4/19.2 Series
+AT&FS7=60 E1Q0V1X4 &C1&D2$F4$C0
+
+E-Tech Research In., 1414UX
+AT&FS7=60 E1Q0V1X4 &M5&K3%C0
+
+E-Tech Research In., 9600 Series
+AT&F E1Q0V1X4 &C1&D2$F4$C0
+
+E-Tech Research In., Other
+AT E1Q0V1X4
+
+ECS 400
+InitString=AT&F&C1&D3&K3&Q5\N3%C3S7=60
+AnswerInit=AT&F&C1&D3&K3&Q5\N3%C3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Elsa MicroLink 14.4 Series 
+AT&FX4&C1&D2\Q3\N3%C3S7=60 
+
+Elsa MicroLink 14.4 Series - Auto Reliable 
+AT&FX4&C1&D2\Q3\N3%C3S7=60 
+
+Elsa MicroLink 14.4 Series - MNP-4 mode 
+AT&FX4&C1&D2\Q3\N3%C0S7=60 
+
+Elsa MicroLink 14.4 Series - Direct mode 
+AT&FX4&C1&D2\Q0\N0S7=60 
+
+Elsa MicroLink 2440T/2440TR 
+AT&FX4&C1&D2\Q3\N3%C3S7=60 
+
+Elsa MicroLink 2440T/2440TR - Auto Reliable 
+AT&FX4&C1&D2\Q3\N3%C3S7=60 
+
+Elsa MicroLink 2440T/2440TR - MNP-4 mode 
+AT&FX4&C1&D2\Q3\N3%C0S7=60 
+
+Elsa MicroLink 2440T/2440TR - Direct mode 
+AT&FX4&C1&D2\Q0\N0S7=60 
+
+Elsa MicroLink ISDN/PC 
+AT&FX4&C1&D2\Q3 
+
+Elsa MicroLink ISDN/PC - Auto Reliable 
+AT&FX4&C1&D2\Q3 
+
+Elsa MicroLink ISDN/PC - Direct mode 
+AT&FX4&C1&D2\Q3 
+
+Elsa MicroLink ISDN/TL 
+AT&FX4&C1&D2\Q3 
+
+Elsa MicroLink ISDN/PC - Auto Reliable 
+AT&FX4&C1&D2\Q3 
+
+Elsa MicroLink ISDN/PC - Direct mode 
+AT&FX4&C1&D2\Q3 
+
+Elsa MicroLink 9624T2VX 
+AT&FX4&C1&D2S0=0&R6&E4$BA0$MB9600 
+
+Elsa MicroLink 9624T2VX - Auto Reliable mode 
+AT&FX4&C1&D2S0=0&R6&E4$BA0$MB9600 
+
+Elsa MicroLink 9624T2VX - MNP-4 mode 
+AT&FX4&C1&D2S0=0&R6&E4$BA0$MB9600 
+
+Elsa MicroLink 2400T2VX 
+AT&FX4&C1&D2S0=0&R6&E4$BA0$MB9600 
+
+Elsa MicroLink 2400T2VX - Auto Reliable mode 
+AT&FX4&C1&D2S0=0&R6&E4$BA0 
+
+Elsa MicroLink 2400T2VX - MNP-4 mode 
+AT&FX4&C1&D2S0=0&R6&E2$BA0 
+
+Elsa MicroLink 2410 w/MNP-5 
+AT&FX4&C1&D2S0=0&R6&E1$BA0$SB9600 
+
+Elsa MicroLink 2410 w/MNP-5 - Auto Reliable mode 
+AT&FX4&C1&D2S0=0&R6&E1$BA0$SB9600 
+
+Elsa MicroLink 2410 w/MNP-5 - MNP-4 mode 
+AT&FX4&C1&D2S0=0&R6&E2$BA0$SB9600 
+
+Elsa MicroLink 2410 w/MNP-5 - Direct mode 
+AT&FX4&C1&D2S0=0&R5&E0$BA1$SB2400 
+
+Elsa MicroLink 2410 w/V.42bis 
+AT&FX4&C1&D2S0=0&R6&E1$BA0$SB9600 
+
+Elsa MicroLink 2410 w/V.42bis - Auto Reliable mode 
+AT&FX4&C1&D2S0=0&R6&E1$BA0$SB9600 
+
+Elsa MicroLink 2410 w/V.42bis - MNP-4 mode 
+AT&FX4&C1&D2S0=0&R6&E2$BA0$SB9600 
+
+Elsa MicroLink 2410 w/V.42bis - Direct mode 
+AT&FX4&C1&D2S0=0&R5&E0$BA1$SB2400 
+
+Elsa MicroLink 2410 (no MNP) 
+ATE1Q0V1X4 &C1&D2 
+
+ETech Bullet PC2400MH 
+AT&F&C1&D2$E1$F4 
+
+ETech Bullet PC2400MH - Auto Reliable 
+AT&F&C1&D2 $E1 $F4 
+
+ETech Bullet E2400M 
+AT&C1&D2$E3$F4$V5$S1 
+
+ETech Bullet E2400M - Auto Reliable 
+AT&F &C1 &D2 $E3 $F4 $V5 $S1 
+
+ETech Bullet E9696M 
+AT&C1&D2$E3$F4$X4$S0 
+
+ETech Bullet E9696M - Auto Reliable 
+AT&F &C1 &D2 $E3 $F4 $X4 $S0 S7=60 
+
+ETech Bullet PC9696M 
+AT&F&C1&D2$E1$F4$S1 
+
+ETech Bullet PC9696M - Auto Reliable 
+AT&F &C1 &D2 $E1 $F4 $S1 S0=0 S7=60 
+
+ETech P1496MX Pocket Modem 
+AT&F&C1&D2$E3$F4$S0 
+
+ETech P1496MX Pocket Modem - Auto Reliable 
+AT&F&C1&D2$E3$F4$S0S0=0S7=60 
+
+ETech P1496MX Pocket Modem - MNP-4 mode 
+AT&F&C1&D2$E1$F4$S0$C0S0=0S7=60 
+
+Everex Evercom 12e 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Everex Evercom 24e 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Everex II-24 
+ATE1Q0V1X4&C1&D2 S7=60 S11=60 
+
+Everex EV941 
+AT&FE1V1Q0X4&C1&D2 
+
+Everex EV941 - Auto Reliable 
+AT&F &C1 &D2 &I1 S7=60 S11=60 
+
+Everex 24e+ 
+AT&F &C1 &D2 %C1 \Q3 \C1 \N3 \J0 \V1 
+
+Everex 24e+ - Auto Reliable 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C1S7=60S11=60 
+
+Everex 24e+ - MNP-4 mode 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C0S7=60S11=60 
+
+Everex Carrier 24 
+AT&F &C1 &D2 %C1 \Q3 \C1 \N3 \J0 \V1 
+
+Everex Carrier 24 - Auto Reliable 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C1S7=60S11=60 
+
+Everex Carrier 24 - MNP-4 mode 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C0S7=60S11=60 
+
+Everex 24/96 
+AT&F &C1 &D2 %C1 \Q3 \C1 \N3 \J0 \V1 
+
+Everex 24/96 - Auto Reliable mode 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C1S7=60S11=60 
+
+Everex 24/96 - MNP-4 mode 
+AT&&C1&D2\Q3\C1\N3\J0\V1%C0S7=60S11=60 
+
+Everex EverFax 24/96E 
+AT&F &C1 &D2 %C1 \Q3 \C1 \N3 \J0 \V1 
+
+Everex Everfax 24/96E - Auto Reliable mode 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C1S7=60S11=60 
+
+Everex Everfax 24/96E - MNP-4 mode 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C0S7=60S11=60 
+
+Everex 96E+ 
+AT&F1&C1&D2W1S7=60S11=55 
+
+Everex 96E+ - Auto Reliable 
+AT&F1&C1&D2 W1 S7=60 S11=60 
+
+Everex 96E+- V.42 mode 
+AT&F1 %C0 &C1&D2 W1 S7=60 S11=60 
+
+Everex 96E+ - MNP-4 mode 
+AT&F1 %C0 &C1&D2 W1 S7=60 S11=60 
+
+Everex Evercom 24 and 24E (no MNP or V.42)
+InitString=AT&F&C1&D3!S1S7=60
+AnswerInit=AT&F&C1&D3!S1S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+Everex Evercom 24+ and 24E+ (MNP 5)
+InitString=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Everex EverFax 24/96 and 24/96E (MNP 5)
+InitString=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Everex Evercom 96+ and 96E+ (V.42bis)
+InitString=AT&FW2&C1&D3\J0\N3\Q2\V2%C1S7=60
+AnswerInit=AT&FW2&C1&D3\J0\N3\Q2\V2%C1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+EXP 14400 Data/Fax
+InitString=AT&FW2X4&C1&D3&K3%C3\N3S7=60
+AnswerInit=AT&FW2X4&C1&D3&K3%C3\N3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Exxel, 1496-B
+AT E1Q0V1X4&K3
+
+Exxel, Other
+AT E1Q0V1X4
+
+Exxel, U1496E
+AT E1Q0V1X4&K3
+
+Falcom, FDX4642T
+AT&F  Q0V1X6
+
+Falcom, Other
+AT E1Q0V1X4
+
+Farallon Remote V.32 (ARA 1.0)
+InitString=AT&F&Q1X4E0$BA1&D3&E0&E3&B1
+AnswerInit=AT&F&Q1X4E0$BA1&D3&E0&E3&B1S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Fastcomm 9696 
+AT&F&C1&D2S0=0&H1&I1&M6S7=60S11=6S10=2 
+
+Fastcomm 9696 - Auto Reliable 
+AT&F &C1 &D2 &H1 &I1 S0=0 AT S7=60 S10=2 S11=60 
+
+FastComm Communications Corp, 9696
+AT E1Q0V1X4 &C1&D2&H1&I1&M0
+
+FastComm Communications Corp, Other
+AT E1Q0V1X4
+
+Focus 14.4 (ARA 1.0)
+InitString=AT&F&D2E0V1B0&H1&M0X4&A0
+AnswerInit=AT&F&D2E0V1B0&H1&M0X4&A0S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Forval IM14400 
+AT&F&C1&D2&Y0\J0\N3\Q3\V2S7=60S11=55 
+
+Forval IM14400 - Auto Reliable 
+AT&F &C1 &D2 \J0\N3\Q3\V2 S7=60 S11=60 
+
+Forval IM14400 - V.42 mode 
+AT&F&C1&D2\J0\N3\Q3\V2 HS7=60S11=60 
+
+Forval IM14400 - MNP-5 mode 
+AT&F&C1&D2\J0\N3\Q3\V2%C1S7=60S11=60 
+
+Forval IM14400 - MNP-4 mode 
+AT&F&C1&D2\J0\N3\Q3\V2%C0S7=60S11=60 
+
+Frecom Winfast 14400 
+AT&F &C1 &D2 *LG2 *M2 *V1 *E1 
+
+Frecom Winfast 14400 - Auto Reliable mode 
+AT&F &C1 &D2 *LG2 *M2 *V1 *E1 
+
+Frecom Winfast 14400 - MNP-4 mode 
+AT&F &C1 &D2 *LG2 *M2 *V1 *E0 
+
+Frecom Winfast 9600 
+AT&F &C1 &D2 *LG2 *M2 *V1 *E1 
+
+Frecom Winfast 9600 - Auto Reliable mode 
+AT&F &C1 &D2 *LG2 *M2 *V1 *E1 
+
+Frecom Winfast 9600 - MNP-4 mode 
+AT&F &C1 &D2 *LG2 *M2 *V1 *E0 
+
+Freedom Series V.32bis Data/FAX Modem
+InitString=AT&F&C1&D3&K3&Q6\J0\N7\Q3\V2%C1S7=60
+AnswerInit=AT&F&C1&D3&K3&Q6\J0\N7\Q3\V2%C1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Galaxy, Other
+AT E1Q0V1X4
+
+Galaxy, Pioneer V.22/42
+ATQ0V1X4&C1%C0&K3\N3&Q5W0
+
+Garvin Super 14.4 
+AT&F &C1&D2S11=60 
+
+Garvin Super 14.4 - Auto Reliable 
+AT&F&C1&D2S11=60 
+
+Garvin Super 14.4 - V.42 mode 
+AT&F&C1&D2S11=60 H0 
+
+Gateway, Other
+AT E1Q0V1X4
+
+Gateway, Telepath
+AT&F E1Q0V1X4 &C1&D2&Q0%C0%M0
+
+Gateway, Telepath 5500
+AT&F E1Q0V1X4 &A1&B1&C1&D2&H1&K1&R2
+
+Gateway, Telepath II
+AT&F E1Q0V1X4 &A1&B1&C1&D2&H1&K1&R2
+
+Gateway 2000 Telepath 
+AT&F&C1&D2W2S7=60S11=60 
+
+Gateway 2000 Telepath - Auto Reliable mode 
+AT&F&C1&D2W2S7=60S11=60 
+
+Gateway 2000 Telepath - MNP-4 mode 
+AT&F&C1&D2W2%C0S7=60S11=60 
+
+Gateway 2000 Telepath 550 
+AT&FX4&B1&C1&D2&H1&K1&R2S7=60S11=55 
+
+Gateway 2000 Telepath 550 - Auto Reliable Mode 
+AT&FX4&B1&C1&D2&H1&K1&R2S7=60S11=55 
+
+Gateway 2000 Telepath 550 - MNP-4 Mode 
+AT&FX4&B1&C1&D2&H1&K3&R2S7=60S11=55 
+
+Gateway 2000 Telepath 550 - 2400 Compatible Mode 
+AT&FX4&B1&C1&D2&H1&M0&R2S7=60S11=55 
+
+General Datacomm 596 
+AT&F &C1&D2S7=60S11=60 
+
+General Datacomm 596 - Auto Reliable 
+AT&F&C1&D2 S7=60 S11=60 
+
+General Datacomm 596 V.42 
+AT&F \Q3 &C1&D2 W1 \V2 S7=60 S11=60 
+
+General Datacomm 596 V.42 - Auto Reliable 
+AT&F &C1 &D2 \Q3 W1 \V2 S7=60 S11=60 
+
+General Datacomm 596 V.42 - V.42 mode 
+AT&F &C1 &D2 %C0 W1 \V2 S7=60 S11=60 
+
+General Datacomm 596 V.42 - MNP-5 mode 
+AT&F &C1 &D2 %C1 S7=60 S11=60 
+
+General Datacomm 596 V.42 - MNP-4 mode 
+AT&F &C1 &D2 %C0 S7=60 S11=60 
+
+General DataComm FastPro V.FC/V.34
+InitString=AT&F0&C1%C1&D3&H0&U1\V1
+AnswerInit=AT&F0&C1%C1&D3&H0&U1\V1S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Global Village, All
+AT E1Q0V1X4
+
+Global Village TelePort Silver
+InitString=AT&FW2&D3\J0\Q3\N3%C1
+AnswerInit=AT&FW2&D3\J0\Q3\N3%C1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Global Village TelePort Silver (ARA 1.0)
+InitString=AT&F&D3&K3\J0W2\Q2S7=60S0=0E0\N0
+AnswerInit=AT&F&D3&K3\J0W2\Q2S7=60S0=0E0\N0S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Global Village TelePort Gold
+InitString=AT&FW2&D3\J0\Q3\N3%C1
+AnswerInit=AT&FW2&D3\J0\Q3\N3%C1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Global Village TelePort Gold (ARA 1.0)
+InitString=AT&F&D3&K3\J0W2\Q2S7=60S0=0E0\N0
+AnswerInit=AT&F&D3&K3\J0W2\Q2S7=60S0=0E0\N0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Global Village TelePort Mercury
+InitString=AT&FW2&D3\J0\Q3\N3%C1
+AnswerInit=AT&FW2&D3\J0\Q3\N3%C1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Global Village TelePort Mercury (ARA 1.0)
+InitString=AT&F&C1&D3&K3\J0W2\Q2S7=60E0\N0
+AnswerInit=AT&F&C1&D3&K3\J0W2\Q2S7=60E0\N0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Global Village TelePort Platinum
+InitString=AT&F1W2&C1&D3&K3&Q5\N3%C3S7=60
+AnswerInit=AT&F1W2&C1&D3&K3&Q5\N3%C3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+GRID 14.4 Fax Modem 
+AT&F&C1&D2\N7%C1\Q3\J0\V2S7=60S11=55 
+
+GRID 14.4 Fax Modem - Auto Reliable 
+AT&F&C1&D2\N7%C1\Q3\J0\V2S7=60S11=55 
+
+GRID 14.4 Fax Modem - MNP-4 mode 
+AT&F&C1&D2\N3%C0\Q3\J0\V2S7=60S11=55 
+
+GRID 14.4 Fax Modem - Direct mode 
+AT&F&C1&D2\N0\Q3\J0\V2S7=60S11=55 
+
+GVC Technologies Inc., 9600
+AT&F E1Q0V1X4 &C1&D2
+
+GVC Technologies Inc., FM144/FM9696
+AT&F E1Q0V1X4 &C1&D2
+
+GVC Technologies Inc., Other
+AT E1Q0V1X4
+
+GVC Technologies Inc., Super 9600 V.32/V.42
+AT&F E1Q0V1X4 &C1&D2
+
+GVC Technologies Inc., V.32 bis
+AT&F E1Q0V1X4 &C1&D2
+
+GVC Super Modem 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+GVC Super Modem 2400 MNP-5 
+AT&F&C1&D2\V1%C1\J0\N3\Q3 
+
+GVC Super Modem 2400 MNP-5 - Auto Reliable 
+AT&F&C1&D2\V1%C1\J0\N3\Q3 S7=60 S11=60 
+
+GVC Super Modem 2400 MNP-5 - MNP-4 mode 
+AT&F&C1&D2\V1%C0\J0\N3\Q3 S7=60 S11=60 
+
+GVC Super Modem 9600 V.32/V.42 
+AT&F2%C1\J0\N6\Q3\V1S0=0 
+
+GVC Super Modem 9600 V.32 - Auto Reliable 
+AT&F2%C1\J0\N6\Q3\V1S0=0S7=60 S11=60 
+
+GVC Super Modem 9600 V.32- V.42 mode 
+AT&F2%C0\J0\N6\Q3\V1S0=0S7=60 S11=60 
+
+GVC Super Modem 9600 V.32 - MNP-4 mode 
+AT&F2%C0\J0\N6\Q3\V1S0=0S7=60 S11=60 
+
+GVC 14400 Fax 
+AT&F2&C1&D2\V1S0=0 
+
+GVC 14400 Fax - Auto Reliable 
+AT&F2&C1&D2\V1S0=0S7=60 S11=60 
+
+GVC 14400 Fax - V.42 mode 
+AT&F2%C0&C1&D2\V1S0=0S7=60 S11=60 
+
+GVC 14400 Fax - MNP-4 mode 
+AT&F2%C0&C1&D2\V1S0=0S7=60 S11=60 
+
+GVC SM-96V (V.42bis)
+InitString=AT&F&C1&D3%C1\J0\N6\Q2\V1S7=60
+AnswerInit=AT&F&C1&D3%C1\J0\N6\Q2\V1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+GVC SM-144V (V.42bis)
+InitString=AT&F&C1&D3%C1\J0\N6\Q2\V1S7=60
+AnswerInit=AT&F&C1&D3%C1\J0\N6\Q2\V1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+GVC FM-288
+InitString=AT&F&C1&D3%C1\J0\N6\Q3\V1S7=60
+AnswerInit=AT&F&C1&D3%C1\J0\N6\Q3\V1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes, Accura 144 + FAX144
+AT E1Q0V1X4&K3
+
+Hayes, Accura 144B + FAX144
+AT E1Q0V1X4&K3
+
+Hayes, Accura 288 + FAX
+AT E1Q0V1X4&K3
+
+Hayes, Accura 96 + FAX96
+AT E1Q0V1X4&K3
+
+Hayes, Accura 96B + FAX96
+AT E1Q0V1X4&K3
+
+Hayes, Optima 144 + FAX144
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Hayes, Optima 144B + FAX144
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Hayes, Optima 288 V.FC + FAX
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Hayes, Optima 96 + FAX96
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Hayes, Optima 96B + FAX96
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Hayes, Other
+AT E1Q0V1X4
+
+Hayes, Ultra 144
+AT&FS30=0 E1Q0V1X4 &C1&D2&K3
+
+Hayes, Ultra 96
+AT&FS30=0 E1Q0V1X4 &C1&D2&K3
+
+Hayes Accura 144 
+AT&F&C1&D2&Q5&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 144 - Auto Reliable 
+AT&F&C1&D2&Q5&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 144 - MNP-4 mode 
+AT&F&C1&D2&Q9&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 96 
+AT&F&C1&D2&Q5&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 96 - Auto Reliable 
+AT&F&C1&D2&Q5&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 96 - MNP-4 mode 
+AT&F&C1&D2&Q9&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 24 EC 
+AT&F&C1&D2&Q5&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 24 EC - Auto Reliable 
+AT&F&C1&D2&Q5&K3S38=0S95=42S7=60S11=60 
+
+Hayes Accura 24 EC - MNP-4 mode 
+AT&F&C1&D2&Q9&K3S38=0S95=42S7=60S11=60 
+
+Hayes-Compatible 1200 Baud Modem 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Hayes-Compatible 2400 Baud Modem 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Hayes Personal Modem 1200 
+ATE1Q0V1X4&C1&D2 S0=0 
+
+Hayes Personal Modem 2400 
+ATE1Q0V1X4&C1&D2 S0=0 
+
+Hayes Smartmodem 1200/1200B 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Hayes Smartmodem 2400/2400B 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Hayes Smartmodem V Series 2400 
+AT&F&C1&D2S7=60W1S11=55 
+
+Hayes Smartmodem V Series 2400 - Auto Reliable 
+AT&F &C1 &D2 W1 S7=60 S11=60 
+
+Hayes V-Series 9600 
+AT&F&C1&D2W1S7=60S11=55 
+
+Hayes V-Series 9600 - Auto Reliable mode 
+AT&F &C1 &D2 W1 S7=60 S11=60 
+
+Hayes V-Series 9600 V.32 
+AT&F&C1&D2W1S7=60S11=55 
+
+Hayes V-Series 9600 V.32 - Auto Reliable mode 
+AT&F &C1 &D2 W1 S7=60 S11=60 
+
+Hayes Optima 2400 
+AT&F&C1&D2&K3W1S95=42 
+
+Hayes Optima 2400 - Auto Reliable 
+AT&F &C1 &D2 W1 S7=60 S11=60 
+
+Hayes Optima 9600 
+AT&F&C1&D2&Q5&K3W1S38=0S95=42 
+
+Hayes Optima 9600 - Auto Reliable 
+AT&F AT &C1 &D2 W1 S7=60 S11=60 
+
+Hayes Optima 14400 Fax 
+AT&F &C1 &D2 &Q9 &K3 W2 S37=0 S38=0 S95=46 
+
+Hayes Optima 14400 - Auto Reliable 
+AT&F&C1&D2W2&Q9&K3S37=0S38=0S95=46S7=60S11=60 
+
+Hayes Optima 288 V.FC + Fax 
+AT&F&C1&D2&K3&Q9W2S37=0S38=0S95=46S7=60S11=55 
+
+Hayes Optima 288 V.FC + Fax - Auto Reliable 
+AT&F&C1&D2W2&Q9&K3S37=0S38=0S95=46S7=60S11=55 
+
+Hayes Optima 288 V.FC + Fax - 2400-Compatible 
+AT&F&C1&D2W2&Q6&K3S37=6S38=0S95=46S7=60S11=55 
+
+Hayes Ultra 9600 
+AT&F&C1&D2 
+
+Hayes Ultra 9600 - Auto Reliable 
+AT&F &C1 &D2 S7=60 S11=60 
+
+Hayes Ultra 14400 
+AT&F &C1 &D2 W1 S38=0 S7=60 S11=60 
+
+Hayes Ultra 14400 - Auto Reliable 
+AT&F &C1 &D2 W1 S7=60 S11=60 
+
+Hayes V Series 2400 V.42 
+AT&F&C1&D2&K3S36=7S7=60S11=60 
+
+Hayes V Series 2400 V.42 - Auto Reliable 
+AT&F &C1 &D2 &K3 S36=7 S7=60 S11=60 
+
+Hayes V Series 9600 V.42 
+AT&F&C1&D2&K3S36=7S7=60S11=55 
+
+Hayes V Series 9600 V.42 - Auto Reliable 
+AT&F &C1 &D2 &K3 S36=7 S7=60 S11=60 
+
+Hayes ISDN Terminal Adaptor 
+AT&F&C1&D2&K3S7=60S11=55 
+
+Hayes ISDN Terminal Adaptor - X.25 mode 
+AT&F&C1&D2X6S7=60S11=60W1 %A1=1 %A3=14 %A0=2 
+
+Hayes ISDN Terminal Adaptor - CSD mode 
+AT&F&C1&D2X6S7=60S11=60 W1 %A1=0 %A2=2 %A0=2 
+
+Hayes Smartmodem 1200/1200B (and compatibles)
+InitString=ATX4V1Q0S7=30
+AnswerInit=ATX4V1Q0S7=30S0=1&W
+BPSRate=1200
+FlowControl=Hardware
+LockBPS=No
+
+Hayes Smartmodem 2400 (and compatibles)
+InitString=AT&F&C1&D3S7=30
+AnswerInit=AT&F&C1&D3S7=30S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+Hayes SmartModem 2400 (ARA 1.0)
+InitString=AT&F&C1E0&D0
+AnswerInit=AT&F&C1E0&D0S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+Hayes Pocket Edition 2400 (no MNP or V.42)
+InitString=AT&F&C1&D3S7=30
+AnswerInit=AT&F&C1&D3S7=30S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+Hayes Smartmodem Optima 9600 (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S46=138S48=7S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Hayes Smartmodem Optima 14400 (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes Optima 14400 (ARA 1.0)
+InitString=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0
+AnswerInit=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Hayes Smartmodem Optima 144 Pocket Edition
+InitString=AT&FW2&C1&D2&K3&Q9S7=60S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D2&K3&Q9S7=60S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes Smartmodem Optima 288 V.FC
+InitString=AT&FW2&C1&D3&K3&Q9S7=60S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q9S7=60S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes Smartmodem Optima 288 V.34
+InitString=AT&FW2&C1&D3&K3&Q9S7=60S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q9S7=60S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes Optima 28800 (ARA 1.0)
+InitString=AT&F&C1&D3S7=90E0&K3&Q6W2L1S37=15
+AnswerInit=AT&F&C1&D3S7=90E0&K3&Q6W2L1S37=15S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+ARAv1=1
+
+Hayes V-series Smartmodem 9600/9600B (V.42)
+InitString=AT&F&C1&D3&K3&Q5S7=60
+AnswerInit=AT&F&C1&D3&K3&Q5S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Hayes V-series ULTRA Smartmodem 9600 (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5S7=60S46=2S48=7S95=63
+AnswerInit=AT&F&C1&D3&K3&Q5S7=60S46=2S48=7S95=63S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Hayes Ultra 96 (ARA 1.0)
+InitString=AT&F&C1E0&K0&D3&Q0
+AnswerInit=AT&F&C1E0&K0&D3&Q0S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Hayes V-series ULTRA Smartmodem 14400 (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S38=10S46=2S48=7S95=63
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S38=10S46=2S48=7S95=63S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Hayes Ultra 14400 (ARA 1.0)
+InitString=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0
+AnswerInit=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Hayes ACCURA 24 EC (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Hayes ACCURA 96 EC (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Hayes ACCURA 144 EC (V.42bis)
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes ACCURA 288 V.FC + FAX
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes ACCURA 288 V.34 + FAX
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Hayes ISDN TA 2.0 (ISDN 56k)
+InitString=AT&F%A1=0%A2=2%A4=1%A0=2W1&D2&K3
+AnswerInit=AT&F%A1=0%A2=2%A4=1%A0=2W1&D2&K3S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+ISDN=Yes
+
+Hayes ISDN TA 2.0 (ISDN 64k)
+InitString=AT&F%A1=0%A2=2%A4=0%A0=2W1&D2&K3
+AnswerInit=AT&F%A1=0%A2=2%A4=0%A0=2W1&D2&K3S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+ISDN=Yes
+
+Hidem 14400FAX 
+AT&FW2S0=0\N6 
+
+Hidem 14400FAX Auto-Reliable mode 
+AT&FW2\N6S0=0 
+
+Hidem 14400FAX - V.42 mode 
+AT&F%C\N6W2S0=0 
+
+Hidem 14400FAX - Direct mode 
+AT&F\N1W2S0=0 
+
+Hidem 14400P/FAX 
+AT&FW2\N6S0=0 
+
+Hidem 14400P/FAX Auto-Reliable mode 
+AT&FW2\N6S0=0 
+
+Hidem 14400P/FAX - V.42 mode 
+AT&F%C\N6W2S0=0 
+
+Hidem 14400P/FAX - Direct mode 
+AT&F\N1W2S0=0 
+
+Hidem 14400DLX 
+AT&FW2\N6S0=0 
+
+Hidem 14400DLX - Auto-Reliable mode 
+AT&FW2\N6S0=0 
+
+Hidem 14400DLX - V.42 mode 
+AT&F%C\N6W2S0=0 
+
+Hidem 14400DLX - Direct mode 
+AT&F\N1W2S0=0 
+
+Hidem 9600 
+AT&FW2\N6S0=0 
+
+Hidem 9600 - Auto-Reliable mode 
+AT&FW2\N6S0=0 
+
+Hidem 9600 - V.42 mode 
+AT&FW2\N6%C0S0=0 
+
+Hidem 9600 - Direct mode 
+AT&F\N1W2S0=0 
+
+Hidem 2442 models 
+AT&FS0=0\N7 
+
+Hidem 2442 - Auto-Reliable mode 
+AT&FS0=0\N7 
+
+Hidem 2442 - V42 mode 
+AT&FTS0=0%C0\N7 
+
+Hidem 2442 - Direct mode 
+AT&FS0=0\N1\Q0 
+
+Hidem 2400 
+AT&FS0=0 
+
+Modem Hidem 1200 
+AT&FS0=0 
+
+IBM, 7855 Model 10
+AT E1Q0V1X4&K3
+
+IBM, Other
+AT E1Q0V1X4
+
+IBM, PCMCIA Laptop 14.4
+AT E1Q0V1X4&K3
+
+IBM 7851 14.4Kbps External Data/Fax Modem
+InitString=AT&FW2&C1&D3&K3&Q5%C3\N3S7=60S36=7S46=138S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5%C3\N3S7=60S36=7S46=138S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+IBM 7855 Modem Model 10 (MNP)
+InitString=AT&F&C1&D2\N3\Q2\V1%C1S7=60
+AnswerInit=AT&F&C1&D2\N3\Q2\V1%C1S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+IBM WaveRunner with Async-to-Sync driver
+InitString=AT&FV1X4Y0&D3%C1
+AnswerInit=AT&FV1X4Y0&D3%C1S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+LockBPS=Yes
+ISDNSync=Yes
+ISDN=Yes
+DTRHangup=No
+
+IBM WaveRunner with V.120 driver
+InitString=AT&FV1X4Y0&D3%C1
+AnswerInit=AT&FV1X4Y0&D3%C1S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+LockBPS=Yes
+ISDN=Yes
+DTRHangup=No
+
+IBM Modem 1200 (5841) 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+IBM DataFax Highspeed 14.4 
+AT&F&C1&D2\J0\N3&K3&Q5%C3W1S7=60S11=55 
+
+IBM DataFax Highspeed 14.4 - Auto Reliable mode 
+AT&F&C1&D2\J0\N3&K3&Q5%C3W1S7=60S11=55 
+
+IBM DataFax Highspeed 14.4 - MNP-4 mode 
+AT&F&C1&D2\J0\N3&K3&Q5%C2W1S7=60S11=55 
+
+IBM Mwave WindSurfer (V.32) 
+AT&F&C1&D2\N3\V1%C1S7=60S11=55 
+
+IBM Mwave WindSurfer (V.32) - Auto Reliable mode 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM Mwave WindSurfer (V.32) - MNP-4 mode 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM N51 Laptop 14400 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM N51 Laptop 14400 - Auto Reliable mode 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM N51 Laptop 14400 - MNP-4 mode 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM N51 Laptop 9600 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM N51 Laptop 9600 - Auto Reliable mode 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM N51 Laptop 9600 - MNP-4 mode 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+IBM PC 2400 bps Modem 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+IBM PS/2 Data/Fax Modem 
+AT&F &C1 &D2 %C1 \Q3 \C1 \N3 \J0 \V1 
+
+IBM PS/2 Data/Fax Modem - Auto Reliable mode 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C1S7=60S11=60 
+
+IBM PS/2 Data/Fax Modem - MNP-4 mode 
+AT&F&C1&D2\Q3\C1\N3\J0\V1%C0S7=60S11=60 
+
+IBM 7855 Model 10 
+AT&F&C1&D2&AL8&B8N1&I0&M0\D0\R2%H0%L2S0=0\M14 
+
+IBM 7855 Model 10 - Auto Reliable 
+AT&F&C1&D2&AL8&B8N1&I0&M0\D0\R2%H0 %L2 S0=0 
+\M14 
+
+Identity Systems Technology Inc., All
+AT E1Q0V1X4
+
+Identity ID9600 
+AT&F2\N6&C1&D2\J0S7=60S11=55 
+
+Identity ID9600 Auto-Reliable mode 
+AT&F2 \N6 &C1 &D2 \J0 S11=60 S7=60 
+
+Identity ID9600 - V.42 mode 
+AT&F2%C0\N6&C1&D2\J0S11=60S7=60 
+
+Identity ID9600 - MNP-4 mode 
+AT&F2%C0\N6&C1&D2\J0S11=60S7=60 
+
+Identity 14400 
+AT&F2\N6&C1&D2\J0S7=60S11=55 
+
+Identity 14400 - Auto-Reliable mode 
+AT&F2\N6&C1&D2\J0S11=55S7=60 
+
+Identity 14400 - V.42 mode 
+AT&F2%C0\N6&C1&D2\J0S11=55S7=60 
+
+Identity 14400 - MNP-4 mode 
+AT&F2%C0\N6&C1&D2\J0S11=55S7=60 
+
+Identity ID9632E
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+LockBPS=No
+
+Identity FM144BR
+InitString=AT&F&C1&D3Q0V1B8S7=60
+AnswerInit=AT&F&C1&D3Q0V1B8S7=60
+BPSRate=57600
+FlowControl=Hardware
+
+Image Twincom 96/42i 
+AT&F&C1&D2W1S95=41S11=60S7=60 
+
+Image Twincom 96/42i Auto-Reliable mode 
+AT&F W1 S95=41 S11=60 S7=60 
+
+Image Twincom 96/42i - V.42 mode 
+AT&F %C0 W1 S95=41 S11=60 S7=60 
+
+Image Twincom 96/42i - MNP-4 mode 
+AT&F %C0 W1 S95=41 S11=60 S7=60 
+
+Image Twincom 144/DF 
+AT&F&C1&D2&Q5W2S95=46S11=60S7=60 
+
+Image Twincom 144/DF Auto-Reliable mode 
+AT&F&C1&D2&Q5S95=46S11=60S7=60 
+
+Image Twincom 144/DF - V.42 mode 
+AT&F&C1&D2&Q5S46=136S95=46S11=60S7=60 
+
+Image Twincom 144/DF - MNP-4 mode 
+AT&F&C1&D2&Q5%C0S95=46S11=60S7=60 
+
+Image Twincom 144/DF - 2400-compatible mode 
+AT&F&C1&D2&Q6%C0S95=46S7=60S11=60S36=3 S48=128 
+
+Incomm 2405 
+AT&F &C1 &D2 \J0 \N3 \Q3 \V1 
+
+Incomm 2405 - Auto Reliable 
+AT&F &C1 &D2 \J0 \N3 \Q3 \V1 S7=60 
+
+Incomm 2405 - MNP-4 mode 
+AT&F %C0 &C1 &D2 \J0 \N3 \Q3 \V1 S7=60 
+
+Incomm 9600/9605 
+AT&F &C1 &D2 \J0 \N3 \Q3 \V1 
+
+Incomm 9600/9605 - Auto Reliable 
+AT&F &C1 &D2 \J0 \N3 \Q3 \V1 S7=60 
+
+Incomm 9600/9605 - MNP-4 mode 
+AT&F %C0 &C1 &D2 \J0 \N3 \Q3 \V1 S7=60 
+
+InfoMate 212A/PC 
+XYNP 60 
+
+InfoMate 212X/PC 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+InfoMate,  212A/PC
+AT E1Q0V1X4&K3
+
+InfoMate,  212X/PC
+AT E1Q0V1X4&K3
+
+InfoMate, Other
+AT E1Q0V1X4
+
+Info Runner, Other
+AT E1Q0V1X4
+
+InfoRunner 2496 Fax Modem 
+AT&F &C1 &D2 &R0 \N7 %C1 \V1 \J0 \Q3 &K3 S7=54 S11=60 
+
+InfoRunner 2496 - Auto Reliable 
+AT&F&C1&D2&R0\N7%C1\V1\J0\Q3&K3 ATS7=54S11=60 
+
+InfoRunner 2496 - MNP-4 mode 
+AT&F&C1&D2&R0\N7%C0\V1\J0\Q3&K3S7=54S11=60 
+
+InfoRunner 2496 - 2400 mode 
+AT&F&C1&D2&R0\N0%C0\V1\J0\Q3&K3S7=54S11=60 
+
+Infotel 14.4 
+AT&F&C1&D2W1S95=41S11=60S7=60 
+
+Infotel 14.4 Auto-Reliable mode 
+AT&F &C1 &D2 W1 S95=41 S11=60 S7=60 
+
+Infotel 14.4 - V.42 mode 
+AT&F&C1&D2S46=136W1S95=41S11=60S7=60 
+
+Infotel 14.4 - MNP-4 mode 
+AT&F&C1&D2%C0W1S95=41S11=60S7=60 
+
+Infotel 14.4 - 2400-compatible mode 
+AT&F&C1&D2%C0W1S95=41S7=60S11=60 
+
+Infotel 9600 
+AT&F2&C1&D2 S0=0 S11=60 S7=60 
+
+Infotel 9600 - Auto-Reliable mode 
+AT&F2&C1&D2S0=0S11=60S7=60 
+
+Infotel 9600 - V.42 mode 
+AT&F2&C1&D2S0=0S11=60S7=60 
+
+Infotel 9600 - MNP-4 mode 
+AT&F2&C1&D2%C0S0=0S11=60S7=60 
+
+Infotel V.42X (V.42bis)
+InitString=AT&F&C1&D3S7=30S36=7
+AnswerInit=AT&F&C1&D3S7=30S36=7S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Infotel V.32 turbo (V.42bis)
+InitString=AT&FW1&C1&D3&K3&Q5S7=60
+AnswerInit=AT&FW1&C1&D3&K3&Q5S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Infotel 144I (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5\N3%C1S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5\N3%C1S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Infotel 1414QVE (V.32bis)
+InitString=AT&F&D3&K3&Q5\J0\N3%C3S7=60S36=7
+AnswerInit=AT&F&D3&K3&Q5\J0\N3%C3S7=60S36=7S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Infotel V.34
+InitString=AT&FQ0W2&C1&D3/N3S7=60S95=43
+AnswerInit=AT&FQ0W2&C1&D3/N3S7=60S95=43S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Intecom PDI-1000/S 
+AT&F &C1 &D2 &K3 X4 S7=60 S11=60 
+
+Intecom PDI-1000/S - Auto-Reliable Mode 
+AT&F&C1&D2X4&K3 S7=60 S11=60 
+
+Intel 2400 MNP 
+AT&F\Q3\N3\J0\V1\C1 
+
+Intel 2400 MNP - Auto Reliable 
+AT&F\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+Intel 2400 MNP - MNP-4 mode 
+AT&F%C0\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+Intel 2400EX MNP 
+AT&F\Q3\N3\J0\V1\C1 
+
+Intel 2400EX MNP - Auto Reliable 
+AT&F\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+Intel 2400EX MNP - MNP-4 mode 
+AT&F%C0\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+Intel 9600EX 
+AT&F&C1&D2\J0\Q3\V1\N3S7=60S11=55 
+
+Intel 9600EX Auto-Reliable mode 
+AT&F\J0\Q3\V1\N3S7=60S11=55 
+
+Intel 9600EX V.42 mode 
+AT&F%C0\J0\Q3\V1\N3S7=60S11=55 
+
+Intel 9600EX MNP-4 mode 
+AT&F%C0\J0\Q3\V1\N3S7=60S11=55 
+
+Intel 14.4EX 
+AT&F&T5S7=60S11=55 
+
+Intel 14.4EX - Auto Reliable 
+AT&F&T5S7=60S11=55 
+
+Intel 14.4EX - V.42 mode 
+AT&F&T5S7=60S11=55 H0 
+
+Intel 14.4EX - MNP4 mode 
+AT&F&T5S7=60S11=55%C0 
+
+Intel 14.4/14.4 Fax 
+AT&F&C1&D2\J0\N3\Q3\V2S7=60S11=55 
+
+Intel 14.4/14.4 Fax - Auto Reliable 
+AT&F&C1&D2\J0\N3\Q3\V2S7=60S11=55 
+
+Intel 14.4/14.4 Fax - MNP4 mode 
+AT&F&C1&D2\J0\N3\Q3\V2-J0%CS7=60S11=55 
+
+Intel 14.4/14.4 Fax - No Error Correction 
+AT&F&C1&D2\J0\N0\Q3\V2S7=60S11=55 
+
+Intel SatisFAXtion 400 
+AT&F&T5S7=60S11=55 
+
+Intel SatisFAXtion 400 - Auto Reliable 
+AT&F&T5S7=60S11=55 
+
+Intel SatisFAXtion 400 - V.42 mode 
+AT&F&T5S7=60S11=55 H0 
+
+Intel SatisFAXtion 400 - MNP4 mode 
+AT&F&T5S7=60S11=55%C0 
+
+Intel SatisFAXtion 200 
+AT&F&C1&D2\J0\Q3\V1\N3S7=60S11=55 
+
+Intel SatisFAXtion 200 - Auto-Reliable mode 
+AT&F\J0\Q3\V1\N3S7=60S11=55 
+
+Intel SatisFAXtion 200 - V.42 mode 
+AT&F%C0\J0\Q3\V1\N3S7=60S11=55 
+
+Intel SatisFAXtion 200 - MNP-4 mode 
+AT&F%C0\J0\Q3\V1\N3S7=60S11=55 
+
+Intel SatisFAXtion 100 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Modem Intel SatisFAXtion Board 
+AT&F\Q3\N3\J0\V1\C1 
+
+Intel SatisFAXtion Board - Auto Reliable 
+AT&F\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+Intel SatisFAXtion Board - MNP-4 mode 
+AT&F%C0\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+Intel 2400 EX (no MNP or V.42)
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+Intel 2400 EX (MNP 5)
+InitString=AT&F&C1&D3\N3%C1\J0\Q2S7=60
+AnswerInit=AT&F&C1&D3\N3%C1\J0\Q2S7=60S0=1&W
+BPSRate=4800
+FlowControl=Hardware
+
+Intel 9600 EX (V.42bis)
+InitString=AT&F&C1&D3\J0\N3\Q2\V2%C1"H3S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V2%C1"H3S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Intel 144/144E Data/Fax
+InitString=AT&F&D2E0\N3\V2\Q2\G0\J0M0S7=60 
+AnswerInit=AT&F&D2E0\N3\V2\Q2\G0\J0M0S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Intel 14400 EX (V.42bis)
+InitString=AT&F&C1&D3\J0\N3\Q2\V2%C1"H3S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V2%C1"H3S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Intel 14400 EX (ARA 1.0)
+InitString=AT&FX4&D3%C0'H0
+AnswerInit=AT&FX4&D3%C0'H0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Intel 144/144e FaxModem (ARA 1.0)
+InitString=AT&FE0\Q2\G0\N0&D3%C0M0S7=60
+AnswerInit=AT&FE0\Q2\G0\N0&D3%C0M0S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Intel SatisFAXtion Modem/400 and 400e (V.42bis)
+InitString=AT&F&C1&D3\J0\N3\Q1\V2%C1"H3S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q1\V2%C1"H3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Software
+
+Intel Corp., 14.4EX with v.32BIS
+ATV1Q0X4&C1&D2
+
+Intel Corp., 144/144e
+AT E1Q0V1X4 &C1&D2&Q0
+
+Intel Corp., 144/144i
+AT E1Q0V1X4 &C1&D2&Q0
+
+Intel Corp., 9600EX
+ATV1Q0X4&C1&D2
+
+Intel Corp., Other
+AT E1Q0V1X4
+
+Intel Corp., PCMCIA 14.4/14.4
+AT E1Q0V1X4&K3
+
+Intel Corp., PCMCIA 96/96
+AT E1Q0V1X4&K3
+
+Intel Corp., SatisFAXtion Modem/300
+AT E1Q0V1X4 &C1&D2&M0&Q0
+
+Intel Corp., SatisFAXtion Modem/350
+AT E1Q0V1X4 &C1&D2&M0&Q0
+
+Intel Corp., SatisFAXtion Modem/400
+AT E1Q0V1X4 &C1&D2&M0&Q0
+
+Intel Corp., SatisFAXtion Modem/400e
+AT E1Q0V1X4 &C1&D2&M0&Q0
+
+Intelligent Modem Series 9600 
+AT&F &C1 &D2 %C1 \J0 \N3 \Q3 \V1 
+
+Intelligent Modem Series 9600 - Auto Reliable 
+AT&F&C1&D2%C1\J0\N3\Q3\V1S7=60 S11=60 
+
+Intelligent Modem Series 9600 - V.42 mode 
+AT&F&C1&D2\J0\N9\Q3\V1S7=60 S11=60 
+
+Intelligent Modem Series 9600 - MNP-4 mode 
+AT&F&C1&D2%C0\J0\N3\Q3\V1S7=60 S11=60 
+
+Intertex Data/Fax 2400 
+AT&F&C1&D2&K3\J0\N3 
+
+Intertex Data/Fax 2400 - Auto-Reliable mode 
+AT&F&C1&D2&K3\J0\N3 
+
+Intertex Data/Fax 2400 - MNP-4 mode 
+AT&F%C0&C1&D2&K3\J0\N3 
+
+Intertex Data/Fax 2400 - V.23 mode 
+AT&F\N0F3&C1&D2&K3\J0 
+
+Intertex Data/Fax 14400 
+AT&F&C1&D2&K3\J0\N3 
+
+Intertex Data/Fax 14400 - Auto-Reliable mode 
+AT&F&C1&D2&K3\J0\N3 
+
+Intertex Data/Fax 14400 - MNP-4 mode 
+AT&F%C0&C1&D2&K3\J0\N3 
+
+Intertex Data/Fax 14400 - V.23 mode 
+AT&F\N0F3&C1&D2&K3\J0 
+
+Inwave Hurricane 14400 Fax 
+AT&F&C1&D2&K3&Q5\N3%C1S7=60S11=60 
+
+Inwave Hurricane 14400 Fax - Auto Reliable 
+AT&F&C1&D2&K3&Q5\N3%C1S7=60S11=60 
+
+Inwave Hurricane 14400 Fax - MNP-4 mode 
+AT&F&C1&D2&K3&Q5\N3%C0S7=60S11=60 
+
+Kortex, All
+AT E1Q0V1X4
+
+Lasat unique 24/96 Fax 
+AT&F&C1&D2S38=0S7=60S95=2W0 
+
+Lasat unique 24/96 Fax - Auto Reliable 
+AT&F&C1&D2S38=0S7=60S95=2W0 
+
+Lasat unique 24/96 Fax - MNP-4 mode 
+AT&F\N5%C0&C1&D2S38=0S7=60S95=2W0 
+
+Lasat unique 24/96 Fax - Normal mode 
+AT&F\N0&C1&D2S38=0S7=60S95=2W0 
+
+Lasat Credit 144 
+AT&F&C1&D2S38=0S7=60S95=2W0 
+
+Lasat Credit 144 - Auto Reliable 
+AT&F&C1&D2S38=0S7=60S95=2W0 
+
+Lasat Credit 144 - MNP-4 mode 
+AT&F\N5%C0&C1&D2S38=0S7=60S95=2W0 
+
+Lasat Credit 144 - Normal mode 
+AT&F\N0&C1&D2S38=0S7=60S95=2W0 
+
+Lasat 144 Series 
+AT&F&C1&D2S38=0S7=60S95=2W0 
+
+Lasat 144 Series - Auto Reliable 
+AT&F&C1&D2S38=0S7=60S95=2W0 
+
+Lasat 144 Series - MNP-4 mode 
+AT&F\N5%C0&C1&D2S38=0S7=60S95=2W0 
+
+Lasat 144 Series - Normal mode 
+AT&F\N0&C1&D2S38=0S7=60S95=2W0 
+
+Lasat ISDN Terminal Adaptor 
+AT&F&C1&D2&K3 
+
+Lasat ISDN Terminal Adaptor - X.25 mode 
+AT&F&C1&D2&K3\N2\J10%R10 
+
+Lasat ISDN Terminal Adaptor - V.110 mode 
+AT&F\N0%R7 
+
+Lasat ISDN Terminal Adaptor - X.75 mode 
+AT&F\N3\J10%R10 
+
+Lasat ISDN Terminal Adaptor - HDLC mode 
+AT&F\N1\J10%R10 
+
+LCE-123 Series 
+ATE1Q0V1X4&C1&D2 S7=60 S0=0 
+
+LCE-124 Series 
+ATE1Q0V1X4&C1&D2 S7=60 S0=0 
+
+LCE-125 Series 
+AT&F1E1V1X4&C1&D2&K3\N6S7=60S11=65 
+
+LCE-125 - Auto-Reliable mode 
+AT&F1TE1V1X4&C1&D2&K3\N6S7=60S11=65 
+
+LCE-125 Series - MNP-4 mode 
+AT&F1%C0E1V1X4&C1&D2&K3\N6S7=60S11=65 
+
+LCE 132P, All
+AT E1Q0V1X4
+
+LCE-132 Series 
+AT&F1E1V1X4&C1&D2&K3&Q5\N6S7=60S11=65 
+
+LCE-132 - Auto-Reliable mode 
+AT&F1E1V1X4&C1&D2&K3&Q5\N6S7=60S11=65 
+
+LCE-132 Series - MNP-4 mode 
+AT&F1%C0E1V1X4&C1&D2&K3&Q5\N6S7=60S11=65 
+
+LightCom, 14.4F
+AT&F E1Q0V1X4 &C1&D2
+
+LightCom, Other
+AT E1Q0V1X4
+
+Lightning LightCom 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Lightning Lightcom 9600 
+AT&F&C1&D2S7=60S11=55S36=7W2 
+
+Lightning 9600 - Auto Reliable Mode 
+AT&F&C1&D2S7=60S11=55W2 
+
+Lightning 9600 - MNP-4 Mode 
+AT&F&C1&D2S7=60S11=55W2%C0 
+
+Lightning 144F, 144/550 
+AT&F&C1&D2S7=60S11=55W2 
+
+Lightning 144F, 144/550 - Auto Reliable Mode 
+AT&F&C1&D2S7=60S11=55W2 
+
+Lightning 144F, 144/550 - MNP-4 Mode 
+AT&F&C1&D2S7=60S11=55W2%C0 
+
+Logicode Quicktel 2400X 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel M2400X 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel 2400H 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel 9624LH 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel 9624LX 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel M9624LX 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel 9624LP 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel M9624LP 
+ATE1Q0V1X4&C1&D2S7=60S11=55 
+
+Logicode Quicktel 2400 V.42bis 
+AT&F&C1&D2%C1&K3\N3S7=60S11=55 
+
+Logicode Quicktel 2400 V.42bis - Auto Reliable Mode 
+AT&F&C1&D2%C1&K3\N3S7=60S11=55 
+
+Logicode Quicktel 2400 V.42bis - MNP-4 Mode 
+AT&F&C1&D2%C0&K3\N3S7=60S11=55 
+
+Logicode Quicktel 96HV 
+AT&F&C1&D2&K3\N3S37=0 
+
+Logicode Quicktel 96HV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 96HV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 96XV 
+AT&F&C1&D2&K3\N3S37=0 
+
+Logicode Quicktel 96XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 96XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M96XV 
+AT&F&C1&D2&K3\N3S37=0 
+
+Logicode Quicktel M96XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M96XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 9696HV 
+AT&F&C1&D2&K3\N3S37=0 
+
+Logicode Quicktel 9696HV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 9696HV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 9696XV 
+AT&F&C1&D2&K3\N3S37=0 
+
+Logicode Quicktel 9696XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 9696XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M9696XV 
+AT&F&C1&D2&K3\N3S37=0 
+
+Logicode Quicktel M9696XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M9696XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 14.4HV 
+AT&F&C1&D2\N3&K3S37=0 
+
+Logicode Quicktel 14.4HV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 14.4HV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 14.4XV 
+AT&F&C1&D2\N3&K3S37=0 
+
+Logicode Quicktel 14.4XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 14.4XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M14.4XV 
+AT&F&C1&D2\N3&K3S37=0 
+
+Logicode Quicktel M14.4XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M14.4XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 1414HV 
+AT&F&C1&D2\N3&K3S37=0 
+
+Logicode Quicktel 1414HV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 1414HV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 1414XV 
+AT&F&C1&D2\N3&K3S37=0 
+
+Logicode Quicktel 1414XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel 1414XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M1414XV 
+AT&F&C1&D2\N3&K3S37=0 
+
+Logicode Quicktel M1414XV - Auto Reliable Mode 
+AT&F&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode Quicktel M1414XV - MNP-4 Mode 
+AT&F%C0&C1&D2\N3&K3S7=60S11=55S37=0 
+
+Logicode QuickTel 288
+InitString=AT&F&C1&D3&K3&M0&Q5\N3%C3S7=60
+AnswerInit=AT&F&C1&D3&K3&M0&Q5\N3%C3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Logicode QuickTel (ARA 1.0)
+InitString=AT&F&C1&D3&K3&M0\N0&Q6%C0S7=60
+AnswerInit=AT&F&C1&D3&K3&M0\N0&Q6%C0S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Logicode Technologies Inc., Other
+AT E1Q0V1X4
+
+Logicode Technologies Inc., Quicktel Series
+AT&F E1L1Q0V1X4 &C1&D2&K3
+
+Macronix Inc., MaxFax Series
+AT
+
+Macronix Inc., Other
+AT E1Q0V1X4
+
+Macronix MaxFax 9624LT-S
+InitString=AT&F&C1&D3&K3&Q9\J0\N3\Q3%C1S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q9\J0\N3\Q3%C1S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Macronix MX-14.4 
+AT&FW2&C1&D2\N3&K3&Q5S7=60S11=60S95=46 
+
+Macronix MX-14.4 - Auto Reliable Mode 
+AT&FW2&C1&D2\N3&K3&Q5S7=60S11=60S95=46 
+
+Macronix MX-14.4 - MNP-4 Mode 
+AT&F%C0W2&C1&D2\N3&K3S7=60S11=60S95=46 
+
+Magnavox, Codex 3260
+AT E1Q0V1X4&K3
+
+Magnavox, Other
+AT E1Q0V1X4
+
+Matra Com 814 V14e 57600 (ISDN)
+InitString=ATZ
+AnswerInit=AUT O
+BPSRate=57600
+FlowControl=Hardware
+ISDN=Yes
+
+Maxtech 14.4
+InitString=AT&FX4&C1&D3%C1\N3\Q3S7=60
+AnswerInit=AT&FX4&C1&D3%C1\N3\Q3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Maxwell, Other
+AT E1Q0V1X4
+
+Maxwell Modem 300PC/300V 
+ATE1Q0V1S0=0 
+
+Maxwell Modem 1200PC/1200V 
+ATE1Q0V1X1S0=0 
+
+Maxwell Modem 1200VP 
+ATE1Q0V1X4&C1&D2 S7=60 S0=0 
+
+Maxwell Modem 2400PC 
+ATE1Q0V1X1 S7=30 S0=0 
+
+Mayze 96/96R
+InitString=AT&F&Q13&S2%R0-E3%K3"U17
+AnswerInit=AT&F&Q13&S2%R0-E3%K3"U17S0=1&W
+BPSRate=19200
+FlowControl=Software
+
+MegaHertz AR196FM 
+AT&F&C1&D2\J0\N3\Q3\V1S7=60S11=60 
+
+MegaHertz AR196FM - Auto Reliable 
+AT&F&C1&D2\J0\N3\Q3\V1S7=60S11=60 
+
+MegaHertz AR196FM - MNP-4 mode 
+AT&F&C1&D2\J0\N3\Q3\V1%C0S7=60S11=60 
+
+MegaHertz AR196FM - 2400 mode 
+AT&F&C1&D2\J0\N0\Q0\V1S7=60S11=60 
+
+Megahertz CC3144 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz CC3144 - Auto Reliable 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz CC3144 - MNP-4 mode 
+AT&F&C1&D2\N3&Q5&K3%C2S7=60S11=60 
+
+MegaHertz EasyTalk 1200 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Megahertz EasyTalk 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Megahertz T396FM 
+AT&F1&C1&D2\Q3%C1&S1S7=60S11=60 
+
+Megahertz T396FM - Auto Reliable 
+AT&F1&C1&D2\Q3&S1S7=60 S11=60 
+
+Megahertz T396FM - MNP-4 mode 
+AT&F1&C1&D2\Q3%C0&S1S7=60 S11=60 
+
+Megahertz T3144 
+AT&F&C1&D2W2\J0\N7\Q3%C1\V2%B14400S7=60S11=60 
+
+Megahertz T3144 - Auto Reliable 
+AT&F&C1&D2\J0\N7\Q3%C1\V2%B14400S7=60 S11=60 
+
+Megahertz T3144 - MNP-4 mode 
+AT&F&C1&D2\J0\N7\Q3%C0\V2%B14400S7=60 S11=60 
+
+Megahertz T3144 - 2400-Compatible mode 
+AT&F&C1&D2\J0\N0\Q00%B2400S7=60S11=60 
+
+Megahertz P224FMV 
+AT&F&C1&D2&Q5&K3S95=42S7=60S11=55 
+
+Megahertz P224FMV - Auto Reliable 
+AT&F&C1&D2&Q5&K3S95=42S7=60S11=55 
+
+Megahertz P224FMV - MNP-4 mode 
+AT&F&C1&D2%C0&K3S95=42S7=60S11=55 
+
+Megahertz P224FMV - Direct mode 
+AT&F&C1&D2&Q0&K3S95=42S7=60S11=55 
+
+Megahertz C524FM 
+AT&F3&C1&D2\J0\N3\Q3S7=60S11=55 
+
+Megahertz C524FM - Auto Reliable 
+AT&F&C1&D2\J0\N3\Q3S7=60S11=55 
+
+Megahertz C524FM - MNP-4 mode 
+AT&F%C0&C1&D2\J0\N3\Q3S7=60S11=55 
+
+Megahertz C524FM - Direct mode 
+AT&F&C1&D2\J1\N0\Q0\V0S7=60S11=55 
+
+Megahertz P296FMV (AA Battery Version) 
+AT&F&C1&D2\N3\J0\Q3%C1 
+
+Megahertz P296FMV (AA Battery Version) - Auto Reliable 
+AT&F%C1&C1&D2\N3\J0\Q3S7=60 S11=60 
+
+Megahertz P296FMV (AA Battery Version) - MNP-4 mode 
+AT&F%C0&C1&D2\N3\J0\Q3S7=60 S11=60 
+
+Megahertz P296FMV (9-Volt Battery Version) 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz P296FMV (9-Volt Battery Version) - Auto Reliable 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz P296FM (9-Volt Battery Version) - MNP-4 mode 
+AT&F&C1&D2\N3&Q5&K3%C2S7=60S11=60 
+
+Megahertz P2144 (AA Battery Version) 
+AT&F1&C1&D2\Q3W2\V2%B14400%C1 
+
+Megahertz P2144 (AA Battery Version) - Auto Reliable mode 
+AT&F1&C1&D2\Q3W2\V2%B14400%C1S7=60S11=60 
+
+Megahertz P2144 (AA Battery Version) - MNP-4 mode 
+AT&F1&C1&D2\Q3W2\V2%B14400%C0S7=60S11=60 
+
+Megahertz P2144 (AA Battery Version) - 2400-compatible mode 
+AT&F1&C1&D2\Q0\N0W2\V2%B2400S7=60S11=60 
+
+Megahertz P2144 (9-Volt Battery Version) 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz P2144 (9-Volt Battery Version) - Auto Reliable 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz P2144 (9-Volt Battery Version) - MNP-4 mode 
+AT&F&C1&D2\N3&Q5&K3%C2S7=60S11=60 
+
+Megahertz P2144 (9-Volt Battery Version) - 2400-compatible mode 
+AT&F&C1&D2&Q0&K3S7=60S11=60 
+
+Megahertz C5144 Fax/Modem 
+AT&F1&C1&D2W2&R2\C1\Q3%C1\V2S7=60S11=60 
+
+Megahertz C5144 Fax/Modem - Auto Reliable 
+AT&F1&C1&D2W2&R2\C1\Q3%C1\V2S7=60S11=60 
+
+Megahertz C5144 Fax/Modem - MNP-4 mode 
+AT&F1&C1&D2W2&R2\C1\Q3%C1\V2S7=60S11=60 
+
+Megahertz C5144 Fax/Modem - 2400-Compatible mode 
+AT&F&C1&D2W2&R2\C0\Q3\N0S7=60S11=60 
+
+Megahertz C596FM 
+AT&F&C1&D2W2\J0\N7\Q3%C1\V2%B9600S7=60S11=60 
+
+Megahertz C596FM - Auto Reliable 
+AT&F&C1&D2\J0\N7\Q3%C1\V2%B9600S7=60 S11=60 
+
+Megahertz C596FM - MNP-4 mode 
+AT&F&C1&D2\J0\N7\Q3%C0\V2%B9600S7=60 S11=60 
+
+Megahertz C596FM - 2400-Compatible mode 
+AT&F&C1&D2\J0\N0\Q00%B2400S7=60S11=60 
+
+Megahertz XJ124FM 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz XJ124FM - Auto Reliable 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz XJ124FM - MNP-4 mode 
+AT&F&C1&D2\N3&Q5&K3%C2S7=60S11=60 
+
+Megahertz XJ1144 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz XJ1144 - Auto Reliable 
+AT&F&C1&D2\N3&Q5&K3%C3S7=60S11=60 
+
+Megahertz XJ1144 - MNP-4 mode 
+AT&F&C1&D2\N3&Q5&K3%C2S7=60S11=60 
+
+Megahertz Corp, A2144
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, C5144 Compaq Internal
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, C596FM Compaq Internal
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, CC3144 PCMCIA
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, CC396FM PCMCIA
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, CC4144 Cellular Modem
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, CC4144-MIT
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, CC4144-NEC
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, IC196FM
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, Other
+AT E1Q0V1X4
+
+Megahertz Corp, P2144
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, P2144 Pocket Modem
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, P296FMV
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, P296FMV
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, T3144
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, T396FM
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, XJ1144 PCMCIA
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, XJ196FM PCMCIA
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, XJ2144
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, XJ2144 PCMCIA
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, Z3144
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Megahertz Corp, Z396FM
+AT E1Q0V1W0X4 &C1&D2&K3
+
+Mercury Technologies, 9600/14400
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Mercury Technologies, Other
+AT E1Q0V1X4
+
+Micc 4824 V.42 
+AT&F&C1&D2\Q3S7=60S11=60 
+
+Micc 4824 V.42 - Auto Reliable 
+AT&F&C1&D2\Q3S7=60 S11=60 
+
+Micc 4824 V.42 - MNP-4 mode 
+AT&F AT%C0&C1&D2\Q3 S7=60 S11=60 
+
+Microcom AX/2400 MNP4 
+AT&F &C1 &D2 \J0 \Q3 \N3 S7=54 
+
+Microcom AX/2400 MNP4 - Auto Reliable 
+AT&F \J0 \Q3 \N3 &C1 &D2 S7=54 
+
+Microcom AX/2400c MNP5 
+AT&F &C1 &D2 \J0 \Q3 \N3 S7=54 
+
+Microcom AX/2400c MNP5 - Auto Reliable 
+AT&F \J0 \Q3 \N3 &C1 &D2 S7=54 
+
+Microcom AX/9600 
+AT&F &C1 &D2 \J0 \Q3 \N3 S7=54 
+
+Microcom AX/9600 - Auto Reliable 
+AT&F \J0 \Q3 \N3 &C1 &D2 S7=54 
+
+Microcom AX/9612c 
+AT&F &C1 &D2 \J0 \Q3 \N3 S7=54 
+
+Microcom AX/9612c - Auto Reliable 
+AT&F \J0 \Q3 \N3 &C1 &D2 S7=54 
+
+Microcom AX/9624c 
+AT&F &C1 &D2 \J0 \Q3 \N3 S7=54 
+
+Microcom AX/9624c - Auto Reliable 
+AT&F \J0 \Q3 \N3 &C1 &D2 S7=54 
+
+Microcom QX/V.32c 
+AT&F&C1&D2\J0\Q3\N3%C3-Q2S7=60S0=0 
+
+Microcom QX/V.32c - Auto Reliable 
+AT&F&C1&D2\J0\Q3\N3%C3-Q2S7=60S0=0 
+
+Microcom QX/2400t 
+AT&F&C1&D2\J0\Q3\N3%C3-Q2S7=60S0=0\V1 
+
+Microcom QX/2400t - Auto Reliable 
+AT&F&C1&D2\J0\Q3\N3\V1%C3-Q2S7=60S0=0 
+
+Microcom QX/2400t - MNP-7 
+AT&F&C1&D2\J0\Q3\N3\V1%C2-Q2S7=60S0=0 
+
+Microcom QX/2400t - MNP-5 
+AT&F&C1&D2\J0\Q3\N3\V1%C1-Q2S7=60S0=0 
+
+Microcom QX/2400t - MNP-4 
+AT&F&C1&D2\J0\Q3\N3\V1%C0-Q2S7=60S0=0 
+
+Microcom QX/4232hs 
+AT&F&C1&D2\J0\Q3\N3%C3-Q2S7=60S0=0 
+
+Microcom QX/4232hs - Auto Reliable mode 
+AT&F&C1&D2\J0\Q3\N3\V1%C3-Q2S7=60S0=0%G0 
+
+Microcom QX/4232hs - V.42bis mode 
+AT&F&C1&D2\J0\Q3\N3\V1%C2-Q2S7=60S0=0%G0 
+
+Microcom QX/4232hs - MNP-5 
+AT&F&C1&D2\J0\Q3\N3\V1%C1-Q2S7=60S0=0%G0 
+
+Microcom QX/4232hs - MNP-4 
+AT&F&C1&D2\J0\Q3\N3\V1%C0-Q2S7=60S0=0%G0 
+
+Microcom QX/4232bis+ 
+AT&F&C1&D2\J0\Q3\N3%C3-Q2S7=60S0=0 
+
+Microcom QX/4232bis+ - Auto Reliable mode 
+AT&F&C1&D2\J0\Q3\N3\V1%C3-Q2S7=60S0=0%G0 
+
+Microcom QX/4232bis+ - V.42bis mode 
+AT&F&C1&D2\J0\Q3\N3\V1%C2-Q2S7=60S0=0%G0 
+
+Microcom QX/4232bis+ - MNP-5 
+AT&F&C1&D2\J0\Q3\N3\V1%C1-Q2S7=60S0=0%G0 
+
+Microcom QX/4232bis+ - MNP-4 
+AT&F&C1&D2\J0\Q3\N3\V1%C0-Q2S7=60S0=0%G0 
+
+Microcom DeskPorte FAST 
+AT&F&C1&D2\J0\Q3\N3%C3S0=0S11=55\V1 
+
+Microcom DeskPorte FAST - Auto Reliable mode 
+AT&F&C1&D2\J0\Q3\N3\V1%C3S0=0S11=55 
+
+Microcom DeskPorte FAST - MNP-5 
+AT&F&C1&D2\J0\Q3\N3\V1%C1S0=0S11=55 
+
+Microcom DeskPorte FAST - MNP-4 
+AT&F&C1&D2\J0\Q3\N3\V1%C0S0=0S11=55 
+
+Microcom DeskPorte FAST - V.23 (75bps transmit) 
+AT&F&C1&D2\J0\Q3\N3\V1%F1S0=0S11=55 
+
+Microcom DeskPorte FAST - V.23 (1200bps transmit) 
+AT&F&C1&D2\J0\Q3\N3\V1%F2S0=0S11=55 
+
+Micro Direct 28.8
+InitString=AT&FW2X4&C1&D3&Q5\N3S7=60
+AnswerInit=AT&FW2X4&C1&D3&Q5\N3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Microcom AX/1200 and AX/2400 (MNP 4)
+InitString=AT&F&C1&D3\J0\N3\Q2S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Microcom AX/1200c and AX/2400c (MNP 5)
+InitString=AT&F&C1&D3\J0\N3\Q2%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2%C1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Microcom AX/9624c (MNP 5)
+InitString=AT&F&C1&D3\G0\J0\N3\Q2%C1S7=60
+AnswerInit=AT&F&C1&D3\G0\J0\N3\Q2%C1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Microcom AX/9600 Plus (MNP 5)
+InitString=AT&F&C1&D3\J0\N3\Q2S7=60
+AnswerInit=AT&F&C1&D3\J0%C3\N3\Q2S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Microcom MacModem V.32 (ARA 1.0)
+InitString=AT&FE0\Q0\G0\N1&D3
+AnswerInit=AT&FE0\Q0\G0\N1&D3S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Microcom QX/V.32c (MNP 5)
+InitString=AT&F&C1&D3\J0%C3\N3\Q2S7=60
+AnswerInit=AT&F&C1&D3\J0%C3\N3\Q2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Microcom QX/4232hs (V.42bis)
+InitString=AT&F&C1&D3\J0%C3\N3\Q2-K0\V2S7=60
+AnswerInit=AT&F&C1&D3\J0%C3\N3\Q2-K0\V2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Microcom QX/4232bis (V.42bis)
+InitString=AT&F&C1&D3\J0%C3\N3\Q2-K0\V2W2S7=60
+AnswerInit=AT&F&C1&D3\J0%C3\N3\Q2-K0\V2W2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Microcom QX/4232bis (ARA 1.0)
+InitString=AT&F&D1\K0\J0W2\Q2S7=120S0=0E0\N3%C0
+AnswerInit=AT&F&D1\K0\J0W2\Q2S7=120S0=0E0\N3%C0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Microcom MicroPorte 542 (V.42bis)
+InitString=AT&F&C1&D3&Q5S7=60S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&Q5S7=60S46=138S48=7S95=47S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Microcom MicroPorte 1042 (V.42bis)
+InitString=AT&F&C1&D3%C3\J0-M0\N6\Q2\V2S7=60
+AnswerInit=AT&F&C1&D3%C3\J0-M0\N6\Q2\V2S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Microcom MicroPorte 4232bis (V.42bis)
+InitString=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60
+AnswerInit=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Microcom DeskPorte V.32bis
+InitString=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60
+AnswerInit=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Microcom DeskPorte FAST
+InitString=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60
+AnswerInit=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Microcom DeskPorte FAST (57600 BPS)
+InitString=AT&F$B57600&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60
+AnswerInit=AT&F$B57600&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Microcom DeskPorte FAST (115200 BPS)
+InitString=AT&F$B115200&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60
+AnswerInit=AT&F$B115200&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+
+Microcom DeskPorte FAST ES 28.8
+InitString=AT&FW2&C1&D3&K3&Q5%C3\N3S7=60S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5%C3\N3S7=60S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Microcom TravelPorte FAST
+InitString=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60
+AnswerInit=AT&F&C1&D3%C3%G0\J0-M0\N6\Q2\V2S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Microcom DeskPorte FAST Rack Mount
+InitString=AT&F$B115200&C1&D3%C3%G0\J0-M0\N3\Q3\V2S7=60
+AnswerInit=AT&F$B115200&C1&D3%C3%G0\J0-M0\N3\Q3\V2S7=60S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+
+Micro Integrated Communications Corp., All
+AT E1Q0V1X4
+
+Microcom, DeskPorte FAST ES 28.8
+AT E1Q0V1X4 &C1&D2&K3%C0
+
+Microcom, DeskPorte Series
+AT E1Q0V1X4 &C1&D2&K3%C0
+
+Microcom, Other
+AT E1Q0V1X4
+
+Microcom, QX4232hs
+AT E1Q0V1X4 &K3&M0
+
+Microcomputer Research Mr. Modem MR-144 
+AT&F2&C1&D2S11=55S7=60S0=0 
+
+Microcomputer Research Mr. Modem MR-144 - Auto Reliable mode 
+AT&F2&C1&D2S11=55S7=60S0=0 
+
+Microcomputer Research Mr. Modem MR-144 - MNP-4 
+AT&F2&C1&D2\N3%C0S11=55S7=60S0=0 
+
+Microcomputer Research Mr. Modem MR-144 - 2400 Direct 
+AT&F2&C1&D2B6\N0S11=55S7=60S0=0 
+
+Microcomputer Research Mr. Modem MR-96 
+AT&F2&C1&D2S11=55S7=60S0=0 
+
+Microcomputer Research Mr. Modem MR-96 - Auto Reliable mode 
+AT&F2&C1&D2S11=55S7=60S0=0 
+
+Microcomputer Research Mr. Modem MR-96 - MNP-4 
+AT&F2&C1&D2\N3%C0S11=55S7=60S0=0 
+
+Microcomputer Research Mr. Modem MR-96 - 2400 Direct 
+AT&F2&C1&D2B6\N0S11=55S7=60S0=0 
+
+Microtest LANMODEM 
+AT 
+
+Miracom, Courier HST
+AT Q0 V1 S7=58 X6&B1&H1&R2
+
+Miracom, Keycard 3000
+AT Q0 V1 S7=58 X6&B1&H1&R2
+
+Miracom, Other
+AT E1Q0V1X4
+
+Miracom, WS4000/PC
+AT Q0 V1 S7=58 X6&B1&H1&R2
+
+Miracom Keycard 2400 
+ATE1V1X4 &C1&D2 S7=60 
+
+Miracom Keycard 3000 
+ATE1V1X1 &C1&D2 S7=59 S23=1 
+
+Miracom WS4000/PC 
+ATE1V1X1 S7=59 S23=1 
+
+Miracom Sportster 9600/PC 
+AT&FX4&B1 &C1 &D2 &H1 &K1 &R2 S7=60 S11=55 
+
+Miracom Sportster 9600/PC - Auto Reliable Mode 
+AT&F&B1&C1&D2&H1&K1&R2S7=60S11=55 
+
+Miracom Sportster 9600/PC - MNP-4 Mode 
+AT&F&B1&C1&D2&H1&K3&R2S7=60S11=55 
+
+Miracom Sportster 14.4 
+AT&FX4&B1 &C1 &D2 &H1 &K1 &R2 S7=60 S11=55 
+
+Miracom Sportster 14.4 - Auto Reliable Mode 
+AT&F&B1&C1&D2&H1&K1&R2S7=60S11=55 
+
+Miracom Sportster 14.4 - MNP-4 Mode 
+AT&F&B1&C1&D2&H1&K3&R2S7=60S11=55 
+
+Miracom Courier 2400e/ 2400e/ps 
+AT&FX6&B6&H1&R2S7=60S11=55 
+
+Miracom 2400e/ 2400e/ps - Auto Reliable 
+AT&F&C1&D2X6&B6&H1&R2 S7=60 S11=60 
+
+Modem Miracom Courier 2400PC 
+AT&FX6&B7&H1&R2S7=60S11=55 
+
+Miracom Courier 2400PC - Auto Reliable 
+AT&FX6&B7&H1&R2 S7=60 S11=60 
+
+Miracom Courier HST 
+AT&FX6&B1H1&R2S7=60S11=55 
+
+Miracom Courier HST - Auto Reliable 
+AT&FX6&B1 &H1 &R2 S7=60 S11=60 
+
+Miracom Courier HST V.42 
+AT&FX6&B1&H1&R2&M4&A3S7=60S11=55 
+
+Miracom Courier HST V.42 - Auto Reliable 
+AT&FX6&B1&H1&R2&M4&A3 S7=60 S11=60 
+
+Miracom Courier HST-ASL 
+AT&F&H1&R2&K3&B1&A3X7 S7=60S11=60 
+
+Miracom Courier HST-ASL - Auto Reliable 
+AT&F&H1&R2&K3&B1&A3 X7 S7=60 S11=60 
+
+Miracom V.32 
+AT&FX6&H1&R2&B1 S7=60S0=0 
+
+Miracom V.32 - Auto Reliable 
+AT&FX6 &H1 &R2 &B1 S7=60 S11=60 
+
+Miracom V.32bis-ASL 
+AT&FT&H1&R2&K3&B1&A3X7 S7=60S11=60 
+
+Miracom V.32bis-ASL - Auto Reliable 
+AT&FX7 &H1&R2&K3&B1&A3 S7=60 S11=60 
+
+Miracom Dual Standard 
+AT&FX6&B1&H1&R2S7=60S11=55 
+
+Miracom Dual Standard - Auto Reliable 
+AT&FX6&B1&H1&R2 S7=60 S11=60 
+
+Miracom Dual Standard V.32bis-ASL 
+AT&F&H1&R2&K3&B1&A3X7 S7=60S11=60 
+
+Miracom Dual Standard V.32bis-ASL - Auto Reliable 
+AT&FX7&H1&R2&K3&B1&A3S7=60S11=60 
+
+Miracom Dual Standard V.32bis-ASL - HST mode 
+AT&FB1X7&H1&R2&K3&B1&A3S7=60S11=60 
+
+Miracom Dual Standard V.32bis-ASL - MNP-5 mode 
+AT&FX7&H1&R2&K1&B1&A3S7=60S11=60 
+
+Motorola-Codex 2260 
+AT&F&C1&D2*DL0&R0 
+
+Motorola-Codex 2264 
+AT&F&C1&D2*FL3*XC1*PT0&R0 
+
+Motorola-Codex 2264 - Auto Reliable 
+AT&F&C1&D2*FL3*XC1*PT0&R0 
+
+Motorola-Codex 3220 
+AT&F&C1&D2*XC0*RS0*FL3*MD0*SM0*MF0L3S7=60 S10=5 
+
+Motorola/Codex 3220 (MNP)
+InitString=AT&F&C1&D3*DC1*FL3*MF0*SM3*XC2S7=60
+AnswerInit=AT&F&C1&D3*DC1*FL3*MF0*SM3*XC2S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Motorola/Codex 3220 Plus (V.42bis)
+InitString=AT&F&C1&D3*DC1*EC0*MF0*SM3*XC2S7=60
+AnswerInit=AT&F&C1&D3*DC1*EC0*MF0*SM3*XC2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Motorola/Codex 326X Series (V.42bis)
+InitString=AT&F&C1&D3*FL3*MF0*SM3*TT2*XC2S7=60
+AnswerInit=AT&F&C1&D3*FL3*MF0*SM3*TT2*XC2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Motorola/Codex 2264
+InitString=AT&F&C1&D3*FL3*ML0*SM3*XC1
+AnswerInit=AT&F&C1&D3*FL3*ML0*SM3*XC1S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Motorola Codex, 2264
+AT Q0 V1 *DC0
+
+Motorola Codex, 3220
+AT Q0 V1 *DC0
+
+Motorola Codex, Codex 3260
+AT Q0 V1 *DC0
+
+Motorola Codex, Other
+AT E1Q0V1X4
+
+Motorola V.34R
+InitString=AT&FW2&C1&D3\N7\Q3\V1%C1S7=60
+AnswerInit=AT&FW2&C1&D3\N7\Q3\V1%C1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Motorola Lifestyle 28.8
+InitString=AT&F&C1&D3\Q3%R3\V2S7=60
+AnswerInit=AT&F&C1&D3\Q3%R3\V2S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Motorola Power 28.8
+InitString=AT&F&C1&D3\Q3%R3\V2S7=60
+AnswerInit=AT&F&C1&D3\Q3%R3\V2S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Motorola TA 210 (ISDN)
+InitString=AT&FW1&M&C1
+AnswerInit=AT&FW1&M&C1S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+ISDN=Yes
+
+Motorola UDS FastTalk II
+InitString=AT&F&C1&D3E1V1X4Q0\J0\N6\Q3%C1S7=60
+AnswerInit=AT&F&C1&D3E1V1X4Q0\J0\N6\Q3%C1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Motorola UDS FastTalk II (ARA 1.0)
+InitString=AT&FE0V1X4&C1&D3%C\N3\Q3S7=60
+AnswerInit=AT&FE0V1X4&C1&D3%C\N3\Q3S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Motorola UDS V.3400
+InitString=AT&FX4W2&C1&D3&M0\J0\N7\Q3%C1
+AnswerInit=AT&FX4W2&C1&D3&M0\J0\N7\Q3%C1S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Motorola UDS UTA 220K (ISDN)
+InitString=AT&F&C1&D2&K3&M1@P2=13S0=1%A2=0&W
+AnswerInit=AT&F&C1&D2&K3&M1@P2=13S0=1%A2=0&W
+BPSRate=38400
+FlowControl=Hardware
+ISDN=Yes
+
+Motorola 925 DHM V.34
+InitString=AT&FW2X4&C1&D3&R\Q3S7=60S80=18
+AnswerInit=AT&FW2X4&C1&D3&R\Q3S7=60S80=18S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+
+Motorola UDS UTA 220 (ISDN Sync Clear Channel)
+InitString=AT&F&C1&D2&K3&M1%A2=0@P2=13
+AnswerInit=AT&F&C1&D2&K3&M1%A2=0@P2=13S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Motorola UDS UTA 220 (ISDN V.120)
+InitString=AT&F&C1&D2&K3&M0%A2=2@P2=13
+AnswerInit=AT&F&C1&D2&K3&M0%A2=2@P2=13S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+M. Codex 3220 Auto-Reliable mode 
+AT*XC0 *RS0 *FL3 *MD0 S7=60 
+
+M. Codex 3220 MNP-5 mode 
+AT*XC0 *RS0 *FL3 *MD0 S7=60AT *SM3 *DC1 *MH0 *FL3 *XC2 
+
+M. Codex 3220 MNP-4 mode 
+AT*XC0 *RS0 *FL3 *MD0 S7=60AT *SM3 *DC0 *MH0 *FL3 *XC2 
+
+Motorola-Codex 3260 Series 
+AT&F&C1&D2*RS0*FL3*MF0S7=60 S10=5 
+
+Motorola-Codex 3260 Auto-Reliable mode 
+AT&F&C1&D2*RS0*FL3*MF0S7=60S10=5 
+
+Motorola-Codex 3260 MNP-5 mode 
+AT&F&C1&D2*RS0*FL3*MF0S7=60S10=5*EC2 
+
+Motorola-Codex 3260 MNP-4 mode 
+AT&F&C1&D2*RS0*FL3*MF0S7=60S10=5EC2*DC0 
+
+Modem Motorola-Codex 326XFAST 
+AT&F&C1&D2*XC1 *CD3 *AA5 *RS0*FL3*XC2*MF0S7=60S10=5 *DE21 
+
+Motorola-Codex 326XFAST Auto-Reliable mode 
+AT*DE21&C1&D2*XC2*RS0*FL3*MF0S7=60S10=5 
+
+Motorola-Codex 326XFAST MNP-5 mode 
+AT*DE21&C1&D2*XC2*RS0*FL3*MF0S7=60S10=5*EC2 
+
+Motorola-Codex 326XFAST MNP-4 mode 
+AT*DE21&C1&D2*XC2*RS0*FL3*MF0S7=60S10=5EC2*DC0 
+
+Multi-Tech, 932EA
+AT E1Q0V1X4  &C1&D2&E4&E14
+
+Multi-Tech, 932EA/25
+AT E1Q0V1X4  &C1&D2&E4&E14
+
+Multi-Tech, 932EAB
+AT E1Q0V1X4  &C1&D2&E4&E14
+
+Multi-Tech, MultiModem II MT932BA
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1432BA
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1432BC
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1432ES
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1432ES
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1432MU
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1432ZDX
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1932BL
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT1932ZDX
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, MultiModem MT932BC
+AT E1Q0V1X4 F1&E4&E14
+
+Multi-Tech, Other
+AT E1Q0V1X4
+
+MultiTech MultiModem 224/224PC 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+MultiTech MultiModem 224E/224EC 
+AT&F&C1&D2S0=0&E1&E4&E7&E13X4$BA0$A1S11=55 
+$SB9600 
+
+MultiTech MultiModem 224E/224EC - Auto Reliable 
+
+AT&FS0=0&E1&E4&E7&E13$BA0$A1$MB2400$SB9600&C1&D2S 
+6S11=60 
+
+MultiTech MultiModem II MT224 
+AT&F&C1&D2&RF1&E4 X4S7=60S11=55S0=0 
+
+MultiTech MultiModem 224 (no MNP or V.42)
+InitString=AT&FX2&C1&D3&R1S7=60
+AnswerInit=AT&FX2&C1&D3&R1S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+MultiTech MultiModem 224E (MNP 5)
+InitString=AT&F&C1&D3&R0&E1&E4&E12&E15$BA0S7=60
+AnswerInit=AT&F&C1&D3&R0&E1&E4&E12&E15$BA0S7=60S0=1&W
+BPSRate=4800
+FlowControl=Hardware
+
+Multitech MultiModem 9600 (ARA 1.0)
+InitString=AT&F&Q1X4E0$BA1&D3&E0&E3&B1
+AnswerInit=AT&F&Q1X4E0$BA1&D3&E0&E3&B1S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+MultiTech MultiModem V32EC (V.42bis)
+InitString=AT&FX4&C1&D3$BA0&E1&E4&E15#L0S7=60
+AnswerInit=AT&FX4&C1&D3$BA0&E1&E4&E15#L0S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+MultiTech MultiModem V32 (no MNP or V.42)
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+MultiTech MultiModem 696E (MNP)
+InitString=AT&F&C1&D3$BA0&E1&E4&E15S7=60
+AnswerInit=AT&F&C1&D3$BA0&E1&E4&E15S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+MultiTech MultiModem II MT932 (V.42bis)
+InitString=AT&FX4&C1&D3$BA0&E1&E4&E15#L0S7=60
+AnswerInit=AT&FX4&C1&D3$BA0&E1&E4&E15#L0S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+MultiTech MultiModem II MT1432 (V.42bis)
+InitString=AT&FX4&C1&D3#A0$BA0&E1&E4&E15#L0S7=60
+AnswerInit=AT&FX4&C1&D3#A0$BA0&E1&E4&E15#L0S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+MultiTech MultiModem II MT1432 (ARA 1.0)
+InitString=AT&F&Q1X4E0$BA1&D3&E0&E4&B1S7=60
+AnswerInit=AT&F&Q1X4E0$BA1&D3&E0&E4&B1S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+MultiTech MultiModem II MT2834BA
+InitString=AT&F&C1&D3#A0$BA0E1&E1&E15#L0V1X4S7=60
+AnswerInit=AT&F&C1&D3#A0$BA0E1&E1&E15#L0V1X4S7=60S0=1&W   
+BPSRate=57600
+FlowControl=Hardware
+
+MultiTech MultiModem II MT2834BR
+InitString=AT&FX4&C1&D3#A0$BA0&E1&E4&E15#L0V1S7=60
+AnswerInit=AT&FX4&C1&D3#A0$BA0&E1&E4&E15#L0V1S7=60S0=1&W   
+BPSRate=57600
+FlowControl=Hardware
+
+MultiTech MultiModem II MT2834ZDX V.34
+InitString=AT&F&D3#T0X4S7=60
+AnswerInit=AT&F&D3#T0X4S7=60S0=1&W   
+BPSRate=57600
+FlowControl=Hardware
+
+MultiModem II MT224 - Auto Reliable 
+AT&F&C1&D2&RF1&E4X4S7=60S11=55S0=0 
+
+MultiModem II MT224 - V.42 mode 
+AT&F&C1&D2&RF1&E4X4S7=60S11=55&E14S0=0 
+
+MultiModem II MT224 - MNP5 mode 
+AT&F&C1&D2&RF1&E4X4S7=60S11=55S0=0#L1 
+
+MultiModem II MT224 - MNP4 mode 
+AT&F&C1&D2&RF1X4S7=60S11=55S0=0#L1&E14 
+
+MultiTech MultiModem 224E7 V.42bis 
+AT&F &C1 &D2 X4 S0=0 &E1 &E4 &E7 &E13 $BA0 $A1 
+S11=55 $SB19200$MB2400 
+
+MultiTech MultiModem 224E7 V.42bis - Auto Reliable 
+
+AT&F&C1&D2S0=0&E1&E4&E7&E13$BA0$A1$MB2400$SB19200 
+=0S11=60 
+
+MultiTech MultiModem V.32 
+AT&F X4 &C1 &D2 S0=0 &E1 &E4 &E7 &E13 $BA0 $A1 
+S7=60 S11=60 $SB19200 
+
+MultiTech MultiModem V.32 - Auto Reliable 
+
+AT&F&C1&D2S0=0&E1&E4&E7&E13$BA0$A1$MB9600$SB19200 
+=0S11=60 
+
+MultiTech MultiModem V.32 EAB V.42bis 
+AT&F X4 &C1 &D2 S0=0 &E1 &E4 &E7 &E13 $BA0 $A1 
+S7=60 S11=60 $SB19200 
+
+MultiTech MultiModem V.32 EAB V.42bis 
+AT&F&C1&D2S0=0&E1&E4&E7&E13$BA0$A1$MB9600$SB19200 
+=0S11=60 
+
+MultiTech MultiModem II MT932BA 
+AT&F&C1&D2&RF1 X4 S7=60 S11=60 S0=0 
+
+MultiTech II MT932 - Auto Reliable 
+AT&F&C1&D2&RF1 X4 S7=60 S11=60 S0=0 
+
+MultiTech II MT932 - V.42 mode 
+AT&F &C1&D2 &RF1 X4 S7=60 S11=60 S0=0 &E14 
+
+MultiTech II MT932 - MNP5 mode 
+AT&F &C1&D2&RF1 X4 S7=60 S11=60 #L1 S0=0 
+
+MultiTech II MT932 - MNP4 mode 
+AT&F &C1&D2&RF1 X4 S7=60 S11=60 #L1 &E14 S0=0 
+
+MultiTech MultiModem II MT1432 
+AT&F&C1&D2&RF1X4 S7=60 S11=55 S0=0 
+
+MultiTech MultiModem II MT1432 - Auto Reliable 
+AT&F&C1&D2&RF1X4 S7=60 S11=55 S0=0 
+
+MultiTech MultiModem II MT1432 - V.42 mode 
+AT&F&C1&D2&RF1X4 S7=60 S11=55 S0=0 &E14 
+
+MultiTech MultiModem II MT1432 - MNP5 mode 
+AT&F&C1&D2&RF1X4 S7=60 S11=55 S0=0 #L1 
+
+MultiTech MultiModem II MT1432 - MNP4 mode 
+AT&F&C1&D2&RF1X4 S7=60 S11=55 S0=0 #L1&E14 
+
+MultiTech MultiModem 696E 
+AT&F X4 &C1 &D2 S0=0 &E1 &E4 &E7 &E13 $BA0 $A1 
+S7=60 S11=60 $SB19200 
+
+MultiTech MultiModem 696E 
+
+AT&F&C1&D2&R0S0=0&E1&E4&E7&E13$BA0$A1$MB9600$ 
+1200S7=60S11=60 
+
+National Semiconductor TYIN 2000 
+AT&F&C1&D2&K3\V1S7=60 S11=55AT+FCLASS=0 
+
+National Semiconductor TYIN 2000 - Auto Reliable 
+AT&F&C1&D2&K3\V1S7=60S11=55AT+FCLASS=0 
+
+National Semiconductor TYIN 2000 - MNP-4 mode 
+AT&F&C1&D2&K3\V1S7=60S11=55%C0AT+FCLASS=0 
+
+NCR Enhanced 14400 Fax Modem 
+AT&F &C1 &D2 \J0 \N7 \Q3 \V2 S7=60 S11=60 
+
+NCR Enhanced 14400 Fax Modem - Auto Reliable 
+AT&F&C1&D2\N7\Q3\V2S7=60S11=60 
+
+NCR Enhanced 14400 Fax Modem - MNP-4 mode 
+AT&F%C0&C1&D2\N7\Q3\V2S7=60S11=60 
+
+NEC America Inc., 2431C
+AT E1Q0V1X4 &C1&D2&K3&M0&Q0 
+
+NEC America Inc., DataComm
+AT E1Q0V1X4 &C1&D2&K3&M0&Q0
+
+NEC America Inc., Laptop
+AT Q0 V1 
+
+NEC America Inc., N2431
+AT Q0 V1 
+
+NEC America Inc., Other
+AT E1Q0V1X4
+
+NEC N2431/2431C 
+AT&F &C1 &D2 &E0 S7=60 S11=55 
+
+NEC N2435 
+AT&F&C1&D2&R0\Q3\N6\J0\V1 
+
+NEC N2435 - Auto Reliable 
+AT&F\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+NEC N2435 - MNP-4 mode 
+AT&F%C0\Q3\N3\J0\V1\C1 S7=60 S11=60 
+
+NEC 9631 
+AT&F &C1 &D2 &R0 \N3 \Q3 \V1 S7=60 S11=60 
+
+NEC 9631 - Auto Reliable 
+AT&F &C1&D2&R0\N3\Q3\V1S7=60S11=60 
+
+NEC 9631 - MNP-4 mode 
+AT&F%C0&C1&D2&R0\N3\Q3\V1S7=60S11=60 
+
+NEC PC-20-66 14.4 Data/Fax 
+AT&F&C1&D2&K3\J0\N7\Q3\V2%C1S7=60 S11=60 
+
+NEC PC-20-66 14.4 Data/Fax - Auto Reliable 
+AT&F&C1&D2\J0\N7\Q3\V2%C1S7=60S11=60 
+
+NEC PC-20-66 14.4 Data/Fax - MNP-4 mode 
+AT&F&C1&D2\J0\N7\Q3\V2%C0S7=60S11=60 
+
+NEC 14.4 Kbps Data/Fax Modem 
+AT&F&C1&D2X6\D1\N7\Q3S85=1S7=60 S11=55S0=0 
+
+NEC 14.4 Kbps Data/Fax Modem - Auto Reliable 
+AT&F&C1&D2X6\D1\N7\Q3S85=1S7=60S11=55S0=0 
+
+NEC 14.4 Kbps Data/Fax Modem - MNP-4 mode 
+AT&F&C1&D2X6\D1\N3\Q3S85=1S7=60S11=55S0=0 
+
+NEC 14.4 Kbps Data/Fax Modem - No Error Control 
+AT&F&C1&D2X6\D1\N0\Q3S85=1S7=60S11=55S0=0 
+
+NetComm M11F 28.8
+InitString=AT&FQ0V1X5&C1&D2&E2&K3&R0\J0\N3%C3%T0S7=60
+AnswerInit=AT&FQ0V1X5&C1&D2&E2&K3&R0\J0\N3%C3%T0S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+NetComm E7 14.4 (ARA 1.0)
+InitString=AT&F\N0&D0&K3%C0X3\I3
+AnswerInit=AT&F\N0&D0&K3%C0X3\I3S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+NetComm M11F 14.4 (ARA 1.0)
+InitString=AT&F\N0&D0&K3%C0X3\I3
+AnswerInit=AT&F\N0&D0&K3%C0X3\I3S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+NetComm M11F 28.8 (ARA 1.0)
+InitString=AT&F\N0&D0&K3%C0X3\I3
+AnswerInit=AT&F\N0&D0&K3%C0X3\I3S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+New Media Corp., All
+AT E1Q0V1X4
+
+Novation, Other
+AT E1Q0V1X4
+
+Novation Professional 2400 
+ATE1Q0V1X3YC0YF1YT0 S7=45 S0=0 
+
+Novation Smart-Cat 103/212 
+%N N NS2 NC0 
+
+Nuvotel 96424IFX 
+AT&F&C1&D2&Q5\N3&K3S7=60S11=55 
+
+Nuvotel 96424IFX - Auto Reliable 
+AT&F&C1&D2&Q5\N3&K3S7=60S11=55 
+
+Nuvotel 96424IFX - MNP-4 mode 
+AT&F%C0&C1&D2&Q5\N3&K3S7=60S11=55 
+
+Nuvotel 14400I 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel 14400I - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel 14400I - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Nuvotel 14400IFX 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel 14400IFX - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel 14400IFX - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Nuvotel 9600I 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel 9600I - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel 9600I - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Nuvotel 9600IFX 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel 9600IFX - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel 9600IFX - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Nuvotel Pegasus 14400E 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel Pegasus 14400E - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel Pegasus 14400E - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Nuvotel Pegasus 14400EFX 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel Pegasus 14400EFX - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel Pegasus 14400EFX - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Nuvotel Pegasus 9600E 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel Pegasus 9600E - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel Pegasus 9600E - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Nuvotel Pegasus 9600EFX 
+AT&F&C1&D2&K3&Q5S7=60S11=55S95=41 
+
+Nuvotel Pegasus 9600EFX - Auto Reliable 
+AT&F&C1&D2&Q5&K3S7=60S11=55S95=41 
+
+Nuvotel Pegasus 9600EFX - MNP-4 mode 
+AT&F&C1&D2%C0&Q5&K3S7=60S11=60S95=41 
+
+Octocom OSI 8324A 
+AT&F &C1 &D2 &I1 *E1 &E1 &K2 S0=0 S7=60 
+
+Octocom OSI 8324A - Auto Reliable 
+AT&F&C1&D2&I1*E1&E1&K2S7=60S0=0 
+
+Octocom OSI 8324A - MNP-4 mode 
+AT&F%C0&C1&D2&I1*E0&E1&K2S7=60S0=0 
+
+Octocom OSI 8396A 
+AT&F &C1 &D2 &I1 *E1 &E1 &K2 AT S0=0 S7=60 
+
+Octocom OSI 8396A - Auto Reliable 
+AT&F&C1&D2&I1*E1&E1&K2S7=60S0=0 
+
+Octocom OSI 8396A - MNP-4 mode 
+AT&F%C0&C1&D2&I1*E0&E1&K2S7=60S0=0 
+
+Octocom OSI 8196A 
+AT&F &C1 &D2 &I1 *E1 &E1 &K2 S0=0 S7=60 
+
+Octocom OSI 8196A - Auto Reliable 
+AT&F&C1&D2&I1*E1&E1&K2S7=60S0=0 
+
+Octocom OSI 8196A - MNP-4 Mode 
+AT&F&C1&D2&I1*E0&E1&K2S7=60S0=0 
+
+Okidata, CLP 296
+AT Q0 V1 X4&B0&K0
+
+Okidata, Okitel 9600
+AT Q0 V1 X4&B0&K0
+
+Okidata, Other
+AT E1Q0V1X4
+
+Okidata CLP 296 
+AT&F&C1&D2\V1\Q3\J0\C1S7=60 
+
+Okidata CLP 296 - Auto Reliable 
+AT&F&C1 &D2\V1\Q3\J0\C1 S7=60 
+
+Okidata Okitel 2400 Plus 
+AT&F&C1&D2\V1\Q3\J0S7=60 
+
+Okidata Okitel 2400 Plus - Auto Reliable mode 
+AT&F&C1 &D2\V1\Q3\J0\C1 S7=60 
+
+Okidata Okitel 2400 Plus - MNP-4 mode 
+AT&F %C0&C1 &D2\V1\Q3\J0\C1 S7=60 
+
+Okidata Okitel 1200/1200B 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Okidata Okitel 2400/2400B 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Okidata Okitel 9600 
+AT&C1&D2\J0\Q3&K3\N3S7=60 
+
+Okidata Okitel 9600 - Auto Reliable 
+AT&F &C1&D2\J0\Q3&K3\N3 S7=60 
+
+Okidata Okitel 9600 - MNP-4 mode 
+AT&F %C0 &C1 &D2 X6 S7=60 S11=60 
+
+Omnitel, All
+AT E1Q0V1X4
+
+Omron Office Automation Products Inc., All
+AT E1Q0V1X4
+
+Omron Impala 14.4K 
+AT&F&C1&D2\J0\Q3\V2&M5S7=60 
+
+Omron Impala 14.4K - Auto Reliable 
+AT&F&C1&D2\J0\Q3\V2&M5S7=60 
+
+Omron Impala 14.4K - MNP-4 mode 
+AT&F&C1&D2%C0\J0\Q3\V2&M5S7=60 
+
+Omron Impala 14.4K - Direct mode 
+AT&F&C1&D2&M0\V0S7=60 
+
+Omron Impala 24/96 Fax 
+AT&F&C1&D2\J0\Q3\N3S7=60S11=55 
+
+Omron Impala 24/96 Fax - Auto Reliable 
+AT&F&C1&D2\J0\Q3\N3S7=60S11=55 
+
+Omron Impala 24/96 Fax - MNP-4 mode 
+AT&F&C1&D2%C0\J0\Q3\N3S7=60S11=55 
+
+Omron Impala 24/96 Fax - Direct mode 
+AT&F&C1&D2\J0\Q0\N0S11=55S7=60 
+
+Pace, Eurolink
+AT Q0 V1 E1 
+
+Pace, Linnet V32 Quad
+AT Q0V1 &K3 
+
+Pace, Other
+AT E1Q0V1X4
+
+Pace, Series Four
+AT Q0 V1 E1 
+
+Pace, Ultralink 32
+AT Q0 V1 E1
+
+Pace, V32
+AT&F &C1 &D2 &K2
+
+Pace Linnet PC Card (300 baud) 
+AT&F 
+
+Pace Linnet 1200 
+AT&F 
+
+Pace Linnet 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=70 
+
+Pace MicroLin Fx 
+AT&F&C1&D2\N3%C3&K3S7=58S95=41 
+
+Pace MicroLin Fx - Auto Reliable 
+AT&F&C1&D2\N3%C3&K3S7=58S95=41 
+
+Pace MicroLin Fx - MNP-4 mode 
+AT&F&C1&D2\N3%C2&K3S7=58S95=41 
+
+Pace MicroLin Fx - Direct mode 
+AT&F&C1&D2\N02&K0S7=58S95=41 
+
+Pace MicroLin Quad Fax PC Card 
+AT&F&C1&D2\N3%C3&K3S7=58S95=41 
+
+Pace MicroLin Quad Fax PC Card - Auto Reliable 
+AT&F AT&C1&D2\N3%C3&K3S7=58S95=41 
+
+Pace MicroLin Quad Fax PC Card - MNP-4 mode 
+AT&F&C1&D2\N3%C2&K3S7=58S95=41 
+
+Pace MicroLin Quad Fax PC Card - Direct mode 
+AT&F&C1&D2\N02&K0S7=58S95=41 
+
+Pace MicroLin fx 32 Plus
+InitString=AT&F&C1&D3&K3\J0\N3%C3S7=60S36=7S95=47
+AnswerInit=AT&F&C1&D3&K3\J0\N3%C3S7=60S36=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Pace Series Four 
+AT&F 
+
+Pace Ultralink Quad 
+AT&F&A1&E2&I1&K1\C4\N0\P1\Q0S7=60 
+
+Pace Ultralink Quad - Auto Reliable 
+AT&F&A1&E2&I1&K1\C4\N0\P1\Q0S7=60 
+
+Pace Ultralink 32 
+AT&F&A1&E2&I1&K1\C4\N0\P1\Q0S7=60 
+
+Pace Ultralink 32 - Auto Reliable 
+AT&F&A1&E2&I1&K1\C4\N0\P1\Q0S7=60 
+
+Pace Linnet Quad 32 
+AT&F&C1&D2&A1&I1&K1\C5\N0\P2\Q0S7=60S11=75 
+
+Pace Linnet Quad 32 - Auto Reliable mode 
+AT&F&C1&D2&A1&I1&K1\C5\N0\P2\Q0S7=60S11=75 
+
+Pace Linnet Quad 32 - MNP-4 mode 
+AT&F&C1&D2&A1&I1&K1\C4\N0\P2\Q0S7=60S11=75 
+
+Packard Bell, All
+AT E1Q0V1X4
+
+PC Logic 19200/Fax 
+AT&F&C1&D2\J0&K3\N3%C1\V1S7=60S11=55 
+
+PC Logic 19200/Fax - Auto Reliable mode 
+AT&F&C1&D2\J0&K3\N3%C1\V1S7=60S11=55 
+
+PC Logic 19200/Fax - MNP-4 mode 
+AT&F&C1&D2\J0&K3\N3%C1\V1S7=60S11=55 
+
+PC Logic 14400/Fax 
+AT&F &C1 &D2 &K3 &Q9 \N3 %C1 S7=60 S11=55 S95=34 
+
+PC Logic 14400/Fax - Auto Reliable mode 
+AT&F &C1&D2&K3&Q9\N3%C1S7=60 S11=55S95=34 
+
+PC Logic 14400/Fax - MNP-4 mode 
+AT&F &C1&D2&K3&Q9\N3%C0S7=60 S11=55S95=34 
+
+PC Logic 96I 
+AT&F&C1&D2&K3&Q5\N3%C1S7=60S11=55S95=34 
+
+PC Logic 96I - Auto Reliable mode 
+AT&F&C1&D2&K3&Q5\N3%C1S7=60S11=55S95=34 
+
+PC Logic 96I - MNP-4 mode 
+AT&F&C1&D2&K3&Q5\N3%C0S7=60S11=55S95=34 
+
+Penril DataComm, Datalink 1200
+AT E1Q0V1X4 &C1&D2&Q0&R0&S0
+
+Penril DataComm, DX144
+AT E1Q0V1X4 &C1&D2&Q0&R0&S0 
+
+Penril DataComm, Other
+AT E1Q0V1X4
+
+Penril Datalink 1200 
+ATE1V1X1Q0 S7=60 
+
+Penril Datalink 2400 
+ATE1V1X4Q0 S7=60 
+
+Penril DLX V.32M 
+AT&F&C1&D2\Q1\V1S0=0S7=60 
+
+Penril DLX V.32M - Auto Reliable 
+AT&F&C1&D2\Q1\V1S0=0S7=60 
+
+Penril DLX V.32M - V.23 mode 
+AT&F&C1&D2F3\Q1\V1S0=0S7=60 
+
+Penril DLX 14.4K 
+AT&F&C1&D2\Q1\V1S0=0S7=60 
+
+Penril DLX 14.4K - Auto Reliable 
+AT&F&C1&D2\Q1\V1S0=0S7=60 
+
+Penril DLX 14.4K - V.23 mode 
+AT&F&C1&D2F3\Q1\V1S0=0S7=60 
+
+PerfectData 14400 
+AT&F &C1 &D2 \N3 %C1 \V2 \Q3 S11=60 
+
+PerfectData 14400 - Auto Reliable 
+AT&F&C1&D2\N3%C1\V2\Q3S11=60 
+
+PerfectData 9600 
+AT&F &C1 &D2 \N3 %C1 \V2 \Q3 S11=60 
+
+PerfectData 9600 - Auto Reliable 
+AT&F AT&C1&D2\N3%C1\V2\Q3S11=60 
+
+PerfectData Corp., All
+AT E1Q0V1X4
+
+Penril Alliance V.32 Series 
+AT&F\D1\C4S7=60S11=60 
+
+Penril Alliance V.32 Series - Auto Reliable 
+AT&F AT \D1 \C4 S7=60 S11=60 
+
+Piiceon Dispatcher 9696 
+AT&F1 &C1 &D2 \N7 W2 \V2 %C1 \Q3 \J0 S7=60 S11=60 
+
+Piiceon Dispatcher 9696 - Auto Reliable 
+AT&F1&C1&D2\N7W2\V2%C1\Q3\J0S7=60S11=60 
+
+Piiceon Dispatcher 9696 - MNP-4 mode 
+AT&F1&C1&D2\N7W2\V2%C0\Q3\J0S7=60S11=60 
+
+Piiceon Dispatcher 9696 - 2400 mode 
+AT&F1&C1&D2\N0W2\V2%C0\Q3\J0S7=60S11=60 
+
+Piiceon Dispatcher 14400 
+AT&F1 &C1 &D2 \N7 W2 \V2 %C1 \Q3 \J0 S7=60 S11=60 
+
+Piiceon Dispatcher 14400 - Auto Reliable 
+AT&F1&C1&D2\N7W2\V2%C1\Q3\J0S7=60S11=60 
+
+Piiceon Dispatcher 14400 - MNP-4 mode 
+AT&F1&C1&D2\N7W2\V2%C0\Q3\J0S7=60S11=60 
+
+Piiceon Dispatcher 14400 - 2400 mode 
+AT&F1&C1&D2\N0W2\V2%C0\Q3\J0S7=60S11=60 
+
+Piiceon Dispatcher (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5%C3\J0\N3S7=60S36=7S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5%C3\J0\N3S7=60S36=7S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+PNB, All
+AT E1Q0V1X4
+
+Pocket, All
+AT E1Q0V1X4
+
+Practical Peripherals, Other
+AT E1Q0V1X4
+
+Practical Peripherals, PC-HSSP
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PC144HC
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PC144LCD
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PC144MT
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PC288HC V.FC
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PC288LCD V.FC
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PC288MT V.FC
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PC288SA V.FC
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals, PM14400FX PS/2
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM14400FXPMT
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM14400FXSA V.32bis
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM144HC II
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM144MT II
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM288 PKT II V.FC
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM288 PKT V.FC
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM288HC II V.FC
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM9600HC II
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, PM9600MT II
+AT&F E1Q0V1X4 &C1&D2&K3
+
+Practical Peripherals, Practicard 144
+AT E1Q0V1X4 S46=0 &C1&D2&K3
+
+Practical Peripherals Practical 1200 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Practical Peripherals Practical 2400 
+ATE1Q0V1X4&C1&D2 S11=55 S0=0 S7=60 
+
+Practical Peripherals 2400SA 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Practical Peripherals 2400 Pocket Modem 
+AT&C1&D2 S11=60 S7=60 S0=0 
+
+Practical Peripherals 2400SA MNP 
+AT&F X4&C1&D2\Q3\N3\J0\V1 
+
+Practical Peripherals 2400SA MNP - Auto Reliable 
+AT&FX4&C1&D2\Q3\N3\J0\V1S7=60S11=60 
+
+Practical Peripherals 2400SA MNP - MNP-4 mode 
+AT&F%C0X4&C1&D2\Q3\N3\J0\V1S7=60S11=60 
+
+Practical Peripherals 2400SA V.42bis 
+AT&F&C1&D2S7=60S11=60 
+
+Practical Peripherals 2400SA V.42bis - Auto Reliable 
+AT&F&C1&D2S7=60S11=60 
+
+Practical Peripherals 2400SA V.42bis - MNP-4 mode 
+AT&F%C0&C1&D2 S7=60S11=60 
+
+Practical Peripherals PM9600SA V.32/V.42bis 
+AT&F&C1&D2S7=60S95=45S11=60 
+
+Practical Peripherals PM9600SA V.32 - Auto Reliable 
+AT&F &C1 &D2 S7=60 S11=60 S95=41 
+
+Practical Peripherals PM14400FXSA 
+AT&F&C1&D2W1S7=60S95=41S11=60 
+
+Practical Peripherals PM14400FXSA - Auto Reliable 
+AT&F&C1&D2W1S7=60S11=60S95=41 
+
+Practical Peripherals PM14400FXSA - MNP-4 Mode 
+AT&F&Q9&C1&D2W1S7=60S11=60S95=41 
+
+Practical Peripherals PM9600FXMT 
+AT&F&C1&D2&Q5&K3S7=60S95=45S11=60 
+
+Practical Peripherals PM9600FXMT - Auto Reliable 
+AT&F&C1&D2&K3&Q5S7=60S11=60S95=45 
+
+Practical Peripherals PM9600FXMT - MNP-4 mode 
+AT&F&C1&D2&K3&Q8&Q9S7=60S11=60S95=45 
+
+Practical Peripherals PM9600FXMT - Direct mode 
+AT&F&C1&D2&K3&Q0S7=60S11=60S95=45 
+
+Practical Peripherals PM14400FXMT 
+AT&F&C1&D2&K3&Q5W2S7=60S95=41S11=60 
+
+Practical Peripherals PM14400FXMT - Auto Reliable 
+AT&F&C1&D2&K3&Q5W2S7=60S95=41S11=60 
+
+Practical Peripherals PM14400FXMT - MNP-4 Mode 
+AT&F&C1&D2&K3&Q9W2S7=60S95=41S11=60 
+
+Practical Peripherals PM2400SA (no MNP or V.42)
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+Practical Peripherals 2400 SA (ARA 1.0)
+InitString=AT&FE0&C1&D3
+AnswerInit=AT&FE0&C1&D3S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+Practical Peripherals PM2400SA (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5S7=60
+AnswerInit=AT&F&C1&D3&K3&Q5S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Practical Peripherals PM2400PPM (no MNP or V.42)
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+Practical Peripherals PM9600SA (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5S46=138S48=7S7=60
+AnswerInit=AT&F&C1&D3&K3&Q5S46=138S48=7S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Practical Peripherals 9600 SA (ARA 1.0)
+InitString=AT&FE0&K0&C1&D3&Q0
+AnswerInit=AT&FE0&K0&C1&D3&Q0S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Practical Peripherals PM144MT II MiniTower
+InitString=AT&FW2X4&Q5&C1&D3S7=60S95=47
+AnswerInit=AT&FW2X4&Q5&C1&D3S7=60S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals PM14400FX (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5S7=60S36=7S46=2S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5S7=60S36=7S46=2S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals PM14400FXMT (ARA 1.0)
+InitString=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0
+AnswerInit=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Practical Peripherals PM14400FXSA (ARA 1.0)
+InitString=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0
+AnswerInit=AT&F&C1&D3E0W1&Q6Y1S7=60S46=0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Practical Peripherals PM144HC II
+InitString=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=2S48=7S95=47
+AnswerInit=AT&FW2&C1&D3&K3&Q5S7=60S36=7S46=2S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals PM14400SA (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5S7=60S36=7S46=2S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5S7=60S36=7S46=2S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals ProClass 28800 V.FC
+InitString=AT&F&C1&D3E1Q0X4&K3S7=60
+AnswerInit=AT&F&C1&D3E1Q0X4&K3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals ProClass 28800 V.34
+InitString=AT&F&C1&D3E1Q0X4&K3S7=60
+AnswerInit=AT&F&C1&D3E1Q0X4&K3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals MC288MT II V.34
+InitString=AT&FW2&C1&D3&K3S7=60
+AnswerInit=AT&FW2&C1&D3&K3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals PM288MT II V.34
+InitString=AT&F0W2&C1&D3S7=60
+AnswerInit=AT&F0W2&C1&D3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Practical Peripherals PM288MTII (ARA 1.0)
+InitString=AT&FW2&C1&D3E1Q0X4&K3S7=60
+AnswerInit=AT&FW2&C1&D3E1Q0X4&K3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+ARAv1=1
+
+Premier Innovations P2400 / P2400E 
+AT&FS7=60 
+
+Prometheus, Home Office 144i
+AT Q0V1
+
+Prometheus, Home Office Fax Modem
+AT Q0V1
+
+Prometheus, Other
+AT E1Q0V1X4
+
+Prometheus, ProModem 144e
+AT&F0V1&Q6&C1&D2Q0E1X4&K3
+
+Prometheus, ProModem 144i
+AT&F0V1&Q6&C1&D2Q0E1X4&K3
+
+Prometheus, Ultima 9600
+AT E1Q0V1 
+
+Prometheus, Ultima Home Office
+AT Q0V1
+
+Prometheus LineLink (ARA 1.0)
+InitString=AT&FW2&C1&D3&Q6&R0%C0\NOW1
+AnswerInit=AT&FW2&C1&D3&Q6&R0%C0\NOW1SO=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Prometheus LineLink
+InitString=AT&F&C1&D3&R0\Q3\V1W1
+AnswerInit=AT&F&C1&D3&R0\Q3\V1W1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Prometheus ProModem 2400MNP/2400BMNP (MNP 5)
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=4800
+FlowControl=Hardware
+
+Prometheus ProModem 2400 (ARA 1.0)
+InitString=AT&FE0&D3
+AnswerInit=AT&FE0&D3S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+Prometheus ProModem 9600 Plus (V.42)
+InitString=AT&F&C1&D3*E7*F3S7=60
+AnswerInit=AT&F&C1&D3*E7*F3S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Prometheus ProModem 9600 (ARA 1.0)
+InitString=AT&F&C1E0\Q0\J1&D3\N0\34H0%C0-J0
+AnswerInit=AT&F&C1E0\Q0\J1&D3\N0\34H0%C0-J0S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Prometheus ProModem 144e
+InitString=AT&FW2&C1&D3&K3&Q5\N6\Q3\V1%C1S7=60
+AnswerInit=AT&FW2&C1&D3&K3&Q5\N6\Q3\V1%C1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Prometheus ProModem 144e
+AT&FE0L0Q0V1X4&C1&D3\N6S7=60
+
+Prometheus ProModem Ultima (V.42bis)
+InitString=AT&F&C1&D3*E9*F3*S1S7=60
+AnswerInit=AT&F&C1&D3*E9*F3*S1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Prometheus ProModem Ultima (ARA 1.0)
+InitString=AT&F&C1&D3E0*F3*E0*S0
+AnswerInit=AT&F&C1&D3E0*F3*E0*S0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Prometheus ProModem Ultima 
+AT&FS7=60S0=0*F3 
+
+Prometheus ProModem Ultima - Auto Reliable 
+AT&FS7=60S0=0*F3 
+
+Prometheus ProModem Ultima - V.42 mode 
+AT&F ATS7=60S0=0*F3*E7 
+
+Prometheus ProModem Ultima - MNP-5 mode 
+AT&FS7=60S0=0*F3*E1 
+
+Prometheus ProModem Ultima - MNP-4 mode 
+AT&FX4S7=60S0=0*F3*E3 
+
+Prometheus Ultima Home Office 
+AT&F&C1&D2\Q3\J0\N3\V1%C1S7=60 S11=60 S0=0 
+
+Prometheus Ultima Home Office - Auto Reliable 
+AT&F&C1&D2\Q3\J0\N3\V1%C1 AT S7=60S0=0S11=60 
+
+Prometheus Ultima Home Office - MNP-4 mode 
+AT&F&C1&D2\Q3\J0\N3\V1%C0 ATS7=60S0=0S11=60 
+
+Prometheus Pro Modem 1200 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Prometheus 2400 MCT-24I Half-card 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Prometheus 9600 Plus 
+AT&F*F3 
+
+Prometheus 9600 Plus - Auto Reliable 
+AT&F*F3 
+
+PSI Comstation 
+AT&C1&D2X3 
+
+Psion Dacom Gold PC3 
+AT&FF3X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC3 - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC3 - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC3 - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC4 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom Gold PC4 - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom Gold PC4 - MNP-4 mode 
+AT&FF3%C0X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC4 - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC4 - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC4 Fax 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom Gold PC4 Fax - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom Gold PC4 Fax - MNP-4 mode 
+AT&FF3%C0X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC4 Fax - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom Gold PC4 Fax - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 3 
+AT&FF3X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 3 - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 3 - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 3 - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 4 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM 4 - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM 4 - MNP-4 mode 
+AT&FF3%C0X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 4 - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 4 - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 4 Fax 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM 4 Fax - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM 4 Fax- MNP-4 mode 
+AT&FF3%C0X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 4 Fax - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM 4 Fax - V.23 mode 
+AT&F ATF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM30 
+AT&FF3X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM30 - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM30 - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM30 - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM40 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM40 - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM40 - MNP-4 mode 
+AT&FF3%C0X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM40 - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM40 - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM40F 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM40F - Auto Reliable 
+AT&FF3X4&C1&D2&I1&J2&K2&R0%C1 
+
+Psion Dacom PDM40F - MNP-4 mode 
+AT&FF3%C0X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM40F - V.21 mode 
+AT&FF1X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM40F - V.23 mode 
+AT&FF4X4&C1&D2&I1&J2&K2&R0 
+
+Psion Dacom PDM50F 
+AT&FF8X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion Dacom PDM50F - Auto Reliable 
+AT&FF8X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion Dacom PDM50F - MNP-4 mode 
+AT&FF8X4&C1&D2&Q5&K3&R0\N3%C2W2 
+
+Psion Dacom PDM50F - V.21 mode 
+AT&FF1X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion Dacom PDM50F - V.23 mode 
+AT&FF3X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion Dacom PDM60F 
+AT&FF8X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion Dacom PDM60F - Auto Reliable 
+AT&FF8X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion Dacom PDM60F - MNP-4 mode 
+AT&FF8X4&C1&D2&Q5&K3&R0\N3%C2W2 
+
+Psion Dacom PDM60F - V.21 mode 
+AT&FF1X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion Dacom PDM60F - V.23 mode 
+AT&FF3X4&C1&D2&Q5&K3&R0\N3%C3W2 
+
+Psion, Dacom Quad
+ATB0 F3 &K1 V1E1Q0
+
+Psion, Other
+AT E1Q0V1X4
+
+PureData PDMCIA 2400 
+AT&F\V2 S7=60 S11=60 
+
+PureData PDMCIA 2400 - Auto Reliable 
+AT&F\V2 S7=60 S11=60 
+
+PureData PDMCIA 2400 - MNP-4 mode 
+AT&F\V2 S7=60 S11=60 
+
+QuickComm 14.4 
+AT&FS7=60S0=0*F3 
+
+QuickComm 14.4 - Auto Reliable 
+AT&FS7=60S0=0*F3 
+
+QuickComm 14.4 - V.42 mode 
+AT&FS7=60S0=0*F3*E7 
+
+QuickComm 14.4 - MNP-5 mode 
+AT&FS7=60S0=0*F3*E1 
+
+QuickComm 14.4 - MNP-4 mode 
+AT&FX4S7=60S0=0*F3*E3 
+
+QuickComm Spirit II 
+AT&F &C1 &D2 X4 *E9 *F3 *N6 S7=60 S0=0 
+
+QuickComm Spirit II - Auto Reliable 
+AT&F&C1&D2X4*E9*F3*N6S7=60S0=0 
+
+QuickComm Spirit II - V.42 mode 
+AT&F&C1&D2X4*E7*F3*N6S7=60S0=0 
+
+QuickComm Spirit II - MNP-5 mode 
+AT&F&C1&D2X4*E1*F3*N6S7=60S0=0 
+
+QuickComm Spirit II - MNP-4 mode 
+AT&F&C1&D2X4*E3*F3*N6S7=60S0=0 
+
+Quickcom, Other
+AT E1Q0V1X4
+
+Quickcom, V.32
+AT E1Q0V1 *E0*F1
+
+Quicktel, 28.8
+AT E1Q0V1X4&K3
+
+Quicktel, Other
+AT E1Q0V1X4
+
+QVC 14.4 
+AT&F2&C1&D2%C1\J0\N6\Q3S0=0S7=60S11=60\V1 
+
+QVC 14.4 - Auto Reliable Mode 
+AT&F2&C1&D2%C1\J0\N6\Q3S0=0S7=60S11=60\V1 
+
+QVC 14.4 - MNP-4 Mode 
+AT&F2&C1&D2%C0\J0\N6\Q3S0=0S7=60S11=60\V1 
+
+Racal Datacom ALM 3223 (V.42bis)
+InitString=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60
+AnswerInit=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Racal Datacom ALM 3226
+InitString=AT&F&C1&D3\N3W1S7=60S24=0S95=1
+AnswerInit=AT&F&C1&D3\N3W1S7=60S24=0S95=1S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Racal Datacom ALM 3239
+InitString=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60
+AnswerInit=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Racal Datacom RMD 3264
+InitString=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60
+AnswerInit=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Racal Datacom ALM 3268
+InitString=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60   
+AnswerInit=AT&F&C1&D3\M0\N3\P2\Q1\V1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Racal Datacom Excalibur Dual Modec
+InitString=AT
+AnswerInit=AT
+BPSRate=115200
+FlowControl=Hardware
+
+Racal-Datacom RMD 2412 
+AT&F&C1&D2X4*C1*D1*E1*L1S0=0S7=60S11=60 
+
+Racal-Datacom RMD 2412 - Auto Reliable 
+AT&F&C1&D2X4*C1*D1*E1*L1S0=0S11=60S7=60 
+
+Racal-Datacom RMD 2412 - MNP-4 mode 
+AT&F&C1&D2X4*C1*D0*E1*L1S0=0S11=60S7=60 
+
+Racal-Datacom RMD 2412 - 2400-compatible mode 
+AT&F&C1&D2X4*C0*D0*E0*L1S0=0S11=60S7=60 
+
+Racal-Datacom RMD 2412/2 
+AT&F&C1&D2X4*C1*D1*E1S0=0S7=60S11=60 
+
+Racal-Datacom RMD 2412/2 - Auto Reliable 
+AT&F&C1&D2X4*C1*D1*E1S0=0S11=60S7=60 
+
+Racal-Datacom RMD 2412/2 - MNP-4 mode 
+AT&F&C1&D2X4*C1*D0*E1S0=0S11=60S7=60 
+
+Racal-Datacom RMD 2412/2 - 2400-compatible mode 
+AT&F&C1&D2X4*C0*E0S0=0S11=60S7=60 
+
+Racal-Datacom RMD 3221 
+AT&FX9&C1&D2*F2S7=60S11=60S0=0 
+
+Racal-Datacom RMD 3221 - Auto-Reliable mode 
+AT&FX9&C1&D2*F2S0=0S7=60S11=60 
+
+Racal-Datacom RMD 3222 
+AT&FX4&C1&D2\N3\Q1\B1S7=60S11=60S0=0 
+
+Racal-Datacom RMD 3222 - Auto-Reliable mode 
+AT&FX4&C1&D2\N3\Q1\B1S0=0S7=60S11=60 
+
+Racal-Datacom ALM 3223 
+AT&F &C1 &D2 \Q1 L1 S7=60 S11=55 
+
+Racal-Datacom ALM 3223 - Auto Reliable 
+AT&F&C1&D2\Q1L1S7=60S11=55 
+
+Racal-Datacom ALM 3223 - MNP-5 mode 
+AT&F&C1&D2\C5\P1\Q1L1S7=60S11=55 
+
+Racal-Datacom ALM 3223 - MNP-4 mode 
+AT&F&C1&D2\C4\P1\Q1L1S7=60S11=55 
+
+Racal-Datacom ALM 3226 
+AT&F&C1&D2W2L2S0=0S7=60 
+
+Racal-Datacom ALM 3226 - Auto Reliable 
+AT&F&C1&D2W2L2S0=0S7=60 
+
+Racal-Datacom ALM 3226 - MNP-4 mode 
+AT&F&C1&D2%C2W2L2S0=0S7=60 
+
+Racal-Datacom ALM 3226 - 2400-Compatible mode 
+AT&F&C1&D2\N0&K0W2L2S0=0S7=60 
+
+Racal-Datacom RMD 3264 
+AT&F &C1 &D2 \Q1 L1 S7=60 S11=55 
+
+Racal-Datacom RMD 3264 - Auto Reliable 
+AT&F&C1&D2\Q1L1S7=60S11=55 
+
+Racal-Datacom RMD 3264 - MNP-5 mode 
+AT&F&C1&D2\C5\P1\Q1L1S7=60S11=55 
+
+Racal-Datacom RMD 3264 - MNP-4 mode 
+AT&F&C1&D2\C4\P1\Q1L1S7=60S11=55 
+
+Racal-Datacom Inc., All
+AT E1Q0V1X4
+
+Racal-Milgo,  RMD 3221
+AT E1Q0V1X4&K3
+
+Racal-Milgo,  RMD 3222
+AT E1Q0V1X4&K3
+
+Racal-Milgo, Other
+AT E1Q0V1X4
+
+Racal-Vadic,  9600VP
+AT E1Q0V1X4&K3
+
+Racal-Vadic,  9632PA
+AT E1Q0V1X4&K3
+
+Racal-Vadic,  VA212
+AT E1Q0V1X4&K3
+
+Racal-Vadic,  VA3451
+AT E1Q0V1X4&K3
+
+Racal-Vadic, Other
+AT E1Q0V1X4
+
+Racal-Vadic 1200PA 
+AT&F&C1&D2 
+
+Racal-Vadic 2400/PS 
+AT&F*F2&C1&D2*E1&Y0 
+
+Racal-Vadic 2400/PS - Auto Reliable 
+AT&F*F2&C1&D2 *E1 S7=60 S11=60 
+
+Racal-Vadic 2400/LC 
+AT&F*F2&C1&D2*P1*E1S7=60S11=60 &Y0 
+
+Racal-Vadic 2400/LC - Auto Reliable 
+AT&F*F2&C1&D2 *P1 *E1 S7=60 S11=60 
+
+Racal-Vadic LC2400PC 
+ATZATS7=60S11=55 
+
+Racal-Vadic 2400PA 
+E O1142 
+
+Racal-Vadic 2400PA Model 2 
+AT&FX4*F2&C1&D2*P1*L1*Q1*E1S7=60S11=60&Y0 
+
+Racal-Vadic 2400PA Model 2 - Auto Reliable 
+AT&FX4*F2&C1&D2*P1*L1*Q1*E1S7=60S11=60 
+
+Racal-Vadic 2400VP 
+AT&FX4*F2&C1&D2*P1*Q1*E1S7=60S11=60&Y0 
+
+Racal-Vadic 2400VP - Auto Reliable 
+AT&FX4*F2&C1&D2*P1*Q1*E1S7=60S11=60 
+
+Racal-Vadic 9600VP 
+AT&F&C1*C1&D2*F2Y1*Q1 
+
+Racal-Vadic 9600VP - Auto Reliable 
+AT&F&C1&D2*F2Y1*Q1S7=60 
+
+Racal-Vadic 9632PA 
+AT&F&C1&D2S7=60 
+
+Racal-Vadic 9632PA - Auto Reliable 
+AT&F &C1 &D2 S7=60 
+
+Racal-Vadic VA212 
+E O 1 3 1 2 16 2 17 2 19 9 E 
+
+Racal-Vadic VA3451 
+E 
+
+Rockwell RPI-based 2400 
+ATE1Q0V1X4&C1&D2S7=60S11=55S0=0+H1 
+
+ROLMphone 244PC 
+ATE1Q0V1X1%P0%C1S0=0 
+
+SAI Systems & Laboratories, All
+AT E1Q0V1X4
+
+Sanyo Modem MBCNB
+InitString=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+S.A.T. 3202S V110 38400 (ISDN)
+InitString=AT&FC2E1Q0V1X1&R0&C1S0=2
+AnswerInit=AT&FC2E1Q0V1X1&R0&C1S0=2&W
+InitBPSRate=38400
+BPSRate=38400
+FlowControl=None
+ISDN=Yes
+
+S.A.T. 3202S V14e 57600 (ISDN)
+InitString=AT&FC2E1Q0V1X1&R0&C1S0=2
+AnswerInit=AT&FC2E1Q0V1X1&R0&C1S0=2&W
+InitBPSRate=57600
+BPSRate=57600
+FlowControl=None
+ISDN=Yes
+
+Seda, 28.8
+AT E1Q0V1X4&K3
+
+Seda, Other
+AT E1Q0V1X4
+
+Shiva,  NetModem/E
+AT E1Q0V1X4&K3
+
+Shiva, Other
+AT E1Q0V1X4
+
+Shiva V.32bis Modem Module
+InitString=AT&FW1&C1&D3&K3&Q5&S1%C3\N3S95=255S0=1
+AnswerInit=AT&FW1&C1&D3&K3&Q5&S1%C3\N3S95=255S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+
+Shiva V.34 Modem Module
+InitString=AT&FW1&C1&D3&K3&Q5&S1%C3\N3S95=47S0=1
+AnswerInit=AT&FW1&C1&D3&K3&Q5&S1%C3\N3S95=47S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+
+Shiva V.32bis Modem Module (ARA 1.0)
+InitString=AT&FW1&C1&D3&K3&Q0&S1S95=47S0=1
+AnswerInit=AT&FW1&C1&D3&K3&Q0&S1S95=47S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+ARAv1=1
+
+Shiva V.34 Modem Module (ARA 1.0)
+InitString=AT&FW1&C1&D3&K3&Q0&S1S95=47S0=1
+AnswerInit=AT&FW1&C1&D3&K3&Q0&S1S95=47S0=1&W
+BPSRate=115200
+FlowControl=Hardware
+ARAv1=1
+
+Shiva NetModem/E 
+AT&FS7=60S11=55S12=1 
+
+Shiva NetModem/E - Auto Reliable 
+AT&FS7=60S11=55S12=1I68 
+
+Shiva NetModem/E - V.42bis mode 
+AT&FS7=60S11=55S12=1S46=138I68 
+
+Shiva NetModem/E - V.42 mode 
+AT&FS7=60S11=55S12=1S46=136I68 
+
+SIIG, Other
+AT E1Q0V1X4
+
+SIIG, SI-1414i
+AT E1Q0V1X4&K3
+
+Starlit Designer 9600 
+AT&F1 X4 &C1 &D2 &R0 &Y0 &M5 %C1 \J0 \N3 \Q3 W1 
+&K3 
+
+Starlit Designer 9600 - Auto Reliable 
+AT&F1X4&C1&D2&R0&M5\J0\N3\Q3W1&K3 S7=60S11=55 
+
+Starlit Designer 9600 - MNP-4 mode 
+AT&F1%C0X4&C1&D2&R0&M5\J0\N3\Q3W1&K3 S7=60S11=55 
+
+SmartLink 9600UM 
+AT&FX4 &C1 &D2 &R0 &Y0 &M5 %C1 \J0 \N5 \Q3 
+
+SmartLink 9600UM - Auto Reliable 
+AT&FX4&C1&D2&R0&M5\J0\N5\Q3 S7=60S11=55 
+
+SmartLink 9600UM - MNP-4 mode 
+AT&F%C0X4&C1&D2&R0&M5\J0\N5\Q3 S7=60S11=55 
+
+Spartan 14.4 Turbo 
+AT&F2&C1&D2S11=55S7=60S0=0 
+
+Spartan 14.4 Turbo - Auto Reliable mode 
+AT&F2&C1&D2S11=55S7=60S0=0 
+
+Spartan 14.4 Turbo - MNP-4 
+AT&F2&C1&D2\N3%C0S11=55S7=60S0=0 
+
+Spartan 14.4 Turbo - 2400 Direct 
+AT&F2&C1&D2B6\N0S11=55S7=60S0=0 
+
+Supra Corp., Other
+AT E1Q0V1X4
+
+Supra Corp., SupraExpress 144i
+AT&F E1Q0V1X4 
+
+Supra Corp., SupraFAXModem 14.4i
+AT&F E1Q0V1X4
+
+Supra Corp., SupraFAXModem 14.4ilc
+AT&F E1Q0V1X4
+
+Supra Corp., SupraFAXModem 144PB
+AT&F E1Q0V1X4 
+
+Supra Corp., SupraFAXModem 28.8i
+AT&F E1Q0V1X4
+
+Supra Corp., SupraFAXModem 288
+AT&F E1Q0V1X4 
+
+Supra Corp., SupraFAXModem 288PB
+AT&F E1Q0V1X4
+
+Supra Corp., SupraFAXModem 9600
+AT&F E1Q0V1X4
+
+Supra Corp., SupraFAXModem Plus
+AT&F E1Q0V1X4
+
+Supra Corp., SupraFAXModem V.32
+AT&F E1Q0V1X4
+
+Supra Corp., SupraFAXModem V.32bis
+AT&F E1Q0V1X4
+
+Supra SupraModem 2400
+InitString=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=30
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V1%C1S7=30S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+LockBPS=No
+
+Supra SupraModem 2400 (ARA 1.0)
+InitString=AT&F&C1E0\N1&D3
+AnswerInit=AT&F&C1E0\N1&D3S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+Supra SupraModem 2400 MNP (MNP 5)
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+
+Supra SupraModem 2400 Plus (V.42bis)
+InitString=AT&F&C1&D3\J0\N3\Q2\V2-J1%C1"H3S7=60
+AnswerInit=AT&F&C1&D3\J0\N3\Q2\V2-J1%C1"H3S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+SupraFaxPlus 2400 (ARA 1.0)
+InitString=AT&FE0&K3S23=61W1X4&Q5\NS46=136
+AnswerInit=AT&FE0&K3S23=61W1X4&Q5\NS46=136S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+Supra FAXModem V.32bis (V.42bis)
+InitString=AT&F2N1W2&C1&D3&K3&Q5%C1S7=60
+AnswerInit=AT&F2N1W2&C1&D3&K3&Q5%C1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Supra FAXModem 144 LC
+InitString=AT&FN1W2&C1&D1&K3&Q5\N3%C1S7=60S36=7S48=7S95=45
+AnswerInit=AT&FN1W2&C1&D1&K3&Q5\N3%C1S7=60S36=7S48=7S95=45S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+SupraFax 14400 (ARA 1.0)
+InitString=AT&F&C1&D3E0&K3S23=61N1W1X4&Q5&D0\N
+AnswerInit=AT&F&C1&D3E0&K3S23=61N1W1X4&Q5&D0\NS0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Supra FAXModem 28.8
+InitString=AT&FN1W2&C1&D1&K3&Q5\N3%C1S7=60S36=7S48=7S95=45
+AnswerInit=AT&FN1W2&C1&D1&K3&Q5\N3%C1S7=60S36=7S48=7S95=45S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+SupraFax 28800 (ARA 1.0)
+InitString=AT&F&Q6&D3%C0\NOW1X4S7=60
+AnswerInit=AT&F&Q6&D3%C0\NOW1X4S7=60S)=1&W
+BPSRate=57600
+FlowControl=Hardware
+ARAv1=1
+
+Supra Modem 2400 
+ATE1Q0V1X4 &C1&D2 S7=60 S11=55 S0=0 
+
+Supra 2400 MNP 
+AT&F2&C1&D2 
+
+Supra 2400 MNP - Auto Reliable 
+AT&F2 &C1 &D2 S7=60 S11=60 
+
+Supra 2400 MNP - MNP-4 mode 
+AT&F2 %C0 &C1&D2 S7=60 S11=60 
+
+Supra 2400 Plus (V.42bis) 
+AT&F2 \V2&C1&D2 
+
+Supra 2400 Plus - Auto Reliable 
+AT&F2 \V2 &C1 &D2 S7=60 S11=60 
+
+Supra 2400 Plus - MNP-4 mode 
+AT&F2%C0 \V2 &C1&D2 S7=60 S11=60 
+
+Supra 9600 
+AT&F&C1&D2\J0\Q3\V1\N3S11=60 
+
+Supra 9600 - Auto-Reliable mode 
+AT&F AT\J0\Q3\V1\N3 S11=60 
+
+Supra 9600 - V.42 mode 
+AT&F %C0 \J0 \Q3 \V1 \N3 S11=60 
+
+Supra 9600 - MNP-4 mode 
+AT&F%C0 \J0 \Q3 \V1 \N3 S11=60 
+
+Supra FaxModem 14.4 
+AT&F2W1S7=60S11=55S95=41 
+
+Supra FaxModem 14.4 - Auto Reliable 
+AT &F2 W1 S95=41 S7=60 S11=55 
+
+Supra FaxModem 14.4 - V.42 mode 
+AT &F2 W1 S95=41 S7=60 S11=55 %C0 
+
+Supra FaxModem 14.4 - MNP-10 mode 
+AT &F2 -K1 W1 S95=41 S7=60 S11=55 
+
+Supra FaxModem 14.4 - MNP-5 mode 
+AT &F2 \N3 %C1 W1 S95=41 S7=60 S11=55 
+
+Supra FaxModem 14.4 - MNP-4 mode 
+AT &F2 \N3 %C0 W2 S95=41 S7=60 S11=55 
+
+Supra FaxModem 14.4 - 2400 mode 
+AT &F \N1 &K0 W1 S95=41 S7=60 S11=55 
+
+Swan, Other
+AT E1Q0V1X4
+
+Synappsys 14.4 
+AT&F2&C1&D2%C1\J0\N6\Q3S0=0S7=60S11=60\V1 
+
+Synappsys 14.4 - Auto Reliable Mode 
+AT&F2&C1&D2%C1\J0\N6\Q3S0=0S7=60S11=60\V1 
+
+Synappsys 14.4 - MNP-4 Mode 
+AT&F2&C1&D2%C0\J0\N6\Q3S0=0S7=60S11=60\V1 
+
+Sysdyne MDM24H 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Sysdyne, Other
+AT E1Q0V1X4
+
+Tandata, Other
+AT E1Q0V1X4
+
+Tandata, TM500
+ATZ &C1&D2 E1V1Q0X1
+
+Tandy, Other
+AT E1Q0V1X4
+
+Tandy 1200-bps Half Card 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Telebit Corp., Other
+AT E1Q0V1X4
+
+Telebit Corp., QBlazer
+AT&F E1Q0V1X4 S50=254 S58=2 S68=255 S61=0 S63=0 &C1&D2
+
+Telebit Corp., QBlazer Plus
+AT&F E1Q0V1X4 S50=254 S58=2 S68=255 S61=0 S63=0 &C1&D2
+
+Telebit Corp., T1000
+AT E1Q0V1 S50=0S52=2S53=1S58=2S66=1S68=255S131=1
+
+Telebit Corp., T1600
+AT E1X4Q0V1 S50=254S51=252S52=2S58=2S61=0S68=255S180=0
+
+Telebit Corp., T2000
+AT E1Q0V1 S50=0 S52=2 S53=1 S58=2 S66=1 S68=255
+
+Telebit Corp., T2500 High Speed
+AT&F0  E1Q0V1X14 S52=2S58=2S93=8S95=0S131=1
+
+Telebit Corp., T3000
+AT&F0  E1X4Q0V1 &C1&D2 S58=2 S50=254 S51=252 S61=0 S63=0 S68=255 S93=8
+
+Telebit Corp., TrailBlazer
+AT&F0 E1Q0V1X4 S52=2S58=2S93=8S95=0S131=1
+
+Telebit Corp., TrailBlazer Plus
+AT&F0 E1Q0V1X4 S52=2S58=2S93=8S95=0S131=1
+
+Telebit Corp., Worldblazer
+AT&F0  E1X4Q0V1 &C1&D2 S58=2 S50=254 S51=252 S61=0 S63=0 S68=255 S93=8
+
+Telebit T1600 (V.42bis)
+InitString=AT&FX2&C1&D3&R3S7=60S51=6S58=0S59=15S68=2S180=2S190=1
+AnswerInit=AT&FX2&C1&D3&R3S7=60S51=6S58=0S59=15S68=2S180=2S190=1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Telebit T1600 (ARA 1.0)
+InitString=AT&F0&C1E0S58=0&D3X2S180=0S181=0
+AnswerInit=AT&F0&C1E0S58=0&D3X2S180=0S181=0S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+ARAv1=1
+
+Telebit T2500 (V.42bis)
+InitString=AT~&FX2S7=60S51=5S52=2S66=1S68=2S97=1S98=3S106=1S131=1
+AnswerInit=AT~&FX2S7=60S51=5S52=2S66=1S68=2S97=1S98=3S106=1S131=1S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Telebit T3000 (V.42bis)
+InitString=AT&FX2&C1&D3S51=6S58=2S59=7S68=2S7=60
+AnswerInit=AT&FX2&C1&D3S51=6S58=2S59=7S68=2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Telebit T3000 (ARA 1.0)
+InitString=AT&F&D3E0Q0X2S50=254S51=5S58=2S59=3S111=0S180=0S190=0
+AnswerInit=AT&F&D3E0Q0X2S50=254S51=5S58=2S59=3S111=0S180=0S190=0S0=1&W
+BPSRate=19200
+FlowControl=Hardware<BR>
+ARAv1=1
+
+Telebit FastBlazer 8840/8840R
+InitString=AT&F&C1&D3&E1&K3S7=60
+AnswerInit=AT&F&C1&D3&E1&K3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Telebit QBlazer (V.42bis)
+InitString=AT&FX2&C1&D3S59=7S68=2S7=60
+AnswerInit=AT&FX2&C1&D3S59=7S68=2S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Telebit QBlazer Plus
+InitString=AT&FX2&C1&D3S7=60S59=7S68=2S180=2S190=1
+AnswerInit=AT&FX2&C1&D3S7=60S59=7S68=2S180=2S190=1S0=1&W<BR>
+BPSRate=57600
+FlowControl=Hardware
+
+Telebit WorldBlazer (ARA 1.0)
+InitString=AT&F&D3E0Q0X2S50=254S51=5S58=2S59=3S111=0S180=0S190=0
+AnswerInit=AT&F&D3E0Q0X2S50=254S51=5S58=2S59=3S111=0S180=0S190=0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Telebit Internal PC Card w/ MNP 
+AT&FS11=60S51=5S58=2S66=1S95=2 
+
+Telebit Internal PC Card w/ MNP - PEP-Only mode 
+AT&FS7=60S11=60S50=255S51=5S58=2S66=1 S95=2 
+
+Telebit Internal PC Card w/ MNP - PEP-Last mode 
+AT&F S7=60S11=60S92=1S51=5S58=2S66=1 S95=2 
+
+Telebit T1000 
+ATS11=60S51=252S52=1S54=2S66=1S95=2S58=2S131=1 
+
+Telebit T1000 - Auto-Reliable mode 
+ATS11=60S51=252S52=1S54=2S66=1S95=2 ATS58=2S131=1 
+
+Telebit T1000 - PEP-mode 
+AT S11=60 S51=252 S52=1 S54=2S66=1S95=2 ATS50=255S58=2S131=1 
+
+Telebit T1000 - PEP-Last mode 
+AT S11=60 S51=252 S52=1 S54=2S66=1S95=2 ATS92=1S58=2S131=1 
+
+Telebit T1500 
+AT S11=60 S50=6 S51=254 S131=1S66=1 S97=1 S106=1 S95=2S58=2 S59=15 
+
+Telebit T1500 - Auto-Reliable mode 
+ATS11=60S50=6S51=254S131=1 ATS66=1S95=2S97=1S106=1 
+
+Telebit T1500 - V.42bis mode 
+ATS11=60S50=6S51=254S131=1 ATS66=1S97=1S106=1S98=3 
+
+Telebit T1500 - MNP-5 mode 
+ATS11=60S50=6S51=254S131=1 ATS66=1S95=2 S96=1 S97=0 S106=1 
+
+Telebit T1500 - MNP-4 mode 
+ATS11=60S50=6S51=254S131=1 ATS66=1S95=2S96=0S97=0S106=1 
+
+Telebit T1600 
+AT&F&C1&D2X12S11=60S51=253S58=2S59=15 
+
+Telebit T1600 - Auto-Reliable mode 
+AT&C1&D2X12S11=60S51=253S58=2S59=15 
+
+Telebit T1600 - V.42bis mode 
+AT&C1&D2X12S11=60S51=253S58=2S59=15S180=2 S190=1 
+
+Telebit T1600 - MNP-5 mode 
+AT&C1&D2X12S11=60S51=253S58=2S59=15S180=3 S190=1 
+
+Telebit T1600 - MNP-4 mode 
+AT&C1&D2X12S11=60S51=253S58=2S59=15S180=3 S190=0 
+
+Telebit T2000 
+AT&FS11=60S52=1S53=1S51=5S58=2S66=1S68=2S95=2S111=255 
+
+Telebit T2000 - Auto-Reliable mode 
+ATS11=60S51=252S52=1S53=1S58=2S66=1S68=2S95=2S111=255 
+
+Telebit T2000 - PEP-Only mode 
+ATS11=60S51=252S52=1S53=1S58=2S66=1S68=2S95=2S111=255S50=255 
+
+Telebit T2000 - PEP-Last mode 
+ATS11=60S51=252S52=1S53=1S58=2S66=1S68=2S95=2S111=255S92=1 
+
+Telebit T2500 
+ATS11=60S50=0S51=254S131=1S66=1S97=1S106=1S58=2S59=15 
+
+Telebit T2500 - Auto-Reliable mode 
+ATS11=60S50=0S51=254S131=1S66=1S97=1S106=1 
+
+Telebit T2500 - V.42bis mode 
+ATS11=60S50=0S51=254S131=1S66=1S97=1S106=1S98=3 
+
+Telebit T2500 - MNP-5 mode 
+ATS11=60S50=0S51=254S131=1S66=1S95=2 S96=1 S97=0 S106=1 
+
+Telebit T2500 - MNP-4 mode 
+ATS11=60S50=0S51=254S131=1S66=1S95=2S96=0S97=0S106=1 
+
+Telebit T2500 - PEP-Only mode 
+ATS11=60S50=255S51=254S131=1S66=1S95=2 S96=1 S97=0 S106=1 
+
+Telebit T2500 - PEP-Last mode 
+ATS11=60S50=0S51=254S131=1S66=1S95=2S97=0S106=1 
+
+Telebit T3000 
+AT&F9X12&C1&D2S59=15 S50=0S51=7 
+
+Telebit T3000 Auto Reliable mode 
+AT&F9TX12&C1&D2S50=0S59=15S190=1 
+
+Telebit T3000 V.32/V.42bis mode 
+AT&F9TX12&C1&D2S50=0S59=15S190=1 
+
+Telebit T3000 V.32bis/V.42bis mode 
+AT&F9TX12&C1&D2S50=0S59=15S190=1 
+
+Telebit T3000 - MNP-5 mode 
+AT&F9TX12&C1&D2S50=0S59=15S180=3S190=1 
+
+Telebit T3000 - MNP-4 mode 
+AT&F9TX12&C1&D2S50=0S59=15S180=3S190=0 
+
+Telebit T3000 - PEP-Only mode 
+AT&F9TX12&C1&D2S50=255S59=15 
+
+Telebit T3000 - PEP-Last mode 
+AT&F9TX12&C1&D2S50=0S59=15S92=1 
+
+Telebit Worldblazer 
+AT&F9X12&C1&D2S59=15 S50=0S51=7 
+
+Telebit Worldblazer - Auto Reliable mode 
+AT&F9TX12&C1&D2S50=0S59=15S190=1 
+
+Telebit Worldblazer - V.32/V.42bis mode 
+AT&F9TX12&C1&D2S50=0S59=15S190=1 
+
+Telebit Worldblazer - V.32bis/V.42bis mode 
+AT&F9TX12&C1&D2S50=0S59=15S190=1 
+
+Telebit Worldblazer - MNP-5 mode 
+AT&F9TX12&C1&D2S50=0S59=15S180=3S190=1 
+
+Telebit Worldblazer - MNP-4 mode 
+AT&F9TX12&C1&D2S50=0S59=15S180=3S190=0 
+
+Telebit Worldblazer - PEP-Only mode 
+AT&F9TX12&C1&D2S50=255S59=15 
+
+Telebit Worldblazer - PEP-Last mode 
+AT&F9TX12&C1&D2S50=0S59=15S92=1 
+
+Telebit Trailblazer 
+AT&FS131=1 S11=60 S51=252 S52=1S7=60 S58=2S66=1 
+
+Telebit Trailblazer - Auto-Reliable mode 
+ATS131=1S11=60S51=252S52=1S58=2S66=1S7=60 
+
+Telebit Trailblazer - V.42 mode 
+ATS131=1S11=60S51=252S52=1S58=2S66=1S7=60S98=0 
+
+Telebit Trailblazer - MNP-4 mode 
+ATS131=1S11=60S51=252S52=1S58=2S66=1S7=60S96=0 
+
+Telebit Trailblazer - PEP-only mode 
+ATS131=1S11=60S51=252S52=1S58=2S66=1S7=60S50=255 
+
+Telebit Trailblazer - PEP-last mode 
+ATS131=1S11=60S51=252S52=1S58=2S66=1S7=60S92=1 
+
+Telebit Q-Blazer 
+AT&FS11=60S51=252&C1&D2L1X4S58=2S59=15 
+
+Telebit Q-Blazer - Auto-Reliable mode 
+AT S11=60 S51=252 &C1 &D2 X4 S58=2S59=15 
+
+Telebit Q-Blazer - V.42bis mode 
+AT S11=60 S51=252 &C1 &D2 X4 S58=2S59=15 S180=2 S190=1 
+
+Telebit Q-Blazer - V.42 mode 
+AT S11=60 S51=252 &C1 &D2 X4 S58=2S59=15 S180=2 S190=0 
+
+Telebit Q-Blazer - MNP-5 mode 
+AT S11=60 S51=252 &C1 &D2 X4 S58=2S59=15 S180=3 
+
+Telebit Q-Blazer - MNP-4 mode 
+AT S11=60 S51=252 &C1 &D2 X4 S58=2S59=15 S180=3 S190=0 
+
+Telecraft Pocket Genius 14400 
+AT&F2S7=60S11=60 
+
+Telecraft Pocket Genius 14400 - Auto Reliable 
+AT&F2&C1&D2S7=60S0=0 
+
+Telecraft Pocket Genius 14400 - MNP-4 mode 
+AT&F2&C1&D2%C0S7=60S11=60 
+
+Telecraft Industries Inc., All
+AT E1Q0V1X4
+
+Teleglobe, All
+AT E1Q0V1X4
+
+Telenetics Corp., All
+AT E1Q0V1X4
+
+Telsat 12/2447 
+ATE1Q0V1X4&C1&D2 S7=60 S0=0 
+
+Telsat 12/2472 MNP 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2472 MNP - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2472 MNP - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 AT%C0 
+
+Telsat 12/2481 
+ATE1Q0V1X4&C1&D2&S1 S7=60 S0=0 
+
+Telsat 12/2482 MNP 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2482 MNP - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2482 MNP - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0%C0 
+
+Telsat 12/2491 
+ATE1Q0V1X4&C1&D2&S1 S7=60 S0=0 
+
+Telsat 12/2492 
+AT&FE1Q0V1X4&C1&D2\N0&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2492 - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2492 - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0%C0 
+
+Telsat 12/2492 MNP 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2492 MNP - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0 
+
+Telsat 12/2492 MNP - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0S7=60S0=0%C0 
+
+Telsat 2223 
+ATE1Q0V1X1&C1&D2&S1 S7=60 S0=0 
+
+Telsat 9662 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0 
+
+Telsat 9662 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0 
+
+Telsat 9662 - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0 
+
+Telsat 9662 - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0%C0 
+
+Telsat 9662 MNP 
+AT&FE1Q0V1X4&C1&D2\N3&K3S7=60S0=0 
+
+Telsat 9662 MNP - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2\N3&K3S7=60S0=0 
+
+Telsat 9662 MNP - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2\N3&K3S7=60S0=0%C0 
+
+Telsat 9682/D 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0 
+
+Telsat 9682/D - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0 
+
+Telsat 9682/D - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0%C0 
+
+Telsat 9682/D MNP 
+AT&FE1Q0V1X4&C1&D2\N3&K3S7=60S0=0 
+
+Telsat 9682/D MNP - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2\N3&K3S7=60S0=0 
+
+Telsat 9682/D MNP - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2\N3&K3S7=60S0=0%C0 
+
+Telsat 9692/D 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0 
+
+Telsat 9692/D - Auto Reliable 
+AT&E1Q0V1X4&C1&D2S7=60S0=0 
+
+Telsat 9692/D - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2S7=60S0=0%C0 
+
+Telsat 9692/D MNP 
+AT&FE1Q0V1X4&C1&D2&R1\N3&K3S7=60S0=0 
+
+Telsat 9692/D MNP - Auto Reliable 
+AT&FE1Q0V1X4&C1&D2&R1\N3&K3S7=60S0=0 
+
+Telsat 9692/D MNP - MNP-4 mode 
+AT&FE1Q0V1X4&C1&D2&R1\N3&K3S7=60S0=0%C0 
+
+Texas Instruments V.32bis 
+AT&F&C1&D2W2\V1%C1\J0\N7\Q3 S7=60 S11=60 
+
+Texas Instruments V.32bis - Auto-Reliable mode 
+AT&F&C1&D2W2\V1%C1\J0\N7\Q3S7=60S11=60 
+
+Texas Instruments V.32bis - MNP-4 mode 
+AT&F&C1&D2W2\V1%C0\J0\N7\Q3S7=60S11=60 
+
+Texas Instruments V.32bis - 2400 mode 
+AT&F&C1&D2W2\V1%C0\J0\N7\Q3S7=60S11=60 
+
+Texas Instruments 9600 V.32/V.42bis 
+AT&F&C1&D2W2\V1%C1\J0\N7\Q3S7=60 S11=55 
+
+Texas Instruments 9600 V.32/V.42bis - Auto-Reliable mode 
+AT&F&C1&D2W2\V1%C1\J0\N7\Q3S7=60S11=55 
+
+Texas Instruments 9600 V.32/V.42bis - MNP-4 mode 
+AT&F&C1&D2W2\V1%C0\J0\N7\Q3S7=60S11=55 
+
+Texas Instruments 9600 V.32/V.42bis - 2400 mode 
+AT&F&C1&D2W2\V1%C0\J0\N7\Q3S7=60S11=60%B2400 
+
+Texas Instruments, All
+AT E1Q0V1X4
+
+The Complete PC Inc., All
+AT E1Q0V1X4
+
+TKR Faxmodem DM-24VF+ Postzugelassen
+@BAUDRATE=9600
+#AT &F
+#AT +FCLASS=0
+#AT &S0 B0 P E1 L2 M1 Q0 V1 X4 Y0
+#AT &C1 &D3 &G0 &J0 &L0 &M0
+#AT &P0 &R0 &S0 &X0 &Y0
+#AT \A3 %C3 \G1
+#AT \K5 \N3 &K3
+#AT %E0 F0 W1 &Y0
+#AT S0=0 S7=45
+#AT &W0
+#AT Z
+#AT &F
+#AT \N0 %C0
+#AT &W1
+#AT Z
+
+TKR IM-144VF+  oder ACEEX DM-1496  oder  CSR 14400
+@BAUDRATE=19200
+#AT &F
+#AT +FCLASS=0
+#AT &Q0
+#AT B0 P E1 L1 M1 Q0 V1 X3 Y0
+#AT &C1 &D3 &G0 &P0
+#AT &R0 &S0 &X0 &Y0 %P0
+#AT %A13 \A3 %C1 \C0 \E0
+#AT \G0 \J0 \K5 \N3 \Q3 \T0
+#AT \V1 \X0 S0=0
+#AT &Q5 W1 &K3
+#AT &N0 &L0
+#AT S95=3
+#AT &W0
+#AT Z
+#AT \N1 %C0 &Q0
+#AT &W1
+#AT Z
+
+TKR Datenmodem IM-24V+
+#AT
+#AT &F
+#AT B0 P E1 L1 M1 Q0 V1 X3 Y0
+#AT &C1 &D3 &G0 &J0 &L0
+#AT &P1 &R0 &S0 &X0 &Y0 %A13
+#AT \A3 \B3 %C1 \C2 \G1 \J0
+#AT \K5 \N7 \T0 \V1 \X1
+#AT \Q3
+#AT S0=0 S7=45
+#AT &W0 &W1
+#AT Z
+
+TKR Faxmodem IM-24VF+
+Silbernes Alu-Gehäuse, D/V- und ORG/ANS-Schalter an der Frontseite.
+@BAUDRATE=9600
+#AT &F
+#AT +FCLASS=0
+#AT B0 P E1 L1 M1 Q0 V1 X3 Y0
+#AT &C1 &D3 &G0 &J0 &L0
+#AT &P0 &R0 &S0 &X0 &Y0 %A13
+#AT \A3 \B3 %C1 \C2 \G1 \J0
+#AT \K5 \N7 \T0 \V1 \X1
+#AT S0=0 S7=45
+#AT \Q3
+#AT &W0
+#AT Z
+#AT \N1 %C0
+#AT &W1
+#AT Z
+
+TKR Faxmodem IM-24VF+ II (neues Modell)
+Schwarzes Gehäuse, keine Schalter an der Frontseite
+@BAUDRATE=9600
+#AT &F
+#AT +FCLASS=0
+#AT B0 P E1 L1 M1 Q0 V1 X3 Y0
+#AT &C1 &D3 &G0 &J0 &L0
+#AT &P0 &R0 &S0 &X0 &Y0 %A13
+#AT \A3 %C1 \C2 \G1 \J0
+#AT \K5 \N3 \T0 \V1 \X1
+#AT S0=0 S7=45 S95=3
+#AT \Q3 &Q5 W1
+#AT &W0
+#AT Z
+#AT \N0 &Q0 &N3 %C0
+#AT &W1
+#AT Z
+
+TKR Faxmodem DM-24VF+ Postzugelassen
+@BAUDRATE=9600
+#AT &F
+#AT +FCLASS=0
+#AT &S0 B0 P E1 L2 M1 Q0 V1 X4 Y0
+#AT &C1 &D3 &G0 &J0 &L0 &M0
+#AT &P0 &R0 &S0 &X0 &Y0
+#AT \A3 %C3 \G1
+#AT \K5 \N3 &K3
+#AT %E0 F0 W1 &Y0
+#AT S0=0 S7=45
+#AT &W0
+#AT Z
+#AT &F
+#AT \N0 %C0
+#AT &W1
+#AT Z
+
+TKR Speedstar Postzugelassen
+@BAUDRATE=19200
+#AT &F
+#AT +FCLASS=0
+#AT B0 P E1 L1 M1 Q0 V1 X3 Y0
+#AT &C1 &D2 &G0 
+#AT &R0 &S0 &X0 &Y0 %S0
+#AT %A13 \A3 %C1 \C0 \E0 \H0
+#AT \G0 \J0 \K5 \N6 \Q3 \T0
+#AT \V1 \X0 S0=0
+#AT &W0
+#AT Z
+#AT &F
+#AT \N0
+#AT &W1
+#AT Z
+
+Toshiba T144 D/F 
+AT&F&C1&D2\N7\J0\Q3\V2S7=60S11=55 
+
+Toshiba T144 D/F - Auto Reliable 
+AT&F&C1&D2\N7\J0\Q3\V2S7=60S11=55 
+
+Toshiba T144 D/F - MNP-4 mode 
+AT&F&C1&D2\N7\J0\Q3\V2%C0S7=60S11=55 
+
+Toshiba T24D/X 
+AT&F&C1 &D2 W1 X4 &K3 &Q5 &R0 \G0 \N3 %C1 S7=60 
+S11=60 
+
+Toshiba T24D/X - Auto-Reliable mode 
+AT &C1&D2W1X4&K3&Q5&R0\G0\N3%C1 S7=60S11=60 
+
+Toshiba T24D/X - MNP-4 mode 
+AT &C1&D2W1X4&K3&Q5&R0\G0\N3%C0S7=60S11=60 
+
+Toshiba, Other
+AT E1Q0V1X4
+
+Toshiba, T144D
+AT E1Q0V1X4&K3
+
+Touchbase Worldport 2496 
+ATE1Q0V1X4&C1&D2S0=0 
+
+Touchbase Worldport V.32 Pocket Modem 
+AT&F&C1 &D2 S7=60 S11=60\N3 \Q3 \J0 \V1 
+
+Touchbase Worldport V.32 - Auto Reliable 
+AT&F&C1&D2\N3\Q3\J0\V1S7=60S11=60 
+
+Touchbase Worldport V.32 - MNP-4 mode 
+AT&F%C0&C1&D2\N3\Q3\J0\V1S7=60S11=60 
+
+TriCom, Business Administrator
+AT&F  Q0V1 X1
+
+TriCom, Other
+AT E1Q0V1X4
+
+TriCom, Tempest Quin
+AT Q0V1E1
+
+TriCom, Tornado 12/42
+ATE1V1 Q0%C0\N4&C1&D2 
+
+TriCom, Tornado 5/42
+AT&F \N2\J0\V1\Q3 E0&C1&D2 S0=1
+
+Turbomodem, All
+AT E1Q0V1X4
+
+TYIN, All
+AT E1Q0V1X4
+
+Twinhead 2400 V.42 
+AT&F &C1 &D2 X4 \N3 %C2 W2 &Q5 S36=7 S46=138 S48=7 S7=60 
+S11=60 
+
+Twinhead 2400 V.42 - Auto Reliable 
+AT&F&C1&D2X4\N3%C2W2&Q5 S36=7S46=138S48=7S7=60 S11=60 
+
+Twinhead 2400 V.42 - MNP-4 mode 
+AT&F&C1&D2X4\N3%C0W2&Q5 S36=7S46=136S48=128S7=60 S11=60 
+
+UDS FasTalk FAX32bx 
+AT&F&C1 &D2 \Q3 &R0 S7=60 
+
+UDS FasTalk FAX32bx - Auto Reliable 
+AT&F &C1 &D2 \Q3 &R0 S7=60 
+
+UDS FasTalk FAX32bx - V.42bis mode 
+AT&F &C1 &D2 \Q3 &R0 S7=60 \N5 
+
+UDS FasTalk FAX32bx - V.42 mode 
+AT&F&C1 &D2 \Q3 \N5 &R0 %C0 S7=60 
+
+UDS FasTalk FAX32bx - MNP-5 mode 
+AT&F &C1 &D2 \Q3 \N3 &R0 S7=60 
+
+UDS FasTalk FAX32bx - MNP-4 mode 
+AT&F &C1 &D2 \Q3 &R0 S7=60 \N3 %C0 
+
+UDS FasTalk FAX32bx - 2400 Compatibile mode 
+AT&F &C1 &D2 &R0 %B2400\Q0 S7=60 \N0 
+
+UDS FasTalk 32bx 
+AT&F&C1 &D2 \Q3 &R0 S7=60 
+
+UDS FasTalk 32bx - Auto Reliable 
+AT&F&C1 &D2 \Q3 &R0 S7=60 
+
+UDS FasTalk 32bx - V.42bis mode 
+AT&F&C1 &D2 \Q3 &R0 S7=60 \N5 
+
+UDS FasTalk 32bx - V.42 mode 
+AT&F &C1 &D2 \Q3 \N5 &R0 %C0 S7=60 
+
+UDS FasTalk 32bx - MNP-5 mode 
+AT&F &C1 &D2 \Q3 \N3 &R0 S7=60 
+
+UDS FasTalk 32bx - MNP-4 mode 
+AT&F &C1 &D2 \Q3 &R0 S7=60 \N3 %C0 
+
+UDS FasTalk 32bx - 2400 Compatibile mode 
+AT&F &C1 &D2 &R0 \Q0 %B2400 S7=60 \N0 
+
+UDS Fastalk V.32/V.42 
+AT&F&C1&D2%B9600C%C1\C1\J0\N3\Q3 
+
+UDS Fastalk V.32/V.42 - Auto Reliable 
+AT&F&C1&D2%B9600C%C1\C1\J0\N3\Q3 
+
+UDS Fastalk V.32/V.42 - V.42bis mode 
+AT&F&C1&D2%B9600C%C1\C1\J0\N3\Q3\N5 
+
+UDS Fastalk V.32/V.42- V.42 mode 
+AT&F&C1&D2%B9600C%C1\C1\J0\N3\Q3\N5%C0 
+
+UDS Fastalk V.32/V.42 - MNP-5 mode 
+AT&F&C1&D2%B9600C%C1\C1\J0\N3\Q3\N3 
+
+UDS Fastalk V.32/V.42 - MNP-4 mode 
+AT&F&C1&D2%B9600C%C1\C1\J0\N3\Q3\N3%C0 
+
+UDS V.3224/V.3225 
+AT&F&C1&D2%B6\N3\C1\J0\Q3\V1S0=0 
+
+UDS V.3224/V.3225 - MNP-5 mode 
+AT&F&C1&D2%B6\N3\C1\J0\Q3\V1S0=0 
+
+UDS V.3224/V.3225 - MNP-4 mode 
+AT&F&C1&D2%B6\N3\C1\J0\Q3\V1S0=0%C0 
+
+UDS V.3227 
+AT&F&C1&D2%B6\C1\J0\Q3S0=0 
+
+UDS V.3227 - Auto Reliable 
+AT&F &C1&D2%B6\C1\J0\Q3S0=0 
+
+UDS V.3227 - V.42bis mode 
+AT&F &C1&D2%B6\C1\J0\Q3S0=0\N5 
+
+UDS V.3227- V.42 mode 
+AT&F &C1&D2%B6\C1\J0\Q3S0=0\N5%C0 
+
+UDS V.3227 - MNP-5 mode 
+AT&F &C1&D2%B6\C1\J0\Q3S0=0\N3 
+
+UDS V.3227 - MNP-4 mode 
+AT&F &C1&D2%B6\C1\J0\Q3S0=0\N3%C0 
+
+UDS V.3229 
+AT&F&C1 &D2 \Q3 S0=0 S7=60 
+
+UDS V.3229 - Auto Reliable 
+AT&F&C1 &D2 \Q3 S0=0 S7=60 
+
+UDS V.3229 - V.42bis mode 
+AT&F&C1 &D2 \Q3 S0=0 S7=60 \N5 
+
+UDS V.3229- V.42 mode 
+AT&F &C1 &D2 \Q3 S0=0 \N5 %C0 S7=60 
+
+UDS V.3229 - MNP-5 mode 
+AT&F &C1 &D2 \Q3 S0=0 \N3 S7=60 
+
+UDS V.3229 - MNP-4 mode 
+AT&F &C1 &D2 \Q3 S7=60 S0=0 \N3 %C0 
+
+UDS Sync-Up V.32/5 
+AT&F&C1 &D2 &R0 %B9600C %C1 \N3 \J0 \Q3 S0=0 S7=60 
+
+UDS Sync-Up V.32/5 - Auto Reliable 
+AT&F &C1&D2&R0%B9600C%C1\N3\J0\Q3S7=60 
+
+UDS Sync-Up V.32/5 - MNP-4 mode 
+AT&F&C1&D2&R0%B9600C%C1\N3\J0\Q3S7=60 
+
+UDS LanFast 
+AT 
+
+UDS Motorola, FasTalk V.32/42
+AT Q0 V1 X4&C1\J0\N7\V1\Q3%C0
+
+UDS Motorola, Other
+AT E1Q0V1X4
+
+UDS Motorola, V.3224/V.3225
+AT Q0 V1 X4&C1\J0\N7\V1\Q3%C0
+
+UDS Motorola, V.3227
+AT Q0 V1 X4&C1\J0\N7\V1\Q3%C0
+
+Unisys 9600 
+AT&F&C1 &D2 %C1 \J0 \N3 \Q3 \V1 S7=60 
+
+Unisys 9600 - Auto Reliable 
+AT&F &C1&D2%C1\J0\N3\Q3\V1S7=60 
+
+Unisys 9600 - MNP-4 mode 
+AT&F &C1&D2%C0\J0\N3\Q3\V1S7=60 
+
+Universal Data Systems Fastalk 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S0=0 
+
+Universal Data Systems FasTalk V.32/42b (V.42bis)
+InitString=AT&F&C1&D3\J0\M0\N7\V1\Q2%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\M0\N7\V1\Q2%C1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Universal Data Systems V.32 (no MNP or V.42)
+InitString=AT&F&C1&D2S7=60
+AnswerInit=AT&F&C1&D2S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Universal Data Systems V.3224 (MNP 4)
+InitString=AT&F&C1&D2\J0\N3\Q2S7=60
+AnswerInit=AT&F&C1&D2\J0\N3\Q2S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware<BR>
+
+Universal Data Systems V.3225 (MNP 5)
+InitString=AT&F&C1&D2\J0\N3\Q2%C1S7=60
+AnswerInit=AT&F&C1&D2\J0\N3\Q2%C1S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Universal Data Systems V.3227 (V.42bis)
+InitString=AT&F&C1&D2\J0\M0\N7\Q2%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\M0\N7\Q2%C1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Universal Data Systems V.3229 (V.42bis)
+InitString=AT&F&C1&D3\J0\M0\N7\Q2%C1S7=60
+AnswerInit=AT&F&C1&D3\J0\M0\N7\Q2%C1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+US Robotics Sportster 2400 (no MNP or V.42)
+InitString=AT&F&C1&D3S7=60
+AnswerInit=AT&F&C1&D3S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+US Robotics Sportster 2400 (MNP 5)
+InitString=AT&F&C1&D3&B6&H1&I0&K1&M4S7=60
+AnswerInit=AT&F&C1&D3&B6&H1&I0&K1&M4S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+US Robotics Sportster 2400 (V.42bis)
+InitString=AT&FX4&A3&B1&H1&K2&M4S7=60
+AnswerInit=AT&FX4&A3&B1&H1&K2&M4S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+US Robotics Sportster 9600 (V.42bis)
+InitString=AT&FX4&A3&B1&D3&H1&I0&K1&M4S7=60
+AnswerInit=AT&FX4&A3&B1&D3&H1&I0&K1&M4S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+US Robotics Sportster 14400 (V.42bis)
+InitString=AT&FX4&A3&B1&D3&H1&I0&K1&M4S7=60
+AnswerInit=AT&FX4&A3&B1&D3&H1&I0&K1&M4S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+US Robotics Sportster 14400 (ARA 1.0)
+InitString=AT&FE0V1B0&H1&M0X4&A0&B1
+AnswerInit=AT&FE0V1B0&H1&M0X4&A0&B1S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+US Robotics Sportster 28800
+InitString=AT&FX4&A3&B1&D3&H1&I0&K1&M4S7=60
+AnswerInit=AT&FX4&A3&B1&D3&H1&I0&K1&M4S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+US Robotics Sportster 28800 (ARA 1.0)
+InitString=AT&FX4&B1&R2&C1&D3&H1&K0&M0&A0S7=60
+AnswerInit=AT&FX4&B1&R2&C1&D3&H1&K0&M0&A0S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+ARAv1=1
+
+US Robotics Courier 2400 (no MNP or V.42)
+InitString=ATZX4S7=60
+AnswerInit=ATZX4S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+US Robotics Courier 2400e (MNP 4)
+InitString=AT&F&M4&H1&I0&B6&N0S7=60
+AnswerInit=AT&F&M4&H1&I0&B6&N0S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+US Robotics Courier 2400 (ARA 1.0)
+InitString=AT&F&M0X4
+AnswerInit=AT&F&M0X4S0=1&W
+BPSRate=2400
+FlowControl=Hardware
+ARAv1=1
+
+US Robotics Courier V.32bis (V.42bis)
+InitString=AT&FX4&A3&C1&D2&M4&H1&K1&B1
+AnswerInit=AT&FX4&A3&C1&D2&M4&H1&K1&B1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+US Robotics Courier V.32bis (ARA 1.0)
+InitString=AT&F&D2E0&H1&M0X4
+AnswerInit=AT&F&D2E0&H1&M0X4S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+US Robotics Courier V.32terbo (ARA 1.0)
+InitString=AT&F&D2E0V1B0&H1&M0X4&A0
+AnswerInit=AT&F&D2E0V1B0&H1&M0X4&A0S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+US Robotics Courier HST Dual Standard (V.42bis)
+InitString=AT&FB0X4&A3&C1&D2&M4&H1&K1&B1
+AnswerInit=AT&FB0X4&A3&C1&D2&M4&H1&K1&B1S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+US Robotics Courier HST (V.42bis)
+InitString=AT&FB0X4&A3&C1&D2&M1&H1&K1&B1
+AnswerInit=AT&FB0X4&A3&C1&D2&M1&H1&K1&B1S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+US Robotics Courier V.FC/V.34
+InitString=AT&FB0X4&A3&C1&D2&M4&H1&K1&B1S7=60
+AnswerInit=AT&FB0X4&A3&C1&D2&M4&H1&K1&B1S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+US Robotics WorldPort 2400 (no MNP or V.42bis)
+InitString=AT&FX4&C1&D2S7=60
+AnswerInit=AT&FX4&C1&D3S7=60S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+US Robotics WorldPort 2400 (V.42bis)
+InitString=AT&FX4&C1&D3%C1"H3\J0-J1\N3\Q2\V2S7=60
+AnswerInit=AT&FX4&C1&D3%C1"H3\J0-J1\N3\Q2\V2S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+US Robotics WorldPort 2496 FAX/Data (V.42bis)
+InitString=AT&FX4&C1&D3%C1"H3\J0-J1\N3\Q2\V2S7=60
+AnswerInit=AT&FX4&C1&D3%C1"H3\J0-J1\N3\Q2\V2S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+US Robotics WorldPort 9696 FAX/Data (MNP 5)
+InitString=AT&FX4&C1&D3%C1\J0\N3\Q2\V2S7=60
+AnswerInit=AT&FX4&C1&D3%C1\J0\N3\Q2\V2S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+US Robotics WorldPort 9600 (MNP 5)
+InitString=AT&FX4&C1&D3%C1\J0\N3\Q2\V2S7=60
+AnswerInit=AT&FX4&C1&D3%C1\J0\N3\Q2\V2S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+US Robotics WorldPort 14400 (V.42bis)
+InitString=AT&FX4&A3&B1&C1&D3&H1&K1&M4S7=60
+AnswerInit=AT&FX4&A3&B1&C1&D3&H1&K1&M4S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+US Robotics Sportster 1200/1200 PC 
+ATE1Q0V1X2 S7=60 S11=55 S0=0 
+
+US Robotics Sportster 2400/2400 PC 
+ATE1Q0V1X6&C1&D2 S7=60 S11=55 S0=0 
+
+US Robotics Sportster 2400 V.42bis 
+AT&FX4 &A3&B1&C1&D2&H1&K1 &R2 S7=60 S11=55 
+
+US Robotics Sportster 2400 V.42bis - Auto Reliable Mode 
+AT&F &B1&C1&D2&H1&K1&R2 S7=60S11=55 
+
+US Robotics Sportster 2400 V.42bis - MNP-4 Mode 
+AT&F &B1&C1&D2&H1&K3&R2 S7=60S11=55 
+
+US Robotics Sportster 9600/PC 
+AT&FX4&B1 &C1 &D2 &H1 &K1 &R2 S7=60 S11=55 
+
+US Robotics Sportster 9600/PC - Auto Reliable Mode 
+AT&F &B1&C1&D2&H1&K1&R2 S7=60S11=55 
+
+US Robotics Sportster 9600/PC - MNP-4 Mode 
+AT&F &B1&C1&D2&H1&K3&R2 S7=60S11=55 
+
+US Robotics Sportster 14.4 
+AT&FX4&B1 &C1 &D2 &H1 &K1 &R2 S7=60 S11=55 
+
+US Robotics Sportster 14.4 - Auto Reliable Mode 
+AT&F &B1&C1&D2&H1&K1&R2 S7=60S11=55 
+
+US Robotics Sportster 14.4 - MNP-4 Mode 
+AT&F &B1&C1&D2&H1&K3&R2 S7=60S11=55 
+
+US Robotics 2400PC 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+US Robotics 2400PC MNP 
+AT&FX4&K0&H1&R2 S7=60S11=60S0=0 
+
+US Robotics 2400PC MNP - Auto Reliable 
+AT&F X4&K0&H1&R2S0=0S7=60 S11=60 
+
+US Robotics Courier 2400e/ 2400e/ps 
+AT&FX6&B6&H1&R2S7=60S11=55 
+
+USR Courier 2400e/ 2400e/ps - Auto Reliable 
+AT&F&C1&D2X6&B6&H1&R2 S7=60 S11=60 
+
+US Robotics Courier 2400PC 
+AT&FX6&B7&H1&R2S7=60S11=55 
+
+US Robotics Courier 2400PC - Auto Reliable 
+AT&F X6&B7&H1&R2 S7=60 S11=60 
+
+US Robotics Courier HST 
+AT&FX6&B1&H1&R2S7=60S11=55 
+
+US Robotics Courier HST - Auto Reliable 
+AT&F X6&B1 &H1 &R2 S7=60 S11=60 
+
+US Robotics Courier HST V.42 
+AT&FX6&B1&H1&R2&M4&A3S7=60S11=55 
+
+USR Courier HST V.42 - Auto Reliable 
+AT&F X6&B1&H1&R2&M4&A3 S7=60 S11=60 
+
+US Robotics Courier HST-ASL 
+AT&F&H1&R2&K3&B1&A3X7S7=60S11=60 
+
+US Robotics Courier HST-ASL - Auto Reliable 
+AT&F &H1&R2&K3&B1&A3 X7 S7=60 S11=60 
+
+US Robotics V.32 
+AT&FX6&H1&R2&B1S7=60S0=0 
+
+US Robotics V.32 - Auto Reliable 
+AT&F X6 &H1 &R2 &B1 S7=60 S11=60 
+
+US Robotics V.32bis-ASL 
+AT&F&H1&R2&K3&B1&A3X7S7=60S11=60 
+
+US Robotics V.32bis-ASL - Auto Reliable 
+AT&F X7 &H1&R2&K3&B1&A3 S7=60 S11=60 
+
+US Robotics Dual Standard 
+AT&FX6&B1&H1&R2S7=60S11=55 
+
+US Robotics Dual Standard - Auto Reliable 
+AT&F X6&B1&H1&R2 S7=60 S11=60 
+
+US Robotics Dual Standard V.32bis-ASL 
+AT&F&H1&R2&K3&B1&A3X7 S7=60S11=60 
+
+USR Dual Standard V.32bis-ASL - Auto Reliable 
+AT&F X7&H1&R2&K3&B1&A3S7=60S11=60 
+
+USR Dual Standard V.32bis-ASL - HST mode 
+AT&F B1X7&H1&R2&K3&B1&A3S7=60S11=60 
+
+USR Dual Standard V.32bis-ASL - MNP-5 mode 
+AT&F X7&H1&R2&K1&B1&A3S7=60S11=60 
+
+US Robotics Dual Standard 16.8 
+AT&F&C1 &D2 &H1 &R2 &K3 &B1 &A3 X7 
+S7=60S11=60 
+
+USR Dual Standard 16.8 - Auto Reliable 
+AT&F &C1&D2X7&H1&R2&K3&B1&A3 S7=60S11=60 
+
+USR Dual Standard 16.8 - HST mode 
+AT&F &C1&D2B1X7&H1&R2&K3&B1&A3 S7=60S11=60 
+
+USR Dual Standard 16.8 - MNP-5 mode 
+AT&F &C1&D2X7&H1&R2&K1&B1&A3S7=60S11=60 
+
+US Robotics Dual Standard V.32 Terbo 
+AT&F&C1 &D2 &H1 &R2 &K3 &B1 &A3 X7 
+S7=60S11=55 
+
+US Robotics Dual Standard V.32 Terbo - Auto Reliable 
+AT&F&C1&D2X7&H1&R2&K3&B1&A3 S7=60S11=55 
+
+US Robotics Dual Standard V.32 Terbo - HST mode 
+AT&F&C1&D2B1X7&H1&R2&K3&B1&A3 S7=60S11=55 
+
+US Robotics Dual Standard V.32 Terbo - MNP-5 mode 
+AT&F&C1&D2X7&H1&R2&K1&B1&A3S7=60S11=55 
+
+US Robotics Worldport 2496 
+ATE1Q0V1X4&C1&D2S0=0 
+
+US Robotics Worldport V.32 Pocket Modem 
+AT&F&C1 &D2 S7=60 S11=60 \N3 \Q3 \J0 \V1 
+
+US Robotics Worldport V.32 - Auto Reliable 
+AT&F &C1&D2\N3\Q3\J0\V1S7=60S11=60 
+
+US Robotics Worldport V.32 - MNP-4 mode 
+AT&F %C0&C1&D2\N3\Q3\J0\V1S7=60S11=60 
+
+US Robotics WorldPort 14.4 
+AT&FX4&B1&C1&D2&H1&K1&R2S7=60S11=55 
+
+US Robotics WorldPort 14.4 - Auto Reliable Mode 
+AT&F &B1&C1&D2&H1&K1&R2 S7=60S11=55 
+
+US Robotics WorldPort 14.4 - MNP-4 Mode 
+AT&F &B1&C1&D2&H1&K3&R2 S7=60S11=55 
+
+US Robotics WorldPort 14.4 - V.23 Mode 
+AT&F &B1&C1&D2&H1&R2S34=8S7=60S11=55 
+
+US Robotics WorldPort 9696 Fax Modem 
+AT&F&A3X4&B1&C1&D2&H1&K1&R2S7=60S11=55 
+
+US Robotics WorldPort 9696 Fax Modem - Auto Reliable Mode 
+AT&F&A3&B1&C1&D2&H1&K1&R2S7=60S11=55 
+
+US Robotics WorldPort 9696 Fax Modem - MNP-4 Mode 
+AT&F&A3&B1&C1&D2&H1&K3&R2S7=60S11=55 
+
+US Robotics WorldPort 9696 Fax Modem - V.23 Mode 
+AT&F&A3&B1&C1&D2&H1&K1&R2S7=60S11=55 S34=8 
+
+USR, Courier Dual Standard V.34 Ready Data/Fax
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, Courier HST Dual Standard terbo Fax with ASL
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, Courier HST with ASL
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, Courier V.32 terbo Fac with ASL
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, Courier V.32 terbo with ASL
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, Courier V.34 Ready Data/Fax
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, Dual Standard
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, Dual Standard UK
+AT E1Q0V1 F1 B0 &M0 &K0
+
+USR, Other
+AT E1Q0V1X4
+
+USR, Sportster Series
+AT E1Q0V1X4 &B1&C1&D2&H1&K0&N0
+
+USR, WorldPort 14,400 FAX PCMCIA
+AT B0E1Q0V1X6 &B1&C1&D2&H1&R2
+
+USR, WorldPort 14,400 V.42bis FAX
+AT B0E1Q0V1X6 &B1&C1&D2&H1&R2
+
+USR, WorldPort 9,600
+AT E1Q0V1X4 \N3\J0\Q3\V1 &C1&D2
+
+USR, WorldPort Dual Standard Cellular FAX PCMCIA
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USR, WorldPort Palmtop FAX
+AT&F Q0 V1 X4B0F1S27=128&K0
+
+USA General 14400FX 
+AT&F&C1&D2W1S7=60S95=41S11=60 
+
+USA General 14400FX - Auto Reliable 
+AT&F &C1&D2W1S7=60S11=60S95=41 
+
+USA General 14400FX - MNP-4 Mode 
+AT&F &Q9&C1&D2W1S7=60S11=60S95=41 
+
+UST, All
+AT E1Q0V1X4
+
+Ven-Tel,  9600 Plus / Plus II
+AT E1Q0V1X4&K3
+
+Ven-Tel,  Halfcard
+AT E1Q0V1X4&K3
+
+Ven-Tel,  Halfcard 24
+AT E1Q0V1X4&K3
+
+Ven-Tel,  Pathfinder
+AT E1Q0V1X4&K3
+
+Ven-Tel, Other
+AT E1Q0V1X4
+
+Ven-Tel EC2400-33 (MNP)
+InitString=AT&F&C1&D3%C1\J0\N3\Q2S7=60
+AnswerInit=AT&F&C1&D3%C1\J0\N3\Q2S7=60S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Ven-Tel PCM 9600 Plus (MNP)
+InitString=AT&FB0&C1&D3\N3\Q3%B0%C1%F1S7=60
+AnswerInit=AT&FB0&C1&D3\N3\Q3%B0%C1%F1S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+
+Ven-Tel 212Plus 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Ven-Tel Halfcard 
+ATE1Q0V1X4 S7=60 S0=0 
+
+Ven-Tel Halfcard 24 
+ATE1 Q0 V1 X4 S7=30 S0=0 
+
+Ven-Tel 2400 Plus II 
+AT&F&C1&D2S7=60S11=55S0=0\N3\Q3\C1\G0\J0\V1 
+
+Ven-Tel 2400 Plus II - MNP-5 mode 
+AT&F&C1&D2S7=60S11=55S0=0 AT\N3\Q3\C1\G0\J0\V1 
+
+Ven-Tel 2400 Plus II - MNP-4 mode 
+AT&F &C1&D2S7=60S11=55S0=0 AT\N3\Q3%C0\C1\G0\J0\V1 
+
+Ven-Tel MCM 144 
+AT&F&C1&D2&K3&Q5S7=60S11=55 
+
+Ven-Tel MCM 144 - Auto Reliable 
+AT&F &C1&D2&K3&Q5S7=60S11=55 
+
+Ven-Tel MCM 144 - MNP-4 mode 
+AT&F%C0&C1&D2&K3&Q5S7=60S11=55S0=0 
+
+Ven-Tel 9600 Plus / Plus II 
+AT&F&C1&D2S7=60S11=55S0=0 %F2\N3\Q3 
+
+Ven-Tel 9600 Plus / Plus II - Auto Reliable 
+AT&F &C1&D2S7=60S11=55S0=0 %F2\N3\Q3 
+
+Ven-Tel 9600 Plus / Plus II- V.42 mode 
+AT&F &C1&D2S7=60S11=55S0=0 %F2\N3\Q3%C0 
+
+Ven-Tel 9600 Plus / Plus II - MNP-5 mode 
+AT&F &C1&D2S7=60S11=55S0=0 %F2\N3\Q3*Y3 
+
+Ven-Tel 9600 Plus / Plus II - MNP-4 mode 
+AT&F &C1&D2S7=60S11=55S0=0 %F2\N3\Q3*Y3%C0 
+
+Ven-Tel PCM2400E 
+AT&F&C1&D2S7=60S11=55S0=0\N3\Q3\C1\G0\J0\V1 
+
+Ven-Tel PCM2400E - MNP-5 mode 
+AT&F &C1&D2S7=60S11=55S0=0 \N3\Q3\C1\G0\J0\V1 
+
+Ven-Tel PCM2400E - MNP-4 mode 
+AT&F &C1&D2S7=60S11=55S0=0 \N3\Q3%C0\C1\G0\J0\V1 
+
+Ven-Tel Pathfinder 
+AT&F&C1&D2S11=60S51=252S52=1S58=2S66=1 
+
+Ven-Tel Pathfinder - Auto-Reliable mode 
+AT&C1&D2S11=60S51=252S52=1S58=2S66=1 
+
+Ven-Tel Pathfinder - V.42 mode 
+AT&C1&D2S11=60S51=252S52=1S58=2S66=1 S98=0 
+
+Ven-Tel Pathfinder - MNP-4 mode 
+AT&C1&D2S11=60S51=252S52=1S58=2S66=1 S96=0 
+
+ViVa 24m 
+AT&F\J0\N3\V1\Q3 
+
+ViVa 24m - MNP-5 mode 
+AT&FATAT\J0\N3\V1\Q3S7=60S11=55 
+
+ViVa 24m - MNP-4 mode 
+AT&F\J0\N3\V1\Q3S7=60S11=55%C0 
+
+ViVa 24im 
+AT&F0&C1&D2S7=60S11=55 
+
+ViVa 24im - MNP-5 mode 
+AT&F0S7=60S11=55 
+
+ViVa 24im - MNP-4 mode 
+AT&F0S7=60S11=55%C0 
+
+ViVa 2442i 
+AT&F\J0\V1\Q3 
+
+ViVa 2442i - Auto Reliable 
+AT&F\J0\V1\Q3 
+
+ViVa 2442i- V.42bis mode 
+AT&F \J0\V1\Q3\N5 
+
+ViVa 2442i- V.42 mode 
+AT&F \J0\V1\Q3%C0\N5 
+
+ViVa 2442i - MNP-5 mode 
+AT&F AT\J0\V1\Q3\N3 
+
+ViVa 2442i - MNP-4 mode 
+AT&F \J0\V1\Q3\N3%C0 
+
+ViVa 9642e 
+AT&F&C1&D2S36=7S38=0S95=44 
+
+ViVa 9642e - Auto Reliable 
+AT&F AT&C1&D2S36=7S38=0 
+
+ViVa 9642e- V.42 mode 
+AT&F &C1&D2S36=7S38=0%C0 
+
+ViVa 9642e - MNP-5 mode 
+AT&F &C1&D2S36=7S38=0S48=128 
+
+ViVa 9642e - MNP-4 mode 
+AT&F&C1&D2S36=7S38=0S48=128%C0 
+
+ViVa 9642i 
+AT&F&C1&D2\J0S36=7S38=0 
+
+ViVa 9642i- Auto Reliable 
+AT&F &C1&D2\J0S36=7S38=0 
+
+ViVa 9642i V.42 mode 
+AT&F &C1&D2\J0S36=7S38=0%C0 
+
+ViVa 9642i - MNP-5 mode 
+AT&F&C1&D2\J0S36=7S38=0S48=128 
+
+ViVa 9642i - MNP-4 mode 
+AT&F&C1&D2\J0S36=7S38=0S48=128%C0 
+
+ViVa 14.4 Fax (pre-1994) 
+AT&F&C1&D2&K3S36=7S38=0S95=44 
+
+ViVa 14.4/FAX (pre-1994) - Auto Reliable 
+AT&F&C1&D2&K3S36=7S38=0 
+
+ViVa 14.4Fax (pre-1994) - V.42 mode 
+AT&F&C1&D2&K3S36=7S38=0%C0 
+
+ViVa 14.4/FAX (pre-1994) - MNP-5 mode 
+AT&F&C1&D2&K3S36=7S38=0S48=128 
+
+ViVa 14.4/FAX (pre-1994) - MNP-4 mode 
+AT&F&C1&D2&K3S36=7S38=0S48=128%C0 
+
+ViVa 14.4 Fax (1994) 
+AT&F&C1&D2S7=60S11=55 
+
+ViVa 14.4 FAX (1994) - Auto Reliable 
+AT&F&C1&D2S7=60S11=55 
+
+ViVa 14.4/FAX (1994) - MNP-4 mode 
+AT&F&C1&D2S7=60S11=55%C0 
+
+ViVa 9642e (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5\N3%C3S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5\N3%C3S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+ViVa 14.4/FAX (V.42bis)
+InitString=AT&F&C1&D3&K3&Q5\N3%C3S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5\N3%C3S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Wang, All
+AT E1Q0V1X4
+
+Wang 14/14i 
+AT&F&C1&D2&K3&Q5\N3S7=60S11=60 
+
+Wang 14/14i - Auto Reliable 
+AT&F &C1&D2&K3&Q5\N3S7=60S11=60 
+
+Wang 14/14i - MNP4 mode 
+AT&F &C1&D2&K3&Q5\N3S7=60S11=60%C0 
+
+Wang 14/14i Data Fax Modem
+InitString=AT&F&C1&D3&K3&Q5\N3%C1S7=60S36=7S46=138S48=7S95=37
+AnswerInit=AT&F&C1&D3&K3&Q5\N3%C1S7=60S36=7S46=138S48=7S95=37S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Western Datacom Co. Inc., All
+AT E1Q0V1X4
+
+Winfast, 9600
+AT&F E1Q0V1X4 &K3 *E0 
+
+Winfast, Other
+AT E1Q0V1X4
+
+Winfast, V.32bis
+AT&F E1Q0V1X4 &K3 *E0 
+
+XirCom, CEM-10BT (AM) Creditcard Ethernet Modem
+AT E1Q0V1X4&K3
+
+XirCom, Other
+AT E1Q0V1X4
+
+XyComm Systems Inc., All
+AT E1Q0V1X4
+
+ZAT Modem 14.4/14.4-7
+InitString=AT&F&C1+C1&D3\N3\Q3+Q3%C1+PC1S7=60
+AnswerInit=AT&F&C1+C1&D3\N3\Q3+Q3%C1+PC1S7=60S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+Zeos Notebook Modem 
+AT&F&C1&D2X4\Q3\N3\J0\V1%C1 
+
+Zeos Notebook Modem - Auto Reliable 
+AT&F&C1&D2\Q3\N3\J0\V1%C1S7=60S11=60 
+
+Zeos Notebook Modem - MNP-4 
+AT&F&C1&D2\Q3\N3\J0\V1%C0S7=60S11=60 
+
+Zoltrix ZX1896 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Zoltrix 2400 (No MNP) 
+AT&FE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Zoltrix Enhanced 96/24 V.42bis 
+AT&FE1Q0V1X4&C1&D2S7=60S11=55S0=0\Q3\N9 
+
+Zoltrix Enhanced 96/24-Auto-Reliable 
+AT&FE1Q0V1X4&C1&D2S7=60S11=55S0=0\Q3\N9 
+
+Zoltrix 9600 V.42bis 
+AT&F1X4 &C1 &D2 &M5 &K3 &R0 &Y0 %C1 \J0 \N3 \Q3 
+W1 
+
+Zoltrix 9600 V.42bis - Auto Reliable 
+AT&F1X4&C1&D2&M5&K3&R0\J0\N3\Q3W1S7=60S11=55 
+
+Zoltrix 9600 V.42bis - MNP-4 mode 
+AT&F1%C0X4&C1&D2&M0&K3&R0\J0\N3\Q3W1S7=60S11=55 
+
+Zoltrix 96/144 
+AT&F&C1&D3&R0&Y0S7=60S11=55S36=7S95=43\Q3\N9 
+
+Zoltrix 96/144-Auto-Reliable 
+AT&F&C1&D3S7=60S11=55S36=7S95=43\Q3\N9 
+
+Zoltrix 96/96 
+AT&F&C1&D2&Y0S7=60S11=55S95=43 
+
+Zoltrix 96/96 - Auto-Reliable 
+AT&F&C1&D2S7=60S11=55S95=43 
+
+Zoltrix 96/96 - MNP-5 mode 
+AT&F &C1&D2S7=60S11=55S95=43S48=128 
+
+Zoltrix 96/96 - MNP-4 mode 
+AT&F&C1&D2S7=60S11=55S95=43S48=128%C0 
+
+Zoltrix 96/96 - Normal mode 
+AT&F&C1&D2S7=60S11=55S95=43 &Q6 
+
+Zoltrix 14400 
+AT&F&C1 &D2 &Q5 &K3 &Y0 %C1 \N3 W2 S7=60 S11=60 
+
+Zoltrix 14400 - Auto Reliable 
+AT&F&C1&D2&Q5&K3&Y0\N3W2S7=60S11=60 
+
+Zoltrix 14400 - MNP-4 mode 
+AT&F%C0&C1&D2&Q5&K3&Y0\N3W2S7=60S11=60 
+
+Zoltrix Inc., FM-1414i
+AT&F E1Q0V1X4 &C1&D2S95=3
+
+Zoltrix Inc., Other
+AT E1Q0V1X4
+
+Zoom, 14.4 EX
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, 14.4 PC
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, 14400 VFP V.32bis
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, 14400 VFX V.32bis
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, 14400 VP V.32bis
+AT&F E1Q0V1X4 \N0%C0 &C1&D2&K3
+
+Zoom, 14400 VX V.32bis
+AT&F E1Q0V1X4 \N0%C0 &C1&D2&K3
+
+Zoom, 9600 VFP V.32
+AT E1Q0V1X4 S46=128&c1&d2&K3
+
+Zoom, 9600 VFX V.32
+AT E1Q0V1X4 S46=128&c1&d2&K3
+
+Zoom, 9600 VP V.32
+AT E1Q0V1X4 S46=128&c1&d2&K3
+
+Zoom, 9600 VX V.32
+AT E1Q0V1X4 S46=128&c1&d2&K3
+
+Zoom, Other
+AT E1Q0V1X4
+
+Zoom, PCMCIA 14.4C
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, PKT 14.4
+AT&F E1Q0V1X4 \N0%C0 &C1&D2&K3
+
+Zoom, VFP 14.4V
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, VFP 24K
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, VFP28.8
+AT&F E1Q0V1X4 \N0%C0 &C1&D2&K3
+
+Zoom, VFX 14.4
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, VFX 24K
+AT E1Q0V1X4 S46=136 &C1&D2&K3
+
+Zoom, VFX28.8
+AT&F E1Q0V1X4 \N0%C0 &C1&D2&K3
+
+ZOOM MX2400R (no MNP or V.42)
+InitString=AT&F&C1&D3S7=30
+AnswerInit=AT&F&C1&D3S7=30S0=1&W
+BPSRate=2400
+FlowControl=None
+LockBPS=No
+
+ZOOM 2400/V.42bis (V.42bis)
+InitString=AT&F&C1&D3S7=30S36=7
+AnswerInit=AT&F&C1&D3S7=30S36=7S0=1&W
+BPSRate=9600
+FlowControl=Hardware
+
+Zoom 14.4 VFX (ARA 1.0)
+InitString=AT&FS7=90E0&K3&D0&Q6W2L1S37=15
+AnswerInit=AT&FS7=90E0&K3&D0&Q6W2L1S37=15S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+ZOOM V.32 turbo (V.42bis)
+InitString=AT&FW1&C1&D3&K3&Q5%C1\N3S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&FW1&C1&D3&K3&Q5%C1\N3S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+ZOOM V.32bis (V.42bis)
+InitString=AT&FW1&C1&D3&K3&Q9%C1\N3S7=60S36=7S95=47
+AnswerInit=AT&FW1&C1&D3&K3&Q9%C1\N3S7=60S36=7S95=47S0=1&W
+BPSRate=38400
+FlowControl=Hardware
+
+ZOOM FaxModem 14.4 PC
+InitString=AT&F&C1&D3&K3S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+ZOOM FaxModem VFP 288
+InitString=AT&FW2X4&C1&D3&S1%C3\N3S7=60S36=7S95=1
+AnswerInit=AT&FW2X4&C1&D3&S1%C3\N3S7=60S36=7S95=1S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+ZOOM FaxModem VFX V.32bis
+InitString=AT&F&C1&D3&K3&Q5%C3\N3S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5%C3\N3S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+ZOOM FaxModem VFX 24K
+InitString=AT&F&C1&D3&K3&Q5%C3\N3S7=60S36=7S46=138S48=7S95=47
+AnswerInit=AT&F&C1&D3&K3&Q5%C3\N3S7=60S36=7S46=138S48=7S95=47S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Zoom VFX 28.8 FaxModem (ARA 1.0)
+InitString=AT&F&C1&D3&Q5&K0%C0W2\N3S7=60
+AnswerInit=AT&F&C1&D3&Q5&K0%C0W2\N3S7=60S0=1&W
+BPSRate=19200
+FlowControl=Hardware
+ARAv1=1
+
+Zoom VFX 28.8 FaxModem
+InitString=AT&F&C1&D3&Q5W2\N3S7=60
+AnswerInit=AT&F&C1&D3&Q5W2\N3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Zoom Modem PC 1200 
+ATE1Q0V1X1 S7=60 S11=55 S0=0 
+
+Zoom Modem PC 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Zoom Fax Modem 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Zoom Fax Modem PKT 2400 
+ATE1Q0V1X4&C1&D2 S7=60 S11=55 S0=0 
+
+Zoom 2400 V.42bis (no fax) 
+AT&F&C1&D2S7=60S11=55S36=7S95=43 
+
+Zoom 2400 V.42bis (no fax) - Auto Reliable 
+AT&F&C1&D2S7=60S11=55S36=7S95=43 
+
+Zoom 2400 V.42bis (no fax) - V.42 mode 
+AT&F&C1&D2S7=60S11=55S36=7S95=43 
+
+Zoom 2400 V.42bis (no fax) - MNP-5 mode 
+AT&F&C1&D2S7=60S11=55S36=7S95=43 
+
+Zoom 2400 V.42bis (no fax) - MNP-4 mode 
+AT&F&C1&D2S7=60S11=55S36=7S95=43 
+
+Zoom 2400 FCV/FXV Fax Modem 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV/FXV Fax Modem - Auto Reliable 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV/FXV Fax Modem - V.42 mode 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV/FXV Fax Modem - MNP-5 mode 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV/FXV Fax Modem - MNP-4 mode 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV+ Fax Modem 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV+ Fax Modem - Auto Reliable 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV+ Fax Modem - V.42 mode 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV+ Fax Modem - MNP-5 mode 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 FCV+ Fax Modem - MNP-4 mode 
+AT&F&C1&D2S7=60S11=55 
+
+Zoom 2400 AMC/AMX (no fax) Modem 
+AT&FX4&C1&D2S7=60S11=55 
+
+Zoom 2400 AMC/AMX (no fax) Modem - Auto Reliable 
+AT&FX4&C1&D2S7=60S11=55 
+
+Zoom 2400 AMC/AMX/PKT Fax Modem 
+AT&FX4&C1&D2S7=60S11=55 
+
+Zoom 2400 AMC/AMX/PKT Fax Modem - Auto Reliable 
+AT&FX4&C1&D2S7=60S11=55 
+
+Zoom VP/VX 9600 (no fax) 
+AT&F&C1&D2&K3S7=60S11=55S95=43 
+
+Zoom VP/VX 9600 (no fax) - Auto Reliable 
+AT&F&C1&D2&K3S7=60S11=55S95=43 
+
+Zoom VP/VX 9600 (no fax) - MNP-4 mode 
+AT&F&C1&D2&K3S7=60S11=55S95=43S48=128%C0 
+
+Zoom VFP/VFX 9600 Fax Modem 
+AT&F&C1&D2&K3S7=60S11=55S95=43 
+
+Zoom VFP/VFX 9600 Fax Modem - Auto Reliable 
+AT&F&C1&D2&K3S7=60S11=55S95=43 
+
+Zoom VFP/VFX 9600 Fax Modem - MNP-4 mode 
+AT&F&C1&D2&K3S7=60S11=55S95=43S48=128%C0 
+
+Zoom VFDI/VFDX 2400 Modem 
+AT&F&C1&D2&Q5%C3\J0S7=60S11=55S95=43 
+
+Zoom VFDI/VFDX 2400 Modem - Auto Reliable 
+AT&F&C1&D2&Q5%C3\J0S7=60S11=55S95=43 
+
+Zoom VFDI/VFDX 2400 Modem - MNP-4 mode 
+AT&F&C1&D2&Q5%C2\J0S48=0S7=60S95=43 
+
+Zoom V.32 Turbo 
+AT&F&C1&D2&K3S7=60S11=55S95=43 
+
+Zoom V.32 Turbo - Auto Reliable 
+AT&F&C1&D2&K3S7=60S11=55S95=43 
+
+Zoom V.32 Turbo - MNP-5 mode 
+AT&F&C1&D2&K3S7=60S11=55S95=43S48=128 
+
+Zoom V.32 Turbo - MNP-4 mode 
+AT&F&C1&D2&K3S7=60S11=55S95=43S48=128%C0 
+
+Zoom VP/VX 14400 (no fax) Modem 
+AT&F&C1&D2&K3W2S95=43 
+
+Zoom VP/VX 14400 (no fax) Modem - Auto Reliable 
+AT&F&C1&D2W2S7=60S11=55S95=43 
+
+Zoom VP/VX 14400 (no fax) Modem - MNP-4 mode 
+AT&F\N3&C1&D2S7=60S11=55S95=43%C0W2 
+
+Zoom VFP/VFX 14400 Fax Modem 
+AT&F&C1&D2&K3W2S95=43 
+
+Zoom VFP/VFX 14400 Fax Modem - Auto Reliable 
+AT&F&C1&D2W2S7=60S11=55S95=43 
+
+Zoom VFP/VFX 14400 Fax Modem - MNP-4 mode 
+AT&F\N3&C1&D2S7=60S11=55S95=43%C0W2 
+
+Zyxel U-1496 Series 
+AT&F&D2&R0&T5S11=60 
+
+Zyxel U-1496 - Auto Reliable 
+AT&F&D2 &R0 &T5 S11=60 
+
+Zyxel U-1496 - V.42 mode 
+AT&F&D2&R0 &T5 S11=60 &K3 
+
+Zyxel U-1496 - MNP-5 mode 
+AT&F&D2&R0 &T5 S11=60 &K2 
+
+Zyxel U-1496 - MNP-4 mode 
+AT&F&C1&D2&R0&T5S11=60%C0 
+
+Zyxel Elite 2864I (ISDN)
+InitString=ATB40&W&C1&D2&H3
+AnswerInit=ATB40&W&C1&D2&H3S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+Zyxel U-1496 (V.42bis)
+InitString=AT&FX6&B1&C1&D2&N0&K4&H3S7=60
+AnswerInit=AT&FX6&B1&C1&D2&N0&K4&H3S7=60S0=1&W
+BPSRate=57600
+FlowControl=Hardware
+
+ZyXEL, Other
+AT E1Q0V1X4
+
+ZyXEL, U1496B
+AT E1Q0V1X4&K3
+
+ZyXEL, U1496E
+AT E1Q0V1X4&K3
+
+@EndNode
+

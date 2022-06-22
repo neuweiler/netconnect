@@ -1,5 +1,55 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_Dialer.h"
 #include "protos.h"
+
+///
+/// external variables
+extern struct Hook des_hook;
+extern struct Hook strobjhook;
+extern struct Hook objstrhook;
+extern Object *win;
+extern Object *app;
+
+///
+
+/// ScriptList_ConstructFunc
+struct ScriptLine * SAVEDS ScriptList_ConstructFunc(register __a2 APTR pool, register __a1 struct ScriptLine *src)
+{
+   struct ScriptLine *new;
+
+   if((new = (struct ScriptLine *)AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR)) && src && src != (APTR)-1)
+      memcpy(new, src, sizeof(struct ScriptLine));
+   else if(new)
+      new->sl_command = SL_Send;
+
+   return(new);
+}
+
+///
+/// ScriptList_DisplayFunc
+SAVEDS LONG ScriptList_DisplayFunc(register __a2 char **array, register __a1 struct ScriptLine *script_line)
+{
+   if(script_line)
+   {
+      *array++ = script_commands[script_line->sl_command];
+      *array = script_line->sl_contents;
+   }
+   else
+   {
+      *array++ = GetStr("  \033bCommand");
+      *array   = GetStr("  \033bString");
+   }
+   return(NULL);
+}
+
+///
 
 /// Dialer_PopString_AddPhone
 ULONG Dialer_PopString_AddPhone(struct IClass *cl, Object *obj, struct MUIP_Dialer_PopString_AddPhone *msg)
@@ -32,12 +82,33 @@ ULONG Dialer_PopString_AddPhone(struct IClass *cl, Object *obj, struct MUIP_Dial
 ULONG Dialer_ScriptActive(struct IClass *cl, Object *obj, Msg msg)
 {
    struct Dialer_Data *data = INST_DATA(cl, obj);
-   STRPTR ptr;
+   struct ScriptLine *script_line;
 
-   DoMethod(data->LI_Script, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &ptr);
-   setstring(data->STR_Line, (ptr ? ptr : (STRPTR)""));
-   set(data->PO_Line, MUIA_Disabled, !ptr);
-   set(data->BT_Remove, MUIA_Disabled, !ptr);
+   DoMethod(data->LI_Script, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &script_line);
+   if(script_line)
+   {
+      nnset(data->CY_Command, MUIA_Cycle_Active, script_line->sl_command);
+      if(script_line->sl_command > SL_WaitFor && script_line->sl_command < SL_Exec)
+      {
+         nnset(data->STR_String, MUIA_String_Contents, "");
+         set(data->STR_String, MUIA_Disabled, TRUE);
+      }
+      else
+      {
+         nnset(data->STR_String, MUIA_String_Contents, script_line->sl_contents);
+         set(data->STR_String, MUIA_Disabled, FALSE);
+         set(_win(obj), MUIA_Window_ActiveObject, data->STR_String);
+      }
+      set(data->CY_Command, MUIA_Disabled, FALSE);
+      set(data->BT_Remove, MUIA_Disabled, FALSE);
+   }
+   else
+   {
+      nnset(data->STR_String, MUIA_String_Contents, "");
+      set(data->STR_String, MUIA_Disabled, TRUE);
+      set(data->CY_Command, MUIA_Disabled, TRUE);
+      set(data->BT_Remove, MUIA_Disabled, TRUE);
+   }
    return(NULL);
 }
 
@@ -46,13 +117,18 @@ ULONG Dialer_ScriptActive(struct IClass *cl, Object *obj, Msg msg)
 ULONG Dialer_LineModified(struct IClass *cl, Object *obj, Msg msg)
 {
    struct Dialer_Data *data = INST_DATA(cl, obj);
-   STRPTR ptr;
+   struct ScriptLine *script_line;
 
-   DoMethod(data->LI_Script, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &ptr);
-   if(ptr)
+   DoMethod(data->LI_Script, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &script_line);
+   if(script_line)
    {
-      strcpy(ptr, (STRPTR)xget(data->STR_Line, MUIA_String_Contents));
+      script_line->sl_command = xget(data->CY_Command, MUIA_Cycle_Active);
+      strncpy(script_line->sl_contents, (STRPTR)xget(data->STR_String, MUIA_String_Contents), MAXPATHLEN);
       DoMethod(data->LI_Script, MUIM_List_Redraw, MUIV_List_Redraw_Active);
+      if(script_line->sl_command > SL_WaitFor && script_line->sl_command < SL_Exec)
+         set(data->STR_String, MUIA_Disabled, TRUE);
+      else
+         set(data->STR_String, MUIA_Disabled, FALSE);
    }
 
    return(NULL);
@@ -60,25 +136,14 @@ ULONG Dialer_LineModified(struct IClass *cl, Object *obj, Msg msg)
 
 ///
 
-/// Script_ConstructFunc
-SAVEDS ASM STRPTR Script_ConstructFunc(REG(a2) APTR pool, REG(a1) STRPTR src)
-{
-   STRPTR new;
-
-   if((new = (STRPTR)AllocVec(MAXPATHLEN + 1, MEMF_ANY | MEMF_CLEAR)) && src)
-      memcpy(new, src, MAXPATHLEN + 1);
-   return(new);
-}
-
-///
 /// Dialer_New
 ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct Dialer_Data tmp;
-   static const struct Hook Script_ConstructHook= { { 0,0 }, (VOID *)Script_ConstructFunc , NULL, NULL };
+   static const struct Hook ScriptList_ConstructHook= { { 0,0 }, (VOID *)ScriptList_ConstructFunc , NULL, NULL };
+   static const struct Hook ScriptList_DisplayHook= { { 0,0 }, (VOID *)ScriptList_DisplayFunc , NULL, NULL };
    static STRPTR ARR_CY_Window[] = { "-", "open", "close", NULL };
    static STRPTR ARR_CY_Login[] = { "Login automatically", "Login manually", NULL };
-   static STRPTR ARR_PO_Lines[] = { "Dial", "SendLogin", "SendPassword", "Send", "WaitFor", "GoOnline", "SendBreak", "Pause", NULL };
 
    if(obj = tmp.GR_Script = (Object *)DoSuperNew(cl, obj,
       MUIA_InnerLeft, 0,
@@ -87,15 +152,17 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
       MUIA_InnerTop, 0,
       Child, VGroup,
          MUIA_Group_Spacing, 0,
-         Child, tmp.LV_Script = ListviewObject,
+         Child, tmp.LV_Script = NListviewObject,
             MUIA_CycleChain            , 1,
-            MUIA_Listview_DragType     , 1,
-            MUIA_Listview_DoubleClick  , TRUE,
-            MUIA_Listview_List         , tmp.LI_Script = ListObject,
+            MUIA_NListview_NList       , tmp.LI_Script = NListObject,
                MUIA_Frame              , MUIV_Frame_InputList,
-               MUIA_List_ConstructHook , &Script_ConstructHook,
-               MUIA_List_DestructHook  , &des_hook,
-               MUIA_List_DragSortable  , TRUE,
+               MUIA_NList_DragType     , MUIV_NList_DragType_Default,
+               MUIA_NList_ConstructHook, &ScriptList_ConstructHook,
+               MUIA_NList_DisplayHook  , &ScriptList_DisplayHook,
+               MUIA_NList_DestructHook , &des_hook,
+               MUIA_NList_DragSortable , TRUE,
+               MUIA_NList_Format       , "BAR,",
+               MUIA_NList_Title        , TRUE,
             End,
          End,
          Child, HGroup,
@@ -103,20 +170,10 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
             Child, tmp.BT_Add = MakeButton("  _Add"),
             Child, tmp.BT_Remove = MakeButton("  _Remove"),
          End,
-         Child, tmp.PO_Line = PopobjectObject,
-            MUIA_Popstring_String      , tmp.STR_Line = MakeKeyString(NULL, MAXPATHLEN, "  l"),
-            MUIA_Popstring_Button      , PopButton(MUII_PopUp),
-            MUIA_Popobject_StrObjHook  , &strobjhook,
-            MUIA_Popobject_ObjStrHook  , &objstrhook,
-            MUIA_Popobject_Object      , tmp.LV_Lines = ListviewObject,
-               MUIA_Listview_DoubleClick  , TRUE,
-               MUIA_Listview_List         , ListObject,
-                  MUIA_Frame              , MUIV_Frame_InputList,
-                  MUIA_List_AutoVisible   , TRUE,
-                  MUIA_List_SourceArray   , ARR_PO_Lines,
-               End,
-            End,
-         End,
+      End,
+      Child, HGroup,
+         Child, tmp.CY_Command = Cycle(script_commands),
+         Child, tmp.STR_String = MakeKeyString(NULL, MAXPATHLEN, "  l"),
       End,
       Child, HGroup,
          Child, MakeKeyLabel2("  Phone numbers:", "  p"),
@@ -224,16 +281,17 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       if(data->GR_Script)
       {
-         set(data->PO_Line, MUIA_Disabled, TRUE);
+         set(data->CY_Command, MUIA_Disabled, TRUE);
+         set(data->STR_String, MUIA_Disabled, TRUE);
          set(data->BT_Remove, MUIA_Disabled, TRUE);
-         set(data->STR_Line, MUIA_String_AttachedList, data->LV_Script);
+         set(data->STR_String, MUIA_String_AttachedList, data->LV_Script);
          set(data->CY_WinStartup, MUIA_Cycle_Active, 1);
+         set(data->CY_Command, MUIA_Weight, 0);
 
-         DoMethod(data->LV_Lines , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime , data->PO_Line, 2, MUIM_Popstring_Close, TRUE);
-         DoMethod(data->STR_Line , MUIM_Notify, MUIA_String_Contents       , MUIV_EveryTime , obj, 1, MUIM_Dialer_LineModified);
+         DoMethod(data->CY_Command, MUIM_Notify, MUIA_Cycle_Active         , MUIV_EveryTime , obj, 1, MUIM_Dialer_LineModified);
+         DoMethod(data->STR_String , MUIM_Notify, MUIA_String_Contents     , MUIV_EveryTime , obj, 1, MUIM_Dialer_LineModified);
          DoMethod(data->LV_Script, MUIM_Notify, MUIA_List_Active           , MUIV_EveryTime , obj, 1, MUIM_Dialer_ScriptActive);
-         DoMethod(data->LV_Script, MUIM_Notify, MUIA_List_Active           , MUIV_EveryTime , win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Line);
-         DoMethod(data->BT_Add   , MUIM_Notify, MUIA_Pressed               , FALSE          , data->LI_Script, 3, MUIM_List_InsertSingle, "", MUIV_List_Insert_Bottom);
+         DoMethod(data->BT_Add   , MUIM_Notify, MUIA_Pressed               , FALSE          , data->LI_Script, 3, MUIM_List_InsertSingle, -1, MUIV_List_Insert_Bottom);
          DoMethod(data->BT_Add   , MUIM_Notify, MUIA_Pressed               , FALSE          , data->LI_Script, 3, MUIM_Set, MUIA_List_Active, MUIV_List_Active_Bottom);
          DoMethod(data->BT_Remove, MUIM_Notify, MUIA_Pressed               , FALSE          , data->LI_Script, 2, MUIM_List_Remove, MUIV_List_Remove_Active);
          DoMethod(data->BT_AddPhone, MUIM_Notify, MUIA_Pressed             , FALSE          , obj, 2, MUIM_Dialer_PopString_AddPhone, TRUE);
@@ -254,15 +312,17 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Dialer_Dispatcher
-SAVEDS ASM ULONG Dialer_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ULONG Dialer_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
-   {
-      case OM_NEW                            : return(Dialer_New               (cl, obj, (APTR)msg));
-      case MUIM_Dialer_PopString_AddPhone    : return(Dialer_PopString_AddPhone(cl, obj, (APTR)msg));
-      case MUIM_Dialer_LineModified          : return(Dialer_LineModified      (cl, obj, (APTR)msg));
-      case MUIM_Dialer_ScriptActive          : return(Dialer_ScriptActive      (cl, obj, (APTR)msg));
-   }
+   if(msg->MethodID == OM_NEW)
+      return(Dialer_New               (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Dialer_PopString_AddPhone)
+      return(Dialer_PopString_AddPhone(cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Dialer_LineModified)
+      return(Dialer_LineModified      (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Dialer_ScriptActive)
+      return(Dialer_ScriptActive      (cl, obj, (APTR)msg));
+
    return(DoSuperMethodA(cl, obj, msg));
 }
 

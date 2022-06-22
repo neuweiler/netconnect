@@ -1,8 +1,28 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_DataBase.h"
+#include "mui_PasswdReq.h"
 #include "protos.h"
 
+///
+/// external variables
+extern struct MUI_CustomClass *CL_PasswdReq;
+extern Object *app;
+extern Object *win;
+extern BOOL changed_passwd, changed_group, changed_hosts, changed_protocols,
+            changed_services, changed_inetd, changed_networks, changed_rpc, changed_inetaccess;
+extern struct Hook des_hook;
+
+///
+
 /// UsersList_ConstructFunc
-SAVEDS ASM struct User *UsersList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct User *src)
+struct User * SAVEDS UsersList_ConstructFunc(register __a2 APTR pool, register __a1 struct User *src)
 {
    struct User *new;
 
@@ -13,7 +33,7 @@ SAVEDS ASM struct User *UsersList_ConstructFunc(REG(a2) APTR pool, REG(a1) struc
 
 ///
 /// UsersList_DisplayFunc
-SAVEDS ASM LONG UsersList_DisplayFunc(REG(a2) char **array, REG(a1) struct User *user)
+SAVEDS LONG UsersList_DisplayFunc(register __a2 char **array, register __a1 struct User *user)
 {
    if(user)
    {
@@ -46,7 +66,7 @@ SAVEDS ASM LONG UsersList_DisplayFunc(REG(a2) char **array, REG(a1) struct User 
 
 ///
 /// GroupsList_ConstructFunc
-SAVEDS ASM struct Group *GroupsList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Group *src)
+struct Group * SAVEDS GroupsList_ConstructFunc(register __a2 APTR pool, register __a1 struct Group *src)
 {
    struct Group *new;
 
@@ -59,7 +79,7 @@ SAVEDS ASM struct Group *GroupsList_ConstructFunc(REG(a2) APTR pool, REG(a1) str
 
 ///
 /// GroupsList_DisplayFunc
-SAVEDS ASM LONG GroupsList_DisplayFunc(REG(a2) char **array, REG(a1) struct Group *group)
+SAVEDS LONG GroupsList_DisplayFunc(register __a2 char **array, register __a1 struct Group *group)
 {
    if(group)
    {
@@ -83,7 +103,7 @@ SAVEDS ASM LONG GroupsList_DisplayFunc(REG(a2) char **array, REG(a1) struct Grou
 
 ///
 /// ProtocolList_ConstructFunc
-SAVEDS ASM struct Protocol *ProtocolList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Protocol *src)
+struct Protocol * SAVEDS ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct Protocol *src)
 {
    struct Protocol *new;
 
@@ -94,7 +114,7 @@ SAVEDS ASM struct Protocol *ProtocolList_ConstructFunc(REG(a2) APTR pool, REG(a1
 
 ///
 /// ProtocolList_DisplayFunc
-SAVEDS ASM LONG ProtocolList_DisplayFunc(REG(a2) char **array, REG(a1) struct Protocol *protocol)
+SAVEDS LONG ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct Protocol *protocol)
 {
    if(protocol)
    {
@@ -116,7 +136,7 @@ SAVEDS ASM LONG ProtocolList_DisplayFunc(REG(a2) char **array, REG(a1) struct Pr
 
 ///
 /// ServiceList_ConstructFunc
-SAVEDS ASM struct Service *ServiceList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Service *src)
+struct Service * SAVEDS ServiceList_ConstructFunc(register __a2 APTR pool, register __a1 struct Service *src)
 {
    struct Service *new;
 
@@ -127,7 +147,7 @@ SAVEDS ASM struct Service *ServiceList_ConstructFunc(REG(a2) APTR pool, REG(a1) 
 
 ///
 /// ServiceList_DisplayFunc
-SAVEDS ASM LONG ServiceList_DisplayFunc(REG(a2) char **array, REG(a1) struct Service *service)
+SAVEDS LONG ServiceList_DisplayFunc(register __a2 char **array, register __a1 struct Service *service)
 {
    if(service)
    {
@@ -150,8 +170,40 @@ SAVEDS ASM LONG ServiceList_DisplayFunc(REG(a2) char **array, REG(a1) struct Ser
 }
 
 ///
+/// InetAccessList_ConstructFunc
+struct InetAccess * SAVEDS InetAccessList_ConstructFunc(register __a2 APTR pool, register __a1 struct InetAccess *src)
+{
+   struct InetAccess *new;
+
+   if((new = (struct InetAccess *)AllocVec(sizeof(struct InetAccess), MEMF_ANY | MEMF_CLEAR)) && src && src != (APTR)-1)
+      memcpy(new, src, sizeof(struct InetAccess));
+   return(new);
+}
+
+///
+/// InetAccessList_DisplayFunc
+SAVEDS LONG InetAccessList_DisplayFunc(register __a2 char **array, register __a1 struct InetAccess *inet_access)
+{
+   if(inet_access)
+   {
+      *array++ = inet_access->Service;
+      *array++ = inet_access->Host;
+      *array++ = (inet_access->Access ? "allow" : "deny");
+      *array   = (inet_access->Log ? "Log" : "");
+   }
+   else
+   {
+      *array++ = GetStr(MSG_TX_Service);
+      *array++ = "\033bHost/Mask";
+      *array++ = "\033bAccess";
+      *array   = "\033bLog";
+   }
+   return(NULL);
+}
+
+///
 /// InetdList_ConstructFunc
-SAVEDS ASM struct Inetd *InetdList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Inetd *src)
+struct Inetd * SAVEDS InetdList_ConstructFunc(register __a2 APTR pool, register __a1 struct Inetd *src)
 {
    struct Inetd *new;
 
@@ -162,7 +214,7 @@ SAVEDS ASM struct Inetd *InetdList_ConstructFunc(REG(a2) APTR pool, REG(a1) stru
 
 ///
 /// InetdList_DisplayFunc
-SAVEDS ASM LONG InetdList_DisplayFunc(REG(a2) char **array, REG(a1) struct Inetd *inetd)
+SAVEDS LONG InetdList_DisplayFunc(register __a2 char **array, register __a1 struct Inetd *inetd)
 {
    if(inetd)
    {
@@ -191,7 +243,7 @@ SAVEDS ASM LONG InetdList_DisplayFunc(REG(a2) char **array, REG(a1) struct Inetd
 
 ///
 /// HostList_ConstructFunc
-SAVEDS ASM struct Host *HostList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Host *src)
+struct Host * SAVEDS HostList_ConstructFunc(register __a2 APTR pool, register __a1 struct Host *src)
 {
    struct Host *new;
 
@@ -202,7 +254,7 @@ SAVEDS ASM struct Host *HostList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct
 
 ///
 /// HostList_DisplayFunc
-SAVEDS ASM LONG HostList_DisplayFunc(REG(a2) char **array, REG(a1) struct Host *host)
+SAVEDS LONG HostList_DisplayFunc(register __a2 char **array, register __a1 struct Host *host)
 {
    if(host)
    {
@@ -221,7 +273,7 @@ SAVEDS ASM LONG HostList_DisplayFunc(REG(a2) char **array, REG(a1) struct Host *
 
 ///
 /// NetworkList_ConstructFunc
-SAVEDS ASM struct Network *NetworkList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Network *src)
+struct Network * SAVEDS NetworkList_ConstructFunc(register __a2 APTR pool, register __a1 struct Network *src)
 {
    struct Network *new;
 
@@ -232,7 +284,7 @@ SAVEDS ASM struct Network *NetworkList_ConstructFunc(REG(a2) APTR pool, REG(a1) 
 
 ///
 /// NetworkList_DisplayFunc
-SAVEDS ASM LONG NetworkList_DisplayFunc(REG(a2) char **array, REG(a1) struct Network *network)
+SAVEDS LONG NetworkList_DisplayFunc(register __a2 char **array, register __a1 struct Network *network)
 {
    if(network)
    {
@@ -254,7 +306,7 @@ SAVEDS ASM LONG NetworkList_DisplayFunc(REG(a2) char **array, REG(a1) struct Net
 
 ///
 /// RpcList_ConstructFunc
-SAVEDS ASM struct Rpc *RpcList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Rpc *src)
+struct Rpc * SAVEDS RpcList_ConstructFunc(register __a2 APTR pool, register __a1 struct Rpc *src)
 {
    struct Rpc *new;
 
@@ -265,7 +317,7 @@ SAVEDS ASM struct Rpc *RpcList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct R
 
 ///
 /// RpcList_DisplayFunc
-SAVEDS ASM LONG RpcList_DisplayFunc(REG(a2) char **array, REG(a1) struct Rpc *rpc)
+SAVEDS LONG RpcList_DisplayFunc(register __a2 char **array, register __a1 struct Rpc *rpc)
 {
    if(rpc)
    {
@@ -308,7 +360,7 @@ LONG protocol_pos(Object *list, STRPTR string)
 ///
 
 /// Databases_PasswdReqFinish
-ULONG Databases_PasswdReqFinish(struct IClass *cl, Object *obj, struct MUIP_AmiTCP_Finish *msg)
+ULONG Databases_PasswdReqFinish(struct IClass *cl, Object *obj, struct MUIP_Genesis_Finish *msg)
 {
    struct Databases_Data *data = INST_DATA(cl, obj);
 
@@ -331,12 +383,14 @@ ULONG Databases_PasswdReqFinish(struct IClass *cl, Object *obj, struct MUIP_AmiT
          DoMethod(data->LV_Users, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &user);
          if(user && strlen((STRPTR)xget(pw_data->STR_pw1, MUIA_String_Contents)))
          {
-            struct Library *UserGroupBase;
-
-            if(UserGroupBase = OpenLibrary(USERGROUPNAME, 0))
+            if(!UserGroupBase)
+               UserGroupBase = OpenLibrary(USERGROUPNAME, 0);
+               
+            if(UserGroupBase)
             {
                strcpy(user->Password, crypt((STRPTR)xget(pw_data->STR_pw1, MUIA_String_Contents), user->Password));
                CloseLibrary(UserGroupBase);
+               UserGroupBase = NULL;
             }
          }
          else
@@ -505,6 +559,36 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
       }
          break;
 
+      case MUIV_Databases_SetStates_InetAccess:
+      {
+         struct InetAccess *inet_access;
+
+         changed_inetaccess = TRUE;
+
+         DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
+         if(inet_access)
+         {
+            set(data->STR_InetAccessService, MUIA_String_Contents, inet_access->Service);
+            set(data->STR_InetAccessHost, MUIA_String_Contents, inet_access->Host);
+            set(data->CY_InetAccess, MUIA_Cycle_Active, (inet_access->Access ? 0 : 1));
+            set(data->CH_InetAccessLog, MUIA_Selected, inet_access->Log);
+         }
+         else
+         {
+            set(data->STR_InetAccessService, MUIA_String_Contents, "");
+            set(data->STR_InetAccessHost, MUIA_String_Contents, "");
+            set(data->CY_InetAccess, MUIA_Cycle_Active, 0);
+            set(data->CH_InetAccessLog, MUIA_Selected, FALSE);
+         }
+         set(data->BT_RemoveInetAccess, MUIA_Disabled, !inet_access);
+         set(data->STR_InetAccessService, MUIA_Disabled, !inet_access);
+         set(data->STR_InetAccessHost, MUIA_Disabled, !inet_access);
+         set(data->CY_InetAccess, MUIA_Disabled, !inet_access);
+         set(data->CH_InetAccessLog, MUIA_Disabled, !inet_access);
+         set(win, MUIA_Window_ActiveObject, data->STR_InetAccessService);
+      }
+         break;
+
       case MUIV_Databases_SetStates_Inetd:
       {
          struct Inetd *inetd;
@@ -640,6 +724,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
    struct Group *group;
    struct Protocol *protocol;
    struct Service *service;
+   struct InetAccess *inet_access;
    struct Inetd *inetd;
    struct Host *host;
    struct Network *network;
@@ -705,7 +790,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          Object *window;
 
          set(app, MUIA_Application_Sleep, TRUE);
-         if(window = NewObject(CL_PasswdReq->mcc_Class, NULL, MUIA_AmiTCP_Originator, obj, TAG_DONE))
+         if(window = NewObject(CL_PasswdReq->mcc_Class, NULL, MUIA_Genesis_Originator, obj, TAG_DONE))
          {
             DoMethod(app, OM_ADDMEMBER, window);
             set(window, MUIA_Window_Open, TRUE);
@@ -725,6 +810,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Users, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
+
 
       case MUIV_Databases_Modification_NewGroup:
          DoMethod(data->LV_Groups, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
@@ -752,6 +838,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          DoMethod(data->LV_Groups, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          break;
 
+
       case MUIV_Databases_Modification_ProtocolName:
          DoMethod(data->LV_Protocols, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &protocol);
          if(protocol)
@@ -776,6 +863,8 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Protocols, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
+
+
       case MUIV_Databases_Modification_ServiceName:
          DoMethod(data->LV_Services, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &service);
          if(service)
@@ -812,6 +901,42 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             }
          }
          break;
+
+
+      case MUIV_Databases_Modification_InetAccessService:
+         DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
+         if(inet_access)
+         {
+            strcpy(inet_access->Service, (STRPTR)xget(data->STR_InetAccessService, MUIA_String_Contents));
+            DoMethod(data->LV_InetAccess, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
+         }
+         break;
+      case MUIV_Databases_Modification_InetAccessHost:
+         DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
+         if(inet_access)
+         {
+            strcpy(inet_access->Host, (STRPTR)xget(data->STR_InetAccessHost, MUIA_String_Contents));
+            DoMethod(data->LV_InetAccess, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
+         }
+         break;
+      case MUIV_Databases_Modification_InetAccess:
+         DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
+         if(inet_access)
+         {
+            inet_access->Access = !xget(data->CY_InetAccess, MUIA_Cycle_Active);
+            DoMethod(data->LV_InetAccess, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
+         }
+         break;
+      case MUIV_Databases_Modification_InetAccessLog:
+         DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
+         if(inet_access)
+         {
+            inet_access->Log = xget(data->CH_InetAccessLog, MUIA_Selected);
+            DoMethod(data->LV_InetAccess, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
+         }
+         break;
+
+
       case MUIV_Databases_Modification_InetdService:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
@@ -880,6 +1005,8 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
+
+
       case MUIV_Databases_Modification_HostAddr:
          DoMethod(data->LV_Hosts, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &host);
          if(host)
@@ -904,6 +1031,8 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Hosts, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
+
+
       case MUIV_Databases_Modification_NetworkName:
          DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &network);
          if(network)
@@ -928,6 +1057,8 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Networks, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
+
+
       case MUIV_Databases_Modification_RpcName:
          DoMethod(data->LV_Rpcs, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &rpc);
          if(rpc)
@@ -952,6 +1083,8 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Rpcs, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
+
+
       case MUIV_Databases_Modification_NewProtocol:
          DoMethod(data->LV_Protocols, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Protocols, MUIA_NList_Active, MUIV_NList_Active_Bottom);
@@ -959,6 +1092,10 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
       case MUIV_Databases_Modification_NewService:
          DoMethod(data->LV_Services, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Services, MUIA_NList_Active, MUIV_NList_Active_Bottom);
+         break;
+      case MUIV_Databases_Modification_NewInetAccess:
+         DoMethod(data->LV_InetAccess, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
+         set(data->LV_InetAccess, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
       case MUIV_Databases_Modification_NewInetd:
          DoMethod(data->LV_Inetd, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
@@ -994,15 +1131,22 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
    static const struct Hook ServiceList_DisplayHook   = { { 0,0 }, (VOID *)ServiceList_DisplayFunc    , NULL, NULL };
    static const struct Hook InetdList_ConstructHook   = { { 0,0 }, (VOID *)InetdList_ConstructFunc , NULL, NULL };
    static const struct Hook InetdList_DisplayHook  = { { 0,0 }, (VOID *)InetdList_DisplayFunc      , NULL, NULL };
+   static const struct Hook InetAccessList_ConstructHook   = { { 0,0 }, (VOID *)InetAccessList_ConstructFunc , NULL, NULL };
+   static const struct Hook InetAccessList_DisplayHook  = { { 0,0 }, (VOID *)InetAccessList_DisplayFunc      , NULL, NULL };
    static const struct Hook HostList_ConstructHook= { { 0,0 }, (VOID *)HostList_ConstructFunc   , NULL, NULL };
    static const struct Hook HostList_DisplayHook   = { { 0,0 }, (VOID *)HostList_DisplayFunc , NULL, NULL };
    static const struct Hook NetworkList_ConstructHook= { { 0,0 }, (VOID *)NetworkList_ConstructFunc   , NULL, NULL };
    static const struct Hook NetworkList_DisplayHook   = { { 0,0 }, (VOID *)NetworkList_DisplayFunc , NULL, NULL };
    static const struct Hook RpcList_ConstructHook= { { 0,0 }, (VOID *)RpcList_ConstructFunc  , NULL, NULL };
    static const struct Hook RpcList_DisplayHook = { { 0,0 }, (VOID *)RpcList_DisplayFunc  , NULL, NULL };
+   static STRPTR STR_CY_Access[3];
    static STRPTR STR_CY_Socket[3];
    static STRPTR STR_CY_Wait[4];
    struct Databases_Data tmp;
+
+   STR_CY_Access[0] = "allow";
+   STR_CY_Access[1] = "deny";
+   STR_CY_Access[2] = NULL;
 
    STR_CY_Socket[0] = "stream";
    STR_CY_Socket[1] = "dgram";
@@ -1257,6 +1401,48 @@ MUIA_InnerTop, 0,
          End,
       End;
 
+      data->GR_InetAccess = VGroup,
+MUIA_InnerLeft, 0,
+MUIA_InnerRight, 0,
+MUIA_InnerBottom, 0,
+MUIA_InnerTop, 0,
+         Child, VGroup,
+            MUIA_Group_Spacing, 0,
+            Child, data->LV_InetAccess = NListviewObject,
+               MUIA_CycleChain            , 1,
+               MUIA_NListview_NList         , data->LI_InetAccess = NListObject,
+                  MUIA_Frame              , MUIV_Frame_InputList,
+                  MUIA_NList_DragType     , MUIV_NList_DragType_Default,
+                  MUIA_NList_DragSortable  , TRUE,
+                  MUIA_NList_DisplayHook   , &InetAccessList_DisplayHook,
+                  MUIA_NList_ConstructHook , &InetAccessList_ConstructHook,
+                  MUIA_NList_DestructHook  , &des_hook,
+                  MUIA_NList_Format        , "BAR,BAR,BAR,",
+                  MUIA_NList_Title         , TRUE,
+               End,
+            End,
+            Child, HGroup,
+               MUIA_Group_Spacing, 0,
+               Child, data->BT_NewInetAccess = MakeButton(MSG_BT_New),
+               Child, data->BT_RemoveInetAccess = MakeButton(MSG_BT_Remove),
+            End,
+         End,
+         Child, HGroup,
+            Child, ColGroup(2),
+               Child, MakeKeyLabel2(MSG_LA_Service, MSG_CC_Service),
+               Child, data->STR_InetAccessService   = MakeKeyString("", 40, MSG_CC_Service),
+               Child, MakeKeyLabel2("  Host:", "  h"),
+               Child, data->STR_InetAccessHost      = MakeKeyString("", 40, "  h"),
+               Child, MakeKeyLabel2("  Access:", "  a"),
+               Child, HGroup,
+                  Child, data->CY_InetAccess = Cycle(STR_CY_Access),
+                  Child, MakeKeyLabel2("  Log:", "  l"),
+                  Child, data->CH_InetAccessLog = MakeKeyCheckMark(TRUE, "  l"),
+               End,
+            End,
+         End,
+      End;
+
       data->GR_Inetd = VGroup,
 MUIA_InnerLeft, 0,
 MUIA_InnerRight, 0,
@@ -1412,6 +1598,9 @@ MUIA_InnerTop, 0,
          set(data->STR_NetworkName , MUIA_String_AttachedList, data->LV_Networks);
          set(data->STR_RpcName     , MUIA_String_AttachedList, data->LV_Rpcs);
 
+         set(data->CY_InetAccess   , MUIA_CycleChain, 1);
+         set(data->CH_InetAccessLog, MUIA_CycleChain, 1);
+
          set(data->CH_Disabled     , MUIA_CycleChain, 1);
          set(data->CY_InetdSocket  , MUIA_CycleChain, 1);
          set(data->CY_InetdWait    , MUIA_CycleChain, 1);
@@ -1492,6 +1681,7 @@ MUIA_InnerTop, 0,
          DoMethod(data->LV_Groups     , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Groups);
          DoMethod(data->LV_Protocols  , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Protocols);
          DoMethod(data->LV_Services   , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Services);
+         DoMethod(data->LV_InetAccess , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_InetAccess);
          DoMethod(data->LV_Inetd      , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Inetd);
          DoMethod(data->LV_Hosts      , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Hosts);
          DoMethod(data->LV_Networks   , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Networks);
@@ -1516,6 +1706,10 @@ MUIA_InnerTop, 0,
          DoMethod(data->STR_ServicePort     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ServicePort);
          DoMethod(data->STR_ServiceAliases  , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ServiceAliases);
          DoMethod(data->LV_ServiceProtocol  , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ServiceProtocol);
+         DoMethod(data->STR_InetAccessService, MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccessService);
+         DoMethod(data->STR_InetAccessHost  , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccessHost);
+         DoMethod(data->CY_InetAccess       , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccess);
+         DoMethod(data->CH_InetAccessLog    , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccessLog);
          DoMethod(data->STR_InetdService    , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdService);
          DoMethod(data->STR_InetdUser       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdUser);
          DoMethod(data->PA_InetdServer      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdServer);
@@ -1537,6 +1731,7 @@ MUIA_InnerTop, 0,
          DoMethod(data->BT_NewGroup         , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewGroup);
          DoMethod(data->BT_NewProtocol      , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewProtocol);
          DoMethod(data->BT_NewService       , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewService);
+         DoMethod(data->BT_NewInetAccess    , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewInetAccess);
          DoMethod(data->BT_NewInetd         , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewInetd);
          DoMethod(data->BT_NewHost          , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewHost);
          DoMethod(data->BT_NewNetwork       , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewNetwork);
@@ -1545,6 +1740,7 @@ MUIA_InnerTop, 0,
          DoMethod(data->BT_RemoveGroup      , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Groups, 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
          DoMethod(data->BT_RemoveProtocol   , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Protocols, 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
          DoMethod(data->BT_RemoveService    , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Services, 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
+         DoMethod(data->BT_RemoveInetAccess , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_InetAccess, 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
          DoMethod(data->BT_RemoveInetd      , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Inetd, 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
          DoMethod(data->BT_RemoveHost       , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Hosts, 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
          DoMethod(data->BT_RemoveNetwork    , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Networks, 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
@@ -1563,6 +1759,7 @@ MUIA_InnerTop, 0,
          DoMethod(data->STR_ProtocolID  , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_ProtocolAliases);
          DoMethod(data->STR_ServiceName , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_ServicePort);
          DoMethod(data->STR_ServicePort , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_ServiceAliases);
+         DoMethod(data->STR_InetAccessService, MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetAccessHost);
          DoMethod(data->STR_InetdService, MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdUser);
          DoMethod(data->STR_InetdUser   , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdServer);
          DoMethod(data->STR_InetdServer , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_InetdArgs);
@@ -1579,15 +1776,17 @@ MUIA_InnerTop, 0,
 
 ///
 /// Databases_Dispatcher
-SAVEDS ASM ULONG Databases_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ULONG Databases_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
-   {
-      case OM_NEW                         : return(Databases_New              (cl, obj, (APTR)msg));
-      case MUIM_Databases_SetStates       : return(Databases_SetStates        (cl, obj, (APTR)msg));
-      case MUIM_Databases_Modification    : return(Databases_Modification     (cl, obj, (APTR)msg));
-      case MUIM_AmiTCP_Finish             : return(Databases_PasswdReqFinish  (cl, obj, (APTR)msg));
-   }
+   if(msg->MethodID == OM_NEW)
+      return(Databases_New              (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Databases_SetStates)
+      return(Databases_SetStates        (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Databases_Modification)
+      return(Databases_Modification     (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Genesis_Finish)
+      return(Databases_PasswdReqFinish  (cl, obj, (APTR)msg));
+
    return(DoSuperMethodA(cl, obj, msg));
 }
 

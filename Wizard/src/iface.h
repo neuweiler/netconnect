@@ -19,9 +19,9 @@
 struct iface {
 /* public: */
   union {
-	 char              iface_u_name[IFNAMSIZ];   /* name is first on ifr */
-	 struct ifreq      iface_u_ifr;     /* ifreq for ioctl's */
-	 struct ifaliasreq iface_u_ifra;    /* req for SIOCAIFADDR */
+    char              iface_u_name[IFNAMSIZ];   /* name is first on ifr */
+    struct ifreq      iface_u_ifr;     /* ifreq for ioctl's */
+    struct ifaliasreq iface_u_ifra;    /* req for SIOCAIFADDR */
   } iface_u;
 #define iface_name  iface_u.iface_u_name
 #define iface_ifr   iface_u.iface_u_ifr
@@ -37,13 +37,8 @@ struct iface {
   u_long iface_MTU; /* interface maximum transfer unit size */
 /* private: */
   int iface_fd;         /* socket descriptor used for ioctl's */
-/* interface configuration info */
-  struct List *             iface_ifclist;
-  struct ifconfig *         iface_ifc;
 /* optional sana2 info */
   struct sana2 *            iface_s2;
-/* optional serial device info */
-  struct SerialContext *    iface_serial;
 };
 
 struct iface *iface_alloc(void);

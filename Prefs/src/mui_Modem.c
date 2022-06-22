@@ -1,8 +1,26 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_Modem.h"
 #include "protos.h"
 
+///
+/// external variables
+extern struct Hook des_hook;
+extern struct Hook strobjhook;
+extern struct Hook objstrhook;
+extern struct Hook sorthook;
+extern Object *win;
+
+///
+
 /// ModemList_ConstructFunc
-SAVEDS ASM struct Modem *ModemList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Modem *src)
+struct Modem * SAVEDS ModemList_ConstructFunc(register __a2 APTR pool, register __a1 struct Modem *src)
 {
    struct Modem *new;
 
@@ -13,7 +31,7 @@ SAVEDS ASM struct Modem *ModemList_ConstructFunc(REG(a2) APTR pool, REG(a1) stru
 
 ///
 /// Modem_ProtocolList_ConstructFunc
-SAVEDS ASM struct ModemProtocol *Modem_ProtocolList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct ModemProtocol *src)
+struct ModemProtocol * SAVEDS Modem_ProtocolList_ConstructFunc(register __a2 APTR pool, register __a1 struct ModemProtocol *src)
 {
    struct ModemProtocol *new;
 
@@ -24,7 +42,7 @@ SAVEDS ASM struct ModemProtocol *Modem_ProtocolList_ConstructFunc(REG(a2) APTR p
 
 ///
 /// Modem_ProtocolList_DisplayFunc
-SAVEDS ASM LONG Modem_ProtocolList_DisplayFunc(REG(a2) char **array, REG(a1) struct ModemProtocol *modem_protocol)
+SAVEDS LONG Modem_ProtocolList_DisplayFunc(register __a2 char **array, register __a1 struct ModemProtocol *modem_protocol)
 {
    if(modem_protocol)
    {
@@ -139,7 +157,7 @@ MUIA_InnerRight, 0,
 MUIA_InnerBottom, 0,
 MUIA_InnerTop, 0,
       Child, HVSpace,
-      Child, MUI_MakeObject(MUIO_BarTitle, "Modem settings"),
+      Child, MUI_MakeObject(MUIO_BarTitle, "Modem / TA settings"),
       Child, ColGroup(2),
          Child, MakeKeyLabel2(MSG_LA_ModemType, "  m"),
          Child, tmp.PO_Modem = PopobjectObject,
@@ -193,7 +211,7 @@ MUIA_InnerTop, 0,
                End,
             End,
          End,
-         Child, MakeKeyLabel2("  Dial suffix", "  u"),
+         Child, MakeKeyLabel2("  Dial suffix:", "  u"),
          Child, tmp.STR_DialSuffix = MakeKeyString(NULL, 80, "  u"),
       End,
       Child, HVSpace,
@@ -330,14 +348,14 @@ MUIA_InnerTop, 0,
 
 ///
 /// Modem_Dispatcher
-SAVEDS ASM ULONG Modem_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ULONG Modem_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
-   {
-      case OM_NEW                        : return(Modem_New                (cl, obj, (APTR)msg));
-      case MUIM_Modem_PopString_Close    : return(Modem_PopString_Close    (cl, obj, (APTR)msg));
-      case MUIM_Modem_UpdateProtocolList : return(Modem_UpdateProtocolList (cl, obj, (APTR)msg));
-   }
+   if(msg->MethodID == OM_NEW)
+      return(Modem_New                (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Modem_PopString_Close)
+      return(Modem_PopString_Close    (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Modem_UpdateProtocolList)
+      return(Modem_UpdateProtocolList (cl, obj, (APTR)msg));
 
    return(DoSuperMethodA(cl, obj, msg));
 }

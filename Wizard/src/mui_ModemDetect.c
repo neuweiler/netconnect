@@ -1,5 +1,29 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "rev.h"
+#include "Strings.h"
+#include "/Genesis.h"
+#include "mui.h"
+#include "mui_MainWindow.h"
+#include "mui_ModemDetect.h"
 #include "protos.h"
+///
+
+#define SIG_SER   (1L << SerReadPort->mp_SigBit)
+
+/// external variables
+extern struct   IOExtSer       *SerReadReq;
+extern struct   MsgPort        *SerReadPort;
+extern char serial_in[], serial_buffer[];
+extern WORD ser_buf_pos;
+extern struct config Config;
+extern Object *app;
+extern Object *win, *status_win;
+extern struct MUI_CustomClass  *CL_MainWindow;
+extern struct MUI_CustomClass  *CL_ModemDetect;
+///
 
 /// serial devices
 
@@ -8,7 +32,7 @@
       "comports.device", "draser.device", "duart.device", "empser.device",
       "envoyserial.device", "fossil.device", "gvpser.device", "highspeed.device",
       "ibmser.device", "netser.device", "newser.device", "scisdn.device",
-      "siosbx.device", "squirrelserial.device", "telser.device", "USRSerial.device",
+      "siosbx.device", "squirrelserial.device", "USRSerial.device",
       "uw.device", "v34serial.device", "someserial.device", NULL };
 
 ///
@@ -53,80 +77,265 @@ static struct ModemDetect modem_detect[] =
 
 ///
 
-#define Action_Abort             255
-#define Action_LookingForModem   1
-#define Action_CheckingATIs      2
-
-/// ModemDetect_Trigger
-ULONG ModemDetect_Trigger(struct IClass *cl, Object *obj, Msg msg)
+/// waitfor
+BOOL waitfor(struct ModemDetect_Data *data, STRPTR string, LONG secs, LONG fifths)
 {
-   struct ModemDetect_Data *data = INST_DATA(cl, obj);
-   BOOL used = FALSE;
+   BOOL timer_running;
+   ULONG sig;
 
-   if(ReadSER)
+   data->time_req->tr_node.io_Command   = TR_ADDREQUEST;
+   data->time_req->tr_time.tv_secs      = secs;
+   data->time_req->tr_time.tv_micro     = fifths * 20000;
+   SetSignal(0, 1L << data->time_port->mp_SigBit);
+   SendIO((struct IORequest *)data->time_req);
+   timer_running = TRUE;
+
+   ser_buf_pos = 0;
+   serial_buffer[0] = NULL;
+   serial_startread(serial_in, 1);
+   while(!data->abort)
    {
-      if(CheckIO(ReadSER))
+      sig = Wait((1L << SerReadPort->mp_SigBit) | (1L << data->time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
+      if(sig & (1L << SerReadPort->mp_SigBit))
       {
-         WaitIO(ReadSER);
-
-         if(*serial_in && data->buf_pos < 80)
+         if(CheckIO((struct IORequest *)SerReadReq))
          {
-            if(*serial_in == '\r' || *serial_in == '\n')
-               data->buffer[data->buf_pos++] = ' ';
-            else
-               data->buffer[data->buf_pos++] = *serial_in;
-            data->buffer[data->buf_pos]   = NULL;
-         }
-         StartSerialRead(serial_in, 1);
+            WaitIO((struct IORequest *)SerReadReq);
 
-         used = TRUE;
+            if(ser_buf_pos < 80)    // if string==NULL, we have to check (see below) !
+               serial_buffer[ser_buf_pos++] = serial_in[0];
+            serial_buffer[ser_buf_pos] = NULL;
+
+            if(string)
+            {
+               if(strstr(serial_buffer, string))
+                  break;
+
+               if(serial_in[0] == '\r' || serial_in[0] == '\n' || serial_in[0] == NULL || ser_buf_pos > 79)
+                  ser_buf_pos = 0;
+            }
+            serial_startread(serial_in, 1);
+         }
       }
+      if(sig & (1L << data->time_port->mp_SigBit))
+      {
+         if(CheckIO((struct IORequest *)data->time_req))
+         {
+            WaitIO((struct IORequest *)data->time_req);
+            timer_running = FALSE;
+            break;
+         }
+      }
+      if(sig & SIGBREAKF_CTRL_C)
+         break;
+   }
+   serial_stopread();
+
+   if(timer_running)
+   {
+      if(!CheckIO((struct IORequest *)data->time_req))
+         AbortIO((struct IORequest *)data->time_req);
+      WaitIO((struct IORequest *)data->time_req);
+      timer_running = FALSE;
    }
 
-   if(CheckIO(data->time_req))
+   if(string)
+      return((strstr(serial_buffer, string) ? TRUE : FALSE));
+   else
+      return(TRUE);
+}
+
+///
+/// ModemHandler
+VOID SAVEDS ModemHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
+{
+   struct ModemDetect_Data *data = INST_DATA(CL_ModemDetect->mcc_Class, status_win);
+   struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
+   BOOL found_modem, found_type;
+   WORD device_nr, unit_nr, ati_nr;
+   LONG pos;
+   char buffer[81], ATI[10][81], MFR[81], FMI[81];
+
+   if(!(data->time_port = CreateMsgPort()))
+      goto abort;
+   if(!(data->time_req = (struct timerequest *)CreateExtIO(data->time_port, sizeof(struct timerequest))))
+      goto abort;
+   if(OpenDevice(TIMERNAME, UNIT_VBLANK, (struct IORequest *)data->time_req,0))
+      goto abort;
+
+   // find device
+
+   found_modem = FALSE;
+   device_nr = 0;
+   while(dev_list[device_nr] && !found_modem && !data->abort)
    {
-      WaitIO(data->time_req);
-
-Printf("serial: '%ls'\n", data->buffer);
-      if(data->action == Action_LookingForModem)
+      unit_nr = 0;
+      while(unit_nr < 10 && !found_modem && !data->abort)
       {
-         if(strstr(data->buffer, "OK"))
+         if(serial_create(dev_list[device_nr], unit_nr))
          {
-            char buf[81];
+            Delay(10);  // to allow the modem to wake up .. (don't remove this !!)
+            serial_send("\r", -1);
+            Delay(10);
+            serial_clear();
+            serial_send("AAT\r", -1);
 
-            strncpy(Config.cnf_serialdevice, data->devices[data->device_nr], 80);
-            Config.cnf_serialunit = data->unit;
+            if(data->abort)   goto abort;
 
-Printf("found modem on %ls, unit %ld\n", data->devices[data->device_nr], data->unit);
-            data->action = Action_CheckingATIs;
-            data->buffer[0] = NULL;
-            data->buf_pos = 0;
+            if(!(waitfor(data, "OK", 0, 25)))
+               serial_delete();
+            else
+               found_modem = TRUE;
+         }
+         if(!found_modem)
+            unit_nr++;
+      }
+      if(!found_modem)
+         device_nr++;
+   }
 
-            sprintf(buf, GetStr(MSG_TX_FoundModem), data->devices[data->device_nr], data->unit);
-            set(data->TX_Info, MUIA_Text_Contents, buf);
-            DoMethod(_app(obj), MUIM_Application_PushMethod, obj, 1, MUIM_ModemDetect_CheckATI);
+   if(data->abort)   goto abort;
+
+   if(!found_modem)
+   {
+      DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_ModemNotFound), NULL);
+      goto abort;
+   }
+
+   sprintf(buffer, GetStr(MSG_TX_FoundModem), dev_list[device_nr], unit_nr);
+   DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buffer, NULL);
+   strncpy(Config.cnf_serialdevice, dev_list[device_nr], sizeof(Config.cnf_serialdevice));
+   Config.cnf_serialunit = unit_nr;
+
+   if(data->abort)   goto abort;
+
+   // check ati's
+
+   found_type = FALSE;
+   ati_nr = 0;
+   while(ati_nr < 10 && !found_type && !data->abort)
+   {
+      serial_clear();
+      sprintf(buffer, "ATI%ld\r", ati_nr);
+      serial_send(buffer, -1);
+      waitfor(data, NULL, 0, 25);
+
+      strncpy(ATI[ati_nr], serial_buffer, 80);
+
+      if(modem_detect[pos].ATI_nr1 < 10 && modem_detect[pos].ATI_nr2 < 10)
+      {
+         pos = 0;
+         while(modem_detect[pos].ModemName)
+         {
+            if(strstr(ATI[modem_detect[pos].ATI_nr1], modem_detect[pos].ATI1))
+            {
+               if(modem_detect[pos].ATI_nr2 != -1)
+               {
+                  if(strstr(ATI[modem_detect[pos].ATI_nr2], modem_detect[pos].ATI2))
+                     break;
+               }
+               else
+                  break;
+            }
+            pos++;
+         }
+         if(modem_detect[pos].ModemName)
+            found_type = TRUE;
+      }
+      if(!found_type)
+         ati_nr++;
+   }
+
+   if(data->abort)   goto abort;
+
+   // check class 2 commands
+
+   if(!found_type)
+   {
+      serial_clear();
+      serial_send("AT#MFR?\r", -1);
+      waitfor(data, NULL, 0, 25);
+      strncpy(MFR, serial_buffer, 80);
+
+      if(data->abort)   goto abort;
+
+      serial_clear();
+      serial_send("AT+FMI?\r", -1);
+      waitfor(data, NULL, 0, 25);
+      strncpy(FMI, serial_buffer, 80);
+
+      pos = 0;
+      while(modem_detect[pos].ModemName && !found_type)
+      {
+         if(modem_detect[pos].ATI_nr1 < 10)
+         {
+            if(strstr(ATI[modem_detect[pos].ATI_nr1], modem_detect[pos].ATI1))
+               found_type = TRUE;
+         }
+         else if(modem_detect[pos].ATI_nr1 == 10)
+         {
+            if(strstr(MFR, modem_detect[pos].ATI1))
+               found_type = TRUE;
          }
          else
          {
-            data->unit++;
-            data->buffer[0] = NULL;
-            data->buf_pos = 0;
-            DoMethod(_app(obj), MUIM_Application_PushMethod, obj, 1, MUIM_ModemDetect_FindModem);
+            if(strstr(FMI, modem_detect[pos].ATI1))
+               found_type = TRUE;
          }
-      }
-      else if(data->action == Action_CheckingATIs)
-      {
-         strcpy(data->ATI[data->ATI_nr], data->buffer);
-         data->buffer[0] = NULL;
-         data->buf_pos = 0;
-         data->ATI_nr++;
-         DoMethod(_app(obj), MUIM_Application_PushMethod, obj, 1, MUIM_ModemDetect_CheckATI);
-      }
 
-      used = TRUE;
+         if(found_type && modem_detect[pos].ATI_nr2 != -1)
+         {
+            found_type = FALSE;
+
+            if(modem_detect[pos].ATI_nr2 < 10)
+            {
+               if(strstr(ATI[modem_detect[pos].ATI_nr2], modem_detect[pos].ATI2))
+                  found_type = TRUE;
+            }
+            else if(modem_detect[pos].ATI_nr2 == 10)
+            {
+               if(strstr(MFR, modem_detect[pos].ATI2))
+                  found_type = TRUE;
+            }
+            else
+            {
+               if(strstr(FMI, modem_detect[pos].ATI2))
+                  found_type = TRUE;
+            }
+         }
+
+         if(!found_type)
+            pos++;
+      }
    }
 
-   return(used);
+   if(data->abort)   goto abort;
+
+   if(found_type)
+      strncpy(Config.cnf_modemname, modem_detect[pos].ModemName, sizeof(Config.cnf_modemname));
+   else
+      DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_UnknownModemType), NULL);
+
+abort:
+
+   if(data->time_req)
+   {
+      CloseDevice((struct IORequest *)data->time_req);
+      DeleteExtIO((struct IORequest *)data->time_req);
+   }
+   if(data->time_port)
+      DeleteMsgPort(data->time_port);
+
+   serial_delete();
+
+mw_data->Page = 2;
+//   mw_data->Page++;
+   DoMainMethod(win, MUIM_MainWindow_SetPage, NULL, NULL, NULL);
+
+   Forbid();
+   data->Handler = NULL;
+   DoMethod(app, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, status_win);
+   status_win = NULL;
 }
 
 ///
@@ -135,226 +344,40 @@ ULONG ModemDetect_FindModem(struct IClass *cl, Object *obj, Msg msg)
 {
    struct ModemDetect_Data *data = INST_DATA(cl, obj);
 
-   data->action = Action_LookingForModem;
-
-   if(data->ihnode_added)
+   if(data->Handler = CreateNewProcTags(
+      NP_Entry       , ModemHandler,
+      NP_Name        , "GenesisWizard modem detect",
+      NP_StackSize   , 16384,
+      NP_WindowPtr   , -1,
+NP_Output, Open("CON:0/0/200/100/GenesisWizard modemdetect/AUTO/WAIT/CLOSE", MODE_NEWFILE),
+      TAG_END))
    {
-      DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->ihnode);
-      data->ihnode_added = FALSE;
+      return(TRUE);
    }
-   close_serial();
-
-   while(data->action != Action_Abort)
+   else
    {
-      if(data->devices[data->device_nr])
-      {
-         if(data->unit < 10)
-         {
-Printf("trying %ls unit %ld\n", data->devices[data->device_nr], data->unit);
-            if(open_serial(data->devices[data->device_nr], data->unit))
-            {
-               data->ihnode.ihn_Object  = obj;
-               data->ihnode.ihn_Signals = SIG_SER | IO_SIGMASK(data->time_req);
-               data->ihnode.ihn_Flags   = 0;
-               data->ihnode.ihn_Method  = MUIM_ModemDetect_Trigger;
-               DoMethod(_app(obj), MUIM_Application_AddInputHandler, &data->ihnode);
-               data->ihnode_added = TRUE;
-
-               send_serial("AAT\r", -1);   // do it twice since the first one might get swallowed
-               Delay(10);
-               send_serial("AT\r", -1);
-
-               data->time_req->tr_node.io_Command = TR_ADDREQUEST;
-               data->time_req->tr_time.tv_secs    = 1;
-               data->time_req->tr_time.tv_micro   = 0;
-               SendIO((struct IORequest *)data->time_req);
-
-               return(NULL);
-            }
-            else
-            {
-               if(data->action != Action_Abort)
-                  DoMethod(app, MUIM_Application_InputBuffered);
-               data->unit++;
-            }
-         }
-         else
-         {
-            data->unit = 0;
-            data->device_nr++;
-         }
-      }
-      else
-      {
-         switch(MUI_Request(_app(obj), obj, NULL, NULL, GetStr(MSG_ReqBT_RetryIgnoreCancel), GetStr(MSG_TX_ModemNotFound)))
-         {
-            case 0:  // cancel
-               DoMethod(obj, MUIM_ModemDetect_Abort);
-               return(NULL);
-            break;
-            case 1:  // retry
-               data->device_nr = 0;
-               data->unit = 0;
-               continue;
-            default: // ignore
-            {
-               struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
-
-               mw_data->Page++;
-               DoMethod(win, MUIM_MainWindow_SetPage);
-
-               DoMethod(obj, MUIM_ModemDetect_Abort);
-               return(NULL);
-            }
-         }
-      }
+      MUI_Request(_app(obj), obj, NULL, NULL, GetStr(MSG_BT__Abort), GetStr(MSG_TX_ErrorLaunchSubtask));
+      DoMethod(app, MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, obj);
    }
-
-   return(NULL);
+   return(FALSE);
 }
-
-///
-/// ModemDetect_CheckATI
-ULONG ModemDetect_CheckATI(struct IClass *cl, Object *obj, Msg msg)
-{
-   struct ModemDetect_Data *data = INST_DATA(cl, obj);
-   char buffer[10];
-   int i = 0;
-
-   while(modem_detect[i].ModemName)
-   {
-      if(strstr(data->ATI[modem_detect[i].ATI_nr1], modem_detect[i].ATI1))
-      {
-         if(modem_detect[i].ATI_nr2 != -1)
-         {
-            if(strstr(data->ATI[modem_detect[i].ATI_nr2], modem_detect[i].ATI2))
-               break;
-         }
-         else
-            break;
-      }
-      i++;
-   }
-
-   if(modem_detect[i].ModemName || data->ATI_nr > 9)
-   {
-      struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
-
-      if(data->ihnode_added)     // got to remove it - otherwise GetModem will be calles again and again
-         DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->ihnode);
-      data->ihnode_added = FALSE;
-
-      if(modem_detect[i].ModemName)
-      {
-         strcpy(Config.cnf_modemname, modem_detect[i].ModemName);
-         set(obj, MUIA_Window_Open, FALSE);
-         DoMethod(obj, MUIM_ModemDetect_GetModem, modem_detect[i].ModemName);
-      }
-      else
-      {
-Printf("\n\nCould not find out which modem you are using !\nPlease send the above output to dolphin@zool.unizh.ch\ntogether with the EXACT modem type/name\n(i.g. not only \"Zeus\" but \"Zeus 2814\")\n\n");
-      }
-
-mw_data->Page = 2;
-//      mw_data->Page++;
-      DoMethod(win, MUIM_MainWindow_SetPage);
-
-      DoMethod(_app(obj), MUIM_Application_PushMethod, obj, 1, MUIM_ModemDetect_Abort);
-      return(NULL);
-   }
-
-   if(data->action == Action_Abort)
-      return(NULL);
-
-   data->action = Action_CheckingATIs;
-
-   sprintf(buffer, "ATI%ld\r", data->ATI_nr);
-   send_serial(buffer, -1);
-
-   data->time_req->tr_node.io_Command = TR_ADDREQUEST;
-   data->time_req->tr_time.tv_secs    = 0;
-   data->time_req->tr_time.tv_micro   = 500000;
-   SendIO((struct IORequest *)data->time_req);
-
-   return(NULL);
-}
-
-///
-/// ModemDetect_GetModem
-ULONG ModemDetect_GetModem(struct IClass *cl, Object *obj, struct MUIP_ModemDetect_GetModem *msg)
-{
-   if(msg->modemname && *msg->modemname)
-   {
-      struct pc_Data pc_data;
-
-      if(ParseConfig("NetConnect:Data/Misc/ModemDatabase", &pc_data))
-      {
-         while(ParseNext(&pc_data))
-         {
-            if(!stricmp(pc_data.Argument, "Modem"))
-            {
-               if(!stricmp(pc_data.Contents, msg->modemname))
-               {
-                  while(ParseNext(&pc_data))
-                  {
-                     if(!stricmp(pc_data.Argument, "InitString"))
-                     {
-                        strncpy(Config.cnf_initstring, pc_data.Contents, 80);
-                        break;
-                     }
-                     if(!stricmp(pc_data.Argument, "Protocol"))
-                     {
-                        Object *window;
-
-                        set(app, MUIA_Application_Sleep, TRUE);
-                        if(window = NewObject(CL_ModemProtocol->mcc_Class, NULL, TAG_DONE))
-                        {
-                           DoMethod(app, OM_ADDMEMBER, window);
-                           DoMethod(window, MUIM_ModemProtocol_InitFromPC, &pc_data);
-                           set(window, MUIA_Window_Open, TRUE);
-                        }
-                        break;
-                     }
-                  }
-               }
-            }
-         }
-         ParseEnd(&pc_data);
-      }
-   }
-
-   return(NULL);
-}
-
 ///
 /// ModemDetect_Abort
 ULONG ModemDetect_Abort(struct IClass *cl, Object *obj, Msg msg)
 {
    struct ModemDetect_Data *data = INST_DATA(cl, obj);
-   struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
-   char buffer[91];
 
-   if(data->ihnode_added)
-      DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->ihnode);
-   data->ihnode_added = FALSE;
-
-   data->action = Action_Abort;
-
-   Delay(10);
-
-   sprintf(buffer, "%ls, unit %ld", Config.cnf_serialdevice, Config.cnf_serialunit);
-   set(mw_data->TX_Device, MUIA_Text_Contents, buffer);
-   set(mw_data->TX_Modem, MUIA_Text_Contents, Config.cnf_modemname);
-   set(mw_data->TX_InitString, MUIA_Text_Contents, Config.cnf_initstring);
-   set(mw_data->TX_DialPrefix, MUIA_Text_Contents, Config.cnf_dialprefix);
-
-   close_serial();
-
-   DoMethod(_app(obj), MUIM_Application_PushMethod, win, 2, MUIM_MainWindow_DisposeWindow, obj);
+   data->abort = TRUE;
+   Forbid();
+   if(data->Handler)
+      Signal((struct Task *)data->Handler, SIGBREAKF_CTRL_C);
+   Permit();
 
    return(NULL);
 }
+
 ///
+
 /// ModemDetect_New
 ULONG ModemDetect_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
@@ -381,70 +404,26 @@ ULONG ModemDetect_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       *data = tmp;
 
-      if(data->time_port = CreateMsgPort())
-      {
-         if(data->time_req = (struct timerequest *)CreateExtIO(data->time_port, sizeof(struct timerequest)))
-         {
-            OpenDevice(TIMERNAME, UNIT_VBLANK, (struct IORequest *)data->time_req,0);
+      data->Handler     = NULL;
+      data->abort       = FALSE;
+      ser_buf_pos       = 0;
 
-            data->devices        = dev_list;
-            data->device_nr      = 0;
-            data->unit           = 0;
-            data->ihnode_added   = FALSE;
-            data->buffer[0]      = NULL;
-            data->buf_pos        = 0;
-            data->action         = 0;
-            data->ATI_nr         = 0;
-
-            DoMethod(data->BT_Abort, MUIM_Notify, MUIA_Pressed, FALSE, obj, 1, MUIM_ModemDetect_Abort);
-
-            return((ULONG)obj);
-         }
-      }
-
+      DoMethod(data->BT_Abort, MUIM_Notify, MUIA_Pressed, FALSE, obj, 1, MUIM_ModemDetect_Abort);
    }
-   if(obj)
-      MUI_DisposeObject(obj);
-   return(NULL);
-}
-
-///
-/// ModemDetect_Dispose
-ULONG ModemDetect_Dispose(struct IClass *cl, Object *obj, Msg msg)
-{
-   struct ModemDetect_Data *data = INST_DATA(cl, obj);
-
-   if(data->ihnode_added)
-      DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->ihnode);
-
-   if(data->time_req)
-   {
-      if(!CheckIO(data->time_req))
-         AbortIO(data->time_req);
-      WaitIO(data->time_req);
-      CloseDevice((struct IORequest *)data->time_req);
-      DeleteIORequest(data->time_req);
-   }
-   if(data->time_port)
-         DeleteMsgPort(data->time_port);
-
-   return(DoSuperMethodA(cl, obj, msg));
+   return((ULONG)obj);
 }
 
 ///
 /// ModemDetect_Dispatcher
-SAVEDS ASM ULONG ModemDetect_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ULONG ModemDetect_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
+   switch((ULONG)msg->MethodID)
    {
-      case OM_NEW                         : return(ModemDetect_New         (cl, obj, (APTR)msg));
-      case OM_DISPOSE                     : return(ModemDetect_Dispose     (cl, obj, (APTR)msg));
-      case MUIM_ModemDetect_Trigger       : return(ModemDetect_Trigger     (cl, obj, (APTR)msg));
-      case MUIM_ModemDetect_FindModem     : return(ModemDetect_FindModem   (cl, obj, (APTR)msg));
-      case MUIM_ModemDetect_CheckATI      : return(ModemDetect_CheckATI    (cl, obj, (APTR)msg));
-      case MUIM_ModemDetect_Abort         : return(ModemDetect_Abort       (cl, obj, (APTR)msg));
-      case MUIM_ModemDetect_GetModem      : return(ModemDetect_GetModem    (cl, obj, (APTR)msg));
+      case OM_NEW                      : return(ModemDetect_New         (cl, obj, (APTR)msg));
+      case MUIM_ModemDetect_FindModem  : return(ModemDetect_FindModem   (cl, obj, (APTR)msg));
+      case MUIM_ModemDetect_Abort      : return(ModemDetect_Abort       (cl, obj, (APTR)msg));
    }
+
    return(DoSuperMethodA(cl, obj, msg));
 }
 

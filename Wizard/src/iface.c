@@ -1,29 +1,16 @@
-/*
- *      $Id: iface.c,v 1.16 1996/07/13 00:54:21 jraja Exp $
- *
- *      iface.c - 
- *
- *      Copyright © 1994 AmiTCP/IP Group, 
- *                       Network Solutions Development Inc.
- *                       All rights reserved.
- */
+/// includes
+#include "/includes.h"
+#pragma header
 
-/*
-#include <proto/ifconfig.h>   /* db/interfaces parsing */
-#include <proto/serscript.h>
-#include <proto/utility.h> /* tag stuff */
-#include <proto/exec.h>
-*/
-
-#include <clib/ifconfig_protos.h>
-#include "globals.c"
+#include "rev.h"
+#include "Strings.h"
+#include "/Genesis.h"
+#include "mui.h"
 #include "protos.h"
 #include "iface.h"
 #include "sana.h"
-
-/*
- * Some shorthands...
- */
+///
+/// defines
 #define ioctl IoctlSocket
 #define IFR iface->iface_ifr
 #define IFRA iface->iface_ifra
@@ -31,6 +18,10 @@
 
 #define LOOPBACK_NAME "lo0"
 #define LOOPBACK_ADDR 0x7f000001
+///
+
+extern int errno;
+
 
 /// iface_alloc
 struct iface *iface_alloc(VOID)
@@ -42,7 +33,7 @@ struct iface *iface_alloc(VOID)
       iface->iface_fd = socket(AF_INET, SOCK_DGRAM, 0);
       if(iface->iface_fd < 0)
       {
-         syslog(LOG_ERR, "iface_alloc: socket(): %m");
+         Printf("iface_alloc: socket()\n");
          iface_free(iface);
          return(NULL);
       }
@@ -72,8 +63,6 @@ BOOL iface_init(struct iface *iface, struct config *conf)
 {
    /* Find the interface and it's information */
    int len;
-   struct sockaddr_in * addrp;
-   ULONG error;
    const char *ifname;
 
    ifname = conf->cnf_ifname;
@@ -89,12 +78,13 @@ BOOL iface_init(struct iface *iface, struct config *conf)
       }
    }
    else
+   {
+      Printf("iface_init: no interface name given.\n");
       return(FALSE);
+   }
 
    /* Copy the interface name */
    memcpy(iface->iface_name, ifname, len + 1);
-   if(ifname != conf->cnf_ifname)   /* to conf too */
-      memcpy(conf->cnf_ifname, ifname, len + 1);
 
    /* clear pointers to resources we possibly own */
    iface->iface_s2 = NULL;
@@ -102,120 +92,55 @@ BOOL iface_init(struct iface *iface, struct config *conf)
    /* get the AmiTCP configuration entry for the interface */
    if(strcmp(ifname, LOOPBACK_NAME))
    {
-      /* lo0 is not in the database */
-      if(iface->iface_ifc == NULL)
+      /* Create the Sana2 configuration file, if present on the configuration */
+      if(*conf->cnf_sana2config && conf->cnf_sana2configtext)
       {
-         error = IfConfigFind(ifname, &iface->iface_ifc);
-         if(error != 0)
+         BPTR fh;
+
+         Printf("configfile '%ls':\n\"%ls\".\n", conf->cnf_sana2config, conf->cnf_sana2configtext);
+
+         /* Create ENV:Sana2 if necessary */
+         if(fh = CreateDir("ENV:Sana2"))
+            UnLock(fh);
+         if(fh = Open(conf->cnf_sana2config, MODE_NEWFILE))
          {
-            char buf[80];
-Printf("Cannot find interface %ls: %ls\n", ifname, IfConfigStrError(error, buf, sizeof(buf)));
-            return(FALSE);
+            Write(fh, conf->cnf_sana2configtext, strlen(conf->cnf_sana2configtext));
+            Close(fh);
          }
+         else
+            Printf("iface_init: could not open %ls for writing!\n", conf->cnf_sana2config);
       }
 
-      /* Check if db/interfaces had the addresses configured */
-      if(addrp = (struct sockaddr_in *)GetTagData(IF_IP, NULL, iface->iface_ifc->ifc_taglist))
-         conf->cnf_addr = addrp->sin_addr.s_addr;
-      if(addrp = (struct sockaddr_in *)GetTagData(IF_DestIP, NULL, iface->iface_ifc->ifc_taglist))
-         conf->cnf_dst = addrp->sin_addr.s_addr;
-      if(addrp = (struct sockaddr_in *)GetTagData(IF_Netmask, NULL, iface->iface_ifc->ifc_taglist))
-         conf->cnf_netmask = addrp->sin_addr.s_addr;
-//      if(addrp = (struct sockaddr_in *)GetTagData(IF_Gateway, NULL, iface->iface_ifc->ifc_taglist))
-//         conf->cnf_gateway = addrp->sin_addr.s_addr;
-    
-      if(GetTagData(IF_ConfigFileName, NULL, iface->iface_ifc->ifc_taglist))
-         strncpy(conf->cnf_sana2config, (STRPTR)GetTagData(IF_ConfigFileName, NULL, iface->iface_ifc->ifc_taglist), MAXPATHLEN);
-      conf->cnf_sana2configtext = (STRPTR)GetTagData(IF_ConfigFileContents, NULL, iface->iface_ifc->ifc_taglist);
-    
-      /* Get information from the Sana2 device if the interface is of Sana2 type */
-      if(iface->iface_ifc->ifc_type == IFCT_SANA)
+      if(!(iface->iface_s2 = sana2_create(conf)))
       {
-         /* Create the Sana2 configuration file, if present on the configuration */
-         if(*conf->cnf_sana2config && conf->cnf_sana2configtext)
-         {
-            BPTR file;
-            BPTR lock;
-            STRPTR buffer, ptr;
-            int pos;
-
-Printf("Creating Sana2 configuration file \"%ls\".\n", conf->cnf_sana2config);
-
-            /* Calculate the length needed for the configuration file */
-            len = strlen(conf->cnf_sana2configtext);
-            len += 2;      /* \n and end \0 */
-            if(buffer = AllocVec(len, MEMF_ANY))
-            {
-               /* Create the contents */
-               pos = 0;
-               ptr = conf->cnf_sana2configtext;
-               while(*ptr)
-               {
-                  if(ptr[0] == '\\' && ptr[1] == 'n')
-                  {
-                     buffer[pos++] = '\n';
-                     ptr++;
-                  }
-                  else
-                     buffer[pos++] = *ptr;
-                  ptr++;
-               }
-               buffer[pos] = NULL;
-
-               /* Show the contents if in debug mode */
-Printf("%ls: \"%ls\".\n", conf->cnf_sana2config, buffer);
-
-               /* Create ENV:Sana2 if necessary */
-               if(lock = CreateDir("ENV:Sana2"))
-                  UnLock(lock);
-     
-               if(file = Open(conf->cnf_sana2config, MODE_NEWFILE))
-               {
-                  Write(file, buffer, strlen(buffer));
-                  Close(file);
-               }
-               else
-                  Printf("WARNING: Could not open %ls for writing!\n", conf->cnf_sana2config);
-     
-               FreeVec(buffer);
-            }
-            else
-               Printf("WARNING: Could not allocate buffer for %ls.\n", conf->cnf_sana2config);
-         }
-         if(!(iface->iface_s2 = sana2_create(iface->iface_ifc)))
-            return(FALSE);
+         Printf("iface_init: could not open %ls unit %ld.\n", conf->cnf_sana2device, conf->cnf_sana2unit);
+         return(FALSE);
+      }
       
 Printf("Opened Sana2 device %ls (unit: %ld).\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
       
-         /* query device information */
-         if(sana2_devicequery(iface->iface_s2) == FALSE)
-         {
-            Printf("Could not get device information of %ls (unit %lu).\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
-            goto fail;
-         }
-      
-         /* Get Sana-II hardware type */
-         iface->iface_sanatype = iface->iface_s2->s2_hwtype;
+      /* query device information */
+      if(sana2_devicequery(iface->iface_s2) == FALSE)
+      {
+         Printf("Could not get device information of %ls (unit %lu).\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
+         goto fail;
       }
+      /* Get Sana-II hardware type */
+      iface->iface_sanatype = iface->iface_s2->s2_hwtype;
 
       /* Only if should be put online AND if hw-type is PPP, SLIP or CSLIP */
 
       /* Determine whether the interface operates over the serial line */
-      if(iface->iface_ifc->ifc_type == IFCT_SANA &&
-        (iface->iface_s2->s2_hwtype == S2WireType_PPP ||
+      if(iface->iface_s2->s2_hwtype == S2WireType_PPP ||
          iface->iface_s2->s2_hwtype == S2WireType_SLIP ||
-         iface->iface_s2->s2_hwtype == S2WireType_CSLIP) ||
-         iface->iface_ifc->ifc_type == IFCT_SLIP ||
-         iface->iface_ifc->ifc_type == IFCT_PPP)
+         iface->iface_s2->s2_hwtype == S2WireType_CSLIP)
       {
-         /* This is to support ppp.device */
          if(!iface_online(iface))
             goto fail;
 
          /* Query the hardware addresses of the Sana-II device */
-         if(iface->iface_ifc->ifc_type == IFCT_SANA)
-            if(!sana2_getaddresses(iface->iface_s2, conf))
-               Printf("sana2_getaddresses() failed");
+         if(!sana2_getaddresses(iface->iface_s2, conf))
+            Printf("sana2_getaddresses() failed.\n");
       }
 
       /*
@@ -257,22 +182,7 @@ fail:
 /// iface_deinit
 VOID iface_deinit(struct iface *iface)
 {
-   if(iface->iface_serial != NULL)
-      if(iface_getflags(iface, &iface->iface_flags) == 0 && iface->iface_flags & IFF_UP)
-
    iface_close_sana2(iface);
-
-   if(iface->iface_ifclist)
-   {
-      IfConfigFreeList(iface->iface_ifclist);
-      iface->iface_ifclist = NULL;
-      iface->iface_ifc = NULL;
-   }
-   else if(iface->iface_ifc)
-   {
-      IfConfigFree(iface->iface_ifc);
-      iface->iface_ifc = NULL;
-   }
 }
 
 ///
@@ -319,7 +229,7 @@ BOOL iface_prepare_bootp(struct iface *iface, struct config *conf)
 
    /* Mark the socket to allow broadcasting. Note that this is now done for point-to-point interfaces as well. */
    if(setsockopt(iface->iface_fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0)
-      syslog(LOG_ERR, "iface_alloc: setsockopt(SO_BROADCAST): %m");
+      Printf("iface_alloc: setsockopt(SO_BROADCAST)\n");
    else
       Printf("Set socket to allow broadcasts.\n");
 
@@ -350,7 +260,6 @@ BOOL iface_prepare_bootp(struct iface *iface, struct config *conf)
    if(iface->iface_flags & IFF_POINTOPOINT)
    {
       ULONG addr;
-//      int error;
 
       if(conf->cnf_dst == INADDR_ANY)
       {
@@ -421,17 +330,12 @@ VOID iface_cleanup_bootp(struct iface *iface, struct config *conf)
 /// iface_online
 BOOL iface_online(struct iface *iface)
 {
-   if(iface->iface_ifc->ifc_type == IFCT_SANA)
+   if(sana2_online(iface->iface_s2) == FALSE)
    {
-      if(sana2_online(iface->iface_s2) == FALSE)
-      {
-         Printf("Could not get %ls (unit %lu) online.\n"
-            "This may be due to possible configuration error of "
-            "the Sana2 driver.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
-         return(FALSE);
-      }
-      Printf("Put Sana2 device %ls (unit: %ld) online.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
+      Printf("Could not get %ls (unit %lu) online.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
+      return(FALSE);
    }
+   Printf("Put Sana2 device %ls (unit: %ld) online.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
    return(TRUE);
 }
 
@@ -439,17 +343,12 @@ BOOL iface_online(struct iface *iface)
 /// iface_offline
 BOOL iface_offline(struct iface *iface)
 {
-   if(iface->iface_ifc->ifc_type == IFCT_SANA)
+   if(sana2_offline(iface->iface_s2) == FALSE)
    {
-      if(sana2_offline(iface->iface_s2) == FALSE)
-      {
-         Printf("Could not get %ls (unit %lu) offline.\n"
-            "This may be due to possible configuration error of "
-            "the Sana2 driver.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
-         return(FALSE);
-      }
-Printf("Put Sana2 device %ls (unit: %ld) offline.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
+      Printf("Could not get %ls (unit %lu) offline.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
+      return(FALSE);
    }
+Printf("Put Sana2 device %ls (unit: %ld) offline.\n", iface->iface_s2->s2_name, iface->iface_s2->s2_unit);
    return(TRUE);
 }
 

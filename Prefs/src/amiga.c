@@ -1,8 +1,38 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_DataBase.h"
+#include "mui_Dialer.h"
+#include "mui_MainWindow.h"
+#include "mui_Modem.h"
+#include "mui_PasswdReq.h"
+#include "mui_Provider.h"
+#include "mui_User.h"
 #include "protos.h"
 
+///
+/// external variables
+extern Object *app;
+extern Object *win;
+extern struct MUI_CustomClass  *CL_MainWindow;
+extern struct MUI_CustomClass  *CL_User;
+extern struct MUI_CustomClass  *CL_Provider;
+extern struct MUI_CustomClass  *CL_Dialer;
+extern struct MUI_CustomClass  *CL_Users;
+extern struct MUI_CustomClass  *CL_Databases;
+extern struct MUI_CustomClass  *CL_Modem;
+extern struct MUI_CustomClass  *CL_About;
+extern struct MUI_CustomClass  *CL_PasswdReq;
+
+///
+
 /// DoSuperNew
-ULONG __stdargs DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...)
+ULONG DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...)
 {
    return(DoSuperMethod(cl, obj, OM_NEW, &tag1, NULL));
 }
@@ -18,14 +48,14 @@ LONG xget(Object *obj, ULONG attribute)
 
 ///
 /// sortfunc
-SAVEDS ASM LONG sortfunc(REG(a1) STRPTR str1, REG(a2) STRPTR str2)
+SAVEDS LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
 {
    return(stricmp(str1, str2));
 }
 
 ///
 /// des_func
-SAVEDS ASM VOID des_func(REG(a2) APTR pool, REG(a1) APTR ptr)
+VOID SAVEDS des_func(register __a2 APTR pool, register __a1 APTR ptr)
 {
    if(ptr)
       FreeVec(ptr);
@@ -33,7 +63,7 @@ SAVEDS ASM VOID des_func(REG(a2) APTR pool, REG(a1) APTR ptr)
 
 ///
 /// strobjfunc
-SAVEDS ASM LONG strobjfunc(REG(a2) Object *list, REG(a1) Object *str)
+SAVEDS LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
 {
    char *x, *s;
    int i;
@@ -65,7 +95,7 @@ SAVEDS ASM LONG strobjfunc(REG(a2) Object *list, REG(a1) Object *str)
 
 ///
 /// objstrfunc
-SAVEDS ASM VOID objstrfunc(REG(a2) Object *list,REG(a1) Object *str)
+VOID SAVEDS objstrfunc(register __a2 Object *list,register __a1 Object *str)
 {
    char *x;
 
@@ -337,7 +367,7 @@ STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep)
 
 ///
 /// IntuiMsgFunc
-SAVEDS ASM VOID IntuiMsgFunc(REG(a1) struct IntuiMessage *imsg,REG(a2) struct FileRequester *req)
+VOID SAVEDS IntuiMsgFunc(register __a1 struct IntuiMessage *imsg,register __a2 struct FileRequester *req)
 {
    if(imsg->Class == IDCMP_REFRESHWINDOW)
       DoMethod(req->fr_UserData, MUIM_Application_CheckRefresh);
@@ -384,7 +414,7 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
          if(*req->fr_File)
          {
             res = buf;
-            stccpy(buf, req->fr_Drawer, sizeof(buf));
+            strncpy(buf, req->fr_Drawer, sizeof(buf));
             AddPart(buf, req->fr_File, sizeof(buf));
          }
          left     = req->fr_LeftEdge;
@@ -411,7 +441,18 @@ STRPTR get_configcontents(BOOL ppp)
 
    if(ppp)
    {
-      sprintf(buffer, "%ls %ld %ld Shared %ls %ls%ls ALLOWPAP=YES ALLOWCHAPMS=YES ALLOWCHAPMD5=YES USERID=%ls PASSWORD=%ls MTU=%ld",
+      sprintf(buffer, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %ls\n%lsuser %ls\nsecret %ls\n",
+         xget(modem_data->STR_SerialDriver, MUIA_String_Contents),
+         xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
+         xget(modem_data->STR_BaudRate, MUIA_String_Integer),
+         xget(provider_data->STR_IP_Address, MUIA_String_Contents),
+         (xget(modem_data->CH_Carrier, MUIA_Selected) ? "cd yes\n" : ""),
+//  (xget(modem_data->CH_7Wire, MUIA_Selected) ? "7Wire " : ""),
+         xget(user_data->STR_LoginName, MUIA_String_Contents),
+         xget(user_data->STR_Password, MUIA_String_Contents));
+//  xget(provider_data->STR_MTU, MUIA_String_Integer));
+
+/*      sprintf(buffer, "%ls %ld %ld Shared %ls %ls%ls ALLOWPAP=YES ALLOWCHAPMS=YES ALLOWCHAPMD5=YES USERID=%ls PASSWORD=%ls MTU=%ld",
          xget(modem_data->STR_SerialDriver, MUIA_String_Contents),
          xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
          xget(modem_data->STR_BaudRate, MUIA_String_Integer),
@@ -421,6 +462,7 @@ STRPTR get_configcontents(BOOL ppp)
          xget(user_data->STR_LoginName, MUIA_String_Contents),
          xget(user_data->STR_Password, MUIA_String_Contents),
          xget(provider_data->STR_MTU, MUIA_String_Integer));
+*/
    }
    else
    {

@@ -1,5 +1,10 @@
-#include "/AmiTCP.h"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
 #include "sana.h"
+///
 
 /// dummy
 int dummy(void)
@@ -14,15 +19,15 @@ static ULONG SanaTags[] = {
 };
 ///
 /// sana2_create
-struct sana2 *sana2_create(struct ifconfig *ifc)
+struct sana2 *sana2_create(struct config *conf)
 {
    struct sana2 * s2;
 
    if(s2 = AllocVec(sizeof(*s2), MEMF_ANY | MEMF_CLEAR))
    {
       s2->s2_openerr = 1;
-      s2->s2_name = (STRPTR)GetTagData(IF_Device, (ULONG)"", ifc->ifc_taglist);
-      s2->s2_unit = GetTagData(IF_Unit, 0, ifc->ifc_taglist);
+      s2->s2_name = conf->cnf_sana2device;
+      s2->s2_unit = conf->cnf_sana2unit;
 
       if(s2->s2_port = CreateMsgPort())
       {
@@ -34,15 +39,8 @@ struct sana2 *sana2_create(struct ifconfig *ifc)
             else
                return(s2);
          }
-         else
-            PrintFault(ERROR_NO_FREE_STORE, "CreateIORequest");
       }
-      else
-         PrintFault(ERROR_NO_FREE_STORE, "CreateMsgPort");
-
    }
-   else
-      PrintFault(ERROR_NO_FREE_STORE, "AllocVec");
 
    sana2_delete(s2);
    return(NULL);

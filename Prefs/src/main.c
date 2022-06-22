@@ -1,41 +1,67 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_About.h"
+#include "mui_DataBase.h"
+#include "mui_Dialer.h"
+#include "mui_MainWindow.h"
+#include "mui_Modem.h"
+#include "mui_PasswdReq.h"
+#include "mui_Provider.h"
+#include "mui_User.h"
 #include "protos.h"
+#include "mui/Grouppager_mcc.h"
+
+///
+/// external variables
+extern struct Catalog *cat;
+extern struct Library *MUIMasterBase;
+#ifdef DEMO
+extern struct Library *BattClockBase;
+#endif
+extern struct MUI_CustomClass  *CL_MainWindow;
+extern struct MUI_CustomClass  *CL_User;
+extern struct MUI_CustomClass  *CL_Provider;
+extern struct MUI_CustomClass  *CL_Dialer;
+extern struct MUI_CustomClass  *CL_Users;
+extern struct MUI_CustomClass  *CL_Databases;
+extern struct MUI_CustomClass  *CL_Modem;
+extern struct MUI_CustomClass  *CL_About;
+extern struct MUI_CustomClass  *CL_PasswdReq;
+extern struct NewMenu MainWindowMenu[];
+extern Object *app;
+extern Object *win;
+extern char config_file[MAXPATHLEN];
+extern BOOL changed_passwd, changed_group, changed_hosts, changed_protocols,
+            changed_services, changed_inetd, changed_networks, changed_rpc, changed_inetaccess;
+
+///
 
 /// exit_libs
 VOID exit_libs(VOID)
 {
    if(cat)              CloseCatalog(cat);
-
-   if(DataTypesBase)    CloseLibrary(DataTypesBase);
-   if(IFFParseBase)     CloseLibrary(IFFParseBase);
-   if(IntuitionBase)    CloseLibrary(IntuitionBase);
-   if(UtilityBase)      CloseLibrary(UtilityBase);
    if(MUIMasterBase)    CloseLibrary(MUIMasterBase);
-   if(LocaleBase)       CloseLibrary(LocaleBase);
-   if(DOSBase)          CloseLibrary(DOSBase);
 
-   cat         = NULL;
-   IFFParseBase   = IntuitionBase   = UtilityBase     =
-   MUIMasterBase  = LocaleBase      = DataTypesBase   =
-   DOSBase        = NULL;
+   cat            = NULL;
+   MUIMasterBase  = NULL;
 }
 
 ///
 /// init_libs
 BOOL init_libs(VOID)
 {
-   DOSBase        = (struct DosLibrary *)OpenLibrary("dos.library", 0);
-   IntuitionBase  = OpenLibrary("intuition.library"   , 0);
-
-   if(LocaleBase  = OpenLibrary("locale.library", 38))
-      cat = OpenCatalog(NULL, "AmiTCPPrefs.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
+   if(LocaleBase)
+      cat = OpenCatalog(NULL, "GenesisPrefs.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
 
    MUIMasterBase  = OpenLibrary("muimaster.library"   , 11);
-   UtilityBase    = OpenLibrary("utility.library"     , 0);
-   IFFParseBase   = OpenLibrary("iffparse.library"    , 0);
-   DataTypesBase  = OpenLibrary("datatypes.library"   , 0);
 
-   if(DOSBase && MUIMasterBase && UtilityBase && IntuitionBase && IFFParseBase && DataTypesBase)
+   if(MUIMasterBase)
       return(TRUE);
 
    exit_libs();
@@ -65,14 +91,14 @@ VOID exit_classes(VOID)
 /// init_classes
 BOOL init_classes(VOID)
 {
-   CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct MainWindow_Data) , MainWindow_Dispatcher);
-   CL_User           = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct User_Data)       , User_Dispatcher);
-   CL_Provider       = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Provider_Data)   , Provider_Dispatcher);
-   CL_Dialer         = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Dialer_Data)     , Dialer_Dispatcher);
-   CL_Databases      = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Databases_Data)  , Databases_Dispatcher);
-   CL_Modem          = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Modem_Data)      , Modem_Dispatcher);
-   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)      , About_Dispatcher);
-   CL_PasswdReq      = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct PasswdReq_Data)  , PasswdReq_Dispatcher);
+   CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct MainWindow_Data), MainWindow_Dispatcher);
+   CL_User           = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct User_Data)       , User_Dispatcher);
+   CL_Provider       = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Provider_Data)   , Provider_Dispatcher);
+   CL_Dialer         = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Dialer_Data)     , Dialer_Dispatcher);
+   CL_Databases      = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Databases_Data)  , Databases_Dispatcher);
+   CL_Modem          = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Modem_Data)      , Modem_Dispatcher);
+   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)      , About_Dispatcher);
+   CL_PasswdReq      = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct PasswdReq_Data)  , PasswdReq_Dispatcher);
 
    if(CL_MainWindow     && CL_User          && CL_Provider    &&
       CL_Dialer         && CL_About         && CL_PasswdReq   &&
@@ -169,104 +195,65 @@ BOOL check_date(VOID)
 #endif
 
 ///
-/// Handler
-VOID __saveds Handler(VOID)
+/// main
+VOID main(VOID)
 {
    ULONG sigs = NULL;
 
-   if(app = ApplicationObject,
-      MUIA_Application_Author       , "Michael Neuweiler",
-      MUIA_Application_Base         , "AmiTCPPrefs",
-      MUIA_Application_Title        , "AmiTCP Prefs",
-      MUIA_Application_Version      , VERSTAG,
-      MUIA_Application_Copyright    , GetStr(MSG_AppCopyright),
-      MUIA_Application_Description  , GetStr(MSG_AppDescription),
-      MUIA_Application_HelpFile     , "NetConnect:Docs/AmiTCP.guide",
-      MUIA_Application_Window       , win = NewObject(CL_MainWindow->mcc_Class, NULL, TAG_DONE),
-   End)
-   {
-      if(DoMethod(win, MUIM_MainWindow_InitGroups, NULL))
-      {
-         struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-
-         set(win, MUIA_Window_Open, TRUE);
-         set(data->GR_Pager, MUIA_Grouppager_Active, 0);
-
-         strcpy(config_file, DEFAULT_CONFIGFILE);
-         DoMethod(win, MUIM_MainWindow_LoadConfig, config_file);
-
-         changed_passwd   = changed_group = changed_hosts    = changed_protocols =
-         changed_services = changed_inetd = changed_networks = changed_rpc       = FALSE;
-
-#ifdef DEMO
-         DoMethod(win, MUIM_MainWindow_About);
-         if(!check_date())
-            MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
-         else
-#endif
-         while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
-         {
-            if(sigs)
-            {
-               sigs = Wait(sigs | SIGBREAKF_CTRL_C);
-               if(sigs & SIGBREAKF_CTRL_C)
-                  break;
-            }
-         }
-         set(win, MUIA_Window_Open, FALSE);
-      }
-      MUI_DisposeObject(app);
-      app = NULL;
-   }
-}
-
-///
-/// main
-LONG main(VOID)
-{
-   ThisProcess = (struct Process *)FindTask(NULL);
-
-   if(!ThisProcess->pr_CLI)
-   {
-      WaitPort(&ThisProcess->pr_MsgPort);
-
-      WBenchMsg = (struct WBStartup *)GetMsg(&ThisProcess->pr_MsgPort);
-   }
-   else
-      WBenchMsg = NULL;
-
    if(init_libs())
    {
-      if(!ThisProcess -> pr_CLI)
-         WBenchLock = CurrentDir(WBenchMsg->sm_ArgList->wa_Lock);
-
       if(init_classes())
       {
          LocalizeNewMenu(MainWindowMenu);
 
-         if(StackSize(NULL) < 16384)
+         if(app = ApplicationObject,
+            MUIA_Application_Author       , "Michael Neuweiler",
+            MUIA_Application_Base         , "GenesisPrefs",
+            MUIA_Application_Title        , "Genesis Preferences",
+            MUIA_Application_Version      , VERSTAG,
+            MUIA_Application_Copyright    , GetStr(MSG_AppCopyright),
+            MUIA_Application_Description  , GetStr(MSG_AppDescription),
+            MUIA_Application_Window       , win = NewObject(CL_MainWindow->mcc_Class, NULL, TAG_DONE),
+         End)
          {
-            LONG success;
-            StackCall(&success,16384,0,(LONG (* __stdargs)())Handler);
-         }
-         else
-            Handler();
+            if(DoMethod(win, MUIM_MainWindow_InitGroups, NULL))
+            {
+               struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
 
+               set(data->GR_Pager, MUIA_Grouppager_Active, 0);
+               set(win, MUIA_Window_Open, TRUE);
+
+               strcpy(config_file, DEFAULT_CONFIGFILE);
+               DoMethod(win, MUIM_MainWindow_LoadConfig, config_file);
+
+               changed_passwd   = changed_group = changed_hosts    = changed_protocols =
+               changed_services = changed_inetd = changed_networks = changed_rpc       =
+               changed_inetaccess = FALSE;
+
+#ifdef DEMO
+               DoMethod(win, MUIM_MainWindow_About);
+               if(!check_date())
+                  MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
+               else
+#endif
+               while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
+               {
+                  if(sigs)
+                  {
+                     sigs = Wait(sigs | SIGBREAKF_CTRL_C);
+                     if(sigs & SIGBREAKF_CTRL_C)
+                        break;
+                  }
+               }
+               set(win, MUIA_Window_Open, FALSE);
+            }
+            MUI_DisposeObject(app);
+            app = NULL;
+         }
          exit_classes();
       }
-      if(WBenchMsg)
-         CurrentDir(WBenchLock);
       exit_libs();
    }
-   if(WBenchMsg)
-   {
-      Forbid();
-      ReplyMsg((struct Message *)WBenchMsg);
-   }
-
-
-   return(RETURN_OK);
 }
 
 ///
-

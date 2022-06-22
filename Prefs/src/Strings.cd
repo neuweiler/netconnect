@@ -1,0 +1,1055 @@
+#language english
+#version 1
+#lengthbytes 0
+;
+;
+; general stuff
+;
+;
+MSG_AppDescription (//)
+Preferences Program for Genesis
+;
+MSG_AppCopyright (//)
+Michael Neuweiler
+;
+MSG_TX_About1 (//)
+\033c\n© 1996 Michael Neuweiler & Active Software\n\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler
+;
+MSG_TX_About2 (//)
+\033cGenesis Prefs uses:\nMUI - Copyright © Stefan Stuntz
+;
+MSG_TX_InvalidProgram (//)
+Sorry, program has become invalid !
+;
+MSG_BT_Sigh (//)
+\033b_Sigh..
+;
+MSG_Pages1 (//)
+Info
+;
+MSG_Pages2 (//)
+Provider
+;
+MSG_Pages3 (//)
+User
+;
+MSG_Pages4 (//)
+Modem / TA
+;
+MSG_Pages5 (//)
+Groups
+;
+MSG_Pages6 (//)
+Databases
+;
+MSG_Pages7 (//)
+Paths
+;
+MSG_Pages8 (//)
+Events
+;
+MSG_BT_Save (//)
+_Save
+;
+MSG_BT_Use (//)
+_Use
+;
+MSG_BT_Cancel (//)
+_Cancel
+;
+MSG_BT_Okay (//)
+\033b_Okay
+;
+MSG_BT_New (//)
+_New
+;
+MSG_BT_New2 (//)
+N_ew
+;
+MSG_BT_Remove (//)
+_Remove
+;
+MSG_BT_Remove2 (//)
+Re_move
+;
+MSG_BT_Remove3 (//)
+Remo_ve
+;
+MSG_TX_DemoVersion (//)
+\033bTHIS IS A DEMO VERSION !
+;
+MSG_TX_DemoWarning (//)
+DEMO VERSION !\n\nThis program will become invalid after 30 days.\nThen you will have to buy the full\nversion if you want to continue using it.\nAlso some functions are disabled in the demo version.
+;\033nThis is a LITE version of NetConnect which was licensed\nfor inclusion with the July '97 issue of CU Amiga.\n\nThis version
+;is limited to 100 days and one hour use\nof the Internet. Designed as a introductory pack to\nget people onto the Internet, you can choose to\nupgrade to the full version for a discounted price.\n\nThe full version will cost £44.95 and is\nlimited to users of this
+;LITE version.\n\nTo order a full version of NetConnect\nat this discounted price contact:\n\nActive Software - +44 (0)1325 352260\n\nor see the NetConnect web site for\nfurther ordering information:\n\n\033bhttp://amigaworld.com/netconnect\n
+;above text only for WireNet
+;
+MSG_TX_SelectProviderFile (//)
+Please select a provider file
+;
+MSG_TX_InstallProvider (//)
+\033cThe provider file will be installed in\nNetConnect:Data/Providers/%ls\nand be used from there.
+;
+MSG_BT_InstallProvider (//)
+*\033b_Proceed|\_Abort
+;
+MSG_TX_ChangesSavedOnly (//)
+Changes on this page will only be saved if you press 'save'.
+;
+; Bubble help "general"
+;
+MSG_Help_Pager (//)
+Select which page\nyou want to be displayed.
+;
+MSG_Help_Save (//)
+Save all changes permanently.
+;
+MSG_Help_Use (//)
+Save changes temporarily.\nThey will be lost next time\nyou reboot your Amiga.
+;
+MSG_Help_Cancel (//)
+Abandon all changes.
+;
+MSG_Help_New (//)
+Add a new entry to the list.\nYou can use drag & drop to move the lines in the list.
+;
+MSG_Help_Remove (//)
+Remove the selected entry.
+;
+;
+;
+; Provider page
+;
+;
+MSG_WI_ProviderInfo (//)
+Provider Information
+;
+MSG_TX_SelectCountry (//)
+\033c- select a country -
+;
+MSG_TX_SelectProvider (//)
+\033c- select a provider -
+;
+MSG_TX_SelectPoP (//)
+\033c- select a PoP -
+;
+MSG_ProviderRegister1 (//)
+Provider
+;
+MSG_ProviderRegister2 (//)
+Configuration
+;
+MSG_ProviderRegister3 (//)
+Interface
+;
+MSG_ProviderRegister4 (//)
+Services
+;
+MSG_ProviderRegister5 (//)
+Loginscript
+;
+MSG_CY_Address0 (//)
+dynamic
+;
+MSG_CY_Address1 (//)
+static
+;
+MSG_CY_Authentication1 (//)
+none
+;
+MSG_CY_Authentication2 (//)
+chap
+;
+MSG_CY_Authentication3 (//)
+pap
+;
+MSG_CY_Header1 (//)
+automatic
+;
+MSG_CY_Header2 (//)
+on
+;
+MSG_CY_Header3 (//)
+off
+;
+MSG_LA_Phone (//)
+PoP's Phone Number:
+;
+MSG_CC_Phone (/1/1)
+p
+;
+MSG_LA_ShowProviderInfo (//)
+Show Provider Info:
+;
+MSG_CC_ShowProviderInfo (/1/1)
+i
+;
+MSG_LA_DomainName (//)
+Domain Name:
+;
+MSG_CC_DomainName (/1/1)
+d
+;
+MSG_LA_NameServer1 (//)
+Name Server 1:
+;
+MSG_CC_NameServer1 (/1/1)
+1
+;
+MSG_LA_NameServer2 (//)
+Name Server 2:
+;
+MSG_CC_NameServer2 (/1/1)
+2
+;
+MSG_LA_ProxyServer (//)
+Proxy Server:
+;
+MSG_CC_ProxyServer (/1/1)
+p
+;
+MSG_LA_ProxyPort (//)
+Port:
+;
+MSG_CC_ProxyPort (/1/1)
+t
+;
+MSG_LA_HostName (//)
+Host Name:
+;
+MSG_CC_HostName (/1/1)
+h
+;
+MSG_LA_Address (//)
+IP Address:
+;
+MSG_CC_Address (/1/1)
+a
+;
+MSG_LA_BOOTP (//)
+BOOTP:
+;
+MSG_CC_BOOTP (/1/1)
+b
+;
+MSG_LA_Interface (//)
+Interface:
+;
+MSG_CC_Interface (/1/1)
+i
+;
+MSG_LA_Compression (//)
+Header Compression:
+;
+MSG_CC_Compression (/1/1)
+h
+;
+MSG_LA_Authentication (//)
+PPP Authentication:
+;
+MSG_CC_Authentication (/1/1)
+a
+;
+MSG_LA_MTU (//)
+MTU:
+;
+MSG_CC_MTU (/1/1)
+m
+;
+MSG_LA_MailServer (//)
+Mail Server:
+;
+MSG_CC_MailServer (//)
+m
+;
+MSG_LA_POP3Server (//)
+POP3 Server:
+;
+MSG_CC_POP3Server (/1/1)
+p
+;
+MSG_LA_NewsServer (//)
+News Server:
+;
+MSG_CC_NewsServer (/1/1)
+n
+;
+MSG_LA_WWWServer (//)
+WWW Server:
+;
+MSG_CC_WWWServer (/1/1)
+w
+;
+MSG_LA_FTPServer (//)
+FTP Server:
+;
+MSG_CC_FTPServer (/1/1)
+f
+;
+MSG_LA_TimeServer (//)
+Time Server:
+;
+MSG_CC_TimeServer (/1/1)
+t
+;
+MSG_LA_IRCServer (//)
+IRC Server:
+;
+MSG_CC_IRCServer (/1/1)
+i
+;
+MSG_LA_IRCPort (//)
+Port:
+;
+MSG_CC_IRCPort (/1/1)
+o
+;
+MSG_LA_Action (//)
+Action
+;
+MSG_LA_String (//)
+String
+;
+MSG_LA_CR (//)
+CR
+;
+; Bubble Help "Provider"
+;
+MSG_Help_Country (//)
+Please select the\ncountry you live in.
+;
+MSG_Help_Provider (//)
+Select the provider\nyou want to use.
+;
+MSG_Help_PoP (//)
+Choose the Point of Presence\nof your provider.
+;
+MSG_Help_Phone (//)
+Enter the phone number(s) of your provider.\nUse a space to separate phone numbers.\ni.e. \"2574011 2574012\".
+;
+MSG_Help_ProviderInfo (//)
+Opens a window which shows\ndetailed information about the\nProvider/PoP you have chosen.
+;
+MSG_Help_DomainName (//)
+The name of\nthe domain.
+;
+MSG_Help_NameServer1 (//)
+The IP Adress of the\nprimary NameServer.
+;
+MSG_Help_NameServer2 (//)
+The IP Adress of the\nsecondary NameServer.
+;
+MSG_Help_ProxyServer (//)
+Enter the name of your\nproviders Proxy-Server.\n(most providers don't use this)
+;
+MSG_Help_ProxyPort (//)
+Enter the port number of your\nproviders Proxy-Server.\n(most providers don't use this)
+;
+MSG_Help_HostName (//)
+The name of your computer.\nIf you use dynamic IP Adresses\nyour provider probably won't\ngive you a host name.
+;
+MSG_Help_IP_Address (//)
+If you use a static IP Address,\nyou have to enter it here.\nThis will be something similar to\n151.52.3.62 (four sets of digits\nwith full stop separators).
+;
+MSG_Help_Address (//)
+Is your IP Address static or dynamic ?
+;
+MSG_Help_BOOTP (//)
+Does your provider\noffer BOOTP ?
+;
+MSG_Help_Interface (//)
+Do you use ppp or\nslip as interface ?
+;
+MSG_Help_Header (//)
+Does your provider support Header Compression ?\nIf you don't know you could simply choose \"Automatic\".
+;
+MSG_Help_Authentication (//)
+Does your provider use\nPAP or CHAP authentication ?
+;
+MSG_Help_MTU (//)
+Set the Maximum\nTransfer Unit.
+;
+MSG_Help_MailServer (//)
+Enter the name of your\nproviders Mail-Server.
+;
+MSG_Help_POPServer (//)
+Enter the name of your\nproviders POP3-Server.
+;
+MSG_Help_NewsServer (//)
+Enter the name of your\nproviders News-Server.
+;
+MSG_Help_WWWServer (//)
+Enter the name of your\nproviders WWW-Server.
+;
+MSG_Help_FTPServer (//)
+Enter the name of your\nproviders FTP-Server.
+;
+MSG_Help_IRCServer (//)
+Enter the name of your\nproviders IRC-Server.
+;
+MSG_Help_IRCPort (//)
+Enter the port number of your\nproviders IRC-Server.\n(default is: 6667)
+;
+MSG_Help_TimeServer (//)
+Enter the name of your\nproviders Time-Server.
+;
+MSG_Help_Action (//)
+Select what should be done.
+;
+MSG_Help_String (//)
+Enter the string to\nsend / wait for.
+;
+MSG_Help_CR (//)
+Should a carriage-return be\nsent, resp. waited for ?
+;
+;
+;
+; User page
+;
+;
+MSG_UserRegister1 (//)
+User Information
+;
+MSG_UserRegister2 (//)
+User StartNet
+;
+MSG_UserRegister3 (//)
+User StopNet
+;
+MSG_LA_LoginName (//)
+Login Name:
+;
+MSG_CC_LoginName (/1/1)
+l
+;
+MSG_LA_Password (//)
+Password:
+;
+MSG_CC_Password (/1/1)
+p
+;
+MSG_LA_EMail (//)
+EMail Address:
+;
+MSG_CC_EMail (/1/1)
+e
+;
+MSG_LA_RealName (//)
+Real Name:
+;
+MSG_CC_RealName (/1/1)
+r
+;
+MSG_LA_Organisation (//)
+Organisation:
+;
+MSG_CC_Organisation (/1/1)
+o
+;
+; Bubble Help "User"
+;
+MSG_Help_LoginName (//)
+Enter your login name here.\nThis is the name you chose when you\nfirst contacted your provider.\nFor instance our login name is \"active\".
+;
+MSG_Help_Password (//)
+This is the password that will be\nused during the login procedure\nat your provider.\nThis password will have been chosen by\nyou when you first contacted your provider.
+;
+MSG_Help_EMail (//)
+Your EMail address.\nThis can be left blank, but if filled\ncould be useful for configuration\nof email programs.
+;
+MSG_Help_RealName (//)
+Your full name
+;
+MSG_Help_Organisation (//)
+The name of your organisation\nor something like \"Private User\".
+;
+MSG_Help_UserStartnet (//)
+This is the script that will be executed\nafter the connection to your provider\nhas been established.\nIt can be used to start a httpd server\nfor example.\nYou can use drag & drop to move\nlines in this list
+;
+MSG_Help_UserStopnet (//)
+This is the script that will be executed\nbefore the connection to your provider\nis terminated.\nYou can use drag & drop to move\nlines in this list.
+;
+MSG_Help_Line (//)
+Edit the contents of the\ncurrently selected line here.
+;
+;
+;
+; Modem page
+;
+;
+MSG_ModemRegister1 (//)
+Modem / TA Settings
+;
+MSG_ModemRegister2 (//)
+Device Settings
+;
+MSG_LA_ModemType (//)
+Type:
+;
+MSG_LA_ModemInit (//)
+Init String:
+;
+MSG_CC_ModemInit (/1/1)
+i
+;
+MSG_LA_DialPrefix (//)
+Dial Prefix:
+;
+MSG_CC_DialPrefix (/1/1)
+p
+;
+MSG_LA_RedialAttempts (//)
+Redial Attempts:
+;
+MSG_CC_RedialAttempts (/1/1)
+r
+;
+MSG_LA_RedialDelay (//)
+Redial Delay:
+;
+MSG_CC_RedialDelay (/1/1)
+d
+;
+MSG_LA_Device (//)
+Device:
+;
+MSG_CC_Device (/1/1)
+d
+;
+MSG_LA_Unit (//)
+Unit:
+;
+MSG_CC_Unit (/1/1)
+n
+;
+MSG_LA_BaudRate (//)
+Baud Rate:
+;
+MSG_CC_BaudRate (/1/1)
+b
+;
+MSG_LA_CarrierDetect (//)
+Carrier Detect
+;
+MSG_CC_CarrierDetect (/1/1)
+a
+;
+MSG_LA_HardwareHandshake (//)
+Hardware Handshake (RTS/CTS)
+;
+MSG_CC_HardwareHandshake (/1/1)
+h
+;
+MSG_LA_OwnDevUnit (//)
+Use OwnDevUnit
+;
+MSG_CC_OwnDevUnit (/1/1)
+o
+;
+; Bubble Help "Modem"
+;
+MSG_Help_Modem (//)
+Select your modem.\nIf your modem is not listed, then just\ninsert the correct initialisation string\n(as found in your modem handbook)\nin the \"Modem Init\" box below.
+;
+MSG_Help_ModemInit (//)
+Enter the initialisation\nstring of your modem.
+;
+MSG_Help_DialPrefix (//)
+The dial prefix\nfor your modem
+;
+MSG_Help_RedialAttempts (//)
+How many times should the dialer\ntry to establish a connection ?
+;
+MSG_Help_RedialDelay (//)
+Time in seconds until\nthe next dial attempt.
+;
+MSG_Help_SerialDriver (//)
+Enter the name of\nyour serial driver.\n(case sensitive !)
+;
+MSG_Help_SerialUnit (//)
+Enter the unit number\nyou want to use for\nyour serial driver.
+;
+MSG_Help_BaudRate (//)
+Enter the transfer speed between\nyour Amiga and your Modem\n(should be higher than the modem's\nmax. connection speed).
+;
+MSG_Help_Carrier (//)
+Shall the network be stopped\nif the modem drops the carrier ?
+;
+MSG_Help_7Wire (//)
+If you use baud rates higher\nthan 9600 you should set this.
+;
+MSG_Help_OwnDevUnit (//)
+Use OwnDevUnit to access\nthe serial device.
+;
+;
+;
+; Paths page
+;
+;
+MSG_LA_MailIn (//)
+Mail IN:
+;
+MSG_CC_MailIn (/1/1)
+m
+;
+MSG_LA_MailOut (//)
+Mail OUT:
+;
+MSG_CC_MailOut (/1/1)
+a
+;
+MSG_LA_NewsIn (//)
+News IN:
+;
+MSG_CC_NewsIn (/1/1)
+n
+;
+MSG_LA_NewsOut (//)
+News OUT:
+;
+MSG_CC_NewsOut (/1/1)
+e
+;
+MSG_LA_FilesIn (//)
+Files IN:
+;
+MSG_CC_FilesIn (/1/1)
+f
+;
+MSG_LA_FilesOut (//)
+Files OUT:
+;
+MSG_CC_FilesOut (/1/1)
+i
+;
+; Bubble Help "Paths"
+;
+MSG_Help_MailIn (//)
+Where does incoming mail go to.
+;
+MSG_Help_MailOut (//)
+Here we store outgoing mails.
+;
+MSG_Help_NewsIn (//)
+Where the news go in
+;
+MSG_Help_NewsOut (//)
+Drawer for outgoing news
+;
+MSG_Help_FileIn (//)
+Drawer to download files to.
+;
+MSG_Help_FileOut (//)
+Drawer to upload files from.
+;
+;
+;
+; Groups page
+;
+;
+MSG_LA_Users (//)
+Users
+;
+MSG_LA_FullName (//)
+Full Name:
+;
+MSG_CC_FullName (/1/1)
+f
+;
+MSG_LA_HomeDir (//)
+Home Dir:
+;
+MSG_CC_HomeDir (/1/1)
+h
+;
+MSG_TX_ChooseHomeDir (//)
+Choose home directory
+;
+MSG_LA_Shell (//)
+Shell:
+;
+MSG_CC_Shell (/1/1)
+l
+;
+MSG_LA_DisableUser (//)
+Disable User
+;
+MSG_CC_DisableUser (/1/1)
+b
+;
+MSG_LA_UserID (//)
+User ID:
+;
+MSG_CC_UserID (/1/1)
+d
+;
+MSG_BT_ChangePassword (//)
+Chan_ge Password
+;
+MSG_LA_UserGID (//)
+Group ID:
+;
+MSG_CC_UserGID (/1/1)
+o
+;
+MSG_BT_RemovePassword (//)
+Remove Pass_word
+;
+MSG_BT_ReallyRemovePasswd (//)
+_Remove|*\033b_Cancel
+;
+MSG_TX_ReallyRemovePasswd (//)
+Do you really want to remove\nthis user's password ?
+;
+MSG_TX_PasswordWarning (//)
+\033b\033cWARNING !\033n\n\nThe password has been removed.\nThis represents a security hole since\nother users may login without beeing\nasked for a password.
+;
+MSG_LA_Groups (//)
+Groups
+;
+MSG_LA_GroupID (//)
+ID:
+;
+MSG_CC_GroupID (/1/1)
+i
+;
+MSG_LA_GroupName (//)
+Name:
+;
+MSG_CC_GroupName (/1/1)
+a
+;
+MSG_LA_GroupMembers (//)
+Members
+;
+; Bubble help "Groups"
+;
+MSG_Help_Users_List (//)
+This list contains\nyour system's users.
+;
+MSG_Help_Users_Username (//)
+The login-name of the selected user.
+;
+MSG_Help_Users_Fullname (//)
+The full name of\nthe selected user.
+;
+MSG_Help_Users_HomeDir (//)
+The user's home directory.\nThis is where the user will be after loging in.
+;
+MSG_Help_Users_Shell (//)
+The shell for the user.\nUsed for remote login with telnet.
+;
+MSG_Help_Users_Disable (//)
+Disable the user.\nThe user can't login anymore.
+;
+MSG_Help_Users_UserID (//)
+The user's ID number.\nMake sure every user has a unique one.
+;
+MSG_Help_Users_ChangePassword (//)
+Change the user's password.
+;
+MSG_Help_Users_RemovePassword (//)
+Remove the user's password.\nBe warned: It is dangerous if a user has no\npassword since everyone could login using this\nuser's account.
+;
+MSG_Help_Users_GroupID (//)
+The user's group id.\nYou can drag & drop a group from\nthe list below into this field.
+;
+MSG_Help_Groups_List (//)
+This list contains\nthe system's groups.
+;
+MSG_Help_Groups_Name (//)
+The name of the selected group.
+;
+MSG_Help_Groups_Number (//)
+The id number of the selected group.\nMake sure every group has its own id !
+;
+MSG_Help_Groups_Members (//)
+The currently selected group's members.\nTo add members drag & drop a user from\nthe above user list into this list.
+;
+;
+;
+; Databases page
+;
+;
+MSG_DatabasesRegister1 (//)
+Hosts
+;
+MSG_DatabasesRegister2 (//)
+Protocols
+;
+MSG_DatabasesRegister3 (//)
+Services
+;
+MSG_DatabasesRegister4 (//)
+Inetd
+;
+MSG_DatabasesRegister5 (//)
+Networks
+;
+MSG_DatabasesRegister6 (//)
+Rpc
+;
+MSG_TX_IPAddr (//)
+\033bIP Addr
+;
+MSG_LA_IPAddr (//)
+IP Addr:
+;
+MSG_CC_IPAddr (/1/1)
+i
+;
+MSG_TX_Name (//)
+\033bName
+;
+MSG_LA_Name (//)
+Name:
+;
+MSG_CC_Name (/1/1)
+m
+;
+MSG_TX_Aliases (//)
+\033bAliases
+;
+MSG_LA_Aliases (//)
+Aliases:
+;
+MSG_CC_Aliases (/1/1)
+a
+;
+MSG_TX_ID (//)
+\033bID
+;
+MSG_LA_ID (//)
+ID:
+;
+MSG_CC_ID (/1/1)
+i
+;
+MSG_TX_Port (//)
+\033bPort
+;
+MSG_LA_Port (//)
+Port:
+;
+MSG_CC_Port (/1/1)
+p
+;
+MSG_TX_Service (//)
+\033bService
+;
+MSG_LA_Service (//)
+Service:
+;
+MSG_CC_Service (/1/1)
+i
+;
+MSG_TX_User (//)
+\033bUser
+;
+MSG_LA_User (//)
+User:
+;
+MSG_CC_User (/1/1)
+e
+;
+MSG_TX_Server (//)
+\033bServer
+;
+MSG_LA_Server (//)
+Server:
+;
+MSG_CC_Server (/1/1)
+v
+;
+MSG_TX_Args (//)
+\033bArgs
+;
+MSG_LA_Args (//)
+Args:
+;
+MSG_CC_Args (/1/1)
+a
+;
+MSG_TX_Status (//)
+\033bStatus
+;
+MSG_TX_Enabled (//)
+enabled
+;
+MSG_TX_Disabled (//)
+disabled
+;
+MSG_LA_Enabled (//)
+Enabled:
+;
+MSG_CC_Enabled (/1/1)
+b
+;
+MSG_TX_Protocol (//)
+\033bProtocol
+;
+MSG_TX_Socket (//)
+\033bSocket
+;
+MSG_TX_Wait (//)
+\033bWait
+;
+; Bubble Help "Databases"
+;
+MSG_Help_Hosts (//)
+This list holds the host database.\nAmiTCP will check this list before querying\na name server for a host's address.
+;
+MSG_Help_Hosts_IPAddr (//)
+The host's IP address.
+;
+MSG_Help_Name (//)
+The name of the\ncurrent selected entry.
+;
+MSG_Help_Aliases (//)
+The aliases of the\ncurrent selected entry\n(separated by a space).
+;
+MSG_Help_Protocols (//)
+This list holds the\nprotocol database.
+;
+MSG_Help_ID (//)
+The ID number of the\ncurrent selected entry.
+;
+MSG_Help_Services (//)
+This list holds the service database.\nAmiTCP needs this to assign\na given port to a service.
+;
+MSG_Help_Port (//)
+The port number of the\ncurrent selected entry.
+;
+MSG_Help_Protocol (//)
+The protocol of the\ncurrent selected entry.
+;
+MSG_Help_Inetd (//)
+This list defines how the\nservices can be used.\nPlease refer to\nAmiTCP's documentation.
+;
+MSG_Help_Service (//)
+The name of the service.
+;
+MSG_Help_Inetd_User (//)
+The user name that will be\nused to run the server.
+;
+MSG_Help_Inetd_Server (//)
+The server to be launched\n(\"internal\" or a\nspecific file).
+;
+MSG_Help_Args (//)
+The arguments passed to the server.
+;
+MSG_Help_Enabled (//)
+Enable/Disable the selected service.
+;
+MSG_Help_Socket (//)
+Select which socket\ntype should be used.
+;
+MSG_Help_Wait (//)
+Select if we should wait\nfor the server to complete.
+;
+MSG_Help_Networks (//)
+This list holds the networks database.\nPlease refer to the AmiTCP documentation.
+;
+MSG_Help_Rpcs (//)
+This list holds the\nprogram number database.
+;
+;
+;
+; Events page
+;
+;
+MSG_LA_Start (//)
+Start:
+;
+MSG_CC_Start (/1/1)
+t
+;
+MSG_LA_Stop (//)
+Stop:
+;
+MSG_CC_Stop (/1/1)
+o
+;
+MSG_LA_Online (//)
+Online:
+;
+MSG_CC_Online (/1/1)
+n
+;
+MSG_LA_OnlineFailed (//)
+Online Failed:
+;
+MSG_CC_OnlineFailed (/1/1)
+f
+;
+MSG_LA_OfflineActive (//)
+Offline (active):
+;
+MSG_CC_OfflineActive (/1/1)
+a
+;
+MSG_LA_OfflinePassive (//)
+Offline (passive):
+;
+MSG_CC_OfflinePassive (/1/1)
+p
+;
+; Bubble help "events"
+;
+MSG_Help_Start (//)
+Sound to play when\nGenesis is started.
+;
+MSG_Help_Stop (//)
+Sound to play when\nGenesis is stopped.
+;
+MSG_Help_Online (//)
+Sound to play when\ninterface is online.
+;
+MSG_Help_OnlineFailed (//)
+Sound to play when\nconnection failed.
+;
+MSG_Help_OfflineActive (//)
+Sound to play when the user\nput the interface offline.
+;
+MSG_Hepl_OfflinePassive (//)
+Sound to play when the interface\nwas set offline passively.
+;
+;
+;
+; Menus
+;
+;
+MSG_MENU_PROJECT (//)
+Project
+;
+MSG_MENU_ABOUT (//)
+About...
+;
+MSG_MENU_QUIT (//)
+Quit
+;
+MSG_MENU_SETTINGS (//)
+Settings
+;
+MSG_MENU_IMPORT (//)
+Import Provider
+;
+MSG_MENU_MUI (//)
+MUI...
+;
+MSG_MENU_HELP (//)
+Help
+;
+MSG_MENU_HELP_AMITCP (//)
+AmiTCP
+;
+MSG_MENU_EXPORT (//)
+Export Provider
+;
+MSG_TX_ExportProvider (//)
+To help us make the provider database more complete\nand up to date, please send the just created file to\n\n\033b\033cenquiries@active2.demon.co.uk\033l\033n .\n\nDon't worry, no personal data was exported. You\ncan have a look at the generated file to make sure\nnothing was exported you do not want to publish.
+;
+MSG_MENU_EXPERT (//)
+Expert mode
+;

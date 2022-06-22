@@ -1,5 +1,20 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_Provider.h"
 #include "protos.h"
+
+///
+/// external variables
+extern struct Hook strobjhook;
+extern Object *win;
+
+///
 
 /// Provider_Sana2Cycle
 ULONG Provider_Sana2Cycle(struct IClass *cl, Object *obj, Msg msg)
@@ -417,17 +432,19 @@ MUIA_InnerTop, 0,
 
 ///
 /// Provider_Dispatcher
-SAVEDS ASM ULONG Provider_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ULONG Provider_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
-   {
-      case OM_NEW                                  : return(Provider_New                        (cl, obj, (APTR)msg));
-      case MUIM_Provider_Sana2Cycle                : return(Provider_Sana2Cycle                 (cl, obj, (APTR)msg));
-      case MUIM_Provider_PopString_Close           : return(Provider_PopString_Close            (cl, obj, (APTR)msg));
+   if(msg->MethodID == OM_NEW)
+      return(Provider_New                        (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Provider_Sana2Cycle)
+      return(Provider_Sana2Cycle                 (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Provider_PopString_Close)
+      return(Provider_PopString_Close            (cl, obj, (APTR)msg));
 #ifdef FIX_PROVIDER
-      case MUIM_Provider_Reset                     : return(Provider_Reset                      (cl, obj, (APTR)msg));
+   if(msg->MethodID == MUIM_Provider_Reset)
+      return(Provider_Reset                      (cl, obj, (APTR)msg));
 #endif
-   }
+
    return(DoSuperMethodA(cl, obj, msg));
 }
 

@@ -1,5 +1,23 @@
-#include "globals.c"
+/// includes
+#include "/includes.h"
+#pragma header
+
+#include "/Genesis.h"
+#include "rev.h"
+#include "Strings.h"
+#include "mui.h"
+#include "mui_About.h"
+#include "mui_MainWindow.h"
 #include "protos.h"
+#include "images/logo.h"
+
+///
+/// external variables
+extern ULONG logo_colors[];
+extern UBYTE logo_body[];
+extern Object *win;
+
+///
 
 /// About_New
 ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
@@ -80,12 +98,11 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 
 ///
 /// About_Dispatcher
-SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+SAVEDS ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
-   switch (msg->MethodID)
-   {
-      case OM_NEW : return(About_New      (cl,obj,(APTR)msg));
-   }
+   if(msg->MethodID == OM_NEW)
+      return(About_New(cl,obj,(APTR)msg));
+
    return(DoSuperMethodA(cl, obj, msg));
 }
 
