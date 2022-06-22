@@ -1,0 +1,170 @@
+
+  
+  
+  
+    The Modem Page:Initialization Strings
+  
+  
+    
+      
+      
+ Initialization Strings: Modems E - H 
+      [
+        E |
+        F |
+        G |
+        H 
+      ]
+      
+        
+          
+            
+              
+            
+          
+          
+            
+              [
+                A - D |
+                E - H |
+                I - L |
+                M - P |
+                Q - T |
+                U - W |
+                X - Z 
+              ]
+            
+          
+          
+            
+              
+            
+          
+        
+      
+      
+      [
+        The Modem Page  |
+        Init String DataBase |
+        Detection |
+        Manufactures |
+        Other Sites 
+      ]
+      
+      [
+        Whats New!  |
+        Frames 
+      ]
+    
+    
+    
+    
+Modem NameInit String
+E-Tech Bullet E2400MAT&F&C1&D2$E3$F4$V5$S1
+E-Tech Bullet E9696MAT&F&C1&D2$E3$F4$X4$S0
+E-Tech Bullet PC2400MHAT&F&C1&D2$E1$F4
+E-Tech Bullet PC9696MAT&F&C1&D2$E1$F4$S1
+ECS 400AT&F&C1&D3&K3&Q5\N3%C3S7=60
+Elsa MicroLink 14.4 SeriesAT&FX4&C1&D2\Q3\N3%C3
+Elsa MicroLink 2400T2VXAT&FX4&C1&D2&R6&E4$BA0$MB9600
+Elsa MicroLink 2410 (no MNP)ATE1Q0V1X4&C1&D2
+Elsa MicroLink 2410 w/MNP-5AT&FX4&C1&D2&R6&E1$BA0$SB9600
+Elsa MicroLink 2410 w/V.42bisAT&FX4&C1&D2&R6&E1$BA0$SB9600
+Elsa MicroLink 2440T/2440TRAT&FX4&C1&D2\Q3\N3%C3
+Elsa MicroLink 9624T2VXAT&FX4&C1&D2&R6&E4$BA0$MB9600
+Elsa MicroLink ISDN/PCAT&FX4&C1&D2\Q3
+Elsa MicroLink ISDN/TLAT&FX4&C1&D2\Q3
+ETech P1496MX Pocket ModemAT&F&C1&D2$E3$F4$S0
+Everex 96E+AT&F1&C1&D2\V2W1
+Everex Carrier 24AT&F\Q3\N3\J0\V10
+Everex Carrier 24/96AT&F&C1&D2\Q3\N3\J0\V1\C1
+Everex EV941AT&FE1V1Q0X4&C1&D2&I1&Y0
+Everex Evercom 12eAT&FE1V1Q0X4&C1&D2&I1&Y0
+Everex Evercom 24eAT&FE1V1Q0X4&C1&D2&I1&Y0
+Everex Evercom 24e+ (MNP 5)AT&F&C1&D2\Q3\C1\N3\J0\V1
+Everex EverFax 24/96EAT&F&C1&D2\Q3\N3\J0\V1
+Everex II-24AT&FE1V1Q0X4&C1&D2&I1&Y0
+(Go to Top)
+Modem NameInit String
+Fastcomm 2496/TurboAT#F#EE0#CL2#CH1#CW#LCN#LDNS2=43
+Fastcomm 9696AT&F&C1&D2&H1&I1&M6S10=2
+Forval IM14400AT&F&C1&D2&Y0\J0\N3\Q3\V1
+Frecom Winfast 14400AT&F&C1&D2*LG2*M2*V1*E10
+Frecom Winfast 9600AT&F&C1&D2*LG2*M2*V1*E10
+Freedom Series V.32bis Data/FAX ModemAT&F&C1&D3&K3&Q6\J0\N7\Q3\V2%C1S7=60
+(Go to Top)
+Modem NameInit String
+Garvin Super Modem 14.4AT&F&C1&D2
+Gateway 2000 TelepathAT&F&C1&D2&Q9&K3W2S37=0S38=0
+Gateway 2000 TelePathAT&FW2&C1&D3&K3&Q5\N3%C1S7=60S36=7S46=138S48=7S95=47
+Gateway 2000 Telepath 550AT&FX4&B1&C1&D2&H1&K1&R2
+Gateway 2000 TelePath 550AT&FX4&A3&B1&C1&D2&H1&K1&M4S7=60
+Gateway 2000 TelePath II Fax ModemAT&FX4&A3&B1&C1&D2&H1&K1&M4&N0S7=60
+Gateway 2000 TelePath PCMCIA Fax ModemAT&FX4&C1&D3&K3&Q5\N3%C3S7=60
+General DataComm 596AT&FQ0E1V1&C1&D2
+General Datacomm 596 V.42AT&F\Q3&C1&D2W1\V2
+Generic 14400 bps ModemAT&F&C1&D2S7=60
+Generic 19200 bps ModemAT&F&C1&D2S7=60
+Generic 28800 bps ModemAT&F&C1&D2S7=60
+GRID 14.4 Fax ModemAT&F&C1&D2\N7%C1\Q3\J0\V2
+GVC 14400 V.42bisAT&F2&C1&D2\V1&Y0
+GVC FM-288AT&F&C1&D3%C1\J0\N6\Q3\V1S7=60
+GVC SM-144V (V.42bis)AT&F&C1&D3%C1\J0\N6\Q2\V1S7=60
+GVC Super Modem 2400AT&F\V1%C1\C1\J0\N3\Q3&Y0
+GVC Super Modem 2400 MNP-5AT&F\V1%C1\C1\J0\N3\Q3&Y0
+GVC Super Modem 9600 V.32AT&F2X4&C1&D2%C1\C1\G0\J0\N6\Q3\V1&Y0
+(Go to Top)
+Modem NameInit String
+Hayes AccuraAT&F&C1&D2&Q5&K3S38=0S95=42
+Hayes Accura 144AT&F&C1&D2&Q5&K3S38=0S95=42
+Hayes ACCURA 144 + FAX144AT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Hayes ACCURA 144 ECAT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Hayes ACCURA 144B + FAX144AT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Hayes Accura 24 ECAT&F&C1&D2&Q5&K3S38=0S95=42
+Hayes ACCURA 288 V.34/V.FC + FAXAT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Hayes Accura 288 V.FCAT&F&C1&D2&Q5&K3S38=0S95=42
+Hayes ACCURA 288B V.34/V.FC + FAXAT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Hayes Accura 96AT&F&C1&D2&Q5&K3S38=0S95=42
+Hayes Compatible 1200 Baud ModemAT&F&C1&D2
+Hayes Compatible 2400 Baud ModemAT&F&C1&D2
+Hayes ISDN TA 2.0 (ISDN 56k)AT&F%A1=0%A2=2%A4=1%A0=2W1&D2&K3
+Hayes ISDN TA 2.0 (ISDN 64k)AT&F%A1=0%A2=2%A4=0%A0=2W1&D2&K3
+Hayes ISDN Terminal AdaptorAT&F&C1&D2&K3%A1=0%A2=2%A0=2W1
+Hayes OPTIMA 144 + FAX144AT&FW2&C1&D2&K3&Q5S7=60S46=138S48=7S95=47
+Hayes OPTIMA 144 + FAX144 PCMCIAAT&FW2&C1&D2&K3&Q5S7=60S46=138S48=7S95=47
+Hayes OPTIMA 144 + FAX144 Pocket EditionAT&FW2&C1&D2&K3&Q9S7=60S46=138S48=7S95=47
+Hayes Optima 14400 FaxAT&F&C1&D2&K3&Q9W2S37=0S38=0S95=46
+Hayes OPTIMA 144B + FAX144AT&FW2&C1&D2&K3&Q5S7=60S46=138S48=7S95=47
+Hayes Optima 2400AT&F&C1&D2&K3W1S95=42
+Hayes OPTIMA 288 V.34/V.FC + FAXAT&FW2&C1&D2&K3&Q9S7=60S46=138S48=7S95=47
+Hayes Optima 288 V.FC + FaxAT&F&C1&D2&K3&Q9W2S37=0S38=0S95=46
+Hayes OPTIMA 288B V.34/V.FC + FAXAT&FW2&C1&D2&K3&Q9S7=60S46=138S48=7S95=47
+Hayes Optima 9600AT&F&C1&D2&Q5&K3W2S38=0S95=42
+Hayes Personal Modem 1200AT&F&C1&D2
+Hayes Personal Modem 2400AT&F&C1&D2
+Hayes Smartmodem 1200/1200BAT&F&C1&D2
+Hayes Smartmodem 2400/2400BAT&F&C1&D2
+Hayes Smartmodem V Series 2400/2400BAT&F&C1&D2
+Hayes Smartmodem V Series 9600/9600B/9600 V.32AT&F&C1&D2
+Hayes Ultra 14400AT&F&C1&D2W1S38=0
+Hayes Ultra 9600AT&F&C1&D2
+Hayes V Series 2400/2400B V.42AT&F&C1&D2&K3&Y0
+Hayes V Series 9600/9600B V.42AT&F&C1&D2&K3&Y0
+Hayes V-series ULTRA Smartmodem 14400AT&FW2&C1&D2&K3&Q5S7=60S38=10S46=2S48=7S95=63
+Hidem 1200AT&F
+Hidem 14400DLXAT&FW2\N6
+Hidem 14400FAXAT&FW2\N6
+Hidem 14400P/FAXAT&FW2\N6
+Hidem 2400AT&F
+Hidem 2442AT&F\N7
+Hidem 9600AT&FW2\N6
+(Go to Top)
+    
+    Comments or suggestions
+    Got an init string for a modem not listed?
+    
+    
+    
+    
+  
+ 

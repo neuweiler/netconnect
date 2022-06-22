@@ -1,84 +1,79 @@
 ###############################################################################
 #
-#	SMakefile
+#  SMakefile
 #
-#	Makefile for the `SMake' utility required to build `AmiTCP Prefs'
+#  Makefile for the `SMake' utility required to build `AmiTCP Prefs'
 #
-#	1996 by Michael Neuweiler
+#  1996 by Michael Neuweiler
 #
 ###############################################################################
 
 .c.o:
-	sc $(CFLAGS) $(GST) $(OPTIONS) NOEXTDEF $*.c
+   sc $(CFLAGS) $(GST) $(OPTIONS) NOEXTDEF $*.c
 
 .asm.o:
-	ASM -D $*.asm
+   ASM -D $*.asm
 
-CPU		= ANY
-#CPU		= 68030
-DEMO		= DEF=DEMO
-#BETA		= DEF=BETA
-#DEBUG	= DBG=LINE
-OPTIMIZE	= OPT OPTTIME NOOPTINLOCAL
-#NETCOM	= DEF=NETCOM
+CPU      = ANY
+#CPU     = 68030
+#DEMO     = DEF=DEMO
+DEBUG   = DBG=LINE
+#OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
+#FIX_PROVIDER  = DEF=FIX_PROVIDER
+#DO_LISTTREE = DEF=DO_LISTTREE
 
-OPTIONS	= CPU=$(CPU) $(OPTIMIZE)
-GST		= GSTIMM GST=includes.gst
+OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
+GST      = GSTIMM GST=/includes.gst
 
-CFLAGS	= MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG) $(NETCOM)
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(DEBUG) $(FIX_PROVIDER) $(DO_LISTTREE)
 
-LFLAGS	= ND SC SD NOICONS MAXHUNK 100000
-#LFLAGS	= SC SD NOICONS MAXHUNK 100000
+#LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
+LFLAGS  = SC SD NOICONS MAXHUNK 100000
 
-OBJS		= globals.o main.o Stackcall.o mui1.o mui2.o mui3.o amiga.o
-LIBS		= lib:amiga.lib lib:sc.lib
+OBJS     = globals.o main.o Stackcall.o amiga.o mui_About.o mui_DataBase.o mui_Modem.o mui_MainWindow.o mui_Dialer.o mui_Provider.o mui_User.o mui_PasswdReq.o
+LIBS     = lib:amiga.lib lib:sc.lib
 
-all:	 includes.gst locale/Strings.h images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh AmiTCPPrefs
-#all:	 includes.gst locale/Strings.h locale/empty.ct locale:catalogs/deutsch/AmiTCPPrefs.catalog images/logo.bh AmiTCPPrefs
+all:   /includes.gst /locale/Strings.h /images/logo.bh /images/provider.bh /images/user.bh /images/modem.bh /images/dialer.bh /images/databases.bh AmiTCPPrefs
 
-includes.gst:	includes.h
-		GST >NIL: UNLOAD $@
-		SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ includes.h
-		GST $@
+/includes.gst:  /includes.h
+      GST >NIL: UNLOAD $@
+      SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
+      GST $@
 
-images/logo.bh: images/logo.iff
-	brush2c images/logo.iff >images/logo.bh
-images/information.bh: images/information.iff
-	brush2c images/information.iff >images/information.bh
-images/provider.bh: images/provider.iff
-	brush2c images/provider.iff >images/provider.bh
-images/user.bh: images/user.iff
-	brush2c images/user.iff >images/user.bh
-images/modem.bh: images/modem.iff
-	brush2c images/modem.iff >images/modem.bh
-images/groups.bh: images/groups.iff
-	brush2c images/groups.iff >images/groups.bh
-images/databases.bh: images/databases.iff
-	brush2c images/databases.iff >images/databases.bh
-images/paths.bh: images/paths.iff
-	brush2c images/paths.iff >images/paths.bh
+/images/logo.bh: /images/logo.iff
+   brush2c /images/logo.iff >/images/logo.bh
+/images/provider.bh: /images/provider.iff
+   brush2c /images/provider.iff >/images/provider.bh
+/images/user.bh: /images/user.iff
+   brush2c /images/user.iff >/images/user.bh
+/images/modem.bh: /images/modem.iff
+   brush2c /images/modem.iff >/images/modem.bh
+/images/dialer.bh: /images/dialer.iff
+   brush2c /images/dialer.iff >/images/dialer.bh
+/images/databases.bh: /images/databases.iff
+   brush2c /images/databases.iff >/images/databases.bh
 
-locale/Strings.h: locale/Strings.cd
-	cat2h locale/Strings.cd locale/Strings.h
-#locale/empty.ct : locale/Strings.cd
-#	sc:c/FlexCat locale/Strings.cd NEWCTFILE locale/empty.ct
-#locale:catalogs/deutsch/AmiTCPPrefs.catalog : locale/deutsch.ct
-#	sc:c/FlexCat locale/Strings.cd locale/deutsch.ct CATALOG locale:catalogs/deutsch/AmiTCPPrefs.catalog
-#	c:avail >nil: flush
+/locale/Strings.h: /locale/Strings.cd
+   cat2h /locale/Strings.cd /locale/Strings.h
 
-AmiTCPPrefs:	$(OBJS)
+AmiTCPPrefs:   $(OBJS)
    SLINK WITH T:AmiTCPPrefs.WITH <<!(T:AmiTCPPrefs.WITH)
-		FROM	lib:start.o $(OBJS)
-		TO		AmiTCPPrefs
-		LIB	$(LIBS)
-		MAP	AmiTCPPrefs.map H
-		$(LFLAGS)
-	<
+      FROM  lib:start.o $(OBJS)
+      TO    AmiTCPPrefs
+      LIB   $(LIBS)
+      MAP   AmiTCPPrefs.map H
+      $(LFLAGS)
+   <
 
-globals.o:	globals.c	mui.h rev.h AmiTCPPrefs.h locale/Strings.h images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
-	sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
-main.o:		main.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
-mui1.o:		mui1.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
-mui2.o:		mui2.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
-mui3.o:		mui3.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c images/logo.bh images/information.bh images/provider.bh images/user.bh images/modem.bh images/groups.bh images/databases.bh images/paths.bh
-amiga.o:		amiga.c		mui.h rev.h AmiTCPPrefs.h locale/Strings.h globals.c
+globals.o:  globals.c   mui.h rev.h /AmiTCP.h /locale/Strings.h /images/logo.bh /images/information.bh /images/provider.bh /images/user.bh /images/modem.bh /images/groups.bh /images/databases.bh /images/paths.bh
+   sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
+main.o:              main.c               mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+mui_About.o:         mui_About.c          mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+mui_DataBase.o:      mui_DataBase.c       mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+mui_Modem.o:         mui_Modem.c          mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+mui_MainWindow.o:    mui_MainWindow.c     mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c /images/logo.bh /images/provider.bh /images/user.bh /images/modem.bh /images/dialer.bh /images/databases.bh
+mui_Dialer.o:        mui_Dialer.c         mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+mui_Provider.o:      mui_Provider.c       mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+mui_User.o:          mui_User.c           mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+mui_PasswdReq.o:     mui_PasswdReq.c      mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c
+amiga.o:             amiga.c              mui.h rev.h /AmiTCP.h /locale/Strings.h globals.c

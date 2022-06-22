@@ -1,0 +1,138 @@
+
+  
+  
+  
+    The Modem Page:Initialization Strings
+  
+  
+    
+      
+      
+ Initialization Strings: Modems Q - T 
+      [
+        Q |
+        R |
+        S |
+        T 
+      ]
+      
+        
+          
+            
+              
+            
+          
+          
+            
+              [
+                A - D |
+                E - H |
+                I - L |
+                M - P |
+                Q - T |
+                U - W |
+                X - Z 
+              ]
+            
+          
+          
+            
+              
+            
+          
+        
+      
+      
+      [
+        The Modem Page  |
+        Init String DataBase |
+        Detection |
+        Manufactures |
+        Other Sites 
+      ]
+      
+      [
+        Whats New!  |
+        Frames 
+      ]
+    
+    
+    
+Modem NameInit String
+QuickComm 14.4AT&F*F3
+QuickComm Spirit IIAT&F&C1&D2X4*E9*F3*N6
+QVC 14.4AT&F2&C1&D2%C1\J0\N6\Q3\V1
+Racal-Datacom ALM 3223AT&F&C1&D2\Q1L1
+Racal-Datacom ALM 3226AT&F&C1&D2W2L2
+Racal-Datacom ALM 3264AT&F&C1&D2\Q1L1
+Racal-Datacom RMD 2412AT&F&C1&D2X4*C1*D1*E1*L1
+Racal-Datacom RMD 2412/2AT&F&C1&D2X4*C1*D1*E1
+Racal-Datacom RMD 3221AT&FX9&C1&D2*F2
+Racal-Milgo RMD 3222AT&FX4&C1&D2\N3\Q1\B1
+Racal-Vadic 1200PAAT&F&C1&D2
+Racal-Vadic 2400/PSAT&F*F2&C1&D2*E1&Y0
+Racal-Vadic 2400LCAT&F&C1&D2*E1*F2*P1&Y0
+Racal-Vadic 2400PA Model 2AT&F&C1&D2X4*E1*L1*Q1*F2*P1
+Racal-Vadic 2400VPAT&F&C1*C1&D2*E1*F2Y1*Q1
+Racal-Vadic 9600VPAT&F&C1*C1&D2*F2Y1*Q1
+Racal-Vadic 9632PAAT&F&C1&D2
+Racal-Vadic LC2400PCAT&F&C1&D2X4*E1*L1*Q1*F2*P1
+Rockwell RPI based AT&T PCX DataPort 14400AT&FW2&C1&D2&Q6&K3S7=60
+Shiva NetModem/EAT&FS12=1
+SmartLink 9600UMAT&FX4&C1&D2&R0&Y0&M5%C1\J0\N5\Q3
+Starlit Designer 9600AT&F1X4&C1&D2&R0&Y0&M5%C1\J0\N3\Q3W1&K3
+Supra 2400 MNPAT&F2&C1%C0
+Supra 2400 Plus (V.42bis)AT&F2&C1%C0\V2
+Supra 2400/9600 FaxModemAT&F&C1&D2+H1
+Supra 9600AT&F&C1&D2\Q3\N3\J0\V1\C1%C0
+Supra FaxModem 14.4AT&F2W1S95=41
+Supra Modem 2400AT&F&C1&D2+H1
+SupraExpress 288iPNP/28800 Fax/ModemAT&F2&KV0E0&D2S0=0S7=45
+Synappsys 14.4AT&F2&C1&D2%C1\J0\N6\Q3\V1
+Telebit Internal PC Card w/ MNPAT&F~S51=5~S58=2~S66=1~S95=2
+Telebit QBlazerAT&FS51=252&C1&D2L1X4S58=2S59=15
+Telebit QBlazer PlusAT&F&D2S58=2S59=15
+Telebit T1000AT&F~S51=5~S52=1~S54=2~S58=2~S66=1~S68=2~S95=2
+Telebit T1500 or T2500 - MNP modeAT&F~S50=6~S51=254~S52=1~S131=1~S58=2~S66=1~S95=2
+Telebit T1500 or T2500 - V.42 modeAT&F~S51=254~S52=1~S131=1~S58=2~S66=1~S97=1~S106=1
+Telebit T1600AT&F~S51=253&C1&D2L1X12~S58=2~S59=15
+Telebit T2000AT&F~S51=5~S52=1~S53=1~S58=2~S66=1~S68=2~S95=2~S110=1
+Telebit T3000AT&FS51=253&C1&D2L1X12S58=2S59=15
+Telebit T3000 (38.4K baud)AT&FS51=253&C1&D2L1X12S58=2S59=15
+Telebit T3000 (57.6K baud)AT&FS51=7&C1&D2L1X12S58=2S59=15
+Telebit TeleBlazer V.34AT&FX1&D2&K3
+Telebit Trailblazer / Trailblazer PlusAT&FS131=1S51=5S52=1S53=1S58=2S66=1
+Telebit WorldblazerAT&F9X12&C1&D2S59=15S50=0S51=7S190=1
+Telecraft Pocket Genius 14400AT&F2
+Telsat 12/2447AT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0
+Telsat 12/2472 MNPAT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0
+Telsat 12/2481AT&FE1Q0V1X4&C1&D2\N0&K2&R2&M0&MAT
+Telsat 12/2482AT&FE1Q0V1X4&C1&D2\N0&K2&R2&M0&MAT
+Telsat 12/2482 MNPAT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0
+Telsat 12/2491AT&FE1Q0V1X4&C1&D2\N0&K2&R2&M0
+Telsat 12/2492AT&FE1Q0V1X4&C1&D2\N0&K2&R2&M0
+Telsat 12/2492 MNPAT&FE1Q0V1X4&C1&D2\N3&K2&R2&M0
+Telsat 2223AT&FE1Q0V1X4&C1&D2
+Telsat 9662AT&FE1Q0V1X4&C1&D2
+Telsat 9662 MNPAT&FE1Q0V1X4&C1&D2\N3&K3
+Telsat 9682/DAT&FE1Q0V1X4&C1&D2
+Telsat 9682/D MNPAT&FE1Q0V1X4&C1&D2\N3&K3
+Telsat 9692/DAT&FE1Q0V1X4&C1&D2&R0
+Telsat 9692/D MNPAT&FE1Q0V1X4&C1&D2&R1\N3&K3
+Texas Instruments 9600 V.32/V.42bisAT&F&C1&D2W2\V1%C1\J0\N7\Q3
+Texas Instruments V.32bisAT&F&C1&D2W2\V1%C1\J0\N7\Q3
+Toshiba T144 D/FAT&F&C1&D2\N7\J0\Q3\V2
+Toshiba T144 NWX PCMCIAAT&F&C1&D2W2X4&Q5\G0\N3\Q3\V2%C1
+Toshiba T24D/XAT&F&C1&D2W1X4&K3&Q5&R0\G0\N3%C1
+Touchbase Worldport 2496AT&F&C1&D2\N3\Q3\J0\V1
+Touchbase Worldport V.32 Pocket ModemAT&F&C1&D2\N3\Q3\J0\V1
+Twinhead 2400 V.42bisAT&F&C1&D2X4\N3%C2W2&Q5S36=7S46=138S48=7
+    
+    Comments or suggestions
+    Got an init string for a modem not listed?
+    
+    
+    
+    
+  
+ 

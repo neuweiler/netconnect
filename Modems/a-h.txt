@@ -1,0 +1,250 @@
+
+  
+  
+  
+    The Modem Page:Initialization Strings
+  
+  
+    
+      
+      
+ Initialization Strings: Modems A - D 
+      [
+        A |
+        B |
+        C |
+        D 
+      ]
+      
+        
+          
+            
+              
+            
+          
+          
+            
+              [
+                A - D |
+                E - H |
+                I - L |
+                M - P |
+                Q - T |
+                U - W |
+                X - Z 
+              ]
+            
+          
+          
+            
+              
+            
+          
+        
+      
+      
+      [
+        The Modem Page  |
+        Init String DataBase |
+        Detection |
+        Manufactures |
+        Other Sites 
+      ]
+      
+      [
+        Whats New!  |
+        Frames 
+      ]
+    
+    
+Modem NameInit String
+Aceex 1496AT&F&C1&D2%C1\J0\N3\Q3\V1W1&K3S95=46
+Aceex Designer 14400AT&F1X4&C1&D2&R0&Y0%C1\J0\N3\Q3W1&K3
+Acer 14400 Internal FAX/Voice/Data ModemAT&F&C1&D2\Q3\N3\J0%C1"H3S7=60
+Acubit 14.4 Fax ModemAT&F&C1&D2%C1\J0\N3\Q3\V1W1&K3S95=46
+Adtech Hi-Per 96/144AT&F&C1&D2&K3\J0
+Adtech Hi-Per 96/96AT&F&C1&D2&K3\J0S7=60S11=60
+Adtech Micro 2400 V.42bisAT&F&C1&D2\N3\Q3\V1W0
+Adtran ISU 128 (ISDN)AT&C1&D2&R0&S2\Q3S34=15
+Altima 4XX Internal Fax/DataAT&F&C1&D2L3W1\G1\K1
+Amber Logic Mistral 14400AT&FW2&C1&D3&E5&K1\C5\Q0
+AMT STAR 1442 (V.32bis)AT&F2&C1&D2\V2&Y0
+AMT STAR 9600 (V.42bis)AT&F2&C1&D2\V2&Y0
+Anchor 96E5AT&F&C1&D2\N5\Q3\V2%C3
+Anderson-Jacobson 96/32 STHAT&F&C1&D2*C1*LG2*M2*E1
+Andest Fax/Data Modem 14.4AT&F&C1&D2&K3\J0\N7\V1
+Angia Communications PCMCIA Fax ModemAT&FW2&C1&D3\J0\N7\Q3\V2%C1S7=60
+Angia DataSTAR/FaxSTAR 14400AT&F&C1&D2%C1
+Angia DataSTAR/FaxSTAR 9600AT&F&C1&D2%C1
+Apex Data Freedom V.32 Fax ModemAT&F&C1&D2%C1\J0&Q6&K3\V2
+Apex Data Freedom V.32bis Fax ModemAT&F&C1&D2%C1\J0&Q6&K3\V2
+Apex Data PCMCIA Modem CardAT&FW2&C1&D3&K3&Q5\J0\N7\Q2\V2%C1S7=60
+Apex Data V.32 Fax ModemAT&F&C1&D2%C1\J0\N7\Q3\V2
+Apex Data V.32/V.32bis Data/FaxAT&FW2&C1&D3&K3&Q5\J0\N7\Q2\V2%C1S7=60
+Apex Data V.32bis Fax ModemAT&F&C1&D2%C1\J0\N7\Q3\V2
+April Technologies Series 14400AT&F&C1&D2%C1\J0\N9\Q3
+April Technologies Series 9600AT&F&C1&D2%C1\J0\N9\Q3
+Archtek SmartLink 14.4AT&F&C1&D2&K3\N3
+Aspen 14.4EFX Data Fax ModemAT&FW2&C1&D2&K3S7=60S36=7S46=2S48=7
+Aspen 14.4FX3 Data Fax ModemAT&FW2&C1&D2&K3S7=60S36=7S46=2S48=7
+AT&T 2224 CEOAT&F&C1&D2\C1\G0\J0\N3\Q3\V1
+AT&T ComSphere 3800AT&FX6&C1&D2\N5\Q3%C1"H3S7=60
+AT&T ComSphere 3830AT&FX6&C1&D2\N5\Q3%C1"H3S7=60
+AT&T Dataport 14.4/FAXAT&F&C1&D2%C1X6\D1\N7\Q3
+AT&T DataPort 14.4/FAX ExternalAT&FX6&C1&D2\N7\Q3%C1S7=60
+AT&T DataPort 14.4/FAX InternalAT&FX6&C1&D2\N7\Q3%C1S7=60
+AT&T DataPort Express 14.4 ExternalAT&F&C1&D2\J0\N7\Q3%C1S7=60
+AT&T DataPort Express 14.4 InternalAT&F&C1&D2\J0\N7\Q3%C1S7=60
+AT&T DataPort Express 28.8 InternalAT&F&C1&D2\J0\N7\Q3%C1S7=60
+AT&T KeepinTouch Card ModemAT&F&C1&D2%C1X6\D1\N7\Q3
+AT&T KeepInTouch Cellular PCMCIA CardAT&F0X6&C1&D2\N7\Q3%C1S7=60
+AT&T KeepInTouch Express 28.8 PCMCIA CardAT&F0X6&C1&D2\N7\Q3%C1S7=60
+AT&T KeepInTouch Express PCMCIA CardAT&FX6&C1&D2\N7\Q3%C1S7=60
+AT&T KeepInTouch PCMCIA CardAT&FX6&C1&D2\N7\Q3%C1S7=60
+AT&T Paradyne Comsphere 3820AT&F&C1&D2\N5\D1\Q3
+ATi 14400 ETC*Express PCMCIA ModemAT&FW2&C1&D2&K3&Q5S7=60
+ATi 14400 ETC-E External Fax ModemAT&F2W2&C1&D2&B1&K3&O1&Q6&U1
+ATi 19200 ETC-E External Fax ModemAT&F2W2&C1&D2&B1&K3&O1&Q6&U1
+ATI 2400etcAT&F1&C1&D2X6S9=10S10=180&Y0
+ATI 2400etc V.42AT&F2&C1&D2X6&Y0
+ATI 9600etcAT&F2&C1&D2X6&Y0
+Austin Fax/Data ModemAT&FW2X4&C1&D3&K3&Q5\J0\N3%C3S7=60
+(Go to Top)
+Modem NameInit String
+Bausch Datacom 3522AT&F\Q3\N3\J0\V1\C1
+Bausch Datacom 3522 V.42AT&F\Q3\N3\J0\V1\C1
+Best D.P. 2400/2400Fax ModemAT&F&C1&D2&K3\N0\N7%C0"H0\N7%C1"H3
+Best D.P. 9624FQAT&F&C1&D2&K3
+Best D.P. 9624XAT&F&C1&D2&K3
+Best D.P. 9648FXAT&F&C1&D2&K3
+Best D.P. ACE Multimedia Fax/ModemAT&F&C1&D2&K3\N0\N7%C0"H0\N7%C1"H3
+Best D.P. Smart One 1442AT&F&C1&D2W2
+Best D.P. Smart One 1442FAT&F&C1&D2&K3&Q5%C0&Q5%C3\N0
+Best D.P. Smart One 1442FXAT&F&C1&D2&K3\N0
+Best D.P. Smart One 2400AT&F&C1&D2W2
+Best D.P. Smart One 2834F/FXAT&F0Q0X1&K3%C3\N3&D2
+Best D.P. Smart One 9642AT&F&C1&D2W2
+Best Data Smart One 1442FQ Internal ModemAT&FW2&C1&D2&Q6&K3S7=60S36=7S46=2S48=7
+Black Box 144FX/144FX-PCAT&F&C1&D2&K3&Q5\N3S95=43
+Boca Complete Communicator Gold Internal ModemAT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Boca Modem 14.4K/V.32bis (V.42bis)AT&FW2&C1&D3&K3&Q5%C1\N3S7=60S36=7S46=138S95=47
+Boca Research 14.4AT&F&C1&D2&K3%C1%E1\N3S95=47
+Boca Research 2400AT&F&C1&D2\Q3\N3\J0\V1
+Boca Research 2400 V.42bisAT&F&C1&D2\Q3\N3\J0\V1
+Boca Research M2400iAT&F3&C1&D2
+Boca V.34 BocaModem ExternalAT&FW2&C1&D2&K3&Q5\N3%C3S7=60S95=47
+Boca V.34 BocaModem InternalAT&FW2&C1&D2&K3&Q5\N3%C3S7=60S95=47
+Boca V.Fast Class BocaModemAT&F&C1&D2&K3&Q5\N3%C3S7=60S95=47
+BSM Quik Com MNPAT&F\Q3\J0\N3%C1&C1&D2
+(Go to Top)
+Modem NameInit String
+CALCOM 14400 External ModemAT&F&C1&D3&K3\N5S7=60S36=7S46=138S95=47
+CALCOM 14400 Internal ModemAT&F&C1&D3&K3\N5S7=60S36=7S46=138S95=47
+Cardinal 14400 (V.42bis)AT&F&C1&D3&K3&Q5\N3%C1%M3S7=60S46=138S48=7S95=47
+Cardinal 14400 V32bisAT&F&C1&D2S95=41
+Cardinal 14450 V32bisAT&F&C1&D2S95=41
+Cardinal 2400 V42AT&F&C1&D2\N3\Q3\J0\C2\V2
+Cardinal 2450 V42AT&F&C1&D2\N3\Q3\J0\C2\V2
+Cardinal 28.8 Fax/ModemAT&FX1&K3\G0%C3&D2
+Cardinal 9600 V.42AT&F&C1&D2S95=41
+Cardinal 9650 V.42AT&F&C1&D2S95=41
+Cardinal MB2210/MB2450AT&F&C1&D2\N3\Q3\J0\C2\V2
+Cardinal MB2296SRAT&F&C1&D2\N3\Q3\J0\C2\V2
+Cardinal MVP144DSP-CAT&FW1&C1&D3&K3&Q5\N5%C1S7=60
+Cardinal MVP144IAT&FW2&C1&D2&Q6&K3S7=60
+Cardinal MVP144XFAT&FW2&C1&D2&Q6&K3S7=60
+Cardinal MVP288IAT&FW2&C1&D2&K3&Q5\N3%C3S7=60
+Cardinal MVP288XFAT&FW2&C1&D2&K3&Q5\N3%C3S7=60
+Cirrus Logic based 14400 bps ModemAT&F&C1&D2\Q3\N3\J0%C1"H3S7=60
+Compaq Enhanced Internal Modem (V.42bis)AT&F&C1&D2X4W1&Q5S46=2&K3S36=7&Y0
+COMPAQ Presario 14.4 Internal ModemAT&FW1&C1&D3\N3\Q3S7=60
+COMPAQ Presario 19.2 Internal ModemAT&FW1&C1&D3\N3\Q3S7=60
+Compaq SpeedPAQ 144 ModemAT&F&C1&D2W2\V1
+COMPAQ SpeedPaq 144 ModemAT&F&C1&D3&K3&Q5\J0\N3%C1S7=60S36=7S46=2S48=7S95=47
+COMPAQ SpeedPaq 144/P ModemAT&FW2&C1&D3&K3&Q5\N3%C1S7=60S36=7S46=2S48=7S95=47
+Complete Communicator GOLDAT&F&C1&D2&K3&Q5\N3%C1
+Complete Communicator V.42AT&F&C1&D2\Q3\N3\J0\V1
+Complete FAX/9624AT&F3W1&C1&D2&K3\J0\N3\Q3\V1%C0
+Complete Modem PlusAT&F3W1&C1&D2&K3\J0\N3\Q3\V1%C0
+Complete PC TurboModem PlusAT&F&D2&C1
+Compuadd 9600 MNP5AT&FX4&C1&D2%C1\J0\N3\Q3\V1
+CompuCom SpeedmodemAT&F2*H1\N3\Q3%C1&C1&D1
+CompuCom Speedmodem STARAT&F2*H2\J0\N3\Q3%C1&C1&D2
+Compudyne 9642AT&F&C1&D2S95=44
+ControlWare Citam (ISDN)ATZ&C0&D1&M0&R1&S0S8=1
+CTK FaxManagerAT&F\Q3\N3%C1\J0
+CTK Shorty 14400 + FaxAT&F2\Q3\N6%C1\C1\J0
+CTK Shorty 2400AT&F\Q3\N3%C1\J0
+CTK Shorty V.42bis + FaxAT&F&K3\N3%C3\J0
+(Go to Top)
+Modem NameInit String
+Dacom FASTLANE V32AT&F&C1&D2&R0*E1*F3*S1
+Dallas Fax 14.4 / 14.4 Pro PlusAT&F&C1&D2W1S95=41
+Dallas Fax 96/96AT&F&C1&D2W1S95=41
+Data Race Action 1496AT&F&C1&D2W1&K3S64=5
+Data Race Action 24AT&F&C1&D2&K3S64=5
+Data Race Action 32 / 32LAT&F&C1&D2W1&K3S64=5
+Data Race RediCARD V.32bisAT&F&C1&D2&K3&Q6\J0\N7\Q3\V2%C1S7=60
+Data Race RediMODEM 14400AT&F&C1&D2\N7\J0\Q3\V2
+Data Race RediMODEM 9600AT&F&C1&D2\N7\J0\Q3\V2
+Data Race RediMODEM V.32bisAT&F&C1&D2&K3&Q6\J0\N7\Q3\V2%C1S7=60
+Dataflex Pocket Comfax IIAT&F3&C1&D2\G0\N3\Q3
+Dataflex Pocket Quadcom IIAT&F3&C1&D2\G0&Q5\N3\Q3
+Dataflex Pocket Quadsync IIAT&F3&C1&D2\G0&Q5\N3\Q3
+Dataflex Rapier 9600AT&F&C1&D2%C1&I1\N3\Q2
+DataTrek 2424 (MNP)AT&F&C1&D2\N3\Q3\J1
+DataTrek 2496CFM PCMCIAAT&F&C1&D2&Y0\J0\N3\Q3\V1%C2S134=5
+DataTrek 624 (UK)AT&F&C1&D2&P1\N3\Q3\J1
+DataTrek 624 (US)AT&F&C1&D2\N3\Q3\J1
+DataTrek Elite M/FM/SFMAT&F&C1&D2&Y0\J0\N3\Q3\V1%C2S134=5
+DataTrek V.32AT&F&C1&D2&Y0\J0\N3\Q3\V1%C2S134=4
+DEC DF296-DA (DECmodem V32)AT&F&C1&D2%A1%F2$M2$C1
+Dell Data/Fax 24/96VAT&F&C1&D2&K3\V1
+Dell Data/Fax 96/96VAT&F1&C1&D2\N7\Q3\V2
+Digicom Connection 14.4 DFAT&F&C1&D2&K3\N5M3\%C1
+Digicom Connection 14.4+AT&F&C1&D2&K3\N5
+Digicom Connection 96+AT&F&C1&D2&K3\N5
+Digicom DSI9624 LEAT&F*F3*E9&C1
+Digicom DSI9624 LE PlusAT&F*F3*E9&C1
+Digicom DSI9624PCAT&F*F3*E9&C1
+Digicom Eagle V.32AT&F&C1&D2&R0*E9*F3*M2*N3*S1
+Digicom Eagle V.32+AT&F&C1&D2&R0*E9*F3*M2*N6*S1
+Digicom ScoutAT&F&C1&D2&R0*E9*F3*M2*N3*S0
+Digicom Scout PlusAT&F&C1&D2&R0*E9*F3*M2*N6*S0
+Digicom Systems Connection 14.4+FAXAT&F&C1&D3&K3\N5%C1S48=7S7=60
+Digital Scholar PlusAT&F&C1&D2%A1%F2
+Digitan DS92M Fax ModemAT&F&C1&D2\Q3\N7\V1
+Digitan Hi-IQ (ZX1896) Fax ModemAT&F&C1&D2\Q3\N7\V1
+Digitan Systems DS144F Internal ModemAT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Digitan Systems DS288F Internal ModemAT&FW2&C1&D2&K3&Q5S7=60S36=7S46=138S48=7S95=47
+Direct ConnectAT&FX4&C1&D2&Q6%R1%K2-E5%C1
+DoveFax 144EAT&F&C1&D3*E1*E5*E9*F3*M2*N6*S1S7=60
+Dowty Mayze 96/96RAT&FX4&C1&D2&Q6%R1%K2-E5%C1
+Dowty Quantum 96AT&F&C1&D2&I1&K2&E1
+Dowty Quattro PCAT&F&C1&D2&E1&K2
+Dr. Neuhaus Faxy 9600AT&F3&C1&D2
+Dr. Neuhaus Fury 14.4 TIAT&F&C1&D2\N6\V1\Q3
+Dr. Neuhaus Fury 14.4 TI/SLAT&F&C1&D2\N3\V1\Q3
+Dr. Neuhaus Fury 2400 PC/FaxAT&F3&C1&D2
+Dr. Neuhaus Fury 2400 PC/TIAT&F\Q3\N3\J0\V1\T0
+Dr. Neuhaus Fury 2400 PC/TI + MNPAT&F\Q3\N3\J0\V1\T0
+Dr. Neuhaus Fury 2400 Pocket/FaxAT&F3&C1&D2
+Dr. Neuhaus Fury 2402 TIAT&F\Q3\N3\J0\V1
+Dr. Neuhaus Fury 2403 TIAT&F3&C1&D2
+Dr. Neuhaus Fury 9600 TIAT&F&C1&D2\N6\V1\Q3
+Dr. Neuhaus Fury 9601 TIAT&F&C1&D2\N3\V1\Q3
+Dr. Neuhaus Fury Card 2400AT&F3&C1&D2
+Dr. Neuhaus Fury PC Junior/Fax 2400AT&F\Q3\N3\J0\V1\T0
+DSI Connection 144AT&F&C1&D2&K3\N5
+Dynalink 1414VHAT&F&C1&D2\N3%C1&K3&Q9S95=43
+Dynalink 9696VHAT&F&C1&D2\N3%C1&K3&Q9S95=43
+(Go to Top)
+    
+    Comments or suggestions
+    Got an init string for a modem not listed?
+    
+    
+    
+    
+  
+ 

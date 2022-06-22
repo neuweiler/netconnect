@@ -24,7 +24,7 @@
 #define MSG_BT_Remove2 "\x0\x15" "Re_move"
 #define MSG_BT_Remove3 "\x0\x16" "Remo_ve"
 #define MSG_TX_DemoVersion "\x0\x17" "\033bTHIS IS A DEMO VERSION !"
-#define MSG_TX_DemoWarning "\x0\x18" "DEMO VERSION !\n\nThis program will become invalid after 30 days.\nThen you will have to buy the full\nversion if you want to continue using it.\nAlso some functions are disabled in the demo version."
+#define MSG_TX_DemoWarning "\x0\x18" "DEMO VERSION !\n\nThis program will become invalid after 100 days.\nThen you will have to buy the full\nversion if you want to continue using it.\nAlso some functions are disabled in the demo version."
 #define MSG_TX_SelectProviderFile "\x0\x19" "Please select a provider file"
 #define MSG_TX_InstallProvider "\x0\x1A" "\033cThe provider file will be installed in\nNetConnect:Data/Providers/%ls\nand be used from there."
 #define MSG_BT_InstallProvider "\x0\x1B" "*\033b_Proceed|\_Abort"

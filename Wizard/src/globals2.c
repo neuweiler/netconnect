@@ -4,10 +4,10 @@
 #define USE_SETUP_PAGE0_COLORS
 #include "/images/setup_page0.bh"
 
-#define USE_SETUP_PAGE1_HEADER
-#define USE_SETUP_PAGE1_BODY
-#define USE_SETUP_PAGE1_COLORS
-#include "/images/setup_page1.bh"
+//#define USE_SETUP_PAGE1_HEADER
+//#define USE_SETUP_PAGE1_BODY
+//#define USE_SETUP_PAGE1_COLORS
+//#include "/images/setup_page1.bh"
 
 #define USE_SETUP_PAGE2_HEADER
 #define USE_SETUP_PAGE2_BODY
@@ -34,16 +34,10 @@
 #define USE_SETUP_PAGE6_COLORS
 #include "/images/setup_page6.bh"
 
-#define USE_SETUP_PAGE7_HEADER
-#define USE_SETUP_PAGE7_BODY
-#define USE_SETUP_PAGE7_COLORS
-#include "/images/setup_page7.bh"
-
-#define USE_SETUP_PAGE8_HEADER
-#define USE_SETUP_PAGE8_BODY
-#define USE_SETUP_PAGE8_COLORS
-#include "/images/setup_page8.bh"
-
+//#define USE_SETUP_PAGE7_HEADER
+//#define USE_SETUP_PAGE7_BODY
+//#define USE_SETUP_PAGE7_COLORS
+//#include "/images/setup_page7.bh"
 
 ///
 

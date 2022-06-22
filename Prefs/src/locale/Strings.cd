@@ -79,7 +79,11 @@ MSG_TX_DemoVersion (//)
 \033bTHIS IS A DEMO VERSION !
 ;
 MSG_TX_DemoWarning (//)
-DEMO VERSION !\n\nThis program will become invalid after 30 days.\nThen you will have to buy the full\nversion if you want to continue using it.\nAlso some functions are disabled in the demo version.
+DEMO VERSION !\n\nThis program will become invalid after 100 days.\nThen you will have to buy the full\nversion if you want to continue using it.\nAlso some functions are disabled in the demo version.
+;\033nThis is a LITE version of NetConnect which was licensed\nfor inclusion with the July '97 issue of CU Amiga.\n\nThis version
+;is limited to 100 days and one hour use\nof the Internet. Designed as a introductory pack to\nget people onto the Internet, you can choose to\nupgrade to the full version for a discounted price.\n\nThe full version will cost £44.95 and is\nlimited to users of this
+;LITE version.\n\nTo order a full version of NetConnect\nat this discounted price contact:\n\nActive Software - +44 (0)1325 352260\n\nor see the NetConnect web site for\nfurther ordering information:\n\n\033bhttp://amigaworld.com/netconnect\n
+;above text only for WireNet
 ;
 MSG_TX_SelectProviderFile (//)
 Please select a provider file

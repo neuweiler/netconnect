@@ -1,0 +1,69 @@
+
+###############################################################################
+#
+#  SMakefile
+#
+#  Makefile for the `SMake' utility required to build `AmiTCP Controller'
+#
+#  1997 by Michael Neuweiler
+#
+###############################################################################
+
+.c.o:
+   sc $(CFLAGS) $(GST) $(OPTIONS) NOEXTDEF $*.c
+
+.asm.o:
+   ASM -D $*.asm
+
+CPU      = ANY
+#CPU     = 68030
+DEMO     = DEF=DEMO
+DEBUG   = DBG=LINE
+#OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
+
+OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
+GST      = GSTIMM GST=/includes.gst
+
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetInclude: IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(DEBUG)
+
+#LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
+LFLAGS  = SC SD NOICONS MAXHUNK 100000
+
+OBJS     = mui_MainWindow.o mui_Online.o main.o globals.o amiga.o sana.o bootpc.o iface.o serial.o stackcall.o fixpath.o
+LIBS     = lib:amiga.lib lib:sc.lib
+
+all:   /includes.gst locale/Strings.h AmiTCP
+
+/includes.gst:  /includes.h
+      GST >NIL: UNLOAD includes.gst
+      SC NOOBJNAME INCLUDEDIR=netinclude: IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
+      GST $@
+
+locale/Strings.h: locale/AmiTCP.cd
+   cat2h locale/AmiTCP.cd locale/Strings.h
+
+AmiTCP:   $(OBJS)
+   SLINK WITH T:AmiTCP.WITH <<!(T:AmiTCP.WITH)
+      FROM  lib:start.o $(OBJS)
+      TO    AmiTCP
+      LIB   $(LIBS)
+      MAP   AmiTCP.map H
+      $(LFLAGS)
+   <
+
+
+globals.o: globals.c rev.h locale/Strings.h /AmiTCP.h mui.h protos.h
+   sc $(CFLAGS) $(GST) $(OPTIONS) globals.c
+
+main.o: main.c globals.c rev.h locale/Strings.h /AmiTCP.h mui.h protos.h
+mui_MainWindow.o: mui_MainWindow.c rev.h globals.c locale/Strings.h /AmiTCP.h mui.h protos.h
+mui_Online.o: mui_Online.c rev.h globals.c locale/Strings.h /AmiTCP.h mui.h protos.h
+amiga.o: amiga.c globals.c rev.h locale/Strings.h /AmiTCP.h mui.h protos.h
+serial.o: serial.c locale/Strings.h /AmiTCP.h
+
+iface.o: iface.c globals.c protos.h iface.h sana.h rev.h locale/Strings.h /AmiTCP.h mui.h protos.h
+sana.o: sana.c /AmiTCP.h sana.h
+bootpc.o: bootpc.c globals.c bootpc.h iface.h rev.h locale/Strings.h /AmiTCP.h mui.h protos.h bootp.h bptypes.h
+
+FixPath.o: FixPath.c
+

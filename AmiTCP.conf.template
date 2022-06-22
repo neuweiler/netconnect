@@ -1,0 +1,88 @@
+# AmiTCP configuration file
+# Created by Setup AmiTCP, © 1997 Michael Neuweiler
+
+LoginName        "dolphin"
+Password         "xxx"
+RealName         "Michael Neuweiler"
+EMail            "dolphin@zool.unizh.ch"
+Organisation     "Private User"
+
+Phone            "3641223"
+
+SerialDevice     "serial.device"
+SerialUnit       0
+BaudRate         38400
+CarrierDetect    yes
+7Wire            yes
+SerBufLen        16384
+
+Modem            "ZyXEL U-1496 series"
+InitString       "AT&F&D2&C1X4S0=0"
+DialPrefix       "ATDT"
+DialSuffix       ""
+RedialAttempts   10
+RedialDelay      5
+
+Sana2Device      "DEVS:Network/appp.device"
+Sana2Unit        0
+Sana2Config      "ENV:Sana2/appp0.config"
+Sana2ConfigText  "sername serial.device\nserunit 0\nserbaud 38400\ncd yes\nlocalipaddress 0.0.0.0\nuser dolphin\nsecret xxx\n"
+Interface        ppp
+IfConfigParams   ""
+MTU              1500
+KeepAlive        1
+PingInterval     10
+
+IPAddr           0.0.0.0
+HostName         ""
+DestIP           0.0.0.0
+Gateway          0.0.0.0
+Netmask          255.255.255.0
+DomainName       "unizh.ch"
+NameServer       130.60.128.3
+NameServer       130.60.64.51
+BOOTPServer      0.0.0.0
+UseBootP         no
+
+MailServer       "mail"
+POPServer        "mail"
+NewsServer       "news"
+IRCServer        "irc.span.ch"
+IRCPort          6677
+TimeServer       0.0.0.0
+ProxyServer      ""
+ProxyPort        8888
+
+AutoLogin        yes
+OnlineOnStartup  no
+QuickReconnect   yes
+SynClock         yes
+ShowStatus       yes
+ShowSpeed        yes
+ShowOnlineTime   yes
+ShowButtons      yes
+
+Online           ""
+OnlineFail       ""
+OfflineActive    ""
+OfflinePassive   ""
+Startup          ""
+Shutdown         ""
+WinOnline         -
+WinOnlineFail     open
+WinOfflineActive  open
+WinOfflinePassive close
+WinStartup        open
+
+
+LoginScript
+Dial
+GoOnline
+EOS
+
+User StartNet
+EOS
+
+User StopNet
+EOS
+
