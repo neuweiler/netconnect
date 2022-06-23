@@ -3,13 +3,19 @@
 **
 ** Fix the current Process search patch list by faking a CLI
 **
-** Copyright © 1990-1995 by Olaf `Olsen' Barthel
+** Copyright 1990-1995 by Olaf `Olsen' Barthel
 **    All Rights Reserved
 **
 ** :ts=4
 */
 
-   /* This is how a linked list of directory search paths looks like. */
+#include <exec/types.h>
+#include <exec/memory.h>
+#include <exec/ports.h>
+#include <dos/dos.h>
+#include <dos/dosextens.h>
+
+/* This is how a linked list of directory search paths looks like. */
 
 struct Path
 {

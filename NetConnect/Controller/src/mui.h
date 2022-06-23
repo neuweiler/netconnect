@@ -1,3 +1,6 @@
+#ifndef MUI_H_
+#define MUI_H_
+
 #define MUISERIALNR_NETCONNECT 1
 #define TAGBASE_NETCONNECT (TAG_USER | (MUISERIALNR_NETCONNECT << 16))
 
@@ -10,3 +13,4 @@ enum { MEN_ABOUT = 1, MEN_QUIT, MEN_CONTROLLER, MEN_GENESIS, MEN_MUI, MEN_HELP }
 
 #define MUIM_Hotkey_Trigger            (TAGBASE_NETCONNECT | 0x1020)
 
+#endif

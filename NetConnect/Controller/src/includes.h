@@ -1,3 +1,10 @@
+#ifndef INCLUDES_H_
+#define INCLUDES_H_
+
+#include <exec/memory.h>
+#include <exec/types.h>
+#include <dos/dos.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,8 +30,6 @@
 #include <libraries/asl.h>
 #include <libraries/diskfont.h>
 
-#include <proto/muimaster.h>
-
 #include <exec/memory.h>
 #include <exec/execbase.h>
 
@@ -38,4 +43,6 @@
 #include <datatypes/soundclass.h>
 
 #include <workbench/workbench.h>
-#include <workbench/WBStart.h>
+
+#endif
+

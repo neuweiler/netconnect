@@ -1,12 +1,16 @@
 /// includes
-#include "/includes.h"
+#include "includes.h"
 
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
-#include "mui_Dock.h"
+#include "../../locale/Strings.h"
 #include "protos.h"
-#include "/images/default_icon.h"
+#include "../../images/default_icon.h"
+#include "../../../WBStart.h"
+#include "mui_Dock.h"
+
+//#include <proto/muimaster.h>
+#include <clib/muimaster_protos.h>
+
+//#include <libraries/mui.h>
 
 ///
 /// external variables
@@ -74,7 +78,7 @@ VOID play_sound(STRPTR file, LONG volume)
 ULONG BuildCommandLine(char *buf, struct Program *program, BPTR curdir, struct AppMessage *msg)
 {
    ULONG cmdlen;      /* Command line length */
-   STRPTR lp;          /* Pointer to current cmdline pos. */
+   char *lp;          /* Pointer to current cmdline pos. */
    STRPTR com = program->File;
 
    *buf = NULL;
@@ -493,7 +497,7 @@ VOID init_icon(struct Icon *icon)
          char file[MAXPATHLEN];
 
          strncpy(file, icon->ImageFile, MAXPATHLEN);
-         if(!stricmp(&file[strlen(file) - 5], ".info"))
+         if(!strcmp(&file[strlen(file) - 5], ".info"))
             file[strlen(file) - 5] = NULL;
          if(icon->disk_object = GetDiskObject(file))
          {
@@ -558,7 +562,7 @@ Object *create_button(struct Icon *icon, Object *current_dock)
          }
          break;
       case 2:
-         icon->Flags |= IFL_DrawFrame; // alway draw a frame for text buttons
+         icon->Flags |= IFL_DrawFrame; // always draw a frame for text buttons
          button = NewObject(CL_Button->mcc_Class, NULL,
             MUIA_NetConnect_Icon, icon,
             Child, TextObject,
@@ -843,15 +847,11 @@ BOOL load_config(VOID)
    return(success);
 }
 
-///
-
 /// BrokerFunc
-SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg)
-{
+int BrokerFunc() {
+   register CxMsg *msg __asm("a1");
+
    if(CxMsgType(msg) == CXM_IEVENT)
       DoMethod((Object *)CxMsgID(msg), MUIM_Hotkey_Trigger);
-   return(NULL);
+   return(0);
 }
-
-///
-

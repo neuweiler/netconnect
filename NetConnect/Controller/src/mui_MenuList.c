@@ -1,11 +1,4 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_MenuList.h"
-#include "protos.h"
 
 ///
 /// external variables
@@ -14,8 +7,11 @@ extern struct MsgPort *appmenu_port;
 ///
 
 /// ProgramList_ConstructFunc
-SAVEDS ASM struct Program *ProgramList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Program *src)
+struct Program *ProgramList_ConstructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Program *src __asm("a1");
+
    struct Program *new;
 
    if((new = (struct Program *)AllocVec(sizeof(struct Program), MEMF_ANY | MEMF_CLEAR)) && src)
@@ -25,8 +21,11 @@ SAVEDS ASM struct Program *ProgramList_ConstructFunc(REG(a2) APTR pool, REG(a1) 
 
 ///
 /// ProgramList_DestructFunc
-SAVEDS ASM VOID ProgramList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Program *program)
+VOID ProgramList_DestructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Program *program __asm("a1");
+
    if(program)
    {
       if(program->File)
@@ -44,8 +43,11 @@ SAVEDS ASM VOID ProgramList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Progr
 
 ///
 /// MenuList_ConstructFunc
-SAVEDS ASM struct MenuEntry *MenuList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *src)
+struct MenuEntry *MenuList_ConstructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct MenuEntry *src __asm("a1");
+
    static const struct Hook ProgramList_ConstructHook = { { 0,0 }, (VOID *)ProgramList_ConstructFunc  , NULL, NULL };
    static const struct Hook ProgramList_DestructHook  = { { 0,0 }, (VOID *)ProgramList_DestructFunc   , NULL, NULL };
    struct MenuEntry *new;
@@ -73,8 +75,11 @@ SAVEDS ASM struct MenuEntry *MenuList_ConstructFunc(REG(a2) APTR pool, REG(a1) s
 
 ///
 /// MenuList_DestructFunc
-SAVEDS ASM VOID MenuList_DestructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *menu)
+VOID MenuList_DestructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct MenuEntry *menu __asm("a1");
+
    if(menu)
    {
       if(menu->AppMenuItem)
@@ -134,8 +139,12 @@ ULONG MenuList_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// MenuList_Dispatcher
-SAVEDS ASM ULONG MenuList_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+ULONG MenuList_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+
    switch (msg->MethodID)
    {
       case OM_NEW                   : return(MenuList_New         (cl, obj, (APTR)msg));

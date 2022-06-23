@@ -1,11 +1,4 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_Dock.h"
-#include "protos.h"
 
 ///
 /// external variables
@@ -188,8 +181,12 @@ ULONG Dock_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// Dock_Dispatcher
-SAVEDS ASM ULONG Dock_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+ULONG Dock_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+
    switch (msg->MethodID)
    {
       case OM_NEW                : return(Dock_New             (cl, obj, (APTR)msg));

@@ -1,3 +1,6 @@
+#ifndef NETCONNECT_H_
+#define NETCONNECT_H_
+
 #define REG(x) register __ ## x
 #define ASM    __asm
 #define SAVEDS __saveds
@@ -145,3 +148,5 @@ struct Dock
    UWORD Flags;
    Object *LI_Buttons;
 };
+
+#endif

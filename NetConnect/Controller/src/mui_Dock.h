@@ -1,3 +1,10 @@
+#include "includes.h"
+
+#include "../../NetConnect.h"
+#include "../../locale/Strings.h"
+#include "mui.h"
+#include "protos.h"
+
 #define MUIM_Dock_DockPrefs            (TAGBASE_NETCONNECT | 0x1010)
 #define MUIM_Dock_GenesisPrefs         (TAGBASE_NETCONNECT | 0x1011)
 #define MUIM_Dock_Help                 (TAGBASE_NETCONNECT | 0x1012)
@@ -11,5 +18,3 @@ struct Dock_Data
    struct TextAttr TxtAttr;
    struct TextFont *TxtFont;
 };
-
-

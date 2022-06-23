@@ -1,14 +1,4 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_About.h"
-#include "protos.h"
-#include "rev.h"
-
-///
 
 /// About_New
 ULONG About_New(struct IClass *cl, Object *obj, struct opSet *msg)
@@ -85,8 +75,12 @@ ULONG About_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// About_Dispatcher
-SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+ULONG About_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+
    switch (msg->MethodID)
    {
       case OM_NEW : return(About_New(cl, obj, (APTR)msg));

@@ -1,15 +1,22 @@
 /// includes
-#include "/includes.h"
+//#include "includes.h"
 
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
+#include <exec/types.h>
+#include <dos/notify.h>
+#include <libraries/gadtools.h>
+#include <libraries/commodities.h>
+#include <libraries/mui.h>
+
+#include "../../NetConnect.h"
+#include "../../locale/Strings.h"
 #include "mui.h"
-#include "protos.h"
+//#include "protos.h"
 
+#include <datatypes/pictureclass.h>
 #define USE_DEFAULT_ICON_HEADER
 #define USE_DEFAULT_ICON_BODY
 #define USE_DEFAULT_ICON_COLORS
-#include "/images/default_icon.h"
+#include "../../images/default_icon.h"
 
 ///
 
@@ -71,7 +78,7 @@ struct MUI_Command arexx_list[] =
 ///
 
 /// BrokerFunc
-SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg);
+int BrokerFunc(CxMsg *msg);
 struct Hook BrokerHook = { { 0,0 }, (VOID *)BrokerFunc, NULL, NULL };
 
 ///

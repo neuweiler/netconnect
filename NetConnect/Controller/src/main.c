@@ -1,45 +1,4 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "//genesis/genesis.lib/pragmas/nc_lib.h"
-#include "mui.h"
-#include "mui_About.h"
-#include "mui_Button.h"
-#include "mui_Dock.h"
-#include "mui_MenuList.h"
-#include "protos.h"
-#include "rev.h"
-
-///
-/// defines
-#define NEWSTACK_SIZE 16384
-
-///
-/// extern variables
-extern struct ExecBase *SysBase;
-extern struct Catalog *cat;
-extern Object *SoundObject, *app, *group, *menu_list;
-extern struct Library *NetConnectBase;
-extern struct MUI_CustomClass *CL_Dock, *CL_Button, *CL_About, *CL_MenuList;
-extern struct Hook BrokerHook;
-extern struct MUI_InputHandlerNode ihnode;
-extern struct MsgPort *appmenu_port;
-extern ULONG NotifySignal;
-extern struct NotifyRequest nr;
-extern struct Process *proc;
-extern struct NewMenu DockMenu[];
-extern struct CommandLineInterface *LocalCLI;
-extern BPTR OldCLI;
-extern struct StackSwapStruct StackSwapper;
-extern struct MUI_Command arexx_list[];
-#ifdef DEMO
-extern struct Library *BattClockBase;
-#endif
-
-
-///
+#include "main.h"
 
 /// exit_libs
 VOID exit_libs(VOID)
@@ -86,7 +45,7 @@ BOOL init_libs(VOID)
    if(MUIMasterBase  && UtilityBase    && GfxBase  && IFFParseBase   &&
       WorkbenchBase  && DataTypesBase  && IconBase && NetConnectBase)
    {
-      if(NCL_GetOwner())
+//TODO      if(NCL_GetOwner())
       {
 #ifdef DEMO
          CloseLibrary(NetConnectBase);
@@ -109,7 +68,7 @@ BOOL init_libs(VOID)
 /// exit_classes
 VOID exit_classes(VOID)
 {
-   if(CL_About)      MUI_DeleteCustomClass(CL_About);
+	if(CL_About)      MUI_DeleteCustomClass(CL_About);
    if(CL_Button)     MUI_DeleteCustomClass(CL_Button);
    if(CL_Dock)       MUI_DeleteCustomClass(CL_Dock);
    if(CL_MenuList)   MUI_DeleteCustomClass(CL_MenuList);
@@ -122,10 +81,10 @@ VOID exit_classes(VOID)
 /// init_classes
 BOOL init_classes(VOID)
 {
-   CL_About    = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)   , About_Dispatcher);
-   CL_Button   = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Button_Data)  , Button_Dispatcher);
-   CL_Dock     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct Dock_Data)    , Dock_Dispatcher);
-   CL_MenuList = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct MenuList_Data), MenuList_Dispatcher);
+   CL_About    = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)   , About_Dispatcher);
+   CL_Button   = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct Button_Data)  , Button_Dispatcher);
+   CL_Dock     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct Dock_Data)    , Dock_Dispatcher);
+   CL_MenuList = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct MenuList_Data), MenuList_Dispatcher);
 
    if(CL_Dock && CL_Button && CL_About && CL_MenuList)
       return(TRUE);
@@ -411,7 +370,7 @@ int main(int argc, char *argv[])
 
    if(!proc->pr_CLI)
    {
-      if(LocalCLI = CloneCLI(&WBenchMsg->sm_Message))
+      if(LocalCLI = CloneCLI(&_WBenchMsg->sm_Message))
       {
          OldCLI = proc->pr_CLI;
          proc->pr_CLI = MKBADDR(LocalCLI);
