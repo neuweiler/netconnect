@@ -3,7 +3,7 @@
 
 #define VVSpace MUI_NewObject(MUIC_Rectangle, MUIA_FixWidth, 1, TAG_DONE)
 
-enum { MEN_ABOUT = 1, MEN_ABOUT_MUI, MEN_ICONIFY, MEN_QUIT, MEN_LOAD, MEN_IMPORT, MEN_SAVE, MEN_SAVEAS, MEN_MUI };
+enum { MEN_ABOUT = 1, MEN_ABOUT_MUI, MEN_ICONIFY, MEN_QUIT, MEN_LOAD, MEN_IMPORT, MEN_IMPORTOLD, MEN_SAVE, MEN_SAVEAS, MEN_MUI };
 
 #define MUIA_Genesis_Originator                  (TAGBASE_PREFS | 0x1000)
 #define MUIM_Genesis_Finish                      (TAGBASE_PREFS | 0x1001)

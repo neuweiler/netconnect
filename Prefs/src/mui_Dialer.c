@@ -23,7 +23,6 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct Dialer_Data tmp;
    static STRPTR ARR_Dialer_Register[4];
    static STRPTR ARR_MainWindow[4];
-   static STRPTR ARR_LaunchMode[] = { "CLI", "WB", "Script", "AREXX", NULL };
 
    ARR_Dialer_Register[0] = GetStr(MSG_DialerRegister1);
    ARR_Dialer_Register[1] = GetStr(MSG_DialerRegister2);
@@ -100,6 +99,24 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
             Child, HVSpace,
          End,
          Child, HVSpace,
+         Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Startup)),
+         Child, ColGroup(7),
+            Child, HVSpace,
+            Child, tmp.CH_StartupInetd  = MakeKeyCheckMark(TRUE, MSG_CC_StartupInetd),
+            Child, KeyLLabel1(GetStr(MSG_LA_StartupInetd), *GetStr(MSG_CC_StartupInetd)),
+            Child, HVSpace,
+            Child, tmp.CH_StartupLoopback  = MakeKeyCheckMark(TRUE, MSG_CC_StartupLoopback),
+            Child, KeyLLabel1(GetStr(MSG_LA_StartupLoopback), *GetStr(MSG_CC_StartupLoopback)),
+            Child, HVSpace,
+            Child, HVSpace,
+            Child, tmp.CH_StartupTCP  = MakeKeyCheckMark(TRUE, MSG_CC_StartupTCP),
+            Child, KeyLLabel1(GetStr(MSG_LA_StartupTCP), *GetStr(MSG_CC_StartupTCP)),
+            Child, HVSpace,
+            Child, HVSpace,
+            Child, HVSpace,
+            Child, HVSpace,
+         End,
+         Child, HVSpace,
       End,
 
       Child, VGroup,
@@ -107,13 +124,13 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
          Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Startup)),
          Child, HGroup,
             Child, tmp.PA_Startup = MakePopAsl(tmp.STR_Startup = MakeKeyString(NULL, MAXPATHLEN, "  r"), MSG_TX_ChooseFile, FALSE),
-            Child, tmp.CY_Startup = Cycle(ARR_LaunchMode),
+            Child, tmp.CY_Startup = Cycle(exec_types),
          End,
          Child, HVSpace,
          Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Shutdown)),
          Child, HGroup,
             Child, tmp.PA_Shutdown = MakePopAsl(tmp.STR_Shutdown = MakeKeyString(NULL, MAXPATHLEN, "  d"), MSG_TX_ChooseFile, FALSE),
-            Child, tmp.CY_Shutdown = Cycle(ARR_LaunchMode),
+            Child, tmp.CY_Shutdown = Cycle(exec_types),
          End,
          Child, HVSpace,
       End,
@@ -145,10 +162,13 @@ set(data->CH_QuickReconnect, MUIA_Disabled, TRUE);
       set(data->CH_QuickReconnect   , MUIA_ShortHelp, GetStr(MSG_Help_QuickReconnect));
       set(data->CH_ConfirmOffline   , MUIA_ShortHelp, GetStr(MSG_Help_ConfirmOffline));
       set(data->CH_Debug            , MUIA_ShortHelp, GetStr(MSG_Help_Debug));
+      set(data->CH_StartupInetd     , MUIA_ShortHelp, GetStr(MSG_Help_StartupInetd));
+      set(data->CH_StartupLoopback  , MUIA_ShortHelp, GetStr(MSG_Help_StartupLoopback));
+      set(data->CH_StartupTCP       , MUIA_ShortHelp, GetStr(MSG_Help_StartupTCP));
       set(data->STR_Startup         , MUIA_ShortHelp, GetStr(MSG_Help_Startup));
-      set(data->CY_Startup          , MUIA_ShortHelp, GetStr(MSG_Help_LaunchMode));
+      set(data->CY_Startup          , MUIA_ShortHelp, GetStr(MSG_Help_ExecType));
       set(data->STR_Shutdown        , MUIA_ShortHelp, GetStr(MSG_Help_Shutdown));
-      set(data->CY_Shutdown         , MUIA_ShortHelp, GetStr(MSG_Help_LaunchMode));
+      set(data->CY_Shutdown         , MUIA_ShortHelp, GetStr(MSG_Help_ExecType));
    }
    return((ULONG)obj);
 }

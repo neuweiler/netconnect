@@ -12,10 +12,10 @@ LONG   ReadFile(STRPTR file, STRPTR buffer, LONG len);
 BOOL   WriteFile(STRPTR file, STRPTR buffer, LONG len);
 
 BOOL   GetUserName(LONG user_number, char *buffer, LONG len);
-struct User *GetUser(STRPTR name, STRPTR title, LONG flags);
+struct User *GetUser(STRPTR name, STRPTR password, STRPTR title, LONG flags);
 struct User *GetGlobalUser(VOID);
 VOID   SetGlobalUser(struct User *user);
 VOID   ClearUserList(VOID);
 BOOL   ReloadUserList(VOID);
-
+BOOL   IsOnline(LONG flags);
 #endif

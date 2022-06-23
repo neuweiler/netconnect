@@ -16,6 +16,7 @@ Object *MakeKeyCheckMark(BOOL state, STRPTR control_char);
 Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only);
 STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep);
 char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save);
+VOID clear_list(struct MinList *list);
 STRPTR realloc_copy(STRPTR *old, STRPTR src);
 VOID encrypt(STRPTR in, STRPTR out);
 VOID decrypt(STRPTR in, STRPTR out);

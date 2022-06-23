@@ -10,6 +10,9 @@ struct Dialer_Data
    Object *CH_QuickReconnect;
    Object *CH_ConfirmOffline;
    Object *CH_Debug;
+   Object *CH_StartupInetd;
+   Object *CH_StartupLoopback;
+   Object *CH_StartupTCP;
 
    Object *CY_MainWindow;
    Object *CH_ShowLog;

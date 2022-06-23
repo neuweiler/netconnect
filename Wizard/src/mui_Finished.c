@@ -219,7 +219,7 @@ ULONG Finished_New(struct IClass *cl, Object *obj, struct opSet *msg)
       Child, MakeText(GetStr(MSG_TX_InfoSaveInfo)),
       Child, HGroup,
          Child, tmp.CH_Info = CheckMark(TRUE),
-         Child, MakePopAsl(tmp.STR_Info = MakeString("AmiTCP:log/GenesisWizard.log", MAXPATHLEN), MSG_TX_SaveInformation, FALSE),
+         Child, MakePopAsl(tmp.STR_Info = MakeString("AmiTCP:log/GENESiSWizard.log", MAXPATHLEN), MSG_TX_SaveInformation, FALSE),
       End,
       Child, HVSpace,
       Child, MakeText(GetStr(MSG_TX_InfoPrint)),

@@ -6,7 +6,7 @@
 # 
 #######################################################################
 
-all: pragmas/genesis_lib.h genesis.library amitcp:libs/genesis.library test
+all: pragmas/genesis_lib.h genesis.library amitcp:libs/genesis.library test_genesislib
 
 OBJS     = genesis_lib.o
 LIBS     = lib:amiga.lib lib:sc.lib
@@ -31,18 +31,18 @@ genesis.library : $(OBJS)
          LIBFD pragmas/genesis_lib.fd
          LIB $(LIBS)
          LIBVERSION 2 LIBREVISION 0
-         LIBID "genesis 2.0.4 (07.06.98)"
+         LIBID "genesis 2.0.7 (08.07.98)"
          MAP genesis.library.map
    <
       slink from genesis.library to AmiTCP:libs/genesis.library nodebug noicons
       run <>nil: flushlib genesis.library
 
-test : test.o
-      slink with T:test.WITH <<!(t:test.WITH)
-         FROM lib:c.o test.o
-         TO test
+test_genesislib : test_genesislib.o
+      slink with T:test_genesislib.WITH <<!(t:test_genesislib.WITH)
+         FROM lib:c.o test_genesislib.o
+         TO test_genesislib
          LIB $(LIBS)
-         MAP test.map
+         MAP test_genesislib.map
    <
 
 pragmas/genesis_lib.h : pragmas/genesis_lib.fd
@@ -51,7 +51,7 @@ pragmas/genesis_lib.h : pragmas/genesis_lib.fd
 .c.o:
    sc $(CFLAGS) $(GST) $(LIBFLAGS) $(OPTIONS) $*.c
 
-genesis_lib.o  : genesis_lib.c  libraries/genesis.h pragmas/genesis_lib.h proto/genesis.h
-test.o         : test.c libraries/genesis.h pragmas/genesis_lib.h proto/genesis.h
-   sc $(CFLAGS) $(GST) $(OPTIONS) test.c
+genesis_lib.o     : genesis_lib.c  libraries/genesis.h pragmas/genesis_lib.h proto/genesis.h
+test_genesislib.o : test_genesislib.c libraries/genesis.h pragmas/genesis_lib.h proto/genesis.h
+   sc $(CFLAGS) $(GST) $(OPTIONS) test_genesislib.c
 

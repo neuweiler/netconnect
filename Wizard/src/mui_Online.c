@@ -13,6 +13,7 @@
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
 #include "/genesis.lib/pragmas/genesis_lib.h"
+#include "/genesis.lib/pragmas/nc_lib.h"
 #include "mui.h"
 #include "mui_Online.h"
 #include "mui_MainWindow.h"
@@ -39,6 +40,9 @@ extern BOOL dialup;
 extern const char AmiTCP_PortName[];
 extern struct Interface Iface;
 extern struct ISP ISP;
+#ifdef NETCONNECT
+extern struct Library *NetConnectBase;
+#endif
 
 ///
 
@@ -212,7 +216,12 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    if(data->abort)   goto abort;
 
    // open bsdsocket.library and ifconfig.library
-   if(!(SocketBase = OpenLibrary("bsdsocket.library", 0)))
+#ifdef NETCONNECT
+   SocketBase = (struct Library *)NCL_OpenSocket();;
+#else
+   SocketBase = OpenLibrary("bsdsocket.library", 0);
+#endif
+   if(!SocketBase)
    {
       DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Abort), GetStr(MSG_TX_ErrorBsdsocketLib));
       goto abort;
@@ -262,6 +271,9 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_InitIface), NULL);
    if(data->abort)   goto abort;
 Printf("init iface\n");
+#ifdef NETCONNECT
+   NCL_CallMeSometimes();
+#endif
    if(!(iface_init(iface_data, &Iface, &ISP, &Config)))
       goto abort;
 Printf("iface initialized\n");
@@ -354,6 +366,9 @@ Printf("check if config is complete\n");
    if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringAmiTCP), NULL);
    if(data->abort)   goto abort;
+#ifdef NETCONNECT
+   NCL_CallMeSometimes();
+#endif
 Printf("configure interface\n");
 
    if(!(iface_config(iface_data, &Iface, &Config)))
@@ -520,9 +535,6 @@ Printf("save new resolv.conf\n");
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ClosingConnection), NULL);
    success = TRUE;
 Printf("everything went well.\n");
-#ifdef DEMO
-   DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "try to access the net now\nthis req won't appear in the final version", NULL);
-#endif
 
 abort:
 Printf("reached 'abort'\n");
@@ -595,12 +607,12 @@ ULONG Online_GoOnline(struct IClass *cl, Object *obj, Msg msg)
 
    if(data->TCPHandler = CreateNewProcTags(
       NP_Entry       , TCPHandler,
-      NP_Name        , "GenesisWizard netconfig",
+      NP_Name        , "GENESiSWizard Netconfig",
       NP_StackSize   , 16384,
       NP_WindowPtr   , -1,
       NP_CloseOutput , TRUE,
-      NP_Output      , Open("AmiTCP:log/GenesisWizard.log", MODE_NEWFILE),
-//NP_Output, Open("CON:/100/640/200/GenesisWizard netconfig/AUTO/WAIT/CLOSE", MODE_NEWFILE),
+      NP_Output      , Open("AmiTCP:log/GENESiSWizard.log", MODE_NEWFILE),
+//NP_Output, Open("CON:/100/640/200/GENESiSWizard Netconfig/AUTO/WAIT/CLOSE", MODE_NEWFILE),
       TAG_END))
    {
       return(TRUE);

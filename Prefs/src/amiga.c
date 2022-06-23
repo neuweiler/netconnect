@@ -277,6 +277,25 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
 
 ///
 
+/// clear_list
+VOID clear_list(struct MinList *list)
+{
+   if(list->mlh_TailPred != (struct MinNode *)list)
+   {
+      struct MinNode *e1, *e2;
+
+      e1 = list->mlh_Head;
+      while(e2 = e1->mln_Succ)
+      {
+         Remove((struct Node *)e1);
+         FreeVec(e1);
+         e1 = e2;
+      }
+   }
+}
+
+///
+
 #define ENCODE(c) (c ? (c & 0x3F) + 0x20 : 0x60)
 #define DECODE(c) ((c - 0x20) & 0x3F)
 

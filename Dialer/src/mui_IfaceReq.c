@@ -30,7 +30,7 @@ ULONG IfaceReq_BuildList(struct IClass *cl, Object *obj, struct MUIP_IfaceReq_Bu
       iface = (struct Interface *)msg->list->mlh_Head;
       while(iface->if_node.mln_Succ)
       {
-         if((data->online && !(iface->if_flags & IFL_IsOnline)) || (!data->online && (iface->if_flags & IFL_IsOnline) && !(iface->if_flags & IFL_AlwaysOnline)))
+         if((data->online && !(iface->if_flags & IFL_IsOnline)) || (!data->online && (iface->if_flags & IFL_IsOnline)))
             DoMethod(data->LI_Interfaces, MUIM_List_InsertSingle, iface, MUIV_List_Insert_Bottom);
          iface = (struct Interface *)iface->if_node.mln_Succ;
       }
@@ -111,7 +111,7 @@ ULONG IfaceReq_New(struct IClass *cl, Object *obj, Msg msg)
             MUIA_NListview_NList       , tmp.LI_Interfaces = NListObject,
                MUIA_Frame              , MUIV_Frame_InputList,
                MUIA_NList_DisplayHook  , &IfaceReq_DisplayHook,
-               MUIA_NList_MultiSelect  , MUIV_NList_MultiSelect_Always,
+               MUIA_NList_MultiSelect  , MUIV_NList_MultiSelect_Default,
             End,
          End,
          Child, HGroup,
@@ -124,9 +124,10 @@ ULONG IfaceReq_New(struct IClass *cl, Object *obj, Msg msg)
 
       *data = tmp;
 
-      DoMethod(data->BT_Okay  , MUIM_Notify, MUIA_Pressed, FALSE, obj, 2, MUIM_IfaceReq_Finished, TRUE);
-      DoMethod(data->BT_Cancel, MUIM_Notify, MUIA_Pressed, FALSE, obj, 2, MUIM_IfaceReq_Finished, FALSE);
-      DoMethod(obj            , MUIM_Notify, MUIA_Window_CloseRequest, TRUE, obj, 2, MUIM_IfaceReq_Finished, FALSE);
+      DoMethod(data->BT_Okay        , MUIM_Notify, MUIA_Pressed               , FALSE           , obj, 2, MUIM_IfaceReq_Finished, TRUE);
+      DoMethod(data->BT_Cancel      , MUIM_Notify, MUIA_Pressed               , FALSE           , obj, 2, MUIM_IfaceReq_Finished, FALSE);
+      DoMethod(obj                  , MUIM_Notify, MUIA_Window_CloseRequest   , TRUE            , obj, 2, MUIM_IfaceReq_Finished, FALSE);
+      DoMethod(data->LV_Interfaces  , MUIM_Notify, MUIA_NList_DoubleClick     , MUIV_EveryTime  , obj, 2, MUIM_IfaceReq_Finished, TRUE);
    }
    return((ULONG)obj);
 }

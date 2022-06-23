@@ -1,4 +1,3 @@
-
 ###############################################################################
 #
 #  SMakefile
@@ -17,14 +16,15 @@
 
 CPU      = ANY
 #CPU     = 68030
-DEMO     = DEF=DEMO
+#DEMO     = DEF=DEMO
+NC       = DEF=NETCONNECT
 #DEBUG   = DBG=FULL
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
 GST      = GSTIMM GST=/includes.gst
 
-CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(DEBUG)
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(DEBUG) $(NC)
 
 LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
 #LFLAGS  = SC SD NOICONS MAXHUNK 100000
@@ -58,9 +58,13 @@ mui_MainWindow.o: mui_MainWindow.c /includes.h /Genesis.h\
  /genesis.lib/pragmas/genesis_lib.h rev.h Strings.h mui.h mui_DataBase.h\
  mui_Dialer.h mui_MainWindow.h mui_Modem.h mui_PasswdReq.h\
  mui_User.h mui_Provider.h mui_ProviderWindow.h protos.h\
- images/information.h images/databases.h\
+ mui:Developer/C/Include/MUI/grouppager_mcc.h images/information.h images/databases.h\
  images/dialer.h images/modem.h images/provider.h\
  images/logo.h
+
+globals.o: globals.c /includes.h /Genesis.h Strings.h mui.h protos.h\
+ mui:developer/c/include/mui/grouppager_mcc.h images/logo.h images/databases.h images/dialer.h\
+ images/modem.h images/provider.h images/user.h images/information.h
 
 mui_IfaceWindow.o: mui_IfaceWindow.c /includes.h /Genesis.h\
  /genesis.lib/libraries/genesis.h /genesis.lib/proto/genesis.h\
@@ -84,15 +88,11 @@ mui_Provider.o: mui_Provider.c /includes.h /Genesis.h Strings.h mui.h\
 amiga.o: amiga.c /includes.h /Genesis.h /genesis.lib/libraries/genesis.h\
  /genesis.lib/proto/genesis.h /genesis.lib/pragmas/genesis_lib.h Strings.h mui.h protos.h
 
-globals.o: globals.c /includes.h /Genesis.h Strings.h mui.h protos.h\
- images/logo.h images/databases.h images/dialer.h\
- images/modem.h images/provider.h images/user.h images/information.h
-
 main.o: main.c /includes.h /Genesis.h /genesis.lib/libraries/genesis.h\
- /genesis.lib/proto/genesis.h /genesis.lib/pragmas/genesis_lib.h rev.h Strings.h mui.h mui_About.h\
- mui_DataBase.h mui_Dialer.h mui_MainWindow.h mui_Modem.h mui_PasswdReq.h\
- mui_User.h mui_Provider.h mui_ProviderWindow.h mui_IfaceWindow.h\
- mui_UserWindow.h protos.h
+ /genesis.lib/proto/genesis.h /genesis.lib/pragmas/genesis_lib.h rev.h Strings.h mui.h\
+ mui_About.h mui_DataBase.h mui_Dialer.h mui_MainWindow.h mui_Modem.h\
+ mui_PasswdReq.h mui_User.h mui_Provider.h mui_ProviderWindow.h mui_IfaceWindow.h\
+ mui_UserWindow.h protos.h mui:Developer/C/Include/mui/grouppager_mcc.h
 
 mui_About.o: mui_About.c /includes.h /Genesis.h rev.h Strings.h mui.h\
  mui_About.h mui_MainWindow.h protos.h images/logo.h

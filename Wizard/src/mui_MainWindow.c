@@ -33,7 +33,8 @@ extern struct IOExtSer  *SerWriteReq;
 extern struct MsgPort   *SerWritePort;
 extern struct MUI_CustomClass *CL_Online, *CL_Finished, *CL_Protocol, *CL_LoginScript,
                               *CL_ModemStrings, *CL_Sana2, *CL_SerialModem, *CL_SerialSana,
-                              *CL_UserInfo, *CL_Welcome, *CL_SanaConfig, *CL_Request;
+                              *CL_UserInfo, *CL_Welcome, *CL_SanaConfig, *CL_Request,
+                              *CL_About;
 extern BOOL use_loginscript, use_modem, no_picture, keyboard_input;
 extern int dialing_try;
 extern struct ISP ISP;
@@ -54,11 +55,17 @@ extern UBYTE *bodies[NUM_PAGES];
 /// MainWindow_About
 ULONG MainWindow_About(struct IClass *cl, Object *obj, Msg msg)
 {
-#ifdef DEMO
-   MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033b\033cGenesis Wizard\033n\033c\n" VERTAG "\n\n%ls\n\n\033bTHIS IS A DEMO VERSION !\033n\n\nAREXX port: '%ls'", GetStr(MSG_TX_About), xget(app, MUIA_Application_Base));
-#else
-   MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033b\033cGenesis Wizard\033n\033c\n" VERTAG "\n\n%ls\n\nAREXX port: '%ls'", GetStr(MSG_TX_About), xget(app, MUIA_Application_Base));
-#endif
+   Object *req;
+
+   set(app, MUIA_Application_Sleep, TRUE);
+   if(req = (APTR)NewObject(CL_About->mcc_Class, NULL, TAG_DONE))
+   {
+      DoMethod(app, OM_ADDMEMBER, req);
+      set(req, MUIA_Window_Open, TRUE);
+   }
+   else
+      set(app, MUIA_Application_Sleep, FALSE);
+
    return(NULL);
 }
 
@@ -123,7 +130,7 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(Iface.if_sana2device, "DEVS:Networks/appp.device");
             Iface.if_sana2unit = 0;
             strcpy(Iface.if_sana2config, "ENV:Sana2/appp0.config");
-            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %%a\ncd yes\nuser %%u\nsecret %%p\ndebug = 1\ndebug_window = 1\nlog_file = AmiTCP:log/appp.log\ncon_window = NIL:\n", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate);
+            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %%a\ncd yes\nuser %%u\nsecret %%p\ncd yes\nmppcomp no\nvjcomp no\nbsdcomp no\ndeflatecomp no\neof no\ndebug = 1\ndebug_window = 1\nlog_file = AmiTCP:log/appp.log\ncon_window = NIL:\n", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate);
             Iface.if_sana2configtext = sana2configtext;
             strcpy(Iface.if_name, "ppp");
             Iface.if_flags |= IFL_PPP;
@@ -219,37 +226,33 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
 
          if(*Config.cnf_dialprefix)
          {
-            if(*Config.cnf_initstring)
+            set(app, MUIA_Application_Sleep, TRUE);
+
+            serial_send("\r", -1);
+            Delay(10);
+            serial_send("AAT\r", -1);
+            if(serial_waitfor("OK", NULL, NULL, 2))
             {
-               set(app, MUIA_Application_Sleep, TRUE);
+               char buffer[MAXPATHLEN];
 
-               serial_send("\r", -1);
-               Delay(20);
-               serial_clear();
-               serial_send("AAT\r", -1);
+               Delay(10);
+               EscapeString(buffer, Config.cnf_initstring);
+               strcat(buffer, "\r");
+               serial_send(buffer, -1);
                if(serial_waitfor("OK", NULL, NULL, 2))
-               {
-                  char buffer[MAXPATHLEN];
-
-                  Delay(30);
-                  EscapeString(buffer, Config.cnf_initstring);
-                  strcat(buffer, "\r");
-                  serial_send(buffer, -1);
-                  if(serial_waitfor("OK", NULL, NULL, 2))
-                     data->Page = PAGE_UserInfo;
-                  else
-                     MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_NoOKOnInit));
-               }
+                  data->Page = PAGE_UserInfo;
                else
-                  MUI_Request(app, win, NULL,  NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_NoOKOnAT));
-
-               set(app, MUIA_Application_Sleep, FALSE);
+               {
+                  if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_IgnoreCancel), GetStr(MSG_TX_NoOKOnInit)))
+                     data->Page = PAGE_UserInfo;
+               }
             }
             else
             {
-               MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_SpecifyInitString));
-               set(win, MUIA_Window_ActiveObject, ms_data->STR_InitString);
+               if(MUI_Request(app, win, NULL,  NULL, GetStr(MSG_ReqBT_IgnoreCancel), GetStr(MSG_TX_NoOKOnAT)))
+                  data->Page = PAGE_UserInfo;
             }
+            set(app, MUIA_Application_Sleep, FALSE);
          }
          else
          {
@@ -281,6 +284,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
          }
          break;
       }
+
       case PAGE_Finished:
       {
          struct Finished_Data *fi_data = INST_DATA(CL_Finished->mcc_Class, data->GR_Finished);
@@ -352,11 +356,22 @@ ULONG MainWindow_BackPage(struct IClass *cl, Object *obj, Msg msg)
          data->Page = PAGE_SerialSana;
          break;
       case PAGE_LoginScript:
+      {
+         struct LoginScript_Data *ls_data = INST_DATA(CL_LoginScript->mcc_Class, data->GR_LoginScript);
+
          if(dialing_try)
             DoMethod(data->GR_LoginScript, MUIM_LoginScript_HangUp);
          Delay(50);
+
+         if(ls_data->ihnode_added)
+         {
+            ls_data->ihnode_added = FALSE;
+            DoMethod(app, MUIM_Application_RemInputHandler, &ls_data->ihnode);
+         }
+         serial_stopread();
          data->Page = PAGE_Protocol;
          break;
+      }
       case PAGE_Finished:
          if(use_modem)
          {
@@ -435,9 +450,6 @@ ULONG MainWindow_SetPage(struct IClass *cl, Object *obj, Msg msg)
          clear_list(&ISP.isp_loginscript);
          keyboard_input = FALSE;
 
-         serial_send("\r", -1);
-         Delay(25);
-         serial_clear();
          serial_startread(serial_in, 1);
 
          if(!ls_data->ihnode_added && SerReadPort)
@@ -477,19 +489,6 @@ ULONG MainWindow_Quit(struct IClass *cl, Object *obj, Msg msg)
 {
    if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_QuitCancel), GetStr(MSG_TX_ReallyQuit)))
       DoMethod(app, MUIM_Application_PushMethod, app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
-
-   return(NULL);
-}
-
-///
-/// MainWindow_Help
-ULONG MainWindow_Help(struct IClass *cl, Object *obj, Msg msg)
-{
-   struct MainWindow_Data *data = INST_DATA(cl, obj);
-   char buf[21];
-
-   sprintf(buf, "Page%ld", data->Page + 1);
-   DoMethod(app, MUIM_Application_ShowHelp, win, "GenesisWizard.guide", buf, 0);
 
    return(NULL);
 }
@@ -600,7 +599,6 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
             Child, HSpace(0),
             Child, tmp.BT_Abort   = MakeButton(MSG_BT_Abort),
-            Child, tmp.BT_Help    = MakeButton(MSG_BT_Help),
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
@@ -643,13 +641,11 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
          set(data->BT_Back    , MUIA_ShortHelp, GetStr(MSG_HELP_Back));
          set(data->BT_Next    , MUIA_ShortHelp, GetStr(MSG_HELP_Next));
          set(data->BT_Abort   , MUIA_ShortHelp, GetStr(MSG_HELP_Abort));
-         set(data->BT_Help    , MUIA_ShortHelp, GetStr(MSG_HELP_Help));
 
          DoMethod(obj              , MUIM_Notify, MUIA_Window_CloseRequest, TRUE, obj, 1, MUIM_MainWindow_Quit);
          DoMethod(data->BT_Next    , MUIM_Notify, MUIA_Pressed   , FALSE  , obj, 1, MUIM_MainWindow_NextPage);
          DoMethod(data->BT_Back    , MUIM_Notify, MUIA_Pressed   , FALSE  , obj, 1, MUIM_MainWindow_BackPage);
          DoMethod(data->BT_Abort   , MUIM_Notify, MUIA_Pressed   , FALSE  , obj, 1, MUIM_MainWindow_Quit);
-         DoMethod(data->BT_Help    , MUIM_Notify, MUIA_Pressed   , FALSE  , obj, 1, MUIM_MainWindow_Help);
 
          DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT)    , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_About);
          DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT_MUI), MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_AboutMUI, win);
@@ -677,7 +673,6 @@ SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register
       case MUIM_MainWindow_NextPage       : return(MainWindow_NextPage        (cl, obj, (APTR)msg));
       case MUIM_MainWindow_BackPage       : return(MainWindow_BackPage        (cl, obj, (APTR)msg));
       case MUIM_MainWindow_About          : return(MainWindow_About           (cl, obj, (APTR)msg));
-      case MUIM_MainWindow_Help           : return(MainWindow_Help            (cl, obj, (APTR)msg));
       case MUIM_MainWindow_Quit           : return(MainWindow_Quit            (cl, obj, (APTR)msg));
       case MUIM_MainWindow_DisposeWindow  : return(MainWindow_DisposeWindow   (cl, obj, (APTR)msg));
       case MUIM_MainWindow_MUIRequest     : return(MainWindow_MUIRequest      (cl, obj, (APTR)msg));

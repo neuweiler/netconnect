@@ -1,6 +1,6 @@
 #define MUIM_MainWindow_About                  (TAGBASE_GENESIS | 0x1001)
 #define MUIM_MainWindow_DisposeWindow          (TAGBASE_GENESIS | 0x1002)
-#define MUIM_MainWindow_Trigger                (TAGBASE_GENESIS | 0x1003)
+#define MUIM_MainWindow_NetInfo                (TAGBASE_GENESIS | 0x1003)
 #define MUIM_MainWindow_Quit                   (TAGBASE_GENESIS | 0x1004)
 #define MUIM_MainWindow_OnOffline              (TAGBASE_GENESIS | 0x1005)
 #define MUIM_MainWindow_PutOnline              (TAGBASE_GENESIS | 0x1006)
@@ -18,6 +18,8 @@ struct MUIP_MainWindow_DisposeWindow      { ULONG MethodID; Object *window; };
 struct MUIP_MainWindow_MUIRequest         { ULONG MethodID; STRPTR buttons; STRPTR message; };
 struct MUIP_MainWindow_OnOffline          { ULONG MethodID; LONG online; };
 struct MUIP_MainWindow_SendPing           { ULONG MethodID; STRPTR hostname; };
+struct MUIP_MainWindow_ChangeProvider     { ULONG MethodID; STRPTR name; };
+struct MUIP_MainWindow_ChangeUser         { ULONG MethodID; STRPTR name; STRPTR password; };
 
 struct MainWindow_Data
 {

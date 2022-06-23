@@ -289,10 +289,15 @@ ULONG LoginScript_Dial(struct IClass *cl, Object *obj, struct MUIP_LoginScript_D
    sprintf(buffer1, GetStr(MSG_TX_Dialing), buffer2, dialing_try);
    DoMethod(data->TR_Terminal, TCM_WRITE, buffer1, strlen(buffer1));
 
+   serial_send("AAT\r", -1);
+   Delay(10);
+   serial_send("ATZ\r", -1);
+   Delay(20);
+
    EscapeString(buffer1, Config.cnf_initstring);
    strcat(buffer1, "\r");
    serial_send(buffer1, -1);
-   Delay(50);
+   Delay(10);
 
    EscapeString(buffer1, Config.cnf_dialprefix);
    strcat(buffer1, buffer2);
@@ -319,6 +324,7 @@ ULONG LoginScript_GoOnline(struct IClass *cl, Object *obj, Msg msg)
       DoMethod(app, MUIM_Application_RemInputHandler, &data->ihnode);
       data->ihnode_added = FALSE;
    }
+   serial_stopread();
 
    dialing_try = 0;
    do_keyboard();
@@ -415,7 +421,8 @@ ULONG LoginScript_Dispose(struct IClass *cl, Object *obj, Msg msg)
       data->ihnode_added = FALSE;
       DoMethod(app, MUIM_Application_RemInputHandler, &data->ihnode);
    }
-   serial_clear();
+   serial_stopread();
+
    return(DoSuperMethodA(cl, obj, msg));
 }
 

@@ -27,8 +27,8 @@ void main()
       else
          Printf("GetGlobalUser was NOT successful.\n");
 
-      Printf("\ntesting normal GetUser(NULL)\n");
-      if(user = GetUser(NULL, "please identify yourself", NULL))
+      Printf("\ntesting normal GetUser()\n");
+      if(user = GetUser(NULL, NULL, "please identify yourself", NULL))
       {
          Printf("GetUser was successful.\nUser: %ls\nPassword: %ls\nUID: %ld\nGID: %ld\nGecos: %ls\nHomeDir: %ls\nShell: %ls\n",
             user->us_name, user->us_passwd, user->us_uid, user->us_gid, user->us_gecos,
@@ -69,7 +69,7 @@ void main()
          Printf("GetGlobalUser was NOT successful.\n");
 
       Printf("\ntesting GetUser() with given username \"root\"\n");
-      if(user = GetUser("root", NULL, GUF_TextObject))
+      if(user = GetUser("root", NULL, NULL, GUF_TextObject))
       {
          Printf("GetUser(\"root\") was successful.\nUser: %ls\nPassword: %ls\nUID: %ld\nGID: %ld\nGecos: %ls\nHomeDir: %ls\nShell: %ls\n",
             user->us_name, user->us_passwd, user->us_uid, user->us_gid, user->us_gecos,
@@ -79,6 +79,8 @@ void main()
       }
       else
          Printf("GetUser(\"root\" was NOT successful.\n");
+
+      Printf("is any interface online ?  %ls\n", (IsOnline(NULL) ? "yes" : "no"));
 
       CloseLibrary((struct Library *) GenesisBase);
    }

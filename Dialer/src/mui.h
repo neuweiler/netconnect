@@ -2,7 +2,7 @@
 #define TAGBASE_GENESIS (TAG_USER | (MUISERIALNR_GENESIS << 16))
 
 #define VVSpace MUI_NewObject(MUIC_Rectangle, MUIA_FixWidth, 1, TAG_DONE)
-enum { MEN_ABOUT=1, MEN_ABOUT_MUI, MEN_QUIT, MEN_MUI, MEN_GENESIS };
+enum { MEN_ABOUT=1, MEN_NETINFO, MEN_ABOUT_MUI, MEN_QUIT, MEN_MUI, MEN_GENESIS };
 enum { ID_DOUBLESTART=40 };
 
 #define MUIV_Background_Red      "2:cccccccc,60606060,60606060"
@@ -15,6 +15,7 @@ MainWindow: 1000
 Online    : 1010
 Genesis   : 1020
 IfaceReq  : 1030
+NetInfo   : 1040
 */
 
 /// MainMessage

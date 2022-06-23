@@ -69,16 +69,16 @@ History for Genesis
   correct name if it was defined in db/passwd (but that's gonna
   be automated soon anyway).
 
-2.1.3 (30.3.98)
----------------
+2.1.3 (30.03.98)
+----------------
 
 * fixed bug that caused an enforcer hit when adding nameservers to
   amitcp:db/resolv.conf . should also solve the problem of adding
   empty entries to this file.
 * now reads configuration correctly (again).
 
-2.1.4 (4.4.98)
----------------
+2.1.4 (04.04.98)
+----------------
 
 * now reads amitcp:db/passwd to get user information. user stuff in
   genesis.conf has been dropped. => run genesisprefs first, verify
@@ -88,8 +88,8 @@ History for Genesis
   online => samba should work now.
 * added menu entry to start prefs from genesis... yessss ! :)
 
-2.1.5 (6.4.98)
---------------
+2.1.5 (06.04.98)
+----------------
 
 * increased wait time for amitcp-kernel at startup to 30 secs
   (certain people use to have huuuuge user-startups ! :)
@@ -102,28 +102,28 @@ History for Genesis
 * to start genesisprefs from menu it has to be in AMITCP:, PROGDIR: or
   in the path and its name must be "GenesisPrefs".
 
-2.1.6 (20.4.98)
----------------
+2.1.6 (20.04.98)
+----------------
 
 * a stupid bug prevented genesisprefs to be launched when it wasn't
   in AmiTCP:
 * multiple phonenumbers are supported (separated with a '|').
 * displays how many seconds remain in redial delay.
 
-2.1.7 (30.4.98)
----------------
+2.1.7 (30.04.98)
+----------------
 
 * env:apppdns1 was not deleted (misspelled filename in DeleteFile())
   and thus they were probably reused after switching the provider config.
 
-2.1.8 (4.5.98)
---------------
+2.1.8 (04.05.98)
+----------------
 
 * added SynClock functionality (gettime / savetime).
 * launches 68020 version of AmiTCP if available and applicable.
 
-2.1.9 (7.6.98)
----------------
+2.1.9 (07.06.98)
+----------------
 
 * moved back from stormc to sasc => 31% smaller code..
 * localized everything and added help bubbles.
@@ -132,8 +132,8 @@ History for Genesis
 * moved some internal functions to genesis.lib => requires at least
   genesis.library from 7.6.1998
 
-2.1.10 (8.6.98)
----------------
+2.1.10 (08.06.98)
+-----------------
 
 * user popup now has its own user list again. so if no password is
   set, no requester will appear at all when changing user.
@@ -141,4 +141,123 @@ History for Genesis
   hidden.
 * workaround to prevent term.mcc causing a massive enforcer hit
   attack when its window isn't opened or its MUIA_ShowMe was FALSE.
+
+2.1.11 (15.06.98)
+-----------------
+
+* now supports new netconnect.library
+* at startup tries to login with global user, if not set, tries to
+  login with first defined user. If this user has no passwd set, no
+  login requester will appear.
+* added arexx interface :
+   provider     : NAME,FORCE/S
+                  switch to provider 'name'. if 'force' is passed,
+                  and one iface is still online no requester will appear
+                  but it will go offline immediately.
+                  (case sensitive ! use single quotation marks)
+   user         : NAME,PW=PASSWORD/K
+                  change logged in user to 'name'. if password is known,
+                  you can pass it along with 'password'. A requester
+                  will only appear if required.
+                  (case sensitive !)
+   connect      : IF=IFACENAMES/M,ALL/S
+                  like pressing "connect" button. if no name is given
+                  and only one iface is defined, it will be put online.
+                  if more than one are defined, a requester will popup.
+                  if you pass interface names (i.e. 'ppp' 'magplip0')
+                  they will be put online. you can pass more than one
+                  iface name. 'all' will put all ifaces online.
+                  (case insensitive)
+   disconnect   : IF=IFACENAMES/M,ALL/S
+                  like pressing "disconnect" button. if no name is given
+                  and only one iface is defined, it will be put offline.
+                  if more than one are defined, a requester will popup.
+                  if you pass interface names (i.e. 'ppp' 'magplip0')
+                  they will be put offline. you can pass more than one
+                  iface name. 'all' will put all ifaces offline.
+                  (case insensitive)
+   status       : IF=IFACENAME
+                  return online status of given iface. if no name is given,
+                  the status of the first iface is returned.
+                  TRUE = online, FALSE = offline, -1 = error
+                  (case insensitive)
+   window       : OPEN/S,CLOSE/S
+                  open or close the mainwindow. this will really open/close
+                  the window. It will not iconify it (like SHOW / HIDE).
+
+2.1.12 (22.06.98)
+-----------------
+
+* startup command now gets executed after kernel was loaded and BEFORE inetd
+  is launched. this allows samba to install properly.
+* added CLI/WB arguments: USER, PASSWORD, WAITSTACK
+  user & password are used to login as a specific user at startup
+  waitstack is how many seconds genesis waits til amitcp is ready.
+
+2.1.13 (22.06.98)
+-----------------
+
+* when argument parsing failed, mui app didn't get disposed => could not be
+  launched again.
+* added cli/wb argument PROVIDER to load a provider at startup.
+* made a few modifications in serial_waitfor() to hopefully
+  correct a problem with long delays (reported by wiz).
+* redesigned about requester.
+
+2.1.14 (24.06.98)
+-----------------
+
+* added network status window, can be opened by using the menu.
+  it shows iface name, on/offline, ip, dest ip, gateway ip.
+* when more than one iface is defined and only one of them can be put
+  on/offline, the iface requester will no longer popup.
+
+2.1.15 (01.07.98)
+-----------------
+
+* as a workaround "ATZ\r" is beeing sent before the init-string. this should
+  help to avoid problems with some crappy modems.
+* fixed problem with dialscript... this time for real !
+
+2.1.16 (05.07.98)
+-----------------
+
+* modified about & copyright texts. included "thanks to" part. If someone
+  thinks (s)he has been missed, please let me know.
+* added Delay(10); after each command that's sent to the modem. could fix
+  problems with pace modem.
+* launching genesisprefs from menu should no longer throw up "inser volume
+  PROGDIR:" requester.
+
+2.1.17 (06.07.98)
+-----------------
+
+* debugged detecetion of iface that goes offline by itself (passive).
+* now supports execution of programs/scripts if iface has been put online,
+  if an iface failed to go online, if an iface was put offline by the
+  user and if the iface went offline by itself (e.g. carrier drop with ppp)
+* "always online" is now "auto online" which means that the iface gets online
+  when the config is loaded but the user can put it offline/online manually
+  too.
+* changed behaviour of interface requester slightly. now: default multiselect
+  and double click supported.
+* inetd, lo0 and tcp: will only be loaded/mounted when user specified
+* now properly reloads config when changed with prefs.
+
+2.1.18 (06.07.98)
+-----------------
+
+* some of the new options (StartupTCP, ...) didn't get loaded correctly.
+
+2.2.0 (09.07.98)
+----------------
+
+* full version for NC2
+* wb-tooltypes were not parsed correctly, cause after cloning the global path,
+  genesis thought it was started from cli and not from wb.
+* provider-name passed as argument no longer case sensitive.
+* added 1 hour session-timout in demo mode
+* added 90 days demo timeout, incl. 10 additional days with warning.
+* at startup the about requester pops up in demo mode.
+* added help bubbles for iface led's to display iface name.
 

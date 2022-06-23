@@ -2,21 +2,22 @@
 #include "/includes.h"
 
 #include "/Genesis.h"
+#ifdef NETCONNECT
 #include "/genesis.lib/pragmas/nc_lib.h"
+#endif
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
 #include "mui_About.h"
 #include "mui_MainWindow.h"
 #include "protos.h"
-#include "images/logo.h"
 
 ///
 /// external variables
+#ifdef NETCONNECT
 extern struct Library *NetConnectBase;
-extern ULONG logo_colors[];
-extern UBYTE logo_body[];
-extern Object *win, *app;
+#endif
+extern Object *app, *win;
 
 ///
 
@@ -31,7 +32,7 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 #endif
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title       , "GENESiSPrefs · Copyright Information",
+      MUIA_Window_Title       , "GENESiS Wizard · Copyright Information",
       MUIA_Window_ID          , MAKE_ID('A','B','O','U'),
       MUIA_Window_RefWindow   , win,
       MUIA_Window_LeftEdge    , MUIV_Window_LeftEdge_Centered,
@@ -39,24 +40,6 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
       MUIA_Window_Height      , MUIV_Window_Height_MinMax(50),
       WindowContents, VGroup,
          MUIA_Background, MUII_RequesterBack,
-         Child, HGroup,
-            TextFrame,
-            MUIA_Background, MUII_GroupBack,
-            Child, HVSpace,
-            Child, BodychunkObject,
-               MUIA_FixWidth             , LOGO_WIDTH ,
-               MUIA_FixHeight            , LOGO_HEIGHT,
-               MUIA_Bitmap_Width         , LOGO_WIDTH ,
-               MUIA_Bitmap_Height        , LOGO_HEIGHT,
-               MUIA_Bodychunk_Depth      , LOGO_DEPTH ,
-               MUIA_Bodychunk_Body       , (UBYTE *)logo_body,
-               MUIA_Bodychunk_Compression, LOGO_COMPRESSION,
-               MUIA_Bodychunk_Masking    , LOGO_MASKING,
-               MUIA_Bitmap_SourceColors  , (ULONG *)logo_colors,
-               MUIA_Bitmap_Transparent   , 0,
-            End,
-            Child, HVSpace,
-         End,
          Child, ScrollgroupObject,
             MUIA_CycleChain, 1,
             MUIA_Background, MUII_ReadListBack,
@@ -64,7 +47,7 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
             MUIA_Scrollgroup_Contents, VirtgroupObject,
                ReadListFrame,
                Child, TextObject,
-                  MUIA_Text_Contents, "\033c\033b\033u\nGENESiS Preferences\033n\033c\n\n" \
+                  MUIA_Text_Contents, "\n\033c\033b\033uGENESiS Wizard - Get easily connected\033n\n\n"\
                                       "\033cVersion " VERTAG "\n\n"\
                                       "\033n\033cCopyright © 1997-98 by\n\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n"\
                                       "All Rights Reserved\n",
@@ -93,6 +76,8 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
                                       "MUI is © 1992-97 by Stefan Stunz <stuntz@sasg.com>\n"\
                                       "\n"\
                                       "NList.mcc, NListview.mcc are © 1996-98 Gilles Masson\n"\
+                                      "Busy.mcc is © 1994-97 kmel, Klaus Melchior\n"\
+                                      "Term.mcc is © 1996 by Mathias Mischler\n"\
                                       "\n"\
                                       "AmiTCP is © by NSDI\n"\
                                       "GENESiS uses code that was kindly provided by NSDI",
@@ -115,10 +100,10 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 
       DoMethod(obj, MUIM_Notify, MUIA_Window_CloseRequest, TRUE ,
          MUIV_Notify_Application, 6, MUIM_Application_PushMethod,
-         win, 3, MUIM_MainWindow_AboutFinish, obj);
+         win, 3, MUIM_MainWindow_DisposeWindow, obj);
       DoMethod(data->BT_Button, MUIM_Notify, MUIA_Pressed, FALSE ,
          MUIV_Notify_Application, 6, MUIM_Application_PushMethod,
-         win, 3, MUIM_MainWindow_AboutFinish, obj);
+         win, 3, MUIM_MainWindow_DisposeWindow, obj);
    }
    return((ULONG)obj);
 }

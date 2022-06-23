@@ -152,26 +152,8 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
       strncpy(data->isp->isp_password  , (STRPTR)xget(data->STR_Password, MUIA_String_Contents), sizeof(data->isp->isp_password));
 //  isp_organisation;
 
-      if(data->isp->isp_nameservers.mlh_TailPred != (struct MinNode *)&data->isp->isp_nameservers)
-      {
-         server1 = (struct ServerEntry *)data->isp->isp_nameservers.mlh_Head;
-         while(server2 = (struct ServerEntry *)server1->se_node.mln_Succ)
-         {
-            Remove((struct Node *)server1);
-            FreeVec(server1);
-            server1 = server2;
-         }
-      }
-      if(data->isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&data->isp->isp_domainnames)
-      {
-         server1 = (struct ServerEntry *)data->isp->isp_domainnames.mlh_Head;
-         while(server2 = (struct ServerEntry *)server1->se_node.mln_Succ)
-         {
-            Remove((struct Node *)server1);
-            FreeVec(server1);
-            server1 = server2;
-         }
-      }
+      clear_list(&data->isp->isp_nameservers);
+      clear_list(&data->isp->isp_domainnames);
       if(xget(data->CY_Resolv, MUIA_Cycle_Active))
       {
          pos = 0;
@@ -221,7 +203,8 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
                FreeVec(iface1->if_configparams);
             if(iface1->if_userdata)
                FreeVec(iface1->if_userdata);
-// remove events
+            clear_list(&iface1->if_events);
+
             FreeVec(iface1);
             iface1 = iface2;
          }
@@ -244,8 +227,22 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
             if(iface2->if_userdata = (APTR)AllocVec(sizeof(struct PrefsPPPIface), MEMF_ANY))
                memcpy(iface2->if_userdata, iface1->if_userdata, sizeof(struct PrefsPPPIface));
             NewList((struct List *)&iface2->if_events);
-// copy events
 
+            if(iface1->if_events.mlh_TailPred != (struct MinNode *)&iface1->if_events)
+            {
+               struct ScriptLine *event1, *event2;
+
+               event1 = (struct ScriptLine *)iface1->if_events.mlh_Head;
+               while(event1->sl_node.mln_Succ)
+               {
+                  if(event2 = AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+                  {
+                     memcpy(event2, event1, sizeof(struct ScriptLine));
+                     AddTail((struct List *)&iface2->if_events, (struct Node *)event2);
+                  }
+                  event1 = (struct ScriptLine *)event1->sl_node.mln_Succ;
+               }
+            }
             AddTail((struct List *)&data->isp->isp_ifaces, (struct Node *)iface2);
          }
       }
@@ -265,16 +262,7 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
       else
          data->isp->isp_flags &= ~ISF_UseBootp;
 
-      if(data->isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&data->isp->isp_loginscript)
-      {
-         script_line1 = (struct ScriptLine *)data->isp->isp_loginscript.mlh_Head;
-         while(script_line2 = (struct ScriptLine *)script_line1->sl_node.mln_Succ)
-         {
-            Remove((struct Node *)script_line1);
-            FreeVec(script_line1);
-            script_line1 = script_line2;
-         }
-      }
+      clear_list(&data->isp->isp_loginscript);
       pos = 0;
       FOREVER
       {
@@ -776,8 +764,8 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   End,
                End,
                Child, HGroup,
-                  Child, MakeKeyLabel2(MSG_LA_Configuration, MSG_CC_Configuration),
-                  Child, tmp.CY_Resolv = MakeKeyCycle(STR_CY_Dynamic, MSG_CC_Configuration),
+                  Child, MakeKeyLabel2(MSG_LA_DomainConfiguration, MSG_CC_DomainConfiguration),
+                  Child, tmp.CY_Resolv = MakeKeyCycle(STR_CY_Dynamic, MSG_CC_DomainConfiguration),
                   Child, HVSpace,
                End,
                Child, HVSpace,
@@ -942,12 +930,37 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->CY_HostName     , MUIA_CycleChain, 1);
       set(data->CY_Command      , MUIA_CycleChain, 1);
 
+      set(data->STR_Name        , MUIA_ShortHelp, GetStr(MSG_Help_ProviderName));
+      set(data->STR_Comment     , MUIA_ShortHelp, GetStr(MSG_Help_ProviderComment));
       set(data->STR_Login       , MUIA_ShortHelp, GetStr(MSG_Help_LoginName));
-//      set(data->STR_Comment     , MUIA_ShortHelp, GetStr(MSG_Help_Comment));
       set(data->STR_Password    , MUIA_ShortHelp, GetStr(MSG_Help_Password));
-      set(data->STR_HostName    , MUIA_ShortHelp, GetStr(MSG_Help_HostName));
-      set(data->STR_TimeServer  , MUIA_ShortHelp, GetStr(MSG_Help_TimeServer));
-      set(data->STR_Phone       , MUIA_ShortHelp, GetStr(MSG_Help_Phone));
+
+      set(data->LV_NameServers      , MUIA_ShortHelp, GetStr(MSG_Help_NameServers));
+      set(data->LV_DomainNames      , MUIA_ShortHelp, GetStr(MSG_Help_DomainNames));
+      set(data->BT_AddNameServer    , MUIA_ShortHelp, GetStr(MSG_Help_New));
+      set(data->BT_RemoveNameServer , MUIA_ShortHelp, GetStr(MSG_Help_Remove));
+      set(data->BT_AddDomainName    , MUIA_ShortHelp, GetStr(MSG_Help_New));
+      set(data->BT_RemoveDomainName , MUIA_ShortHelp, GetStr(MSG_Help_Remove));
+      set(data->CY_Resolv           , MUIA_ShortHelp, GetStr(MSG_Help_DomainConfiguration));
+      set(data->STR_HostName        , MUIA_ShortHelp, GetStr(MSG_Help_HostName));
+      set(data->CH_DontQueryHostname, MUIA_ShortHelp, GetStr(MSG_Help_DontQueryHostName));
+      set(data->LV_Interfaces       , MUIA_ShortHelp, GetStr(MSG_Help_IfaceList));
+      set(data->BT_AddIface         , MUIA_ShortHelp, GetStr(MSG_Help_New));
+      set(data->BT_DeleteIface      , MUIA_ShortHelp, GetStr(MSG_Help_Delete));
+      set(data->BT_EditIface        , MUIA_ShortHelp, GetStr(MSG_Help_Edit));
+
+      set(data->CH_GetTime          , MUIA_ShortHelp, GetStr(MSG_Help_SyncClock));
+      set(data->CH_SaveTime         , MUIA_ShortHelp, GetStr(MSG_Help_SaveTime));
+      set(data->STR_TimeServer      , MUIA_ShortHelp, GetStr(MSG_Help_TimeServer));
+      set(data->CH_BOOTP            , MUIA_ShortHelp, GetStr(MSG_Help_UseBootp));
+      set(data->STR_BootpServer     , MUIA_ShortHelp, GetStr(MSG_Help_BootpServer));
+
+      set(data->LV_Script           , MUIA_ShortHelp, GetStr(MSG_Help_LoginScript));
+      set(data->BT_Add              , MUIA_ShortHelp, GetStr(MSG_Help_New));
+      set(data->BT_Remove           , MUIA_ShortHelp, GetStr(MSG_Help_Remove));
+      set(data->CY_Command          , MUIA_ShortHelp, GetStr(MSG_Help_ScriptCommand));
+      set(data->STR_String          , MUIA_ShortHelp, GetStr(MSG_Help_ScriptString));
+      set(data->STR_Phone           , MUIA_ShortHelp, GetStr(MSG_Help_Phone));
 
       DoMethod(obj                 , MUIM_Notify, MUIA_Window_CloseRequest, TRUE            , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_Provider_EditISPFinish, obj, 0);
       DoMethod(data->BT_Cancel     , MUIM_Notify, MUIA_Pressed            , FALSE           , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, originator, 3, MUIM_Provider_EditISPFinish, obj, 0);

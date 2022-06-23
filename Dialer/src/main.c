@@ -14,7 +14,13 @@
 #include "mui_Online.h"
 #include "mui_IfaceReq.h"
 #include "mui_Led.h"
+#include "mui_About.h"
+#include "mui_NetInfo.h"
 #include "protos.h"
+
+///
+/// defines
+#define NEWSTACK_SIZE 16384
 
 ///
 /// external variables
@@ -23,7 +29,7 @@ extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 extern struct Catalog    *cat;
 extern struct Library    *MUIMasterBase, *LockSocketBase, *OwnDevUnitBase, *GenesisBase;
-extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led;
+extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led, *CL_About, *CL_NetInfo;
 extern struct MsgPort     *MainPort;
 extern struct timerequest *TimeReq;
 extern struct MsgPort     *TimePort;
@@ -33,9 +39,11 @@ extern struct NewMenu MainMenu[];
 extern Object *app, *win;
 extern struct Config Config;
 extern ULONG sigs;
-extern char config_file[], connectspeed[];
+extern char config_file[], connectspeed[], default_provider[];
 extern struct CommandLineInterface *LocalCLI;
 extern BPTR OldCLI;
+extern struct MUI_Command arexx_list[];
+extern int waitstack;
 
 #ifdef DEMO
 extern struct Library *BattClockBase;
@@ -79,7 +87,7 @@ BOOL init_libs(VOID)
    if(LocaleBase)
       cat = OpenCatalog(NULL, "Genesis.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
 #ifdef NETCONNECT
-   if(!(NetConnectBase = OpenLibrary("netconnect.library", 0)))
+   if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
       Printf(GetStr(MSG_TX_CouldNotOpenX), "netconnect.library\n");
 #endif
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
@@ -113,8 +121,10 @@ VOID exit_classes(VOID)
    if(CL_Online)              MUI_DeleteCustomClass(CL_Online);
    if(CL_IfaceReq)            MUI_DeleteCustomClass(CL_IfaceReq);
    if(CL_Led)                 MUI_DeleteCustomClass(CL_Led);
+   if(CL_About)               MUI_DeleteCustomClass(CL_About);
+   if(CL_NetInfo)             MUI_DeleteCustomClass(CL_NetInfo);
 
-   CL_MainWindow = CL_Online = CL_IfaceReq = CL_Led = NULL;
+   CL_MainWindow = CL_Online = CL_IfaceReq = CL_Led = CL_About = CL_NetInfo = NULL;
 }
 
 ///
@@ -124,9 +134,11 @@ BOOL init_classes(VOID)
    CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct MainWindow_Data), MainWindow_Dispatcher);
    CL_Online         = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct Online_Data), Online_Dispatcher);
    CL_IfaceReq       = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct IfaceReq_Data), IfaceReq_Dispatcher);
+   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct About_Data), About_Dispatcher);
+   CL_NetInfo        = MUI_CreateCustomClass(NULL, MUIC_Window, NULL, sizeof(struct NetInfo_Data), NetInfo_Dispatcher);
    CL_Led            = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Led_Data), Led_Dispatcher);
 
-   if(CL_MainWindow && CL_Online && CL_IfaceReq && CL_Led)
+   if(CL_MainWindow && CL_Online && CL_IfaceReq && CL_Led && CL_About && CL_NetInfo)
       return(TRUE);
 
    exit_classes();
@@ -143,6 +155,14 @@ VOID exit_ports(VOID)
 
    if(TimeReq)
    {
+#ifdef DEMO
+      if(!CheckIO((struct IORequest *)TimeReq))
+      {
+         AbortIO((struct IORequest *)TimeReq);
+         WaitIO((struct IORequest *)TimeReq);
+      }
+#endif
+
       CloseDevice((struct IORequest *)TimeReq);
       DeleteIORequest(TimeReq);
       TimerBase = NULL;
@@ -166,6 +186,15 @@ BOOL init_ports(VOID)
             if(!(OpenDevice("timer.device", UNIT_VBLANK, (struct IORequest *)TimeReq, 0)))
             {
                TimerBase = &TimeReq->tr_node.io_Device->dd_Library;
+#ifdef DEMO
+               // add 1 hour timeout
+               TimeReq->tr_node.io_Command   = TR_ADDREQUEST;
+               TimeReq->tr_time.tv_secs      = 3600;
+               TimeReq->tr_time.tv_micro     = NULL;
+               SetSignal(0, 1L << TimePort->mp_SigBit);
+               SendIO((struct IORequest *)TimeReq);
+#endif
+
                return(TRUE);
             }
          }
@@ -182,20 +211,64 @@ BOOL init_ports(VOID)
 #ifdef DEMO
 #include <resources/battclock.h>
 #include <clib/battclock_protos.h>
-BOOL check_date(VOID)
+ULONG check_date(VOID)
 {
-   // one month : 2592000
+   struct FileInfoBlock *fib;
+   ULONG days_running = 0;
+   BOOL set_comment = FALSE;
+   char file[50];
+   BPTR lock;
+   ULONG clock = NULL;
+
+   strcpy(file, "libs:locale.library");
 
    if(BattClockBase = OpenResource("battclock.resource"))
    {
-      if(ReadBattClock() < 647390515)
-         return(TRUE);
+      clock = ReadBattClock();
+
+      if(fib = AllocDosObject(DOS_FIB, NULL))
+      {
+         if(lock = Lock(file, ACCESS_READ))
+         {
+            Examine(lock, fib);
+            UnLock(lock);
+
+            if(strlen(fib->fib_Comment) > 4)
+            {
+               ULONG inst;
+
+               inst = atol((STRPTR)(fib->fib_Comment + 2));
+               if(inst > 8000000)   // did we put something in there once ?
+               {
+                  if((fib->fib_Comment[0] == '0') && (fib->fib_Comment[1] == '2'))
+                     days_running = (clock - inst)/86400;
+                  else
+                     set_comment = TRUE;
+               }
+               else
+                  set_comment = TRUE;
+            }
+            else
+               set_comment = TRUE;
+         }
+         FreeDosObject(DOS_FIB, fib);
+      }
+
+      if(set_comment)
+      {
+         char buffer[21];
+
+         sprintf(buffer, "02%ld", clock);
+         SetComment(file, buffer);
+      }
    }
-   return(FALSE);
+
+   return(days_running);
 }
 #endif
 
 ///
+
 /// LocalizeNewMenu
 VOID LocalizeNewMenu(struct NewMenu *nm)
 {
@@ -264,12 +337,17 @@ VOID Handler(VOID)
 
             if(app = ApplicationObject,
                MUIA_Application_Author       , "Michael Neuweiler",
-               MUIA_Application_Base         , "Genesis",
-               MUIA_Application_Title        , "Genesis",
+               MUIA_Application_Base         , "GENESiS",
+               MUIA_Application_Title        , "GENESiS",
                MUIA_Application_SingleTask   , TRUE,
-               MUIA_Application_Version      , "$VER:Genesis "VERTAG,
-               MUIA_Application_Copyright    , "Michael Neuweiler 1997,98",
+#ifdef DEMO
+               MUIA_Application_Version      , "$VER:GENESiS "VERTAG" (DEMO)",
+#else
+               MUIA_Application_Version      , "$VER:GENESiS "VERTAG,
+#endif
+               MUIA_Application_Copyright    , "Michael Neuweiler & Active Technologies 1997,98",
                MUIA_Application_Description  , GetStr(MSG_AppDescription),
+               MUIA_Application_Commands     , arexx_list,
                MUIA_Application_Window       , win = NewObject(CL_MainWindow->mcc_Class, NULL, TAG_DONE),
             End)
             {
@@ -278,123 +356,167 @@ VOID Handler(VOID)
 
                DoMethod(app, MUIM_Notify, MUIA_Application_DoubleStart, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_ReturnID, ID_DOUBLESTART);
 
-               connectspeed[0] = NULL;
+               connectspeed[0]      = NULL;
+               default_provider[0]  = NULL;
+               waitstack = 10;
                bzero(&Config, sizeof(struct Config));
                strcpy(config_file, DEFAULT_CONFIGFILE);
                DoMethod(win, MUIM_MainWindow_LoadConfig);
 
-               DeleteFile("T:AmiTCP.log");
-               if(launch_amitcp())
+               if(parse_arguments())
                {
-                  log_nr.nr_Name     = "T:AmiTCP.log";
-                  log_nr.nr_FullName = NULL;
-                  log_nr.nr_UserData = NULL;
-                  log_nr.nr_Flags    = NRF_SEND_SIGNAL;
-
-                  if((LogNotifySignal = AllocSignal(-1)) != -1)
+                  DeleteFile("T:AmiTCP.log");
+                  if(launch_amitcp())
                   {
-                     log_nr.nr_stuff.nr_Signal.nr_Task = (struct Task *)FindTask(NULL);
-                     log_nr.nr_stuff.nr_Signal.nr_SignalNum = LogNotifySignal;
-                     StartNotify(&log_nr);
-                  }
+                     log_nr.nr_Name     = "T:AmiTCP.log";
+                     log_nr.nr_FullName = NULL;
+                     log_nr.nr_UserData = NULL;
+                     log_nr.nr_Flags    = NRF_SEND_SIGNAL;
 
-                  config_nr.nr_Name     = config_file;
-                  config_nr.nr_FullName = NULL;
-                  config_nr.nr_UserData = NULL;
-                  config_nr.nr_Flags    = NRF_SEND_SIGNAL;
+                     if((LogNotifySignal = AllocSignal(-1)) != -1)
+                     {
+                        log_nr.nr_stuff.nr_Signal.nr_Task = (struct Task *)FindTask(NULL);
+                        log_nr.nr_stuff.nr_Signal.nr_SignalNum = LogNotifySignal;
+                        StartNotify(&log_nr);
+                     }
 
-                  if((ConfigNotifySignal = AllocSignal(-1)) != -1)
-                  {
-                     config_nr.nr_stuff.nr_Signal.nr_Task = (struct Task *)FindTask(NULL);
-                     config_nr.nr_stuff.nr_Signal.nr_SignalNum = ConfigNotifySignal;
-                     StartNotify(&config_nr);
-                  }
+                     config_nr.nr_Name     = config_file;
+                     config_nr.nr_FullName = NULL;
+                     config_nr.nr_UserData = NULL;
+                     config_nr.nr_Flags    = NRF_SEND_SIGNAL;
 
-                  if(Config.cnf_flags & CFL_StartupIconify)
-                     set(app, MUIA_Application_Iconified, TRUE);
-                  if(Config.cnf_flags & CFL_StartupOpenWin)
-                     set(win, MUIA_Window_Open, TRUE);
+                     if((ConfigNotifySignal = AllocSignal(-1)) != -1)
+                     {
+                        config_nr.nr_stuff.nr_Signal.nr_Task = (struct Task *)FindTask(NULL);
+                        config_nr.nr_stuff.nr_Signal.nr_SignalNum = ConfigNotifySignal;
+                        StartNotify(&config_nr);
+                     }
 
-                  if(!(user = GetGlobalUser()))
-                     user = GetUser(NULL, NULL, NULL);
-                  if(user)
-                  {
-                     SetGlobalUser(user);
-                     set(data->TX_User, MUIA_Text_Contents, user->us_name);
-                     FreeUser(user);
+                     if(Config.cnf_flags & CFL_StartupIconify)
+                        set(app, MUIA_Application_Iconified, TRUE);
+                     if(Config.cnf_flags & CFL_StartupOpenWin)
+                        set(win, MUIA_Window_Open, TRUE);
+
+                     if(!(user = GetGlobalUser()))
+                     {
+                        char buf[41];
+
+                        GetUserName(0, buf, 40);
+                        user = GetUser(buf, NULL, NULL, NULL);
+                     }
+                     if(user)
+                     {
+                        SetGlobalUser(user);
+                        set(data->TX_User, MUIA_Text_Contents, user->us_name);
+                        FreeUser(user);
 
 #ifdef DEMO
-                     if(!check_date())
-                        MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
-                     else
-                     {
-#endif
-                     // put always_online online since it wasn't done in MainWindow_ChangeProvider cause AmiTCP wasn't running then
-                     iterate_ifacelist(&data->isp.isp_ifaces, 1);
-                     DoMethod(win, MUIM_MainWindow_PutOnline);
-
-                     if(Config.cnf_startup)
-                        exec_command(Config.cnf_startup, Config.cnf_startuptype);
-
-                     while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
-                     {
-                        if(id == ID_DOUBLESTART)
                         {
-                           if(!xget(win, MUIA_Window_Open))
-                              set(win, MUIA_Window_Open, TRUE);
-                           MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_GenesisAlreadyRunning));
+                           ULONG days_running;
+
+                           days_running = check_date();
+
+                           if(days_running > MAX_DAYS)
+                              MUI_Request(app, win, 0, 0, GetStr(MSG_ReqBT_Okay), "Sorry, this demo version has timed out !");
+                           else
+                           {
+                              DoMethod(win, MUIM_MainWindow_About);
+#endif
+                        if(*default_provider)
+                           set(data->TX_Provider, MUIA_Text_Contents, default_provider);
+                        else
+                        {
+                           STRPTR ptr;
+
+                           DoMethod(data->LI_Providers, MUIM_List_GetEntry, 0, &ptr);
+                           set(data->TX_Provider, MUIA_Text_Contents, ptr);
                         }
 
-                        if(sigs)
+                        while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
                         {
-                           sigs = Wait(sigs | SIGBREAKF_CTRL_C | 1L << MainPort->mp_SigBit | 1L << LogNotifySignal | 1L << ConfigNotifySignal );
-
-                           if(sigs & SIGBREAKF_CTRL_C)
-                              break;
-                           if(sigs & (1L << MainPort->mp_SigBit))
-                              HandleMainMethod(MainPort);
-                           if(sigs & (1L << LogNotifySignal))
-                              DoMethod(win, MUIM_MainWindow_UpdateLog);
-                           if(sigs & (1L << ConfigNotifySignal))
+#ifdef NETCONNECT
+                           NCL_CallMeFrequently();
+#endif
+                           if(id == ID_DOUBLESTART)
                            {
-                              Delay(20);  // to give some time when saving
-                              DoMethod(win, MUIM_MainWindow_LoadConfig);
+                              if(!xget(win, MUIA_Window_Open))
+                                 set(win, MUIA_Window_Open, TRUE);
+                              MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_GenesisAlreadyRunning));
+                           }
+
+                           if(sigs)
+                           {
+#ifdef DEMO
+                              sigs |= (1L << TimePort->mp_SigBit);
+#endif
+                              sigs = Wait(sigs | SIGBREAKF_CTRL_C | 1L << MainPort->mp_SigBit | 1L << LogNotifySignal | 1L << ConfigNotifySignal );
+
+                              if(sigs & SIGBREAKF_CTRL_C)
+                                 break;
+                              if(sigs & (1L << MainPort->mp_SigBit))
+                                 HandleMainMethod(MainPort);
+                              if(sigs & (1L << LogNotifySignal))
+                                 DoMethod(win, MUIM_MainWindow_UpdateLog);
+                              if(sigs & (1L << ConfigNotifySignal))
+                              {
+                                 Delay(50);  // to give some time when saving
+                                 DoMethod(win, MUIM_MainWindow_LoadConfig);
+                                 DoMethod(win, MUIM_MainWindow_ChangeProvider, xget(data->TX_Provider, MUIA_Text_Contents));
+                              }
+#ifdef DEMO
+                              if(sigs & (1L << TimePort->mp_SigBit))
+                              {
+                                 if(CheckIO((struct IORequest *)TimeReq))
+                                 {
+                                    WaitIO((struct IORequest *)TimeReq);
+
+                                    // put ifaces offline, otherwise the user simply wouldn't have to press "okay"
+                                    iterate_ifacelist(&data->isp.isp_ifaces, 0);
+                                    DoMethod(win, MUIM_MainWindow_PutOffline);
+                                    MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033cSorry, the 1 hour session limit has been reached.\n\nTerminating GENESiS...");
+                                    break;
+                                 }
+                              }
+#endif
                            }
                         }
-                     }
 #ifdef DEMO
-                     }
+                           }
+                        }
 #endif
-                     set(win, MUIA_Window_Open, FALSE);
+                        set(win, MUIA_Window_Open, FALSE);
 
-                     if(Config.cnf_shutdown)
-                        exec_command(Config.cnf_shutdown, Config.cnf_shutdowntype);
+                        if(Config.cnf_shutdown)
+                           exec_command(Config.cnf_shutdown, Config.cnf_shutdowntype);
 
-                     iterate_ifacelist(&data->isp.isp_ifaces, 0);
-                     DoMethod(win, MUIM_MainWindow_PutOffline);
+                        iterate_ifacelist(&data->isp.isp_ifaces, 0);
+                        DoMethod(win, MUIM_MainWindow_PutOffline);
+                     }
+
+                     if(LockSocketBase)      // gets opened in launch_amitcp()
+                        CloseLibrary(LockSocketBase);
+                     LockSocketBase = NULL;
+
+                     amirexx_do_command("KILL");
+
+                     clear_config(&Config);
+                     if(ConfigNotifySignal != -1)
+                     {
+                        EndNotify(&config_nr);
+                        FreeSignal(ConfigNotifySignal);
+                     }
+                     if(LogNotifySignal != -1)
+                     {
+                        EndNotify(&log_nr);
+                        FreeSignal(LogNotifySignal);
+                     }
                   }
-
-                  if(LockSocketBase)      // gets opened in launch_amitcp()
-                     CloseLibrary(LockSocketBase);
-                  LockSocketBase = NULL;
-
-                  amirexx_do_command("KILL");
-
-                  clear_config(&Config);
-                  if(ConfigNotifySignal != -1)
-                  {
-                     EndNotify(&config_nr);
-                     FreeSignal(ConfigNotifySignal);
-                  }
-                  if(LogNotifySignal != -1)
-                  {
-                     EndNotify(&log_nr);
-                     FreeSignal(LogNotifySignal);
-                  }
+                  else
+                     MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorAmiTCPLaunch));
                }
                else
-                  MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorAmiTCPLaunch));
-   
+                  MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorParseArgs));
+
                MUI_DisposeObject(app);
                app = NULL;
             }
@@ -411,7 +533,6 @@ VOID Handler(VOID)
 
 ///
 
-#define NEWSTACK_SIZE 16384
 /// main
 int main(int argc, char *argv[])
 {

@@ -5,6 +5,7 @@
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
 #include "/genesis.lib/pragmas/genesis_lib.h"
+#include "/genesis.lib/pragmas/nc_lib.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
@@ -29,8 +30,8 @@ extern struct Process *proc;
 extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 extern struct Library *MUIMasterBase, *GenesisBase;
-#ifdef DEMO
-extern struct Library *BattClockBase;
+#ifdef NETCONNECT
+extern struct Library *NetConnectBase;
 #endif
 extern struct MUI_CustomClass  *CL_MainWindow, *CL_User, *CL_ProviderWindow, *CL_Provider,
                                *CL_Dialer, *CL_Users, *CL_Databases, *CL_Modem, *CL_About,
@@ -52,6 +53,12 @@ VOID exit_libs(VOID)
    if(GenesisBase)      CloseLibrary(GenesisBase);
    if(MUIMasterBase)    CloseLibrary(MUIMasterBase);
 
+#ifdef NETCONNECT
+   if(NetConnectBase)
+      CloseLibrary(NetConnectBase);
+   NetConnectBase = NULL;
+#endif
+
    cat            = NULL;
    GenesisBase    = NULL;
    MUIMasterBase  = NULL;
@@ -63,14 +70,27 @@ BOOL init_libs(VOID)
 {
    if(LocaleBase)
       cat = OpenCatalog(NULL, "GenesisPrefs.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
+#ifdef NETCONNECT
+   if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "netconnect.library\n");
+#endif
 
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
       Printf(GetStr(MSG_TX_CouldNotOpenX), "muimaster.library\n");
    if(!(GenesisBase = OpenLibrary(GENESISNAME, 0)))
       Printf(GetStr(MSG_TX_CouldNotOpenX), GENESISNAME ".\n");
 
+#ifdef NETCONNECT
+   if(MUIMasterBase && GenesisBase && NetConnectBase)
+   {
+      if(NCL_GetOwner())
+         return(TRUE);
+      Printf("NetConnect registration failed.\n");
+   }
+#else
    if(MUIMasterBase && GenesisBase)
       return(TRUE);
+#endif
 
    exit_libs();
    return(FALSE);
@@ -152,24 +172,6 @@ VOID LocalizeNewMenu(struct NewMenu *nm)
 }
 
 ///
-/// check_date
-#ifdef DEMO
-#include <resources/battclock.h>
-#include <clib/battclock_protos.h>
-BOOL check_date(VOID)
-{
-   // one month : 2592000
-
-   if(BattClockBase = OpenResource("battclock.resource"))
-   {
-      if(ReadBattClock() < 647390515)
-         return(TRUE);
-   }
-   return(FALSE);
-}
-#endif
-
-///
 
 /// Handler
 VOID Handler(VOID)
@@ -185,9 +187,13 @@ VOID Handler(VOID)
 
          if(app = ApplicationObject,
             MUIA_Application_Author       , "Michael Neuweiler",
-            MUIA_Application_Base         , "GenesisPrefs",
-            MUIA_Application_Title        , "Genesis Preferences",
-            MUIA_Application_Version      , "$VER:GenesisPrefs "VERTAG,
+            MUIA_Application_Base         , "GENESiSPrefs",
+            MUIA_Application_Title        , "GENESiS Preferences",
+#ifdef DEMO
+            MUIA_Application_Version      , "$VER:GENESiSPrefs "VERTAG" (DEMO)",
+#else
+            MUIA_Application_Version      , "$VER:GENESiSPrefs "VERTAG,
+#endif
             MUIA_Application_Copyright    , GetStr(MSG_AppCopyright),
             MUIA_Application_Description  , GetStr(MSG_AppDescription),
             MUIA_Application_Window       , win = NewObject(CL_MainWindow->mcc_Class, NULL, TAG_DONE),
@@ -213,12 +219,8 @@ VOID Handler(VOID)
                changed_services = changed_inetd = changed_networks = changed_rpc       =
                changed_inetaccess = FALSE;
                root_authenticated = FALSE;
-
 #ifdef DEMO
                DoMethod(win, MUIM_MainWindow_About);
-               if(!check_date())
-                  MUI_Request(app, 0, 0, 0, "*_Sigh..", "Sorry, program has become invalid !");
-               else
 #endif
                while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
                {
@@ -248,7 +250,7 @@ int main(int argc, char *argv[])
 {
    if(SysBase->LibNode.lib_Version < 37)
    {
-      static UBYTE AlertData[] = "\0\214\020GenesisPrefs requires kickstart v37+ !!!\0\0";
+      static UBYTE AlertData[] = "\0\214\020GENESiSPrefs requires kickstart v37+ !!!\0\0";
 
       DisplayAlert(RECOVERY_ALERT, AlertData, 30);
       exit(30);

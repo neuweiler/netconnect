@@ -35,8 +35,8 @@ History for GenesisPrefs
 * Database section got a cycle gadget to select active page.
 * added XonXoff, RadBoogie, OwnDevUnit support.
 
-2.0.4  (21.3.98)
-----------------
+2.0.4  (21.03.98)
+-----------------
 
 * moved interface configuration stuff into separate window.
 * moved user configuration stuff into separate window.
@@ -44,8 +44,8 @@ History for GenesisPrefs
 * transfered database/passwd into user section. WARNING: passwd
   will get overwritten !! Create backup first !
 
-2.1.4 (4.4.98)
----------------
+2.1.4 (04.04.98)
+----------------
 
 * removed "mail login", "mail passwd", "email addr" and
   "mail server" from user section since these are client specific
@@ -68,20 +68,20 @@ History for GenesisPrefs
 * switched on code optimisation: smaller, faster code.
 * sorry for all the inconveniences.. I think it was the last time ;)
 
-2.1.5 (6.4.98)
---------------
+2.1.5 (06.04.98)
+----------------
 
 * merged contents of user-edit window into one page.
 * added checkbox to enable/disable callback.
 * changed connect timeout from string into popup-slider.
 
-2.1.6 (20.4.98)
----------------
+2.1.6 (20.04.98)
+----------------
 
 * some minor internal changes.
 
-2.1.7 (30.4.98)
----------------
+2.1.7 (30.04.98)
+----------------
 
 * added support for appp.device's xonxoff and 7wire options
 * some minor gui enhancements
@@ -94,13 +94,13 @@ History for GenesisPrefs
   one of those : - / % & + , . ; : $ ! < >    (security reasons)
 * merged "rts/cts" and "xon/xoff" checkmarks into a cycle gadget.
 
-2.1.8 (4.5.98)
---------------
+2.1.8 (04.05.98)
+----------------
 
 * added possibility to set get-time and save-time in isp section.
 
-2.1.9 (07.6.98)
----------------
+2.1.9 (07.06.98)
+----------------
 
 * moved back from stormc to sasc => 27% smaller code..
 * localized everything and added bubble help
@@ -110,4 +110,39 @@ History for GenesisPrefs
 * minor changes/rearrangements in the gui (options section).
 * a passwd can only be changed now when the old passwd is entered.
 * a passwd can only be removed when the user enters the root passwd.
+
+2.1.10 (22.06.98)
+-----------------
+
+* corrected some problems with removing the user's passwd.
+
+2.1.11 (01.07.98)
+-----------------
+
+* added "import nc 1 config" (see menu)
+
+2.1.12 (05.07.98)
+-----------------
+
+* modified about & copyright texts. included "thanks to" part. If someone
+  thinks (s)he has been missed, please let me know.
+
+2.1.13 (06.07.98)
+-----------------
+
+* added another page in interface window: Exec . there you can add events
+  that should be executed when: iface is put online, failed to go online,
+  is put offline by user (actively), went offline by itself (passively).
+* "always online" is now "auto online", see genesis.txt.
+* added options so user can choose if inetd, lo0 and tcp: should be loaded
+  at startup (see options/misc).
+* removed bug that created corrupt ppp config files.  <shame>
+* eof mode was wrong way around.. when selected "off" it was on. <more shame>
+
+2.2.0 (09.07.98)
+----------------
+
+* full version for NC2
+* demo version does no longer timeout. It's enough if Genesis does.
+* corrected error in iface config parameter database (ariadne)
 

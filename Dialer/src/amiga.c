@@ -9,20 +9,34 @@
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/pragmas/nc_lib.h"
 #include "mui.h"
 #include "sana.h"
 #include "protos.h"
+#include <proto/icon.h>
+
+///
+/// defines
+enum { ARG_PROVIDER, ARG_USER, ARG_PASSWORD, ARG_WAITSTACK, ARGS };
+#define ARGTEMPLATE "PROVIDER/K,USER/K,PW=PASSWORD/K,WAITSTACK/N"
 
 ///
 /// external variables
 extern struct Library *LocaleBase, *LockSocketBase, *GenesisBase;
 extern struct ExecBase *SysBase;
+extern struct Process *proc;
 extern struct Catalog *cat;
 extern struct MUI_CustomClass *CL_MainWindow;
 extern Object *win, *app;
 extern const char AmiTCP_PortName[];
 extern struct MsgPort *MainPort;
 extern struct Config Config;
+extern int waitstack;
+extern char default_provider[];
+extern struct CommandLineInterface *LocalCLI;
+#ifdef NETCONNECT
+extern struct Library *NetConnectBase;
+#endif
 
 ///
 
@@ -163,6 +177,181 @@ VOID EscapeString(STRPTR buffer, STRPTR str)
 
 ///
 
+/// get_programicon
+struct DiskObject *get_programicon(VOID)
+{
+   struct DiskObject *Icon = NULL;
+
+   if(WBenchMsg)
+   {
+      if(WBenchMsg->sm_ArgList)
+      {
+         if(WBenchMsg->sm_ArgList->wa_Name)
+         {
+            if(Icon = GetDiskObjectNew(WBenchMsg->sm_ArgList->wa_Name))
+            {
+               if(Icon->do_Type != WBTOOL)
+               {
+                  FreeDiskObject(Icon);
+                  Icon = NULL;
+               }
+            }
+
+            if(!Icon)
+            {
+               BPTR NewLock;
+
+               if(NewLock = Lock("PROGDIR:",ACCESS_READ))
+               {
+                  BPTR OldLock;
+
+                  OldLock = CurrentDir(NewLock);
+
+                  if(Icon = GetDiskObjectNew(WBenchMsg->sm_ArgList->wa_Name))
+                  {
+                     if(Icon->do_Type != WBTOOL)
+                     {
+                        FreeDiskObject(Icon);
+                        Icon = NULL;
+                     }
+                  }
+
+                  if(!Icon)
+                  {
+                     if(Icon = GetDiskObjectNew("GENESiS"))
+                     {
+                        if(Icon->do_Type != WBTOOL)
+                        {
+                           FreeDiskObject(Icon);
+                           Icon = NULL;
+                        }
+                     }
+                  }
+                  CurrentDir(OldLock);
+                  UnLock(NewLock);
+               }
+            }
+         }
+      }
+   }
+
+   if(!Icon)
+   {
+      if(Icon = GetDiskObjectNew("GENESiS"))
+      {
+         if(Icon->do_Type != WBTOOL)
+         {
+            FreeDiskObject(Icon);
+            Icon = NULL;
+         }
+      }
+
+      if(!Icon)
+      {
+         if(Icon = GetDiskObjectNew("PROGDIR:GENESiS"))
+         {
+            if(Icon->do_Type != WBTOOL)
+            {
+               FreeDiskObject(Icon);
+               Icon = NULL;
+            }
+         }
+      }
+   }
+
+/* last chance ... */
+   if(!Icon)
+      Icon = GetDefDiskObject(WBTOOL);
+
+   return(Icon);
+}
+
+///
+/// parse_arguments
+BOOL parse_arguments(VOID)
+{
+   BOOL success = FALSE;
+
+   if(!LocalCLI) // see main() why not proc->pr_CLI
+   {
+      STRPTR *ArgArray;
+      struct RDArgs *ArgsPtr;
+
+      if(ArgArray = (STRPTR *)AllocVec(sizeof(STRPTR) * ARGS, MEMF_ANY | MEMF_CLEAR))
+      {
+         if(ArgsPtr = (struct RDArgs *)AllocVec(sizeof(struct RDArgs), MEMF_ANY | MEMF_CLEAR))
+         {
+            if(ReadArgs(ARGTEMPLATE, (LONG *)ArgArray, ArgsPtr))
+            {
+               success = TRUE;
+
+               if(ArgArray[ARG_PROVIDER])
+                  strncpy(default_provider, ArgArray[ARG_PROVIDER], 80);
+               if(ArgArray[ARG_USER])
+               {
+                  struct User *user;
+
+                  if(user = GetUser(ArgArray[ARG_USER], ArgArray[ARG_PASSWORD], NULL, NULL))
+                  {
+                     SetGlobalUser(user);
+                     FreeUser(user);
+                  }
+                  else
+                     success = FALSE;
+               }
+                  ;
+               if(ArgArray[ARG_WAITSTACK])
+                  waitstack = *((LONG *)ArgArray[ARG_WAITSTACK]);
+
+               FreeArgs(ArgsPtr);
+            }
+            FreeVec(ArgsPtr);
+         }
+         FreeVec(ArgArray);
+      }
+   }
+   else
+   {
+      if(IconBase = OpenLibrary("icon.library",0))
+      {
+         struct DiskObject *Icon;
+
+         if(Icon = (struct DiskObject *)get_programicon())
+         {
+            STRPTR Type;
+
+            success = TRUE;
+
+            if(Type = FindToolType(Icon->do_ToolTypes, "PROVIDER"))
+               strncpy(default_provider, Type, 80);
+            if(Type = FindToolType(Icon->do_ToolTypes, "USER"))
+            {
+               struct User *user;
+               STRPTR password;
+
+               password = FindToolType(Icon->do_ToolTypes, "PASSWORD");
+               if(user = GetUser(Type, password, NULL, NULL))
+               {
+                  SetGlobalUser(user);
+                  FreeUser(user);
+               }
+               else
+                  success = FALSE;
+            }
+            if(Type = FindToolType(Icon->do_ToolTypes, "WAITSTACK"))
+               waitstack = atol(Type);
+
+            FreeDiskObject(Icon);
+         }
+
+         CloseLibrary(IconBase);
+         IconBase = NULL;
+      }
+   }
+   return(success);
+}
+
+///
 /// clear_config
 VOID clear_config(struct Config *conf)
 {
@@ -181,7 +370,8 @@ VOID clear_config(struct Config *conf)
    conf->cnf_redialdelay     = 5;
    conf->cnf_flags = CFL_7Wire | CFL_RadBoogie | CFL_ShowLog | CFL_ShowLamps | CFL_ShowConnect |
       CFL_ShowOnlineTime | CFL_ShowButtons | CFL_ShowNetwork | CFL_ShowUser | CFL_ShowStatusWin |
-      CFL_ShowSerialInput | CFL_StartupOpenWin;
+      CFL_ShowSerialInput | CFL_StartupOpenWin | CFL_StartupInetd | CFL_StartupLoopback |
+      CFL_StartupTCP;
 }
 
 ///
@@ -255,8 +445,12 @@ VOID iterate_ifacelist(struct MinList *list, int set_mode)
                if(iface->if_flags & IFL_IsOnline)
                   iface->if_flags |= IFL_PutOffline;
                break;
-            case 1:  // put only IFL_AlwaysOnline online
-               if((iface->if_flags & IFL_AlwaysOnline) && !(iface->if_flags & IFL_IsOnline))
+            case 1:  // put only IFL_AutoOnline online
+               if((iface->if_flags & IFL_AutoOnline) && !(iface->if_flags & IFL_IsOnline))
+                  iface->if_flags |= IFL_PutOnline;
+               break;
+            case 2:  // put all online
+               if(!(iface->if_flags & IFL_IsOnline))
                   iface->if_flags |= IFL_PutOnline;
                break;
          }
@@ -355,7 +549,6 @@ BOOL run_async(STRPTR file)
             SYS_Output     , ofh,
             SYS_Input      , ifh,
             SYS_Asynch     , TRUE,
-            SYS_UserShell  , TRUE,
             NP_StackSize   , 8192,
             TAG_DONE) != -1)
                success = TRUE;
@@ -526,7 +719,7 @@ BOOL launch_amitcp(VOID)
 
    /* wait until AmiTCP is running */
    i = 0;
-   while(!FindPort((STRPTR)AmiTCP_PortName) && i++ < 60)
+   while(!FindPort((STRPTR)AmiTCP_PortName) && i++ < (waitstack * 2))
       Delay(25);
 
    if(FindPort((STRPTR)AmiTCP_PortName))
@@ -534,34 +727,52 @@ BOOL launch_amitcp(VOID)
       if(!SocketBase)
       {
          if(!LockSocketBase)
+#ifdef NETCONNECT
+            LockSocketBase = NCL_OpenSocket();;
+#else
             LockSocketBase = OpenLibrary("bsdsocket.library", 0);
+#endif
          if(SocketBase = LockSocketBase)
          {
-            BOOL mount_tcp = TRUE;
-            struct DosList *dlist;
-
-            if(TX_Info)
-               set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringLoopback));
-            config_lo0();
-
-            if(dlist = LockDosList(LDF_DEVICES | LDF_READ))
-            {
-               if(FindDosEntry(dlist, "TCP", LDF_DEVICES))
-                  mount_tcp = FALSE;
-               UnLockDosList(LDF_DEVICES | LDF_READ);
-            }
-            if(mount_tcp)
+            if(Config.cnf_flags & CFL_StartupLoopback)
             {
                if(TX_Info)
-                  set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_MountingTCP));
-               run_async("C:Mount TCP: from AmiTCP:Devs/Inet-mountlist");
+                  set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringLoopback));
+               config_lo0();
             }
 
-            if(TX_Info)
-               set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_LaunchingInetd));
-            run_async("AmiTCP:bin/inetd");
-            if(TX_Info)
-               set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_LoadingConfiguration));
+            if(Config.cnf_flags & CFL_StartupTCP)
+            {
+               BOOL mount_tcp = TRUE;
+               struct DosList *dlist;
+
+               if(dlist = LockDosList(LDF_DEVICES | LDF_READ))
+               {
+                  if(FindDosEntry(dlist, "TCP", LDF_DEVICES))
+                     mount_tcp = FALSE;
+                  UnLockDosList(LDF_DEVICES | LDF_READ);
+               }
+               if(mount_tcp)
+               {
+                  if(TX_Info)
+                     set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_MountingTCP));
+                  run_async("C:Mount TCP: from AmiTCP:Devs/Inet-mountlist");
+               }
+            }
+
+            if(Config.cnf_startup)
+            {
+               if(TX_Info)
+                  set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_ExecutingStartup));
+               exec_command(Config.cnf_startup, Config.cnf_startuptype);
+            }
+
+            if(Config.cnf_flags & CFL_StartupInetd)
+            {
+               if(TX_Info)
+                  set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_LaunchingInetd));
+               run_async("AmiTCP:bin/inetd");
+            }
 
             SocketBase = NULL;
             success = TRUE;

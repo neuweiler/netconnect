@@ -62,16 +62,10 @@ Edit the selected entry.
 ;
 ;
 MSG_AppDescription (//)
-Preferences Program for Genesis
+Preferences Program for GENESiS
 ;
 MSG_AppCopyright (//)
-Michael Neuweiler
-;
-MSG_TX_About1 (//)
-\033c\n© 1996 Michael Neuweiler & Active Software\n\nMain Programming: Michael Neuweiler\nGUI Design: Chris Wiles/Michael Neuweiler
-;
-MSG_TX_About2 (//)
-\033cGenesis Prefs uses:\nMUI - Copyright © Stefan Stuntz
+Michael Neuweiler & Active Technologies 1996,97
 ;
 MSG_TX_CouldNotOpenX (//)
 Could not open %ls
@@ -101,8 +95,14 @@ Database
 MSG_BT_Save (//)
 _Save
 ;
+MSG_ReqBT_LoadCancel (//)
+*_Load|_Cancel
+;
 MSG_Help_Save (//)
 Save all changes permanently.
+;
+MSG_TX_LoadNC1Config (//)
+You are about to load a NetConnect 1 configuration.\nBe aware that:\n\n1) A new provider will be added.\n2) If a user with the same name doesn't already\n   exist then a new user will be added.\n3) Your modem configuration will be replaced.\n4) \033iOptions\033n and \033iDatabase\033n will not be modified.
 ;
 MSG_TX_ChooseConfigFileLoad (//)
 Choose config file to load..
@@ -189,10 +189,10 @@ Domain Name Servers
 MSG_TX_DomainNames (//)
 Domain Names
 ;
-MSG_LA_Configuration (//)
-Configuration
+MSG_LA_DomainConfiguration (//)
+Domain Configuration
 ;
-MSG_CC_Configuration (/1/1)
+MSG_CC_DomainConfiguration (/1/1)
 n
 ;
 MSG_TX_LocalConfiguration (//)
@@ -246,20 +246,62 @@ Add number...
 MSG_CC_AddNumber (/1/1)
 n
 ;
+MSG_Help_ProviderName (//)
+Name of the configuration.
+;
+MSG_Help_ProviderComment (//)
+Comment for the configuration.
+;
 MSG_Help_LoginName (//)
 Enter your login name here.\nThis is the name you chose when you\nfirst contacted your provider.\nFor instance our login name is \"active\".
 ;
 MSG_Help_Password (//)
 This is the password that will be\nused during the login procedure\nat your provider.\nThis password will have been chosen by\nyou when you first contacted your provider.
 ;
-MSG_Help_Phone (//)
-Enter the phone number(s) of your provider.\nUse a space to separate phone numbers.\ni.e. \"2574011 2574012\".
+MSG_Help_NameServers (//)
+This list holds the nameservers of your provider.\nThey are used to find out the IP address of any given\nhostname. See also Database/Hosts.
+;
+MSG_Help_DomainNames (//)
+This list holds the domain names.\nDomainnames are attached to a hostname automatically.\nFor instance if a domain \"unizh.ch\" is defined here\nand you enter \"telnet voyager\" then GENESiS looks for\nthe host named \"voyager.unizh.ch\".
+;
+MSG_Help_DomainConfiguration (//)
+Certain providers allow to collect the above domain\nconfiuration while establishing a connection. So you\ndo not need to enter nameservers and domainnames.
 ;
 MSG_Help_HostName (//)
-The name of your computer.\nIf you use dynamic IP Adresses\nyour provider probably won't\ngive you a host name.
+The name of your computer.\nIf you use dynamic IP Adresses\nyour provider probably won't\ngive you a host name.\nExample: voyager.unizh.ch
 ;
-MSG_Help_TimeServer (//)
-Enter the name of your\nproviders Time-Server.
+MSG_Help_DontQueryHostName (//)
+While establishing a connection, GENESiS tries to find\nout the local hostname by querying the nameserver(s).\nSome providers have not configured their nameservers properly\nso that their own IP adresses don't have any hostname\nattached. In this case it takes about 1 min while a connection\nis beeing established until a timeout occurs. To avoid\nthis delay you can tell GENESiS not to query the hostname\nat all. If you do that, you should enter the domainnames\nmanually above.
+;
+MSG_Help_IfaceList (//)
+This list holds the interfaces which are used to connect\nto the network. The first entry is used to attach the\nroute to the default gateway. All traffic with hosts\noutside of a LAN have to go through the default gateway.\nFor instance if you have set up a LAN and use ppp to\ndialup an internet provider, you should place the ppp\ninterface on top of the list so all traffic to internet\nhosts get routed through the ppp's gateway and not\nyour LAN.
+;
+MSG_Help_SyncClock (//)
+Synchronize the amiga's internal clock\nwith the given server's clock.
+;
+MSG_Help_SaveTime (//)
+Save the time to the battery backed-up clock of your amiga.
+;
+MSG_Help_TimeServer
+Enter the name of the host you want to\nsynchronize the time & date with.
+;
+MSG_Help_UseBootp (//)
+Should BOOTP be used ? BOOTP is a protocol that allows\nGENESiS to gather important network information (like dns,\nip address, etc.) automatically - but not every provider\ndoes support it and it is usually not required for ppp\nconnections.
+;
+MSG_Help_BootpServer (//)
+The BOOTP server IP address. This information is not\nrequrired. If not given, GENESiS will broadcast a BOOTP\nrequest to every server in the same network.
+;
+MSG_Help_LoginScript (//)
+This list holds the loginscript which is used to connect\nto your provider. Please refer to the manual for further\ndetails.
+;
+MSG_Help_ScriptCommand (//)
+Choose what should be done.
+;
+MSG_Help_ScriptString (//)
+For certain commands you have to enter\na string here. (e.g. \"WaitFor Username:\")
+;
+MSG_Help_Phone (//)
+Enter the phone number(s) of your provider.\nUse a vertical bar to separate phone numbers.\ni.e. \"2574011 | 2574012\".
 ;
 ;
 ; mui_IfaceWindow.c
@@ -275,6 +317,9 @@ MSG_TX_IfaceWindowRegister3 (//)
 Misc
 ;
 MSG_TX_IfaceWindowRegister4 (//)
+Exec
+;
+MSG_TX_IfaceWindowRegister5 (//)
 PPP
 ;
 MSG_LA_Address (//)
@@ -355,11 +400,23 @@ Ping every
 MSG_TX_Minutes (//)
  min
 ;
-MSG_LA_AlwaysOnline (//)
-Always online:
+MSG_LA_AutoOnline (//)
+Auto-Online:
 ;
-MSG_CC_AlwaysOnline (/1/1)
+MSG_CC_AutoOnline (/1/1)
 a
+;
+MSG_TX_Online (//)
+Online
+;
+MSG_TX_OnlineFailed (//)
+Online failed
+;
+MSG_TX_OfflineActive (//)
+Offline active
+;
+MSG_TX_OfflinePassive (//)
+Offline passive
 ;
 MSG_LA_EOFMode (//)
 EOFMode:
@@ -405,6 +462,96 @@ t
 ;
 MSG_TX_TimeoutSlider (//)
 %2ld sec
+;
+MSG_Help_IfaceName (//)
+Enter a name for this interface.\nConventions are if you use ppp device,\nunit 0 to enter something like ppp0.
+;
+MSG_Help_Address (//)
+The IP address of\nour host if static.
+;
+MSG_Help_StaticDynamic (//)
+Choose whether this address remains static or is added\ndynamically (for instance in ppp connecions). Please\ncontact you local network administrator for further information.
+;
+MSG_Help_Dest (//)
+The destination IP address for Point-2-Point\ninterfaces like slip, plip, etc.
+;
+MSG_Help_Gateway (//)
+The gateway IP address.
+;
+MSG_Help_Netmask (//)
+The netmask for this network.\nDefault value is 255.255.255.0
+;
+MSG_Help_DefaultNetmask (//)
+If your network does not use the default netmask\n255.255.255.0 you can switch to \specify\" and enter a\ndifferent value.
+;
+MSG_Help_MTU (//)
+The Maximum Transfer Unit value specifies the max.\nnumber of bytes transferred in one package. The smaller\nthe number the more packages have to be sent for the same\ninformation but it might improove the overall transfer\nspeed on low quality lines.
+;
+MSG_Help_ConfigParams (//)
+Certain sana-II devices require additional parameters.\nUse this template for the arguments:\n\nIPTYPE/N/K, ADDR=ADDRESS/K, ARPTYPE=IPARPTYPE/N/K,\nIPREQ=IPREQUESTS/N/K, ARPREQ=ARPREQUESTS/N/K, WRITEREQ=WRITEREQUESTS/N/K,\nNOTRACKING/S, NOQUICKIO/S, FILTER/S, NOARP/S, P2P=POINT2POINT/S,\nNOSIMPLEX/S, LOOPBACK/S
+;
+MSG_Help_Sana2DeviceCycle (//)
+Choose which driver has to be used for the interface.\nPPP and SLIP interface configuration is supported by\nGENESiS so you do not need to enter config file contents\nfor those interfaces. For other interface drivers you\nwill have to choose \"specify sana-II device\" and enter\nthe infomation manually (see driver documentation).
+;
+MSG_Help_Sana2Device (//)
+Enter the full path where the sana-II driver\ncan be located. Default is in DEVS:Networks/ .
+;
+MSG_Help_Sana2Unit (//)
+Choose which unit of the\nsana-II device has to be used.
+;
+MSG_Help_Sana2ConfigFile (//)
+Enter the config file name for the sana-II\ndevice. Default locatoin is ENV:Sana2/ .
+;
+MSG_Help_Sana2ConfigText (//)
+Here you can enter the contents of the sana-II config\nfile. Some devices require all information to be printed\nin one line only. Refer to the driver documentation.
+;
+MSG_Help_KeepAlive (//)
+If you choose any other value than 0, GENESiS will send\na ping after the given intervall to keep the connection\nfrom beeing shutdown due to inactivity.
+;
+MSG_Help_AutoOnline (//)
+Put an interface online immediately when\nthe provider configuration is selected.
+;
+MSG_Help_EventPage (//)
+Choose for which event you would\nlike to add/remove programs/scripts.
+;
+MSG_Help_Online (//)
+This list holds programs/scripts which get executed when\nthe interface has successfully been put online.
+;
+MSG_Help_OnlineFail (//)
+This list holds programs/scripts which get executed when\nGENESiS was unable to put the interface online.
+;
+MSG_Help_OfflineActive (//)
+This list holds programs/scripts which get executed when\nthe user put the interface offline.
+;
+MSG_Help_OfflinePassive (//)
+This list holds programs/scripts which get executed whennthe interface went offline without user interference.
+;
+MSG_Help_Event (//)
+Enter a program, script\nor AREXX command here.
+;
+MSG_Help_CarrierDetect (//)
+Should the ppp device monitor the CarrierDetect signal\nof your modem and go offline when it drops ?
+;
+MSG_Help_ConnectTimeout (//)
+Choose the timeout for reestablishing\nthe connection during a callback.
+;
+MSG_Help_Callback (//)
+If your provider supports callback (calling you back\nso you can save phone costs) you can enter your phone\nnumber or a callback string negotiated with you provider here.
+;
+MSG_Help_MPPCompression (//)
+Enable/disable Microsoft\nPoint2Point compression.
+;
+MSG_Help_VJCompression (//)
+Enable/disable\nVan Jacobsen's compression.
+;
+MSG_Help_BSDCompression (//)
+Enablde/disable\nBSD compression.
+;
+MSG_Help_DeflateCompression (//)
+Enable/disable\nDeflate compression
+;
+MSG_Help_EOF (//)
+Enable/disable\nEOF mode.
 ;
 ;
 ; mui_UserWindow.c
@@ -544,7 +691,7 @@ MSG_TX_Shell (//)
 \033bShell
 ;
 MSG_Help_UserList (//)
-This list contains the system's user list.\nIt is used to login with Genesis and other programs.
+This list contains the system's user list.\nIt is used to login with GENESiS and other programs.\nThe first entry is the default user.
 ;
 ;
 ; mui_Modem.c
@@ -1017,6 +1164,12 @@ Import...
 MSG_CC_IMPORT (/1/1)
 P
 ;
+MSG_MENU_IMPORTOLD (//)
+Import NC 1 config...
+;
+MSG_CC_IMPORTOLD (/1/1)
+N
+;
 MSG_MENU_SAVE (//)
 Save
 ;
@@ -1068,6 +1221,24 @@ Debug mode
 ;
 MSG_CC_DebugMode (/1/1)
 d
+;
+MSG_LA_StartupInetd (//)
+Launch Inetd
+;
+MSG_CC_StartupInetd (/1/1)
+i
+;
+MSG_LA_StartupLoopback (//)
+Configure loopback (lo0)
+;
+MSG_CC_StartupLoopback (/1/1)
+l
+;
+MSG_LA_StartupTCP (//)
+Mount TCP:
+;
+MSG_CC_StartupTCP (/1/1)
+t
 ;
 MSG_TX_StatusWindows (//)
 Status windows display options
@@ -1148,34 +1319,34 @@ MSG_TX_ChooseFile (//)
 Choose file
 ;
 MSG_Help_ShowOnlineTime (//)
-Shall the online time meter be displayed?
+Shall the online time meter be displayed ?
 ;
 MSG_Help_ShowSpeed (//)
-Shall the connect string of\nthe modem be displayed?
+Shall the connect string of\nthe modem be displayed ?
 ;
 MSG_Help_ShowProviders (//)
-Shall the provider/configuration\nlist be displayed?
+Shall the provider/configuration\nlist be displayed ?
 ;
 MSG_Help_ShowButtons (//)
-Shall the Connect/Disconnect\nbuttons be displayed?
+Shall the Connect/Disconnect\nbuttons be displayed ?
 ;
 MSG_Help_ShowLeds (//)
-Shall the interface status\nleds be displayed?
+Shall the interface status\nleds be displayed ?
 ;
 MSG_Help_ShowLog (//)
-Shall the syslog output\nbe displayed?
+Shall the syslog output\nbe displayed ?
 ;
 MSG_Help_ShowUsers (//)
-Shall the user\nlist be displayed?
+Shall the user\nlist be displayed ?
 ;
 MSG_Help_MainWindow (//)
-How should the main window\nbe opened at startup?
+How should the main window\nbe opened at startup ?
 ;
 MSG_Help_StatusWindows (//)
-Would you like status windows to be opened\n(at startup and while connecting)?
+Would you like status windows to be opened\n(at startup and while connecting) ?
 ;
 MSG_Help_ShowSerialInput (//)
-Would you like to see the serial input while\na connection is beeing established?
+Would you like to see the serial input while\na connection is beeing established ?
 ;
 MSG_Help_QuickReconnect (//)
 Would you like to reconnect quickly after\na system reboot ? If you do, please make sure\nthe modem doesn't hang up on a DTR signal\ndrop (with AT&D0 in the init string).
@@ -1186,14 +1357,23 @@ Would you like to confirm\nany disconnection ?
 MSG_Help_Debug (//)
 Debug mode might help when having\nproblems while connecting.
 ;
-MSG_Help_Startup (//)
-You can launch a program/script\nwhen Genesis is started.
+MSG_Help_StartupInetd (//)
+Shall Inetd be launched at startup ? Inetd is responsible\nto lauch other daemons like ftpd, identd, httpd, etc.
 ;
-MSG_Help_LaunchMode (//)
+MSG_Help_StartupLoopback (//)
+Shall the loopback interface lo0 (127.0.0.1)\nbe configured at startup ?
+;
+MSG_Help_StartupTCP (//)
+Shall TCP: be\nmounted at startup ?
+;
+MSG_Help_Startup (//)
+You can launch a program/script\nwhen GENESiS is started.
+;
+MSG_Help_ExecType (//)
 Choose what type of program/script\nyou want to launch.
 ;
 MSG_Help_Shutdown (//)
-You can launch a program/script when\nGenesis is beeing shut down.
+You can launch a program/script when\nGENESiS is beeing shut down.
 ;
 ;
 ; mui_PasswdReq.c
@@ -1245,3 +1425,6 @@ MSG_TX_Comment (//)
 MSG_TX_Command (//)
 \033bCommand
 ;             
+MSG_Help_ISPList (//)
+This list holds your provider definitions.\nYou can select them in the GENESiS main window.\nThe first entry is the default configuration.
+;

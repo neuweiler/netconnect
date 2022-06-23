@@ -18,6 +18,7 @@ LONG GetEnvDOS(STRPTR name, STRPTR buffer, LONG max_len);
 STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep);
 VOID EscapeString(STRPTR buffer, STRPTR str);
 BOOL have_ppp_frame(UBYTE *data, ULONG count);
+BOOL load_config(STRPTR file, struct Config *config);
 BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct Config *config);
 VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Config *config);
 VOID clear_list(struct MinList *list);
@@ -52,6 +53,7 @@ SAVEDS ASM ULONG Finished_Dispatcher(register __a0 struct IClass *cl, register _
 SAVEDS ASM ULONG Sana2_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ASM ULONG SanaConfig_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 SAVEDS ASM ULONG Request_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
+SAVEDS ASM ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg);
 
 ///
 /// mui_LoginScript.c

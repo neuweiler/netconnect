@@ -117,31 +117,9 @@ SAVEDS ASM VOID isp_desfunc(register __a2 APTR pool, register __a1 struct ISP *i
 {
    if(isp)
    {
-      if(isp->isp_nameservers.mlh_TailPred != (struct MinNode *)&isp->isp_nameservers)
-      {
-         struct ServerEntry *server1, *server2;
-
-         server1 = (struct ServerEntry *)isp->isp_nameservers.mlh_Head;
-         while(server2 = (struct ServerEntry *)server1->se_node.mln_Succ)
-         {
-            Remove((struct Node *)server1);
-            FreeVec(server1);
-            server1 = server2;
-         }
-      }
-
-      if(isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&isp->isp_domainnames)
-      {
-         struct ServerEntry *server1, *server2;
-
-         server1 = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
-         while(server2 = (struct ServerEntry *)server1->se_node.mln_Succ)
-         {
-            Remove((struct Node *)server1);
-            FreeVec(server1);
-            server1 = server2;
-         }
-      }
+      clear_list(&isp->isp_nameservers);
+      clear_list(&isp->isp_domainnames);
+      clear_list(&isp->isp_loginscript);
 
       if(isp->isp_ifaces.mlh_TailPred != (struct MinNode *)&isp->isp_ifaces)
       {
@@ -156,18 +134,8 @@ SAVEDS ASM VOID isp_desfunc(register __a2 APTR pool, register __a1 struct ISP *i
                FreeVec(iface1->if_configparams);
             if(iface1->if_userdata)
                FreeVec(iface1->if_userdata);
-            if(iface1->if_events.mlh_TailPred != (struct MinNode *)&iface1->if_events)
-            {
-               struct ScriptLine *event1, *event2;
 
-               event1 = (struct ScriptLine *)iface1->if_events.mlh_Head;
-               while(event2 = (struct ScriptLine *)event1->sl_node.mln_Succ)
-               {
-                  Remove((struct Node *)event1);
-                  FreeVec(event1);
-                  event1 = event2;
-               }
-            }
+            clear_list(&iface1->if_events);
 
             Remove((struct Node *)iface1);
             FreeVec(iface1);
@@ -175,19 +143,6 @@ SAVEDS ASM VOID isp_desfunc(register __a2 APTR pool, register __a1 struct ISP *i
          }
       }
 
-      if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
-      {
-         struct ScriptLine *script_line1, *script_line2;
-
-         script_line1 = (struct ScriptLine *)isp->isp_loginscript.mlh_Head;
-         while(script_line1->sl_node.mln_Succ)
-         {
-            script_line2 = (struct ScriptLine *)script_line1->sl_node.mln_Succ;
-            Remove((struct Node *)script_line1);
-            FreeVec(script_line1);
-            script_line1 = script_line2;
-         }
-      }
       FreeVec(isp);
    }
 }
@@ -251,6 +206,11 @@ ULONG Provider_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       set(data->BT_Edit       , MUIA_Disabled, TRUE);
       set(data->BT_Delete     , MUIA_Disabled, TRUE);
+
+      set(data->LV_ISP     , MUIA_ShortHelp, GetStr(MSG_Help_ISPList));
+      set(data->BT_New     , MUIA_ShortHelp, GetStr(MSG_Help_New));
+      set(data->BT_Delete  , MUIA_ShortHelp, GetStr(MSG_Help_Remove));
+      set(data->BT_Edit    , MUIA_ShortHelp, GetStr(MSG_Help_Edit));
 
       DoMethod(data->BT_New    , MUIM_Notify, MUIA_Pressed, FALSE, obj, 2, MUIM_Provider_NewISP);
       DoMethod(data->BT_Edit   , MUIM_Notify, MUIA_Pressed, FALSE, obj, 1, MUIM_Provider_EditISP);

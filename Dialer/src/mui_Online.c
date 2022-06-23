@@ -5,11 +5,13 @@
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/pragmas/nc_lib.h"
 #include "Strings.h"
 #include "mui.h"
 #include "mui_Online.h"
 #include "mui_MainWindow.h"
 #include "mui_Led.h"
+#include "mui_NetInfo.h"
 #include "protos.h"
 #include "bootpc.h"
 #include "iface.h"
@@ -22,11 +24,14 @@
 extern struct Library *GenesisBase;
 extern int errno;
 extern struct Config Config;
-extern Object *app, *win, *status_win;
+extern Object *app, *win, *status_win, *netinfo_win;
 extern struct MUI_CustomClass  *CL_MainWindow, *CL_Online;
 extern struct MsgPort *MainPort;
 extern const char AmiTCP_PortName[];
 extern BOOL dialup;
+#ifdef NETCONNECT
+extern struct Library *NetConnectBase;
+#endif
 
 ///
 
@@ -179,7 +184,12 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    char buffer[MAXPATHLEN];
 
    // open bsdsocket.library
-   if(!(SocketBase = OpenLibrary("bsdsocket.library", 0)))
+#ifdef NETCONNECT
+   SocketBase = NCL_OpenSocket();;
+#else
+   SocketBase = OpenLibrary("bsdsocket.library", 0);
+#endif
+   if(!SocketBase)
    {
       DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorBsdsocketLib));
       goto abort;
@@ -229,7 +239,9 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
                ReadFile("ENV:APPPdns2", buffer, 20);
                if(!find_server_by_name(&mw_data->isp.isp_nameservers, buffer))
                   add_server(&mw_data->isp.isp_nameservers, buffer);
-
+#ifdef NETCONNECT
+               NCL_CallMeSometimes();
+#endif
                if(data->abort)   goto abort;
 
                if((mw_data->isp.isp_flags & ISF_UseBootp) && !is_secondary)
@@ -275,6 +287,9 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
                DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringAmiTCP), NULL);
                if(data->abort)   goto abort;
 
+#ifdef NETCONNECT
+               NCL_CallMeSometimes();
+#endif
                if(!(iface_config(iface_data, iface, &Config)))
                {
                   syslog_AmiTCP(LOG_CRIT, GetStr(MSG_TX_ErrorConfigIface), iface->if_name);
@@ -401,6 +416,8 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
                iface_data = NULL;
 
                DoMainMethod(mw_data->GR_Led[(int)iface->if_userdata], MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Green, NULL);
+               if(netinfo_win)
+                  DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
                syslog_AmiTCP(LOG_NOTICE, "%ls is now online", iface->if_name);
                iface->if_flags |= IFL_IsOnline;
                exec_event(&iface->if_events, IFE_Online);
@@ -438,12 +455,16 @@ abort:
        {
           exec_event(&iface->if_events, IFE_OnlineFail);
           DoMethod(app, MUIM_Application_PushMethod, mw_data->GR_Led[(int)iface->if_userdata], 3, MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Red);
+          if(netinfo_win)
+             DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
        }
     }
 
    if(SocketBase)
       CloseLibrary(SocketBase);
    SocketBase = NULL;
+
+   IsOnline((is_one_online(&mw_data->isp.isp_ifaces) ? 22 : -22));
 
    Forbid();
    data->TCPHandler = NULL;
@@ -460,12 +481,12 @@ ULONG Online_GoOnline(struct IClass *cl, Object *obj, struct MUIP_Online_GoOnlin
 
    if(data->TCPHandler = CreateNewProcTags(
       NP_Entry      , TCPHandler,
-      NP_Name       , "Genesis netconfig",
+      NP_Name       , "GENESiS Netconfig",
       NP_StackSize  , 16384,
       NP_WindowPtr  , -1,
       NP_CloseOutput, TRUE,
-//      NP_Output, Open("AmiTCP:log/Genesis.log", MODE_NEWFILE),
-NP_Output, Open("CON:/300/640/200/Genesis netconfig/AUTO/WAIT/CLOSE", MODE_NEWFILE),
+      NP_Output, Open("AmiTCP:log/GENESiS.log", MODE_NEWFILE),
+//NP_Output, Open("CON:/300/640/200/GENESiS Netconfig/AUTO/WAIT/CLOSE", MODE_NEWFILE),
       TAG_END))
    {
       return(TRUE);

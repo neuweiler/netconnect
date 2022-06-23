@@ -17,6 +17,11 @@
 
 #define DEFAULT_CONFIGFILE "AmiTCP:db/genesis.conf"
 
+#ifdef DEMO
+#define MAX_DAYS 100
+#define WARN_DAYS 90
+#endif
+
 /// Config
 #define CFL_IgnoreDSR            (1)
 #define CFL_7Wire                (1 << 1)    // default on
@@ -37,7 +42,9 @@
 #define CFL_ShowSerialInput      (1 << 16)   // default on
 #define CFL_StartupOpenWin       (1 << 17)   // default on
 #define CFL_StartupIconify       (1 << 18)
-
+#define CFL_StartupInetd         (1 << 19)   // default on
+#define CFL_StartupLoopback      (1 << 20)   // default on
+#define CFL_StartupTCP           (1 << 21)   // default on
 
 struct Config
 {
@@ -64,7 +71,7 @@ struct Config
 #define IFL_IsOnline       (1)         /* is the iface currently online ? */
 #define IFL_PutOnline      (1 << 1)    /* shall the iface be put online in this pass ? */
 #define IFL_PutOffline     (1 << 2)    /* shall the iface be put online in this pass ? */
-#define IFL_AlwaysOnline   (1 << 3)    /* must iface be online as longa as genesis's running ? */
+#define IFL_AutoOnline     (1 << 3)    /* put iface online automatically ? */
 
 #define IFL_IPDynamic      (1 << 4)    /* was ip addr set to dynamic at startup ? */
 #define IFL_DSTDynamic     (1 << 5)    /* was dst dynamic */
@@ -147,6 +154,17 @@ struct PrefsPPPIface
    BOOL ppp_deflatecomp;
    BOOL ppp_eof;
 };
+///
+
+/// Exec Types
+
+enum { EXEC_CLI = 0, EXEC_WB, EXEC_Script, EXEC_ARexx };
+#ifdef USE_EXEC_TYPES
+STRPTR exec_types[] = { "CLI", "WB", "Script", "AREXX", NULL };
+#else
+extern STRPTR exec_types[];
+#endif
+
 ///
 
 /// ServerEntry   (41)

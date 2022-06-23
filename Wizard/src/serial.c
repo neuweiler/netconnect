@@ -110,7 +110,6 @@ int serial_waitfor(STRPTR string1, STRPTR string2, STRPTR string3, int secs)
 
                      serial_buffer[buf_pos++] = serial_in[0];
                      serial_buffer[buf_pos] = NULL;
-
                      if(buf_pos > 1020)
                         buf_pos = 0;
 
@@ -185,19 +184,6 @@ BOOL serial_dsr(VOID)
 }
 
 ///
-/// serial_clear
-VOID serial_clear(VOID)
-{
-   if(SerReadReq)
-   {
-      serial_stopread();
-
-      SerReadReq->IOSer.io_Command = CMD_CLEAR;
-      DoIO((struct IORequest *)SerReadReq);
-   }
-}
-
-///
 
 /// serial_delete
 VOID serial_delete(VOID)
@@ -234,7 +220,13 @@ BOOL serial_create(STRPTR device, LONG unit)
 {
    ULONG flags;
 
-   flags = SERF_XDISABLED | SERF_SHARED | SERF_7WIRE;
+   flags = SERF_SHARED;
+   if(Config.cnf_flags & CFL_7Wire)
+      flags |= SERF_7WIRE;
+   if(!(Config.cnf_flags & CFL_XonXoff))
+      flags |= SERF_XDISABLED;
+   if(Config.cnf_flags & CFL_RadBoogie)
+      flags |= SERF_RAD_BOOGIE;
 
    SerReadPort = CreateMsgPort();
    SerWritePort = CreateMsgPort();

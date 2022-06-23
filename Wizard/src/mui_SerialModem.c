@@ -18,6 +18,7 @@ extern struct Library *MUIMasterBase;
 extern Object *win, *app;
 extern struct GenesisBase *GenesisBase;
 extern struct MUI_CustomClass  *CL_MainWindow;
+extern struct Config Config;
 
 extern struct Hook strobjhook, sorthook, txtobjhook, deshook, objstrhook, objtxthook;
 

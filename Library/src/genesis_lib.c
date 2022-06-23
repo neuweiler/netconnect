@@ -1,8 +1,9 @@
 /// includes & defines
 #include <devices/netinfo.h>
-
+#include <intuition/intuitionbase.h>
 #include "libraries/genesis.h"
 #include "/Genesis.h"
+#include "rev.h"
 
 #define MAKE_ID(a,b,c,d) ((ULONG) (a)<<24 | (ULONG) (b)<<16 | (ULONG) (c)<<8 | (ULONG) (d))
 #define ID_OKAY   42
@@ -11,6 +12,8 @@
 #define ID_STROBJ 45
 ///
 /// variables
+const char version_string[] = "$VER:genesis.library " VERTAG;
+
 struct   DosLibrary      *DOSBase       = NULL;
 struct   ExecBase        *SysBase       = NULL;
 struct   IntuitionBase   *IntuitionBase = NULL;
@@ -24,6 +27,7 @@ struct   User            *global_user   = NULL;
 struct   SignalSemaphore LibSemaphore;
 struct   MinList         UserList;
 char     pw_buffer[1024];
+BOOL     is_online = 0;
 
 struct UserNode
 {
@@ -246,6 +250,8 @@ SAVEDS ASM LONG ReadFile(register __a0 STRPTR file, register __a1 STRPTR buffer,
          if(size >= 0)
             buffer[size] = NULL;
       }
+      else
+         size = -1;
    }
    return(size);
 }
@@ -269,6 +275,17 @@ SAVEDS ASM BOOL WriteFile(register __a0 STRPTR file, register __a1 STRPTR buffer
       }
    }
    return(success);
+}
+
+///
+/// IsOnline
+SAVEDS ASM BOOL IsOnline(register __d0 LONG flags)
+{
+   if(flags == 22)
+      is_online = TRUE;
+   if(flags == -22)
+      is_online = FALSE;
+   return(is_online);
 }
 
 ///
@@ -351,6 +368,52 @@ struct NetInfoPasswd *passwd_by_name(char *name)
 }
 
 ///
+/// check_user_password
+BOOL check_user_password(STRPTR name, STRPTR password)
+{
+   BOOL ok = FALSE;
+
+   if(name)
+   {
+      if(passwd_by_name(name))
+      {
+         if(!(*passwd->pw_passwd))
+         {
+            if(!password)
+               ok = TRUE;
+            else
+            {
+               if(!*password)
+                  ok = TRUE;
+            }
+         }
+         else
+         {
+            if(password)
+            {
+               STRPTR salt;
+
+               salt = passwd->pw_passwd;
+
+               if(!UserGroupBase)
+                  UserGroupBase = OpenLibrary(USERGROUPNAME, 0);
+
+               if(UserGroupBase)
+               {
+                  if(!strcmp(crypt(password, salt), passwd->pw_passwd))
+                     ok = TRUE;
+
+                  CloseLibrary(UserGroupBase);
+                  UserGroupBase = NULL;
+               }
+            }
+         }
+      }
+   }
+   return(ok);
+}
+
+///
 
 // internal functions, don't use semaphore here !
 
@@ -378,33 +441,30 @@ STRPTR get_username(LONG pos)
 
 ///
 /// get_user
-struct User *get_user(char *name, char *title, LONG flags)
+struct User *get_user(char *name, char *password, char *title, LONG flags)
 {
    Object *app, *win, *PO_Username = NULL, *STR_Username = NULL, *LV_Usernames = NULL,
           *STR_Password, *BT_Okay, *BT_Cancel;
    ULONG sigs = NULL, id;
-   STRPTR password = NULL;
+   STRPTR ptr = NULL;
    struct User *user = NULL;
    int tries;
 
-   if(name)
-      if(!passwd_by_name(name))
-         name = NULL;
-
-   if(name && !*passwd->pw_passwd)
+   if(check_user_password(name, password))
       return(create_usercopy(passwd));
 
    if(MUIMasterBase = OpenLibrary("muimaster.library", 11))
    {
       if(app = ApplicationObject,
          MUIA_Application_Title      , "Genesis User Request",
-         MUIA_Application_Version    , "$VER: GenesisUserReq 1.0 (07.06.98)",
+//         MUIA_Application_Version    , "$VER: GenesisUserReq 1.0 (07.06.98)",
          MUIA_Application_Copyright  , "©1998, Michael Neuweiler",
          MUIA_Application_Author     , "Michael Neuweiler",
          MUIA_Application_Description, "Requester to login a user",
          MUIA_Application_Base       , "GENESISUSERREQ",
          SubWindow, win = WindowObject,
             MUIA_Window_ID       , MAKE_ID('U','R','E','Q'),
+            MUIA_Window_Screen   , IntuitionBase->FirstScreen,
             MUIA_Window_Title    , "login",
             WindowContents       , VGroup,
                Child, VGroup,
@@ -498,49 +558,19 @@ struct User *get_user(char *name, char *title, LONG flags)
                break;
             if(id == ID_OKAY)
             {
-               STRPTR salt;
-               if(!name)
-                  get(STR_Username, MUIA_String_Contents, &name);
+               get(STR_Username, MUIA_String_Contents, &name);
+               get(STR_Password, MUIA_String_Contents, &ptr);
 
-               if(passwd_by_name(name))
+               if(check_user_password(name, ptr))
                {
-                  get(STR_Password, MUIA_String_Contents, &password);
-
-                  if(*passwd->pw_passwd)
-                     salt = passwd->pw_passwd;
-                  else
-                  {
-                     user = create_usercopy(passwd);
-                     break;
-                  }
-
-                  if(!UserGroupBase)
-                     UserGroupBase = OpenLibrary(USERGROUPNAME, 0);
-
-                  if(UserGroupBase)
-                  {
-                     if(!strcmp(crypt(password, salt), passwd->pw_passwd))
-                     {
-                        user = create_usercopy(passwd);
-                        break;
-                     }
-                     else
-                     {
-                        DisplayBeep(NULL);
-                        nnset(STR_Password, MUIA_String_Contents, NULL);
-                        set(win, MUIA_Window_ActiveObject, STR_Password);
-                        tries++;
-                     }
-                     CloseLibrary(UserGroupBase);
-                     UserGroupBase = NULL;
-                  }
+                  user = create_usercopy(passwd);
+                  break;
                }
                else
                {
                   DisplayBeep(NULL);
-                  nnset(STR_Username, MUIA_String_Contents, NULL);
                   nnset(STR_Password, MUIA_String_Contents, NULL);
-                  set(win, MUIA_Window_ActiveObject, STR_Username);
+                  set(win, MUIA_Window_ActiveObject, STR_Password);
                   tries++;
                }
 
@@ -711,12 +741,12 @@ SAVEDS ASM BOOL GetUserName(register __d0 LONG user_number, register __a0 STRPTR
 
 ///
 /// GetUser
-SAVEDS ASM struct User *GetUser(register __a0 STRPTR name, register __a1 STRPTR title, register __d0 LONG flags)
+SAVEDS ASM struct User *GetUser(register __a0 STRPTR name, register __a1 STRPTR password, register __a2 STRPTR title, register __d0 LONG flags)
 {
    struct User *user;
 
    ObtainSemaphore(&LibSemaphore);
-   user = get_user(name, title, flags);
+   user = get_user(name, password, title, flags);
    ReleaseSemaphore(&LibSemaphore);
 
    return(user);

@@ -92,13 +92,18 @@ ULONG UserWindow_PasswdReqFinish(struct IClass *cl, Object *obj, struct MUIP_Gen
 ULONG UserWindow_RemovePassword(struct IClass *cl, Object *obj, Msg msg)
 {
    struct UserWindow_Data *data = INST_DATA(cl, obj);
+   struct User *user;
 
-   if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_RemoveCancel), GetStr(MSG_TX_ReallyRemovePasswd)))
+   if(user = GetUser("root", NULL, GetStr(MSG_TX_ReallyRemovePasswd), GUF_TextObject))
    {
+      FreeUser(user);
       MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_PasswordWarning));
-      *data->p_user->pu_password = NULL;
+      *data->password = NULL;
       set(data->BT_RemovePassword, MUIA_Disabled, TRUE);
    }
+   else
+      MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_NotAllowedModifyUser));
+
    return(NULL);
 }
 
@@ -185,7 +190,7 @@ ULONG UserWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
    {
       struct User *user;
 
-      if(user = GetUser("root", GetStr(MSG_TX_ModifyUserRootAccess), GUF_TextObject))
+      if(user = GetUser("root", NULL, GetStr(MSG_TX_ModifyUserRootAccess), GUF_TextObject))
       {
          FreeUser(user);
          if(strcmp(data->p_user->pu_login, "root"))

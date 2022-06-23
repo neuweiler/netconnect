@@ -7,6 +7,7 @@
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/proto/genesis.h"
 #include "/genesis.lib/pragmas/genesis_lib.h"
+#include "/genesis.lib/pragmas/nc_lib.h"
 #include "mui.h"
 #include "mui_Finished.h"
 #include "mui_Protocol.h"
@@ -21,6 +22,7 @@
 #include "mui_UserInfo.h"
 #include "mui_Welcome.h"
 #include "mui_Request.h"
+#include "mui_About.h"
 #include "protos.h"
 
 #include "images/setup_page0.h"
@@ -40,13 +42,13 @@ extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 
 extern struct Library *MUIMasterBase, *GenesisBase;
-#ifdef DEMO
-extern struct Library *BattClockBase;
+#ifdef NETCONNECT
+extern struct Library *NetConnectBase;
 #endif
 extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_Welcome , *CL_SerialSana,
                               *CL_SerialModem, *CL_ModemStrings, *CL_UserInfo, *CL_Protocol,
                               *CL_LoginScript, *CL_Finished, *CL_Sana2, *CL_SanaConfig,
-                              *CL_Request;
+                              *CL_Request, *CL_About;
 extern struct NewMenu MainMenu[];
 extern struct MsgPort *MainPort;
 extern Object *app;
@@ -74,6 +76,11 @@ VOID exit_libs(VOID)
    if(cat)              CloseCatalog(cat);
    if(GenesisBase)      CloseLibrary(GenesisBase);
    if(MUIMasterBase)    CloseLibrary(MUIMasterBase);
+#ifdef NETCONNECT
+   if(NetConnectBase)
+      CloseLibrary(NetConnectBase);
+   NetConnectBase = NULL;
+#endif
 
    cat            = NULL;
    MUIMasterBase  = GenesisBase = NULL;
@@ -86,13 +93,26 @@ BOOL init_libs(VOID)
    if(LocaleBase)
       cat = OpenCatalog(NULL, "GenesisWizard.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
 
+#ifdef NETCONNECT
+   if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
+      Printf(GetStr(MSG_TX_ErrorOpenX), "netconnect.library\n");
+#endif
    if(!(MUIMasterBase  = OpenLibrary("muimaster.library"   , 11)))
       Printf(GetStr(MSG_TX_ErrorOpenX), "muimaster.library.\n");
    if(!(GenesisBase    = OpenLibrary(GENESISNAME, 0)))
       Printf(GetStr(MSG_TX_ErrorOpenX), GENESISNAME ".\n");
 
+#ifdef NETCONNECT
+   if(MUIMasterBase && GenesisBase && NetConnectBase)
+   {
+      if(NCL_GetOwner())
+         return(TRUE);
+      Printf("NetConnect registration failed.\n");
+   }
+#else
    if(MUIMasterBase && GenesisBase)
       return(TRUE);
+#endif
 
    exit_libs();
    return(FALSE);
@@ -105,6 +125,7 @@ VOID exit_classes(VOID)
    if(CL_MainWindow)          MUI_DeleteCustomClass(CL_MainWindow);
    if(CL_Online)              MUI_DeleteCustomClass(CL_Online);
    if(CL_Request)             MUI_DeleteCustomClass(CL_Request);
+   if(CL_About)               MUI_DeleteCustomClass(CL_About);
 
    if(CL_Welcome)             MUI_DeleteCustomClass(CL_Welcome);
    if(CL_SerialSana)          MUI_DeleteCustomClass(CL_SerialSana);
@@ -119,7 +140,7 @@ VOID exit_classes(VOID)
 
    CL_MainWindow = CL_Online = CL_Welcome = CL_SerialSana = CL_SerialModem = CL_ModemStrings =
    CL_UserInfo = CL_Protocol = CL_LoginScript = CL_Finished = CL_Sana2 = CL_SanaConfig =
-   CL_Request = NULL;
+   CL_Request = CL_About = NULL;
 }
 
 ///
@@ -129,6 +150,7 @@ BOOL init_classes(VOID)
    CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct MainWindow_Data)    , MainWindow_Dispatcher);
    CL_Online         = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct Online_Data)        , Online_Dispatcher);
    CL_Request        = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct Request_Data)       , Request_Dispatcher);
+   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)         , About_Dispatcher);
 
    CL_Welcome         = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct Welcome_Data)       , Welcome_Dispatcher);
    CL_SerialSana      = MUI_CreateCustomClass(NULL, MUIC_Group , NULL, sizeof(struct SerialSana_Data)    , SerialSana_Dispatcher);
@@ -143,7 +165,7 @@ BOOL init_classes(VOID)
 
    if(CL_MainWindow && CL_Online && CL_Welcome && CL_SerialSana && CL_SerialModem && CL_ModemStrings &&
       CL_UserInfo && CL_Protocol && CL_LoginScript && CL_Finished && CL_Sana2 && CL_SanaConfig &&
-      CL_Request)
+      CL_Request && CL_About)
       return(TRUE);
 
    exit_classes();
@@ -171,22 +193,6 @@ BOOL init_ports(VOID)
    exit_ports();
    return(FALSE);
 }
-
-///
-/// check_date
-#ifdef DEMO
-#include <resources/battclock.h>
-#include <clib/battclock_protos.h>
-BOOL check_date(VOID)
-{
-   if(BattClockBase = OpenResource("battclock.resource"))
-   {
-      if(ReadBattClock() < 647390515)
-         return(TRUE);
-   }
-   return(FALSE);
-}
-#endif
 
 ///
 /// LocalizeNewMenu
@@ -291,19 +297,19 @@ VOID Handler(VOID)
 
             if(app = ApplicationObject,
                MUIA_Application_Author       , "Michael Neuweiler",
-               MUIA_Application_Base         , "GenesisWizard",
-               MUIA_Application_Title        , "Genesis Wizard",
-               MUIA_Application_Version      , "$VER:GenesisWizard "VERTAG,
+               MUIA_Application_Base         , "GENESiSWizard",
+               MUIA_Application_Title        , "GENESiS Wizard",
+#ifdef DEMO
+               MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG" (DEMO)",
+#else
+               MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG,
+#endif
                MUIA_Application_Copyright    , "Michael Neuweiler 1997,98",
-               MUIA_Application_HelpFile     , "PROGDIR:GenesisWizard.guide",
                MUIA_Application_Description  , GetStr(MSG_AppDescription),
                MUIA_Application_Window       , win = NewObject(CL_MainWindow->mcc_Class, NULL, TAG_DONE),
             End)
             {
                struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-
-               DoMethod(data->GR_ModemStrings, MUIM_ModemStrings_LoadData);
-               DoMethod(data->GR_SerialModem , MUIM_SerialModem_LoadData);
 
                set(win, MUIA_Window_Open, TRUE);
                if(!xget(win, MUIA_Window_Open))    // check if there was enogh space to open window
@@ -315,6 +321,9 @@ VOID Handler(VOID)
                else
                   no_picture = FALSE;
 
+               DoMethod(data->GR_ModemStrings, MUIM_ModemStrings_LoadData);
+               DoMethod(data->GR_SerialModem , MUIM_SerialModem_LoadData);
+
                // init variables
 
                ser_buf_pos = 0;
@@ -323,10 +332,26 @@ VOID Handler(VOID)
 
                bzero(&Config, sizeof(struct Config));
                Config.cnf_baudrate = 38400;
-               Config.cnf_flags = CFL_7Wire;
+               Config.cnf_flags = CFL_7Wire | CFL_RadBoogie;
                Config.cnf_serbuflen = 16384;
                Config.cnf_redialattempts = 10;
                Config.cnf_redialdelay = 5;
+               if(load_config("AmiTCP:db/genesis.conf", &Config))
+               {
+                  struct SerialModem_Data *sm_data = INST_DATA(CL_SerialModem->mcc_Class, data->GR_SerialModem);
+                  struct ModemStrings_Data *ms_data = INST_DATA(CL_ModemStrings->mcc_Class, data->GR_ModemStrings);
+
+                  if(*Config.cnf_serialdevice)
+                     setstring(sm_data->STR_SerialDevice, Config.cnf_serialdevice);
+                  setslider(sm_data->SL_SerialUnit, Config.cnf_serialunit);
+                  if(*Config.cnf_modemname)
+                     set(sm_data->TX_ModemName, MUIA_Text_Contents, Config.cnf_modemname);
+
+                  if(*Config.cnf_initstring)
+                     setstring(ms_data->STR_InitString, Config.cnf_initstring);
+                  if(*Config.cnf_dialprefix)
+                     setstring(ms_data->STR_DialPrefix, Config.cnf_dialprefix);
+               }
 
                bzero(&ISP, sizeof(struct ISP));
                NewList((struct List *)&ISP.isp_loginscript);
@@ -341,10 +366,9 @@ VOID Handler(VOID)
                use_loginscript = FALSE;
 
 #ifdef DEMO
-               if(!check_date())
-                  MUI_Request(app, 0, 0, 0, GetStr(MSG_ReqBT_Okay), "Sorry, this demo version has expired !");
-               else
+               DoMethod(win, MUIM_MainWindow_About);
 #endif
+
                while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
                {
                   if(sigs)
@@ -389,7 +413,7 @@ int main(int argc, char *argv[])
 {
    if(SysBase->LibNode.lib_Version < 37)
    {
-      static UBYTE AlertData[] = "\0\214\020GenesisWizard requires kickstart v37+ !!!\0\0";
+      static UBYTE AlertData[] = "\0\214\020GENESiSWizard requires kickstart v37+ !!!\0\0";
 
       DisplayAlert(RECOVERY_ALERT, AlertData, 30);
       exit(30);

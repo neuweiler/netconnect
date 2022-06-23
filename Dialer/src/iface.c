@@ -24,7 +24,7 @@ extern int errno;
 extern Object *status_win;
 extern struct MUI_CustomClass *CL_Online;
 extern struct MUI_CustomClass *CL_MainWindow;
-extern struct IOExtSer *SerReq;
+extern struct IOExtSer *SerWriteReq;
 extern Object *app;
 extern Object *win;
 extern BOOL dialup;
@@ -177,21 +177,32 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
                DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, buf, NULL);
                if(data->abort)   return(FALSE);
 
+               serial_send("\r", -1);
+               Delay(10);
                serial_send("AAT\r", -1);
                serial_waitfor("OK", 1);
+               Delay(10);
                if(data->abort)
                   return(FALSE);
+               serial_send("ATZ\r", -1);
+               serial_waitfor("OK", 1);
+               Delay(10);
 
-               EscapeString(buf, conf->cnf_initstring);
-               strncat(buf, "\r", sizeof(buf) - strlen(buf));
-               serial_send(buf, -1);
-               serial_waitfor("OK", 2);
+               if(*conf->cnf_initstring)
+               {
+                  EscapeString(buf, conf->cnf_initstring);
+                  strncat(buf, "\r", sizeof(buf) - strlen(buf));
+                  serial_send(buf, -1);
+                  serial_waitfor("OK", 2);
+                  Delay(10);
+               }
                if(data->abort)
                   return(FALSE);
 
                sprintf(buf, "%ls%ls%ls\r", conf->cnf_dialprefix, number_ptr, conf->cnf_dialsuffix);
                serial_send(buf, -1);
                ok = serial_waitfor("CONNECT", 90);
+               Delay(10);
                if(data->abort)
                   return(FALSE);
 
@@ -249,12 +260,11 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
       }
       else if(script_line->sl_command == SL_SendBreak)
       {
-         SerReq->IOSer.io_Command = SDCMD_BREAK;
-         DoIO((struct IORequest *)SerReq);
+         SerWriteReq->IOSer.io_Command = SDCMD_BREAK;
+         DoIO((struct IORequest *)SerWriteReq);
       }
       else if(script_line->sl_command == SL_Pause)
          Delay(atol(script_line->sl_contents) * 50);
-
       script_line = (struct ScriptLine *)script_line->sl_node.mln_Succ;
    }
    return(success);
@@ -414,6 +424,8 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
          if(!sana2_getaddresses(iface_data->ifd_s2, iface))
             syslog_AmiTCP(LOG_WARNING, "iface_init: sana2_getaddresses() failed");
       }
+      else
+         iface_online(iface_data);
 
        // The Sana2 device needs to be closed here (before AmiTCP gets to know
        // about the device) because of the bugs of the original CBM slip-driver

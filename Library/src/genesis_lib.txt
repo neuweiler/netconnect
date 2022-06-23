@@ -51,3 +51,25 @@ History of genesis.library
   and the pointer to your mui window and recompile).
 * added new argument to GetUser() : flags. Please refer to
   libraries/genesis.h for possible values.
+
+2.0.5 (15.06.98)
+----------------
+
+* changed arguments of GetUser() once more (SORRY !!)
+  Now looks like this: GetUser(name, password, title, flags);
+  password = passwd of the user if known.
+
+2.0.6 (01.07.98)
+----------------
+
+* corrected bug: when getuser() was called with a given name and
+  the user changed the username, the passwd for the user getuser()
+  was called with was asked for.
+* added IsOnline() to check if at least one iface is online.
+
+2.0.7 (08.07.98)
+----------------
+
+* now opens user requester on frontmost screen.
+* finally the version string gets printed correctly now.
+

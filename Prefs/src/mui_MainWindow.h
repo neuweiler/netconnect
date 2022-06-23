@@ -9,10 +9,13 @@
 #define MUIM_MainWindow_MenuSaveAs              (TAGBASE_PREFS | 0x1018)
 #define MUIM_MainWindow_ClearConfig             (TAGBASE_PREFS | 0x1019)
 #define MUIM_MainWindow_LoadDatabases           (TAGBASE_PREFS | 0x101a)
+#define MUIM_MainWindow_LoadOldConfig           (TAGBASE_PREFS | 0x101b)
+#define MUIM_MainWindow_MenuImportOld           (TAGBASE_PREFS | 0x101c)
 
 struct MUIP_MainWindow_Finish          { ULONG MethodID; LONG level; };
 struct MUIP_MainWindow_AboutFinish     { ULONG MethodID; Object *window; };
 struct MUIP_MainWindow_LoadConfig      { ULONG MethodID; STRPTR file; };
+struct MUIP_MainWindow_LoadOldConfig   { ULONG MethodID; STRPTR file; };
 struct MUIP_MainWindow_SaveConfig      { ULONG MethodID; STRPTR file; };
 
 struct MainWindow_Data

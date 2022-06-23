@@ -46,7 +46,7 @@ ULONG Request_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct Request_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title    , "Genesis Wizard",
+      MUIA_Window_Title    , "GENESiS Wizard",
       MUIA_Window_ID       , MAKE_ID('R','E','Q','U'),
       MUIA_Window_RefWindow, win,
       MUIA_Window_LeftEdge , MUIV_Window_LeftEdge_Centered,

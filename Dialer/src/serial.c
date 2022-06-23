@@ -14,8 +14,8 @@
 /// external variables
 extern struct ExecBase *SysBase;
 extern struct Library  *OwnDevUnitBase;
-extern struct IOExtSer *SerReq;
-extern struct MsgPort  *SerPort;
+extern struct IOExtSer *SerReadReq, *SerWriteReq;
+extern struct MsgPort  *SerReadPort, *SerWritePort;
 extern Object *app;
 extern Object *win;
 extern Object *status_win;
@@ -28,12 +28,12 @@ extern BOOL SerialLocked;
 /// serial_stopread
 VOID serial_stopread(VOID)
 {
-   if(SerReq)
+   if(SerReadReq)
    {
-      if(!(CheckIO((struct IORequest *)SerReq)))
-         AbortIO((struct IORequest *)SerReq);
+      if(!(CheckIO((struct IORequest *)SerReadReq)))
+         AbortIO((struct IORequest *)SerReadReq);
 
-      WaitIO((struct IORequest *)SerReq);
+      WaitIO((struct IORequest *)SerReadReq);
    }
 }
 
@@ -41,15 +41,15 @@ VOID serial_stopread(VOID)
 /// serial_startread
 VOID serial_startread(STRPTR data, LONG len)
 {
-   if(SerReq)
+   if(SerReadReq)
    {
-      SerReq->IOSer.io_Command  = CMD_READ;
-      SerReq->IOSer.io_Length   = len;
-      SerReq->IOSer.io_Data     = data;
+      SerReadReq->IOSer.io_Command  = CMD_READ;
+      SerReadReq->IOSer.io_Length   = len;
+      SerReadReq->IOSer.io_Data     = data;
 
-      SetSignal(0, 1L << SerPort->mp_SigBit);
+      SetSignal(0, 1L << SerReadPort->mp_SigBit);
 
-      SendIO((struct IORequest *)SerReq);
+      SendIO((struct IORequest *)SerReadReq);
    }
 }
 
@@ -57,15 +57,15 @@ VOID serial_startread(STRPTR data, LONG len)
 /// serial_send
 VOID serial_send(STRPTR cmd, LONG len)
 {
-   if(SerReq && *cmd)
+   if(SerWriteReq && *cmd)
    {
       if(len < 0)
          len = strlen(cmd);
 
-      SerReq->IOSer.io_Length  = len;
-      SerReq->IOSer.io_Command = CMD_WRITE;
-      SerReq->IOSer.io_Data    = cmd;
-      DoIO((struct IORequest *)SerReq);
+      SerWriteReq->IOSer.io_Length  = len;
+      SerWriteReq->IOSer.io_Command = CMD_WRITE;
+      SerWriteReq->IOSer.io_Data    = cmd;
+      DoIO((struct IORequest *)SerWriteReq);
    }
 }
 
@@ -99,12 +99,12 @@ BOOL serial_waitfor(STRPTR string, int secs)
             serial_startread(ser_buf, 1);
             while(!data->abort)
             {
-               sig = Wait((1L << SerPort->mp_SigBit) | (1L<< time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
-               if(sig & (1L << SerPort->mp_SigBit))
+               sig = Wait((1L << SerReadPort->mp_SigBit) | (1L<< time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
+               if(sig & (1L << SerReadPort->mp_SigBit))
                {
-                  if(CheckIO((struct IORequest *)SerReq))
+                  if(CheckIO((struct IORequest *)SerReadReq))
                   {
-                     WaitIO((struct IORequest *)SerReq);
+                     WaitIO((struct IORequest *)SerReadReq);
 
                      buffer[buf_pos++] = ser_buf[0];
                      buffer[buf_pos] = NULL;
@@ -154,8 +154,10 @@ BOOL serial_waitfor(STRPTR string, int secs)
             if(timer_running)
             {
                if(!CheckIO((struct IORequest *)time_req))
+               {
                   AbortIO((struct IORequest *)time_req);
-               WaitIO((struct IORequest *)time_req);
+                  WaitIO((struct IORequest *)time_req);
+               }
                timer_running = FALSE;
             }
             CloseDevice((struct IORequest *)time_req);
@@ -173,11 +175,11 @@ BOOL serial_carrier(VOID)
 {
    ULONG CD = 1<<5;
 
-   if(!SerReq)
+   if(!SerWriteReq)
       return(FALSE);
-   SerReq->IOSer.io_Command = SDCMD_QUERY;
-   DoIO((struct IORequest *)SerReq);
-   return((BOOL)(CD & SerReq->io_Status ? FALSE : TRUE));
+   SerWriteReq->IOSer.io_Command = SDCMD_QUERY;
+   DoIO((struct IORequest *)SerWriteReq);
+   return((BOOL)(CD & SerWriteReq->io_Status ? FALSE : TRUE));
 }
 
 ///
@@ -186,11 +188,11 @@ BOOL serial_dsr(VOID)
 {
    ULONG DSR = 1<<3;
 
-   if(!SerReq)
+   if(!SerWriteReq)
       return(FALSE);
-   SerReq->IOSer.io_Command = SDCMD_QUERY;
-   DoIO((struct IORequest *)SerReq);
-   return((BOOL)(DSR & SerReq->io_Status ? FALSE : TRUE));
+   SerWriteReq->IOSer.io_Command = SDCMD_QUERY;
+   DoIO((struct IORequest *)SerWriteReq);
+   return((BOOL)(DSR & SerWriteReq->io_Status ? FALSE : TRUE));
 }
 
 ///
@@ -212,36 +214,50 @@ VOID serial_hangup(VOID)
 }
 
 ///
+/// serial_clear
+VOID serial_clear(VOID)
+{
+   if(SerReadReq)
+   {
+      serial_stopread();
+
+      SerReadReq->IOSer.io_Command = CMD_CLEAR;
+      DoIO((struct IORequest *)SerReadReq);
+   }
+}
+
+///
 
 /// serial_delete
 VOID serial_delete(VOID)
 {
    struct Device *dev;
 
-   if(SerReq && SerReq->IOSer.io_Device)
+   if(SerReadReq && SerReadReq->IOSer.io_Device)
    {
-      if(!CheckIO((struct IORequest *)SerReq))
+      if(!CheckIO((struct IORequest *)SerReadReq))
       {
-         AbortIO((struct IORequest *)SerReq);
-         WaitIO((struct IORequest *)SerReq);
+         AbortIO((struct IORequest *)SerReadReq);
+         WaitIO((struct IORequest *)SerReadReq);
       }
-      CloseDevice((struct IORequest *)SerReq);
+      CloseDevice((struct IORequest *)SerReadReq);
    }
-   if(SerReq)
-      DeleteExtIO((struct IORequest *)SerReq);
-   SerReq = NULL;
-   if(SerPort)
-      DeleteMsgPort(SerPort);
-   SerPort = NULL;
+   if(SerReadReq)    DeleteExtIO((struct IORequest *)SerReadReq);
+   if(SerReadPort)   DeleteMsgPort(SerReadPort);
+   if(SerWriteReq)   DeleteExtIO((struct IORequest *)SerWriteReq);
+   if(SerWritePort)  DeleteMsgPort(SerWritePort);
+
+   SerReadReq  = SerWriteReq  = NULL;
+   SerReadPort = SerWritePort = NULL;
+
+   if(SerialLocked && OwnDevUnitBase && *Config.cnf_serialdevice)
+      FreeDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit);
+   SerialLocked = FALSE;
 
    Forbid();
    if(dev = (struct Device *)FindName(&SysBase->DeviceList, Config.cnf_serialdevice))
       RemDevice(dev);
    Permit();
-
-   if(SerialLocked && OwnDevUnitBase && *Config.cnf_serialdevice)
-      FreeDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit);
-   SerialLocked = FALSE;
 }
 
 ///
@@ -260,34 +276,45 @@ BOOL serial_create(VOID)
 
    if((Config.cnf_flags & CFL_OwnDevUnit) && OwnDevUnitBase)
    {
-      if(!AttemptDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit, "Genesis", NULL))
+      if(!AttemptDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit, "GENESiS", NULL))
          SerialLocked = TRUE;
       else
          return(FALSE);
    }
 
-   if(SerPort = CreateMsgPort())
+   SerReadPort = CreateMsgPort();
+   SerWritePort = CreateMsgPort();
+
+   if(SerReadPort && SerWritePort)
    {
-      if(SerReq = (struct IOExtSer *)CreateExtIO(SerPort, sizeof(struct IOExtSer)))
+      SerReadReq  = (struct IOExtSer *)CreateExtIO(SerReadPort , sizeof(struct IOExtSer));
+      SerWriteReq = (struct IOExtSer *)CreateExtIO(SerWritePort, sizeof(struct IOExtSer));
+
+      if(SerReadReq && SerWriteReq)
       {
          // set flags before OpenDevice()
-         SerReq->io_SerFlags = flags;
+         SerReadReq->io_SerFlags = flags;
    
-         if(!OpenDevice(Config.cnf_serialdevice, Config.cnf_serialunit, (struct IORequest *)SerReq, 0))
+         if(!OpenDevice(Config.cnf_serialdevice, Config.cnf_serialunit, (struct IORequest *)SerReadReq, 0))
          {
             // Set up our serial parameters
-            SerReq->IOSer.io_Command   = SDCMD_SETPARAMS;
-            SerReq->io_Baud      = Config.cnf_baudrate;
-            SerReq->io_RBufLen   = (Config.cnf_serbuflen < 512 ? 512 : Config.cnf_serbuflen);
-            SerReq->io_ReadLen   = 8;
-            SerReq->io_WriteLen  = 8;
-            SerReq->io_StopBits  = 1;
-            SerReq->io_SerFlags  = flags;
-            SerReq->io_TermArray.TermArray0 =
-            SerReq->io_TermArray.TermArray1 = 0;
+            SerReadReq->IOSer.io_Command   = SDCMD_SETPARAMS;
+            SerReadReq->io_Baud      = Config.cnf_baudrate;
+            SerReadReq->io_RBufLen   = (Config.cnf_serbuflen < 512 ? 512 : Config.cnf_serbuflen);
+            SerReadReq->io_ReadLen   = 8;
+            SerReadReq->io_WriteLen  = 8;
+            SerReadReq->io_StopBits  = 1;
+            SerReadReq->io_SerFlags  = flags;
+            SerReadReq->io_TermArray.TermArray0 =
+            SerReadReq->io_TermArray.TermArray1 = 0;
 
-            if(!DoIO((struct IORequest *)SerReq))
+            if(!DoIO((struct IORequest *)SerReadReq))
+            {
+               memcpy(SerWriteReq, SerReadReq, sizeof(struct IOExtSer));
+               SerWriteReq->IOSer.io_Message.mn_ReplyPort = SerWritePort;
+
                return(TRUE);
+            }
             else
                syslog_AmiTCP(LOG_ERR, "serial_create: SETPARAMS failed.");
          }

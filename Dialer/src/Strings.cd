@@ -37,8 +37,8 @@ MSG_TX_MountingTCP (//)
 MSG_TX_LaunchingInetd (//)
 \nLaunching Inetd
 ;
-MSG_TX_LoadingConfiguration (//)
-\nLoading configuration
+MSG_TX_ExecutingStartup (//)
+\nExecuting startup command
 ;
 ;
 ; globals.c
@@ -53,6 +53,12 @@ About...
 MSG_CC_ABOUT (/1/1)
 ?
 ;
+MSG_MENU_NETSTATUS (//)
+Network status
+;
+MSG_CC_NETSTATUS (/1/1)
+N
+;
 MSG_MENU_ABOUTMUI (//)
 About MUI...
 ;
@@ -66,7 +72,7 @@ MSG_MENU_SETTINGS (//)
 Settings
 ;
 MSG_MENU_GENESIS (//)
-Genesis...
+GENESiS...
 ;
 MSG_CC_GENESIS (/1/1)
 G
@@ -101,16 +107,16 @@ Configuring the interface
 ;
 ;
 MSG_AppDescription (//)
-Genesis
+GENESiS
 ;
 MSG_TX_GenesisAlreadyRunning (//)
-Genesis is already running
+GENESiS is already running
 ;
 MSG_TX_CouldNotCreateMUIClasses (//)
 Could not create MUI classes.
 ;
 MSG_TX_ErrorAmiTCPLaunch (//)
-Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is running (like Miami).\n
+Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is already running.\n
 ;
 ;
 ; mui_IfaceReq.c
@@ -133,10 +139,7 @@ MSG_ReqBT_StayOnline (//)
 *\033b_Stay online|_Go offline and change
 ;
 MSG_TX_ChangeProviderIfaceOnline (//)
-At least one interface is still online. Shall all interfaces\nbe put offline and the new configuration be loaded or would you\nlike to stay online and ignore the new settings for now?
-;
-MSG_TX_About (//)
-Main programming by Michael Neuweiler\n\n
+At least one interface is still online. Shall all interfaces\nbe put offline and the new configuration be loaded or would you\nlike to stay online and ignore the new settings for now ?
 ;
 MSG_TX_TimeOnline (//)
 Time Online:
@@ -157,10 +160,13 @@ MSG_BT_Disconnect (//)
 _Disconnect
 ;
 MSG_TX_MainWindowTitle (//)
-Genesis © 1997,98 by Michael Neuweiler, Active Software
+GENESiS © 1997,98 by Michael Neuweiler & Active Technologies
 ;
 MSG_TX_ReallyQuit (//)
 Do you really want to quit ?
+;
+MSG_TX_CouldNotOpenConfig (//)
+Could not open %ls.\nPlease use GENESiSWizard or GENESiSPrefs\nfirst to create a configuration.
 ;
 MSG_HELP_Connect (//)
 Establish a connection.
@@ -181,7 +187,7 @@ MSG_HELP_User (//)
 Login as a different user.
 ;
 MSG_HELP_Log (//)
-Genesis event log
+GENESiS event log
 ;
 ;
 ; mui_Online.c
@@ -215,7 +221,7 @@ MSG_TX_ErrorBsdsocketLib (//)
 Could not open bsdsocket.library.\nPlease make sure the file AmiTCP can be found in AmiTCP:kernel/
 ;
 MSG_TX_ErrorIfConfigLib (//)
-Could not open ifconfig.library.\nIt looks like AmiTCP Genesis is not properly installed.\nPlease make sure ifconfig.library\ncan be found in AmiTCP:Libs/
+Could not open ifconfig.library.\nIt looks like GENESiS is not properly installed.\nPlease make sure ifconfig.library\ncan be found in AmiTCP:Libs/
 ;
 MSG_TX_ErrorIfaceAlloc (//)
 Interface allocation failed.\nThis might be a result of memory shortage.
@@ -230,23 +236,26 @@ MSG_TX_ErrorConfigIface (//)
 Could not configure interface %ls.
 ;
 MSG_TX_WarningNoDNS (//)
-Was unable to obtain DomainNameServer (DNS) IP-addresses.\nFalling back to root DNS servers but in order to\nget faster responses on queries you should enter the\ncorrect IP addresses of your provider manually in Genesis Preferences\nafter importing the config file created by this program.
+Was unable to obtain DomainNameServer (DNS) IP-addresses.\nFalling back to root DNS servers but in order to\nget faster responses on queries you should enter the\ncorrect IP addresses of your provider manually in GENESiSPrefs\nafter importing the config file created by this program.
 ;
 MSG_TX_ErrorSetDNS (//)
 Could not tell AmiTCP about the nameserver %ls.\nPlease contact your support site if this problem persits.
 ;
 MSG_TX_WarningNoHostname (//)
-Could not obtain the hostname for this machine.\nGenesis might still work without this information.
+Could not obtain the hostname for this machine.\nGENESiS might still work without this information.
 ;
 MSG_TX_WarningNoDomain (//)
-Was unable to obtain domain name.\nMake sure you set the correct value manually\nby using Genesis Preferences !!
+Was unable to obtain domain name.\nMake sure you set the correct value manually\nby using GENESiS Preferences !!
 ;
 MSG_TX_WarningSetDomain (//)
-Could not tell AmiTCP about our domainname '%ls'.\nPlease make sure this is the correct value and modify\nin Genesis Preferences accordingly.
+Could not tell AmiTCP about our domainname '%ls'.\nPlease make sure this is the correct value and modify\nin GENESiSPrefers accordingly.
 ;
 MSG_TX_WarningSetHostname (//)
 Could not tell AmiTCP about our hostname '%ls'.\nHowever AmiTCP will work without this.
 ;
 MSG_TX_ErrorLaunchSubtask (//)
 Was unable to launch sub task for\ngathering network information.\nUnable to finish setup.
+;
+MSG_TX_ErrorParseArgs (//)
+Error parsing arguments / tooltypes.
 ;

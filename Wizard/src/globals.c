@@ -14,9 +14,10 @@
 struct   Library   *MUIMasterBase = NULL;
 struct   Library   *GenesisBase   = NULL;
 struct   Library   *SocketBase    = NULL;
+struct   Library   *UserGroupBase = NULL;
 
-#ifdef DEMO
-struct   Library   *BattClockBase = NULL;
+#ifdef NETCONNECT
+struct   Library   *NetConnectBase= NULL;
 #endif
 
 ///
@@ -77,6 +78,7 @@ struct NewMenu MainMenu[] =
 struct MUI_CustomClass  *CL_MainWindow          = NULL;
 struct MUI_CustomClass  *CL_Online              = NULL;
 struct MUI_CustomClass  *CL_Request             = NULL;
+struct MUI_CustomClass  *CL_About               = NULL;
 
 struct MUI_CustomClass  *CL_Finished            = NULL;
 struct MUI_CustomClass  *CL_Protocol            = NULL;

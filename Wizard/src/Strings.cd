@@ -7,7 +7,7 @@
 ;
 ;
 MSG_AppDescription (//)
-Wizard to setup Genesis.
+Wizard to setup GENESiS.
 ;
 ;
 ; MUI Requester buttons
@@ -52,7 +52,7 @@ _Add
 ;
 ;
 MSG_TX_MainWindowTitle (//)
-Wizard for setup of Genesis © 1997 by Michael Neuweiler, Active Software
+GENESiS Wizard  © 1997,98 by Michael Neuweiler & Active Technologies
 ;
 MSG_TX_NoDSR (//)
 Could not detect the DSR (Dataset ready)\nsignal from your modem. If it wasn't\nswitched on, please switch it on now and\nchoose cancel.
@@ -62,9 +62,6 @@ Your modem is not responding with \"OK\"\nto the init string. Please make sure t
 ;
 MSG_TX_NoOKOnAT (//)
 Your modem is not responding to basic commands.\nPlease make sure the modem is switched on,\nproperly connected and the correct driver\nwas chosen.
-;
-MSG_TX_SpecifyInitString (//)
-You must specify an \033binit string\033n!
 ;
 MSG_TX_SpecifyDialPrefix (//)
 You must specify a \033bdial prefix\033n !\nOtherwise the modem won't\nbe able to dial.
@@ -79,10 +76,7 @@ MSG_TX_CouldNotOpenDevice_Unit (//)
 Could not open %ls, unit %ld !\nPlease make sure the settings are correct.
 ;
 MSG_TX_ReallyQuit (//)
-Do you really want to quit?
-;
-MSG_TX_About (//)
-Main programming by Michael Neuweiler
+Do you really want to quit ?
 ;
 MSG_TX_GoBack (//)
 If you go back now the login script\nhas to be recorded again.
@@ -97,7 +91,7 @@ MSG_HELP_Next (//)
 Go to next page
 ;
 MSG_HELP_Abort (//)
-Terminate Genesis Wizard
+Terminate GENESiS Wizard
 ;
 MSG_HELP_Finish (//)
 Save configuration\nand end program.
@@ -227,7 +221,7 @@ MSG_TX_InfoProtocol (//)
 Choose the \033bprotocol\033n that will be used (most, if not all service\nproviders require a \"ppp\" connection):
 ;
 MSG_TX_InfoUseLoginScript (//)
-Does your provider require a \033blogin script\033n?
+Does your provider require a \033blogin script\033n ?
 ;
 ;
 ; mui_loginscript.c
@@ -249,7 +243,7 @@ MSG_HELP_Dial (//)
 Dial the phonenumber of your provider\nand establish a modem connection.
 ;
 MSG_HELP_GoOnline (//)
-Put Genesis online to gather\nrequired network information.
+Put GENESiS online to gather\nrequired network information.
 ;
 MSG_HELP_HangUp (//)
 Hang up the modem\nand stop dialing.
@@ -295,7 +289,7 @@ MSG_TX_ConfiguringAmiTCP (//)
 configuring AmiTCP...
 ;
 MSG_TX_GetDomain (//)
-obtaining host name\nand domain name...
+obtaining host name\n(this might take a while)
 ;
 MSG_TX_Finished (//)
 finished
@@ -304,7 +298,7 @@ MSG_TX_ClosingConnection (//)
 closing connection...
 ;
 MSG_TX_ErrorLaunchAmiTCP (//)
-Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:bin/AmiTCP.kernel does not exist.\n2) Another TCP stack is running (like Miami).\n3) Invalid AmiTCP.key in AmiTCP:key.
+Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is already running.\n
 ;
 MSG_TX_ErrorBsdsocketLib (//)
 Could not open bsdsocket.library.\nPlease make sure the file AmiTCP can be found in AmiTCP:kernel/
@@ -313,19 +307,19 @@ MSG_TX_ErrorIfaceAlloc (//)
 Interface allocation failed.\nThis might be a result of memory shortage.
 ;
 MSG_TX_ErrorNoIP (//)
-Could not obtain local IP address.\nPlease refer to the logfile in RAM:GenesisWizard.log\nand contact your support site.
+Could not obtain local IP address.\nPlease refer to the logfile in RAM:GENESiSWizard.log\nand contact your support site.
 ;
 MSG_TX_ErrorConfigIface (//)
 Could not configure interface %ls.
 ;
 MSG_TX_WarningNoDNS (//)
-Was unable to obtain DomainNameServer (DNS) IP-addresses.\nFalling back to root DNS servers but in order to\nget faster responses on queries you should enter the\ncorrect IP addresses of your provider manually in Genesis Preferences\nafter importing the config file created by this program.
+Was unable to obtain DomainNameServer (DNS) IP-addresses.\nFalling back to root DNS servers but in order to\nget faster responses on queries you should enter the\ncorrect IP addresses of your provider manually in GENESiS Preferences\nafter importing the config file created by this program.
 ;
 MSG_TX_ErrorSetDNS (//)
 Could not tell AmiTCP about the nameserver %ls.\nPlease contact your support site if this problem persits.
 ;
 MSG_TX_WarningNoDomain (//)
-Was unable to obtain domain name.\nMake sure you set the correct value manually\nby using Genesis Preferences !!
+Was unable to obtain domain name.\nMake sure you set the correct value manually\nby using GENESiS Preferences !!
 ;
 MSG_TX_ErrorLaunchSubtask (//)
 Was unable to launch sub task for\ngathering network information.\nUnable to finish setup.
@@ -377,10 +371,10 @@ MSG_TX_Undefined (//)
 - undefined -
 ;
 MSG_TX_ShowConfigWindowTitle (//)
-Genesis configuration
+GENESiS configuration
 ;
 MSG_LA_ShowConfigTitle (//)
-\033uGenesisWizard network configuration information
+\033uGENESiSWizard network configuration information
 ;
 MSG_LA_IfaceName (//)
 Interface:
@@ -437,10 +431,10 @@ MSG_TX_InfoSaveConfig (//)
 The Wizard has successfully gathered all necessary network\ninformation to get you connected to the Internet! Please\nchoose where you want to save the \033bconfiguration file\033n (we\nrecommend you leave this checked as default):
 ;
 MSG_TX_InfoSaveInfo (//)
-Do you want to save the configuration information to a \033blogfile\033n?
+Do you want to save the configuration information to a \033blogfile\033n ?
 ;
 MSG_TX_InfoPrint (//)
-Would you like to \033bprint\033n the configuration information for future\nreference?
+Would you like to \033bprint\033n the configuration information for future\nreference ?
 ;
 ;
 ; mui_sana2.c
@@ -506,7 +500,7 @@ MSG_LA_LoginName (//)
 Login name:
 ;
 MSG_TX_InfoTitle (//)
-Genesis network configuration\n----------------------------\n\nGenesis Wizard Copyright © 1997 by Michael Neuweiler.\n\n\n
+GENESiS network configuration\n----------------------------\n\nGENESiS Wizard Copyright © 1997,98 by Michael Neuweiler & Active Technologies\n\n\n
 ;
 MSG_TX_ObtainedBy (//)
 obtained by
@@ -516,10 +510,10 @@ obtained by
 ;
 ;
 MSG_TX_ConfigName (//)
-GenesisWizard Config
+GENESiSWizard Config
 ;
 MSG_TX_ConfigComment (//)
-Config generated by GenesisWizard
+Config generated by GENESiSWizard
 ;
 MSG_TX_ErrorMUIApp (//)
 Could not create MUI application.

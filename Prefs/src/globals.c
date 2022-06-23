@@ -3,6 +3,7 @@
 
 #define USE_SCRIPT_COMMANDS
 #define USE_EVENT_COMMANDS
+#define USE_EXEC_TYPES
 #include "/Genesis.h"
 #include "Strings.h"
 #include "mui.h"
@@ -52,8 +53,8 @@
 struct   Library      *MUIMasterBase = NULL;
 struct   Library      *GenesisBase   = NULL;
 struct   Library      *UserGroupBase = NULL;
-#ifdef DEMO
-struct   Library      *BattClockBase = NULL;
+#ifdef NETCONNECT
+struct Library        *NetConnectBase= NULL;
 #endif
 struct   Catalog      *cat           = NULL; /* pointer to our locale catalog */
 
@@ -92,6 +93,7 @@ struct NewMenu MainWindowMenu[] =
    { NM_TITLE, (STRPTR)MSG_MENU_SETTINGS  , 0               , 0, 0, (APTR)0            },
    { NM_ITEM , (STRPTR)MSG_MENU_LOAD      , MSG_CC_LOAD     , 0, 0, (APTR)MEN_LOAD     },
    { NM_ITEM , (STRPTR)MSG_MENU_IMPORT    , MSG_CC_IMPORT   , 0, 0, (APTR)MEN_IMPORT   },
+   { NM_ITEM , (STRPTR)MSG_MENU_IMPORTOLD , MSG_CC_IMPORTOLD, 0, 0, (APTR)MEN_IMPORTOLD},
    { NM_ITEM , (STRPTR)MSG_MENU_SAVE      , MSG_CC_SAVE     , 0, 0, (APTR)MEN_SAVE     },
    { NM_ITEM , (STRPTR)MSG_MENU_SAVEAS    , MSG_CC_SAVEAS   , 0, 0, (APTR)MEN_SAVEAS   },
    { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },

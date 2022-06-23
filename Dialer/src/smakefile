@@ -1,4 +1,3 @@
-
 ###############################################################################
 #
 #  SMakefile
@@ -19,7 +18,7 @@ CPU      = ANY
 #CPU     = 68030
 DEMO     = DEF=DEMO
 NC       = DEF=NETCONNECT
-#DEBUG   = DBG=LINE
+#DEBUG   = DBG=FULL
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
@@ -30,8 +29,8 @@ CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetInclude: IGN=
 LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
 #LFLAGS  = SC SD NOICONS MAXHUNK 100000
 
-OBJS     = mui_MainWindow.o mui_Online.o mui_IfaceReq.o mui_Led.o main.o globals.o amiga.o \
-           sana.o bootpc.o iface.o serial.o fixpath.o
+OBJS     = mui_MainWindow.o mui_Online.o mui_IfaceReq.o mui_Led.o mui_Arexx.o mui_About.o \
+           mui_NetInfo.o main.o globals.o amiga.o sana.o bootpc.o iface.o serial.o fixpath.o
 LIBS     = lib:amiga.lib lib:sc.lib
 
 all:   /includes.gst Strings.h Genesis
@@ -57,16 +56,18 @@ Genesis:   $(OBJS)
 mui_MainWindow.o: mui_MainWindow.c /includes.h /Genesis.h\
  /genesis.lib/libraries/genesis.h /genesis.lib/pragmas/genesis_lib.h\
  /genesis.lib/proto/genesis.h rev.h Strings.h mui.h mui_MainWindow.h\
- mui_Online.h mui_IfaceReq.h mui_Led.h protos.h sana.h
+ mui_Online.h mui_IfaceReq.h mui_NetInfo.h mui_Led.h\
+ protos.h sana.h
 
 amiga.o: amiga.c /includes.h Strings.h /Genesis.h\
  /genesis.lib/libraries/genesis.h /genesis.lib/pragmas/genesis_lib.h /genesis.lib/proto/genesis.h\
- mui.h sana.h protos.h
+ /genesis.lib/pragmas/nc_lib.h mui.h sana.h protos.h
 
 mui_Online.o: mui_Online.c /includes.h /Genesis.h\
  /genesis.lib/libraries/genesis.h /genesis.lib/pragmas/genesis_lib.h\
- /genesis.lib/proto/genesis.h Strings.h mui.h mui_Online.h mui_MainWindow.h\
- mui_Led.h protos.h bootpc.h iface.h bootp.h bptypes.h
+ /genesis.lib/proto/genesis.h /genesis.lib/pragmas/nc_lib.h Strings.h mui.h\
+ mui_Online.h mui_MainWindow.h mui_Led.h mui_NetInfo.h protos.h\
+ bootpc.h iface.h bootp.h bptypes.h
 
 iface.o: iface.c /includes.h /Genesis.h Strings.h protos.h mui.h\
  mui_MainWindow.h mui_Online.h mui_Led.h iface.h sana.h
@@ -74,11 +75,13 @@ iface.o: iface.c /includes.h /Genesis.h Strings.h protos.h mui.h\
 main.o: main.c /includes.h /Genesis.h /genesis.lib/libraries/genesis.h\
  /genesis.lib/pragmas/genesis_lib.h /genesis.lib/proto/genesis.h /genesis.lib/pragmas/nc_lib.h rev.h\
  Strings.h mui.h mui_MainWindow.h mui_Online.h mui_IfaceReq.h mui_Led.h\
- protos.h
+ mui_About.h mui_NetInfo.h protos.h
 
 globals.o: globals.c /includes.h Strings.h /Genesis.h mui.h protos.h
 
 serial.o: serial.c /includes.h /Genesis.h Strings.h mui.h mui_Online.h protos.h
+
+mui_Arexx.o: mui_Arexx.c /Genesis.h Strings.h mui.h mui_MainWindow.h protos.h
 
 bootpc.o: bootpc.c /includes.h /Genesis.h bootpc.h iface.h protos.h bootp.h\
  bptypes.h
@@ -90,6 +93,13 @@ sana.o: sana.c /includes.h /Genesis.h iface.h sana.h protos.h
 
 mui_Led.o: mui_Led.c /includes.h /Genesis.h mui.h mui_Led.h protos.h\
  images/black.h images/green.h images/yellow.h images/orange.h images/red.h
+
+mui_NetInfo.o: mui_NetInfo.c /includes.h /Genesis.h\
+ /genesis.lib/pragmas/nc_lib.h rev.h Strings.h mui.h mui_NetInfo.h\
+ mui_MainWindow.h protos.h
+
+mui_About.o: mui_About.c /includes.h /Genesis.h /genesis.lib/pragmas/nc_lib.h\
+ rev.h Strings.h mui.h mui_About.h mui_MainWindow.h protos.h
 
 FixPath.o: FixPath.c
 
