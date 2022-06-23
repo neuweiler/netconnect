@@ -28,7 +28,7 @@ extern Object *app, *win, *status_win, *netinfo_win;
 extern struct MUI_CustomClass  *CL_MainWindow, *CL_Online;
 extern struct MsgPort *MainPort;
 extern const char AmiTCP_PortName[];
-extern BOOL dialup;
+extern BOOL dialup, use_reconnect;
 #ifdef NETCONNECT
 extern struct Library *NetConnectBase;
 #endif
@@ -169,6 +169,60 @@ BOOL config_complete(struct Interface_Data *iface_data, struct Interface *iface,
       }
    }
    return(TRUE);
+}
+
+///
+/// save_reconnectinfo
+BOOL save_reconnectinfo(struct ISP *isp)
+{
+   BPTR fh;
+   BOOL success = FALSE;
+   struct ServerEntry *server;
+   struct Interface *iface;
+
+   if(fh = Open("AmiTCP:db/reconnect.conf", MODE_NEWFILE))
+   {
+      FPrintf(fh, "ISP           %ls\n", isp->isp_name);
+      if(isp->isp_nameservers.mlh_TailPred != (struct MinNode *)&isp->isp_nameservers)
+      {
+         server = (struct ServerEntry *)isp->isp_nameservers.mlh_Head;
+         while(server->se_node.mln_Succ)
+         {
+            FPrintf(fh, "NameServer    %ls\n", server->se_name);
+            server = (struct ServerEntry *)server->se_node.mln_Succ;
+         }
+      }
+      if(isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&isp->isp_domainnames)
+      {
+         server = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
+         while(server->se_node.mln_Succ)
+         {
+            FPrintf(fh, "DomainName    %ls\n", server->se_name);
+            server = (struct ServerEntry *)server->se_node.mln_Succ;
+         }
+      }
+      if(isp->isp_ifaces.mlh_TailPred != (struct MinNode *)&isp->isp_ifaces)
+      {
+         iface = (struct Interface *)isp->isp_ifaces.mlh_Head;
+         while(iface->if_node.mln_Succ)
+         {
+            if(iface->if_flags & IFL_IsOnline)
+            {
+               FPrintf(fh, "Interface     %ls\n", iface->if_name);
+               if(*iface->if_addr);
+                  FPrintf(fh, "IPAddr        %ls\n", iface->if_addr);
+               if(*iface->if_dst)
+                  FPrintf(fh, "DestIP        %ls\n", iface->if_dst);
+               if(*iface->if_gateway)
+                  FPrintf(fh, "Gateway       %ls\n", iface->if_gateway);
+            }
+            iface = (struct Interface *)iface->if_node.mln_Succ;
+         }
+      }
+      Close(fh);
+   }
+
+   return(success);
 }
 
 ///
@@ -417,7 +471,7 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
 
                DoMainMethod(mw_data->GR_Led[(int)iface->if_userdata], MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Green, NULL);
                if(netinfo_win)
-                  DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
+                  DoMainMethod(netinfo_win, MUIM_NetInfo_Redraw, NULL, NULL, NULL);
                syslog_AmiTCP(LOG_NOTICE, "%ls is now online", iface->if_name);
                iface->if_flags |= IFL_IsOnline;
                exec_event(&iface->if_events, IFE_Online);
@@ -456,7 +510,7 @@ abort:
           exec_event(&iface->if_events, IFE_OnlineFail);
           DoMethod(app, MUIM_Application_PushMethod, mw_data->GR_Led[(int)iface->if_userdata], 3, MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Red);
           if(netinfo_win)
-             DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
+             DoMethod(app, MUIM_Application_PushMethod, netinfo_win, 1, MUIM_NetInfo_Redraw);
        }
     }
 
@@ -465,6 +519,9 @@ abort:
    SocketBase = NULL;
 
    IsOnline((is_one_online(&mw_data->isp.isp_ifaces) ? 22 : -22));
+   if(Config.cnf_flags & CFL_QuickReconnect)
+      save_reconnectinfo(&mw_data->isp);
+   use_reconnect = FALSE;
 
    Forbid();
    data->TCPHandler = NULL;

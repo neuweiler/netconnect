@@ -27,7 +27,7 @@ extern struct MUI_CustomClass *CL_MainWindow;
 extern struct IOExtSer *SerWriteReq;
 extern Object *app;
 extern Object *win;
-extern BOOL dialup;
+extern BOOL dialup, use_reconnect;
 
 ///
 
@@ -184,16 +184,13 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
                Delay(10);
                if(data->abort)
                   return(FALSE);
-               serial_send("ATZ\r", -1);
-               serial_waitfor("OK", 1);
-               Delay(10);
 
                if(*conf->cnf_initstring)
                {
                   EscapeString(buf, conf->cnf_initstring);
                   strncat(buf, "\r", sizeof(buf) - strlen(buf));
                   serial_send(buf, -1);
-                  serial_waitfor("OK", 2);
+                  serial_waitfor("OK", 3);
                   Delay(10);
                }
                if(data->abort)
@@ -387,7 +384,7 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
          iface_data->ifd_s2->s2_hwtype == S2WireType_SLIP ||
          iface_data->ifd_s2->s2_hwtype == S2WireType_CSLIP)
       {
-         if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
+         if(!use_reconnect && (isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript))
          {
             // dial with given dialscript
 

@@ -301,6 +301,7 @@ ULONG MainWindow_ChangeProvider(struct IClass *cl, Object *obj, struct MUIP_Main
    BOOL isp_ok = FALSE;
    BPTR fh;
 
+Printf("changing provider\n");
    if(is_one_online(&data->isp.isp_ifaces))
    {
       set(win, MUIA_Window_Open, TRUE);
@@ -594,11 +595,13 @@ ULONG MainWindow_ChangeProvider(struct IClass *cl, Object *obj, struct MUIP_Main
    }
 
    // only go online when amitcp's already running
-   if(LockSocketBase)
+   if(LockSocketBase && msg->do_online)
    {
       iterate_ifacelist(&data->isp.isp_ifaces, 1);
       DoMethod(win, MUIM_MainWindow_PutOnline);
    }
+Printf("changing provider finished\n");
+
 
    return(NULL);
 }
@@ -867,7 +870,6 @@ ULONG MainWindow_SetStates(struct IClass *cl, Object *obj, Msg msg)
    }
    set(data->BT_Online, MUIA_Disabled, !one_offline);
    set(data->BT_Offline, MUIA_Disabled, !one_online);
-   set(data->BT_Provider, MUIA_Disabled, one_online);
 
    if(one_online)
    {
@@ -1193,7 +1195,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       DoMethod(data->BT_Offline  , MUIM_Notify, MUIA_Pressed             , FALSE, obj, 2, MUIM_MainWindow_OnOffline, FALSE);
 
       // these have to be push methods so the popup can get closed first
-      DoMethod(data->TX_Provider , MUIM_Notify, MUIA_Text_Contents       , MUIV_EveryTime , MUIV_Notify_Application, 5, MUIM_Application_PushMethod, obj, 2, MUIM_MainWindow_ChangeProvider, NULL);
+      DoMethod(data->TX_Provider , MUIM_Notify, MUIA_Text_Contents       , MUIV_EveryTime , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, obj, 3, MUIM_MainWindow_ChangeProvider, NULL, TRUE);
 
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT)    , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_About);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_NETINFO)  , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_NetInfo);

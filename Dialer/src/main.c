@@ -44,6 +44,7 @@ extern struct CommandLineInterface *LocalCLI;
 extern BPTR OldCLI;
 extern struct MUI_Command arexx_list[];
 extern int waitstack;
+extern BOOL use_reconnect;
 
 #ifdef DEMO
 extern struct Library *BattClockBase;
@@ -291,7 +292,8 @@ VOID HandleMainMethod(struct MsgPort *port)
    {
       if(message->MethodID == TCM_INIT ||
          message->MethodID == MUIM_MainWindow_SetStates ||
-         message->MethodID == MUIM_List_Clear)
+         message->MethodID == MUIM_List_Clear ||
+         message->MethodID == MUIM_NetInfo_Redraw)
       {
          message->result = DoMethod(message->obj, message->MethodID);
       }
@@ -359,6 +361,7 @@ VOID Handler(VOID)
                connectspeed[0]      = NULL;
                default_provider[0]  = NULL;
                waitstack = 10;
+               use_reconnect = FALSE;
                bzero(&Config, sizeof(struct Config));
                strcpy(config_file, DEFAULT_CONFIGFILE);
                DoMethod(win, MUIM_MainWindow_LoadConfig);
@@ -422,14 +425,31 @@ VOID Handler(VOID)
                            {
                               DoMethod(win, MUIM_MainWindow_About);
 #endif
-                        if(*default_provider)
-                           set(data->TX_Provider, MUIA_Text_Contents, default_provider);
-                        else
+                        if((Config.cnf_flags & CFL_QuickReconnect) && GetFileSize("AmiTCP:db/reconnect.conf") > 0)
                         {
-                           STRPTR ptr;
+                           if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_ReconnectCancel), GetStr(MSG_TX_TerminatedAbnormallyReconnect)))
+                           {
+                              if(load_reconnect())
+                              {
+                                 use_reconnect = TRUE;
+Printf("load_reconect finished\n");
+                                 DoMethod(win, MUIM_MainWindow_PutOnline);
+Printf("put online finished\n");
+                              }
+                           }
+                        }
 
-                           DoMethod(data->LI_Providers, MUIM_List_GetEntry, 0, &ptr);
-                           set(data->TX_Provider, MUIA_Text_Contents, ptr);
+                        if(!use_reconnect)
+                        {
+                           if(*default_provider)
+                              set(data->TX_Provider, MUIA_Text_Contents, default_provider);
+                           else
+                           {
+                              STRPTR ptr;
+
+                              DoMethod(data->LI_Providers, MUIM_List_GetEntry, 0, &ptr);
+                              set(data->TX_Provider, MUIA_Text_Contents, ptr);
+                           }
                         }
 
                         while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
@@ -461,7 +481,7 @@ VOID Handler(VOID)
                               {
                                  Delay(50);  // to give some time when saving
                                  DoMethod(win, MUIM_MainWindow_LoadConfig);
-                                 DoMethod(win, MUIM_MainWindow_ChangeProvider, xget(data->TX_Provider, MUIA_Text_Contents));
+                                 DoMethod(win, MUIM_MainWindow_ChangeProvider, xget(data->TX_Provider, MUIA_Text_Contents), TRUE);
                               }
 #ifdef DEMO
                               if(sigs & (1L << TimePort->mp_SigBit))
@@ -510,6 +530,7 @@ VOID Handler(VOID)
                         EndNotify(&log_nr);
                         FreeSignal(LogNotifySignal);
                      }
+                     DeleteFile("AmiTCP:db/reconnect.conf");
                   }
                   else
                      MUI_Request(NULL, NULL, NULL, NULL, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorAmiTCPLaunch));

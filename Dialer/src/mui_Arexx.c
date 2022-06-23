@@ -15,7 +15,7 @@ extern struct MUI_CustomClass  *CL_MainWindow;
 /// provider_rxfunc
 SAVEDS ASM APTR provider_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
 {
-   DoMethod(win, MUIM_MainWindow_ChangeProvider, arg[0]);
+   DoMethod(win, MUIM_MainWindow_ChangeProvider, arg[0], TRUE);
 
    return(RETURN_OK);
 }

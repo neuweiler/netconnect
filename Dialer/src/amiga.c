@@ -1,5 +1,3 @@
-// reduce time to w8 for amitcp to 5 secs default when tooltype included
-
 /// includes
 #include "/includes.h"
 #include <workbench/WBStart.h>
@@ -11,6 +9,7 @@
 #include "/genesis.lib/proto/genesis.h"
 #include "/genesis.lib/pragmas/nc_lib.h"
 #include "mui.h"
+#include "mui_MainWindow.h"
 #include "sana.h"
 #include "protos.h"
 #include <proto/icon.h>
@@ -27,7 +26,7 @@ extern struct ExecBase *SysBase;
 extern struct Process *proc;
 extern struct Catalog *cat;
 extern struct MUI_CustomClass *CL_MainWindow;
-extern Object *win, *app;
+extern Object *win, *app, *status_win;
 extern const char AmiTCP_PortName[];
 extern struct MsgPort *MainPort;
 extern struct Config Config;
@@ -347,6 +346,69 @@ BOOL parse_arguments(VOID)
          CloseLibrary(IconBase);
          IconBase = NULL;
       }
+   }
+   return(success);
+}
+
+///
+/// load_reconnect
+BOOL load_reconnect(VOID)
+{
+   struct ParseConfig_Data pc_data;
+   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
+   struct Interface *iface = NULL;
+   BOOL success = FALSE;
+
+   if(ParseConfig("AmiTCP:db/reconnect.conf", &pc_data))
+   {
+      while(ParseNext(&pc_data))
+      {
+         if(!stricmp(pc_data.pc_argument, "ISP"))
+         {
+Printf("setting tx_provider\n");
+            DoMethod(win, MUIM_MainWindow_ChangeProvider, pc_data.pc_contents, FALSE);
+Printf("returned from set(tx_provider\n");
+            strncpy(default_provider, pc_data.pc_contents, 80);
+            success = TRUE;
+            break;
+         }
+      }
+      if(success)
+      {
+Printf("continuing parse reconnect\n");
+         while(ParseNext(&pc_data))
+         {
+            if(!stricmp(pc_data.pc_argument, "DomainName"))
+            {
+               if(!find_server_by_name(&data->isp.isp_domainnames, pc_data.pc_contents))
+                  add_server(&data->isp.isp_domainnames, pc_data.pc_contents);
+            }
+            if(!stricmp(pc_data.pc_argument, "NameServer"))
+            {
+               if(!find_server_by_name(&data->isp.isp_nameservers, pc_data.pc_contents))
+                  add_server(&data->isp.isp_nameservers, pc_data.pc_contents);
+            }
+            if(!stricmp(pc_data.pc_argument, "Interface"))
+            {
+               if(iface = find_by_name(&data->isp.isp_ifaces, pc_data.pc_contents))
+               {
+                  if(iface->if_flags & IFL_IsOnline)
+                     iface = NULL;
+                  else
+                     iface->if_flags |= IFL_PutOnline;
+Printf("iface: '%ls'\n", iface->if_name);
+               }
+Printf("contents: '%ls'\n", pc_data.pc_contents);
+            }
+            if(!stricmp(pc_data.pc_argument, "IPAddr") && iface)
+               strncpy(iface->if_addr, pc_data.pc_contents, sizeof(iface->if_addr));
+            if(!stricmp(pc_data.pc_argument, "DestIP") && iface)
+               strncpy(iface->if_dst, pc_data.pc_contents, sizeof(iface->if_dst));
+            if(!stricmp(pc_data.pc_argument, "Gateway") && iface)
+               strncpy(iface->if_gateway, pc_data.pc_contents, sizeof(iface->if_gateway));
+         }
+      }
+      ParseEnd(&pc_data);
    }
    return(success);
 }

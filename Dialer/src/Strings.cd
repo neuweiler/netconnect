@@ -118,6 +118,12 @@ Could not create MUI classes.
 MSG_TX_ErrorAmiTCPLaunch (//)
 Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is already running.\n
 ;
+MSG_ReqBT_ReconnectCancel (//)
+*_Reconnect|_Cancel
+;
+MSG_TX_TerminatedAbnormallyReconnect (//)
+GENESiS exited abnormally the last time.\nWould you like to reestablish the connection(s)\nwith the previous settings ?\nNOTE: If you are using a modem it has still to\nbe online for this to work.
+;
 ;
 ; mui_IfaceReq.c
 ;

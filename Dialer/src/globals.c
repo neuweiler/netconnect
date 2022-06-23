@@ -54,7 +54,7 @@ char config_file[MAXPATHLEN];
 char connectspeed[41];
 char default_provider[81];
 
-BOOL dialup = 0, SerialLocked = FALSE;
+BOOL dialup = 0, SerialLocked = FALSE, use_reconnect = FALSE;
 
 int h_errno;
 

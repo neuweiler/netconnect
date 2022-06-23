@@ -26,6 +26,7 @@ VOID decrypt(STRPTR in, STRPTR out);
 ULONG DoMainMethod(Object *obj, LONG MethodID, APTR data1, APTR data2, APTR data3);
 SAVEDS ASM VOID des_func(register __a2 APTR pool, register __a1 APTR ptr);
 LONG   get_file_size(STRPTR file);
+BOOL load_reconnect(VOID);
 
 ///
 /// main.c
