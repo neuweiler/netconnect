@@ -9,18 +9,10 @@
 /// external variables
 extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
+extern struct Config Config;
 
 ///
 
-/// provider_rxfunc
-SAVEDS ASM APTR provider_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
-{
-   DoMethod(win, MUIM_MainWindow_ChangeProvider, arg[0], TRUE);
-
-   return(RETURN_OK);
-}
-
-///
 /// user_rxfunc
 SAVEDS ASM APTR user_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
 {
@@ -31,16 +23,14 @@ SAVEDS ASM APTR user_rxfunc(register __a0 struct Hook *hook, register __a2 Objec
 
 ///
 
-/// connect_rxfunc
-SAVEDS ASM APTR connect_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
+/// online_rxfunc
+SAVEDS ASM APTR online_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-
    if(arg[1])
-      iterate_ifacelist(&data->isp.isp_ifaces, 2);
+      iterate_ifacelist(&Config.cnf_ifaces, 2);
    else
    {
-      if(arg[0] && (data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces))
+      if(arg[0] && (Config.cnf_ifaces.mlh_TailPred != (struct MinNode *)&Config.cnf_ifaces))
       {
          struct Interface *iface;
          char **ifnames;
@@ -51,7 +41,7 @@ SAVEDS ASM APTR connect_rxfunc(register __a0 struct Hook *hook, register __a2 Ob
          i = 0;
          while(ifnames[i])
          {
-            iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+            iface = (struct Interface *)Config.cnf_ifaces.mlh_Head;
             while(iface->if_node.mln_Succ)
             {
                if(!stricmp(iface->if_name, ifnames[i]) && !(iface->if_flags & IFL_IsOnline))
@@ -74,16 +64,14 @@ SAVEDS ASM APTR connect_rxfunc(register __a0 struct Hook *hook, register __a2 Ob
 }
 
 ///
-/// disconnect_rxfunc
-SAVEDS ASM APTR disconnect_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
+/// offline_rxfunc
+SAVEDS ASM APTR offline_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-
    if(arg[1])
-      iterate_ifacelist(&data->isp.isp_ifaces, 0);
+      iterate_ifacelist(&Config.cnf_ifaces, 0);
    else
    {
-      if(arg[0] && (data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces))
+      if(arg[0] && (Config.cnf_ifaces.mlh_TailPred != (struct MinNode *)&Config.cnf_ifaces))
       {
          struct Interface *iface;
          char **ifnames;
@@ -94,7 +82,7 @@ SAVEDS ASM APTR disconnect_rxfunc(register __a0 struct Hook *hook, register __a2
          i = 0;
          while(ifnames[i])
          {
-            iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+            iface = (struct Interface *)Config.cnf_ifaces.mlh_Head;
             while(iface->if_node.mln_Succ)
             {
                if(!stricmp(iface->if_name, ifnames[i]) && (iface->if_flags & IFL_IsOnline))
@@ -111,7 +99,7 @@ SAVEDS ASM APTR disconnect_rxfunc(register __a0 struct Hook *hook, register __a2
       }
    }
 
-   DoMethod(win, MUIM_MainWindow_PutOffline);
+   DoMethod(win, MUIM_MainWindow_PutOffline, TRUE);
 
    return(RETURN_OK);
 }
@@ -121,16 +109,15 @@ SAVEDS ASM APTR disconnect_rxfunc(register __a0 struct Hook *hook, register __a2
 /// isonline_rxfunc
 SAVEDS ASM APTR isonline_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
 {
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
    int online = 0;  // 0 = offline, 1 = online, 2 = connecting
 
-   if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
+   if(Config.cnf_ifaces.mlh_TailPred != (struct MinNode *)&Config.cnf_ifaces)
    {
       struct Interface *iface;
 
       if(arg[1])  // is any iface online ?
       {
-         iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+         iface = (struct Interface *)Config.cnf_ifaces.mlh_Head;
          while(iface->if_node.mln_Succ && !online)
          {
             if(iface->if_flags & IFL_IsOnline)
@@ -143,7 +130,7 @@ SAVEDS ASM APTR isonline_rxfunc(register __a0 struct Hook *hook, register __a2 O
       }
       else if(arg[0])
       {
-         iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+         iface = (struct Interface *)Config.cnf_ifaces.mlh_Head;
          while(iface->if_node.mln_Succ)
          {
             if(!stricmp(iface->if_name, (char *)arg[0]))
@@ -159,7 +146,7 @@ SAVEDS ASM APTR isonline_rxfunc(register __a0 struct Hook *hook, register __a2 O
       }
       else
       {
-         iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+         iface = (struct Interface *)Config.cnf_ifaces.mlh_Head;
          if(iface->if_node.mln_Succ)
          {
             if(iface->if_flags & IFL_IsOnline)

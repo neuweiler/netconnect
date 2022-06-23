@@ -1,0 +1,2 @@
+sc nclib idea68k.a sup.a
+copy netconnect.library libs:

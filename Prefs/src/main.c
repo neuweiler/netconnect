@@ -11,14 +11,14 @@
 #include "mui.h"
 #include "mui_About.h"
 #include "mui_DataBase.h"
-#include "mui_Dialer.h"
+#include "mui_IfaceWindow.h"
+#include "mui_Interfaces.h"
 #include "mui_MainWindow.h"
-#include "mui_Modem.h"
+#include "mui_Modems.h"
+#include "mui_ModemWindow.h"
+#include "mui_Options.h"
 #include "mui_PasswdReq.h"
 #include "mui_User.h"
-#include "mui_Provider.h"
-#include "mui_ProviderWindow.h"
-#include "mui_IfaceWindow.h"
 #include "mui_UserWindow.h"
 #include "protos.h"
 #include "mui/grouppager_mcc.h"
@@ -32,9 +32,9 @@ extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 extern struct Library *MUIMasterBase, *GenesisBase;
 extern struct Library *NetConnectBase;
-extern struct MUI_CustomClass  *CL_MainWindow, *CL_User, *CL_ProviderWindow, *CL_Provider,
-                               *CL_Dialer, *CL_Users, *CL_Databases, *CL_Modem, *CL_About,
-                               *CL_PasswdReq, *CL_IfaceWindow, *CL_UserWindow;
+extern struct MUI_CustomClass *CL_About, *CL_Database, *CL_IfaceWindow, *CL_Interfaces,
+                              *CL_MainWindow, *CL_Modems, *CL_ModemWindow, *CL_Options,
+                              *CL_PasswdReq, *CL_User, *CL_UserWindow, *CL_LogLevel;
 extern struct NewMenu MainWindowMenu[];
 extern struct MinList McpList;
 extern Object *app;
@@ -73,8 +73,8 @@ BOOL init_libs(VOID)
    if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
       Printf(GetStr(MSG_TX_CouldNotOpenX), "netconnect.library\n");
 #else
-   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 5)))
-      Printf(GetStr(MSG_TX_CouldNotOpenX), "AmiTCP:libs/genesiskey.library\n");
+   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 6)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "AmiTCP:libs/genesiskey.library (ver 6.0)\n");
 #endif
 
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
@@ -97,14 +97,16 @@ BOOL init_libs(VOID)
 /// exit_classes
 VOID exit_classes(VOID)
 {
-   if(CL_Modem)            MUI_DeleteCustomClass(CL_Modem);
-   if(CL_Databases)        MUI_DeleteCustomClass(CL_Databases);
-   if(CL_Dialer)           MUI_DeleteCustomClass(CL_Dialer);
-   if(CL_ProviderWindow)   MUI_DeleteCustomClass(CL_ProviderWindow);
-   if(CL_Provider)         MUI_DeleteCustomClass(CL_Provider);
-   if(CL_MainWindow)       MUI_DeleteCustomClass(CL_MainWindow);
-   if(CL_About)            MUI_DeleteCustomClass(CL_About);
-   if(CL_IfaceWindow)      MUI_DeleteCustomClass(CL_IfaceWindow);
+   if(CL_MainWindow)    MUI_DeleteCustomClass(CL_MainWindow);
+   if(CL_About)         MUI_DeleteCustomClass(CL_About);
+   if(CL_Interfaces)    MUI_DeleteCustomClass(CL_Interfaces);
+   if(CL_IfaceWindow)   MUI_DeleteCustomClass(CL_IfaceWindow);
+   if(CL_Options)       MUI_DeleteCustomClass(CL_Options);
+   if(CL_Modems)        MUI_DeleteCustomClass(CL_Modems);
+   if(CL_ModemWindow)   MUI_DeleteCustomClass(CL_ModemWindow);
+   if(CL_Database)      MUI_DeleteCustomClass(CL_Database);
+   if(CL_LogLevel)      MUI_DeleteCustomClass(CL_LogLevel);
+
 #ifdef INTERNAL_USER
    if(CL_PasswdReq)        MUI_DeleteCustomClass(CL_PasswdReq);
    if(CL_User)             MUI_DeleteCustomClass(CL_User);
@@ -112,38 +114,39 @@ VOID exit_classes(VOID)
    CL_PasswdReq = CL_User = CL_UserWindow = NULL;
 #endif
 
-   CL_MainWindow  = CL_ProviderWindow= CL_Provider    =
-   CL_Dialer      = CL_About         =
-   CL_Databases   = CL_Modem         = CL_IfaceWindow = NULL;
+   CL_MainWindow  = CL_About     = CL_Interfaces  =
+   CL_IfaceWindow = CL_Options   = CL_Modems      =
+   CL_ModemWindow = CL_Database  = CL_LogLevel    = NULL;
 }
 
 ///
 /// init_classes
 BOOL init_classes(VOID)
 {
-   CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct MainWindow_Data)    , MainWindow_Dispatcher);
-   CL_ProviderWindow = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct ProviderWindow_Data), ProviderWindow_Dispatcher);
-   CL_Provider       = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct Provider_Data)      , Provider_Dispatcher);
-   CL_Dialer         = MUI_CreateCustomClass(NULL, MUIC_Register  , NULL, sizeof(struct Dialer_Data)        , Dialer_Dispatcher);
-   CL_Databases      = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct Databases_Data)     , Databases_Dispatcher);
-   CL_Modem          = MUI_CreateCustomClass(NULL, MUIC_Register  , NULL, sizeof(struct Modem_Data)         , Modem_Dispatcher);
-   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct About_Data)         , About_Dispatcher);
-   CL_IfaceWindow    = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct IfaceWindow_Data)   , IfaceWindow_Dispatcher);
+   CL_MainWindow     = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct MainWindow_Data) , MainWindow_Dispatcher);
+   CL_About          = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct About_Data)      , About_Dispatcher);
+   CL_Interfaces     = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct Interfaces_Data) , Interfaces_Dispatcher);
+   CL_IfaceWindow    = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct IfaceWindow_Data), IfaceWindow_Dispatcher);
+   CL_Options        = MUI_CreateCustomClass(NULL, MUIC_Register  , NULL, sizeof(struct Options_Data)    , Options_Dispatcher);
+   CL_Modems         = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct Modems_Data)     , Modems_Dispatcher);
+   CL_ModemWindow    = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct ModemWindow_Data), ModemWindow_Dispatcher);
+   CL_Database       = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct Database_Data)   , Database_Dispatcher);
+   CL_LogLevel       = MUI_CreateCustomClass(NULL, MUIC_Numericbutton, NULL, sizeof(struct LogLevel_Data)   , LogLevel_Dispatcher);
 
 #ifdef INTERNAL_USER
-   CL_UserWindow     = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct UserWindow_Data)    , UserWindow_Dispatcher);
-   CL_User           = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct User_Data)          , User_Dispatcher);
-   CL_PasswdReq      = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct PasswdReq_Data)     , PasswdReq_Dispatcher);
+   CL_UserWindow     = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct UserWindow_Data) , UserWindow_Dispatcher);
+   CL_User           = MUI_CreateCustomClass(NULL, MUIC_Group     , NULL, sizeof(struct User_Data)       , User_Dispatcher);
+   CL_PasswdReq      = MUI_CreateCustomClass(NULL, MUIC_Window    , NULL, sizeof(struct PasswdReq_Data)  , PasswdReq_Dispatcher);
 
-   if(CL_MainWindow     && CL_ProviderWindow && CL_Provider    &&
-      CL_Dialer         && CL_About          && CL_PasswdReq   &&
-      CL_Databases      && CL_Modem          && CL_User        &&
-      CL_IfaceWindow    && CL_UserWindow)
+   if(CL_MainWindow  && CL_About    && CL_Interfaces  &&
+      CL_IfaceWindow && CL_Options  && CL_Modems      &&
+      CL_ModemWindow && CL_Database && CL_LogLevel    &&
+      CL_PasswdReq   && CL_User     && CL_UserWindow)
       return(TRUE);
 #else
-   if(CL_MainWindow     && CL_ProviderWindow && CL_Provider    &&
-      CL_Dialer         && CL_About          &&
-      CL_Databases      && CL_Modem          && CL_IfaceWindow)
+   if(CL_MainWindow  && CL_About    && CL_Interfaces  &&
+      CL_IfaceWindow && CL_Options  && CL_Modems      &&
+      CL_ModemWindow && CL_Database && CL_LogLevel)
       return(TRUE);
 #endif
 
@@ -228,92 +231,93 @@ VOID Handler(VOID)
             if(!current_user)
                current_user = GetUser("root", NULL, NULL, NULL);
 
-            if(current_user)
-            {
-               if(tmp_win = WindowObject,
-                  MUIA_Window_Title       , NULL,
-                  MUIA_Window_CloseGadget , FALSE,
-                  MUIA_Window_LeftEdge    , MUIV_Window_LeftEdge_Centered,
-                  MUIA_Window_TopEdge     , MUIV_Window_TopEdge_Centered,
-                  MUIA_Window_DepthGadget , FALSE,
-                  MUIA_Window_SizeGadget  , FALSE,
-                  MUIA_Window_DragBar     , FALSE,
-                  WindowContents, VGroup,
-                     MUIA_Background, "2:9c9c9c9c,9c9c9c9c,9c9c9c9c",
+            if(tmp_win = WindowObject,
+               MUIA_Window_Title       , NULL,
+               MUIA_Window_CloseGadget , FALSE,
+               MUIA_Window_LeftEdge    , MUIV_Window_LeftEdge_Centered,
+               MUIA_Window_TopEdge     , MUIV_Window_TopEdge_Centered,
+               MUIA_Window_DepthGadget , FALSE,
+               MUIA_Window_SizeGadget  , FALSE,
+               MUIA_Window_DragBar     , FALSE,
+               WindowContents, VGroup,
+                  MUIA_Background, "2:9c9c9c9c,9c9c9c9c,9c9c9c9c",
+                  Child, HVSpace,
+                  Child, HGroup,
                      Child, HVSpace,
-                     Child, HGroup,
-                        Child, HVSpace,
-                        Child, BodychunkObject,
-                           MUIA_FixWidth             , LOGO_WIDTH ,
-                           MUIA_FixHeight            , LOGO_HEIGHT,
-                           MUIA_Bitmap_Width         , LOGO_WIDTH ,
-                           MUIA_Bitmap_Height        , LOGO_HEIGHT,
-                           MUIA_Bodychunk_Depth      , LOGO_DEPTH ,
-                           MUIA_Bodychunk_Body       , (UBYTE *)logo_body,
-                           MUIA_Bodychunk_Compression, LOGO_COMPRESSION,
-                           MUIA_Bodychunk_Masking    , LOGO_MASKING,
-                           MUIA_Bitmap_SourceColors  , (ULONG *)logo_colors,
-                        End,
-                        Child, HVSpace,
+                     Child, BodychunkObject,
+                        MUIA_FixWidth             , LOGO_WIDTH ,
+                        MUIA_FixHeight            , LOGO_HEIGHT,
+                        MUIA_Bitmap_Width         , LOGO_WIDTH ,
+                        MUIA_Bitmap_Height        , LOGO_HEIGHT,
+                        MUIA_Bodychunk_Depth      , LOGO_DEPTH ,
+                        MUIA_Bodychunk_Body       , (UBYTE *)logo_body,
+                        MUIA_Bodychunk_Compression, LOGO_COMPRESSION,
+                        MUIA_Bodychunk_Masking    , LOGO_MASKING,
+                        MUIA_Bitmap_SourceColors  , (ULONG *)logo_colors,
                      End,
-                     Child, CLabel("loading preferences..."),
                      Child, HVSpace,
                   End,
-               End)
+                  Child, CLabel(GetStr(MSG_TX_LoadingPrefs)),
+                  Child, HVSpace,
+               End,
+            End)
+            {
+               DoMethod(app, OM_ADDMEMBER, tmp_win);
+               set(tmp_win, MUIA_Window_Open, TRUE);
+            }
+            set(app, MUIA_Application_Sleep, TRUE);
+
+            NewList((struct List *)&McpList);
+            if(DoMethod(win, MUIM_MainWindow_InitGroups, NULL))
+            {
+               struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
+
+               set(data->GR_Pager, MUIA_Grouppager_Active, 0);
+               set(win, MUIA_Window_Open, TRUE);
+               if(tmp_win)
                {
-                  DoMethod(app, OM_ADDMEMBER, tmp_win);
-                  set(tmp_win, MUIA_Window_Open, TRUE);
+                  set(tmp_win, MUIA_Window_Open, FALSE);
+                  DoMethod(app, OM_REMMEMBER, tmp_win);
+                  tmp_win = NULL;
                }
-               set(app, MUIA_Application_Sleep, TRUE);
+               set(app, MUIA_Application_Sleep, FALSE);
 
-               NewList((struct List *)&McpList);
-               if(DoMethod(win, MUIM_MainWindow_InitGroups, NULL))
-               {
-                  struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
+               if(fh = CreateDir("AmiTCP:home"))
+                  UnLock(fh);
+               if(fh = CreateDir("AmiTCP:db"))
+                  UnLock(fh);
 
-                  set(data->GR_Pager, MUIA_Grouppager_Active, 0);
-                  set(win, MUIA_Window_Open, TRUE);
-                  if(tmp_win)
-                  {
-                     set(tmp_win, MUIA_Window_Open, FALSE);
-                     DoMethod(app, OM_REMMEMBER, tmp_win);
-                     tmp_win = NULL;
-                  }
-                  set(app, MUIA_Application_Sleep, FALSE);
-
-                  if(fh = CreateDir("AmiTCP:home"))
-                     UnLock(fh);
-                  if(fh = CreateDir("AmiTCP:db"))
-                     UnLock(fh);
-
-                  strcpy(config_file, DEFAULT_CONFIGFILE);
-                  DoMethod(win, MUIM_MainWindow_LoadConfig, config_file);
-                  DoMethod(win, MUIM_MainWindow_LoadDatabases);
+               strcpy(config_file, DEFAULT_CONFIGFILE);
+               DoMethod(win, MUIM_MainWindow_ClearConfig);
+               DoMethod(win, MUIM_MainWindow_LoadConfig, config_file);
+               DoMethod(win, MUIM_MainWindow_LoadDatabase);
 
 #ifdef INTERNAL_USER
-                  changed_passwd = FALSE;
+               changed_passwd = FALSE;
 #endif
-                  changed_group = changed_hosts = changed_protocols = changed_services =
-                  changed_inetd = changed_networks = changed_rpc = changed_inetaccess = FALSE;
+               changed_group = changed_hosts = changed_protocols = changed_services =
+               changed_inetd = changed_networks = changed_rpc = changed_inetaccess = FALSE;
 #ifdef DEMO
-                  DoMethod(win, MUIM_MainWindow_About);
+               DoMethod(win, MUIM_MainWindow_About);
 #endif
 
-                  while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
+               while(DoMethod(app, MUIM_Application_NewInput, &sigs) != MUIV_Application_ReturnID_Quit)
+               {
+                  if(sigs)
                   {
-                     if(sigs)
-                     {
-                        sigs = Wait(sigs | SIGBREAKF_CTRL_C);
-                        if(sigs & SIGBREAKF_CTRL_C)
-                           break;
-                     }
+                     sigs = Wait(sigs | SIGBREAKF_CTRL_C);
+                     if(sigs & SIGBREAKF_CTRL_C)
+                        break;
                   }
-                  set(win, MUIA_Window_Open, FALSE);
                }
-               FreeUser(current_user);
-               current_user = NULL;
-               clear_list(&McpList);
+               set(win, MUIA_Window_Open, FALSE);
             }
+
+            if(current_user)
+               FreeUser(current_user);
+            current_user = NULL;
+            clear_list(&McpList);
+
             MUI_DisposeObject(app);
             app = NULL;
          }

@@ -27,17 +27,26 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
    ULONG days_running;
 #endif
 
-   strcpy(info1, "\n\033c\033b\033uGENESiS - THE Network Solution\033n\n\n"\
-                 "\033cVersion " VERTAG);
+   strncpy(info1, GetStr(MSG_TX_About1a), 512);
+   strncat(info1, " " VERTAG, 512);
 #ifdef NETCONNECT
-   strcat(info1, " - NetConnect");
+   strncat(info1, " - NetConnect", 512);
+#else
+#ifdef VT
+   strncat(info1, " - special OEM version for VillageTronic", 512);
 #endif
-   strcat(info1, "\n\n" \
-                 "\033n\033cCopyright © 1997-98 by\n" \
-                 "\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n"\
-                 "All Rights Reserved\n");
+#endif
+   strncat(info1, "\n\n\033n\033cCopyright © 1997-99 by\n", 512);
+   strncat(info1, "\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n", 512);
+   strncat(info1, GetStr(MSG_TX_About1b), 512);
 
-   sprintf(info2, "\n\033cRegistered to:\n\033i%ls\n(%ls)\n\n\033n\033cARexx port:\n\033i'%ls'\n", NCL_GetOwner(), NCL_GetSerial(), xget(app, MUIA_Application_Base));
+   strncpy(info2, GetStr(MSG_TX_About2), 512);
+   strncat(info2, NCL_GetOwner(), 512);
+   strncat(info2, "\n(", 512);
+   strncat(info2, NCL_GetSerial(), 512);
+   strncat(info2, ")\n\n\033n\033cARexx port:\n\033i", 512);
+   strncat(info2, (STRPTR)xget(app, MUIA_Application_Base), 512);
+   strncat(info2, "'\n", 512);
 #ifdef DEMO
    if((days_running = check_date()) > WARN_DAYS)
       sprintf(demo, "\n\033b\033cDEMO VERSION\nWARNING: Timeout limit exceeded !\nThis demo will become inoperative in %ld days.\n", MAX_DAYS - days_running);
@@ -79,20 +88,11 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
                End,
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
-                  MUIA_Text_Contents, "\n\033cSupport site:\n\033ihttp://www.active-net.co.uk\n\n"\
-                                      "\033nThanks go to:\nOliver Wagner, NSDI Group, Simone Tellini, Niels Heuer,\nChristoph Dietz, Thomas Bickel and many more.",
+                  MUIA_Text_Contents, GetStr(MSG_TX_About3),
                End,
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
-                  MUIA_Text_Contents, "\n\033cGENESiS uses the MUI object library\n"\
-                                      "MUI is © 1992-97 by Stefan Stunz <stuntz@sasg.com>\n"\
-                                      "\n"\
-                                      "NList.mcc, NListview.mcc are © 1996-98 Gilles Masson\n"\
-                                      "Busy.mcc is © 1994-97 kmel, Klaus Melchior\n"\
-                                      "Term.mcc is © 1996 by Mathias Mischler\n"\
-                                      "\n"\
-                                      "AmiTCP is © by NSDI\n"\
-                                      "GENESiS uses code that was kindly provided by NSDI",
+                  MUIA_Text_Contents, GetStr(MSG_TX_About4),
                End,
             End,
          End,

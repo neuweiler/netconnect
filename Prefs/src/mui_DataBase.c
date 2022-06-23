@@ -225,27 +225,27 @@ SAVEDS ASM LONG HostList_DisplayFunc(register __a2 char **array, register __a1 s
 
 ///
 /// NetworkList_ConstructFunc
-SAVEDS ASM struct Network *NetworkList_ConstructFunc(register __a2 APTR pool, register __a1 struct Network *src)
+SAVEDS ASM struct DB_Network *NetworkList_ConstructFunc(register __a2 APTR pool, register __a1 struct DB_Network *src)
 {
-   struct Network *new;
+   struct DB_Network *new;
 
-   if((new = (struct Network *)AllocVec(sizeof(struct Network), MEMF_ANY | MEMF_CLEAR)) && src && src != (APTR)-1)
-      memcpy(new, src, sizeof(struct Network));
+   if((new = (struct DB_Network *)AllocVec(sizeof(struct DB_Network), MEMF_ANY | MEMF_CLEAR)) && src && src != (APTR)-1)
+      memcpy(new, src, sizeof(struct DB_Network));
    return(new);
 }
 
 ///
 /// NetworkList_DisplayFunc
-SAVEDS ASM LONG NetworkList_DisplayFunc(register __a2 char **array, register __a1 struct Network *network)
+SAVEDS ASM LONG NetworkList_DisplayFunc(register __a2 char **array, register __a1 struct DB_Network *db_network)
 {
-   if(network)
+   if(db_network)
    {
       static char buf[11];
 
-      sprintf(buf, "%ld", network->Number);
-      *array++ = network->Name;
+      sprintf(buf, "%ld", db_network->Number);
+      *array++ = db_network->Name;
       *array++ = buf;
-      *array   = network->Aliases;
+      *array   = db_network->Aliases;
    }
    else
    {
@@ -311,14 +311,14 @@ LONG protocol_pos(Object *list, STRPTR string)
 
 ///
 
-/// Databases_SetStates
-ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_SetStates *msg)
+/// Database_SetStates
+ULONG Database_SetStates(struct IClass *cl, Object *obj, struct MUIP_Database_SetStates *msg)
 {
-   struct Databases_Data *data = INST_DATA(cl, obj);
+   struct Database_Data *data = INST_DATA(cl, obj);
 
    switch(msg->page)
    {
-      case MUIV_Databases_SetStates_Groups:
+      case MUIV_Database_SetStates_Groups:
       {
          struct Group *group;
 
@@ -345,7 +345,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
       }
       break;
 
-      case MUIV_Databases_SetStates_Protocols:
+      case MUIV_Database_SetStates_Protocols:
       {
          struct Protocol *protocol;
          LONG pos;
@@ -388,7 +388,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
       }
          break;
 
-      case MUIV_Databases_SetStates_Services:
+      case MUIV_Database_SetStates_Services:
       {
          struct Service *service;
 
@@ -418,7 +418,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
       }
          break;
 
-      case MUIV_Databases_SetStates_InetAccess:
+      case MUIV_Database_SetStates_InetAccess:
       {
          struct InetAccess *inet_access;
 
@@ -448,7 +448,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
       }
          break;
 
-      case MUIV_Databases_SetStates_Inetd:
+      case MUIV_Database_SetStates_Inetd:
       {
          struct Inetd *inetd;
 
@@ -493,7 +493,7 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
       }
          break;
 
-      case MUIV_Databases_SetStates_Hosts:
+      case MUIV_Database_SetStates_Hosts:
       {
          struct Host *host;
 
@@ -520,18 +520,18 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
       }
          break;
 
-      case MUIV_Databases_SetStates_Networks:
+      case MUIV_Database_SetStates_Networks:
       {
-         struct Network *network;
+         struct DB_Network *db_network;
 
          changed_networks = TRUE;
 
-         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &network);
-         if(network)
+         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &db_network);
+         if(db_network)
          {
-            set(data->STR_NetworkName, MUIA_String_Contents, network->Name);
-            set(data->STR_NetworkID, MUIA_String_Integer, network->Number);
-            set(data->STR_NetworkAliases, MUIA_String_Contents, network->Aliases);
+            set(data->STR_NetworkName, MUIA_String_Contents, db_network->Name);
+            set(data->STR_NetworkID, MUIA_String_Integer, db_network->Number);
+            set(data->STR_NetworkAliases, MUIA_String_Contents, db_network->Aliases);
          }
          else
          {
@@ -539,15 +539,15 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
             set(data->STR_NetworkID, MUIA_String_Integer, 0);
             set(data->STR_NetworkAliases, MUIA_String_Contents, NULL);
          }
-         set(data->BT_RemoveNetwork, MUIA_Disabled, !network);
-         set(data->STR_NetworkName, MUIA_Disabled, !network);
-         set(data->STR_NetworkID, MUIA_Disabled, !network);
-         set(data->STR_NetworkAliases, MUIA_Disabled, !network);
+         set(data->BT_RemoveNetwork, MUIA_Disabled, !db_network);
+         set(data->STR_NetworkName, MUIA_Disabled, !db_network);
+         set(data->STR_NetworkID, MUIA_Disabled, !db_network);
+         set(data->STR_NetworkAliases, MUIA_Disabled, !db_network);
          set(win, MUIA_Window_ActiveObject, data->STR_NetworkName);
       }
          break;
 
-      case MUIV_Databases_SetStates_Rpcs:
+      case MUIV_Database_SetStates_Rpcs:
       {
          struct Rpc *rpc;
 
@@ -578,27 +578,27 @@ ULONG Databases_SetStates(struct IClass *cl, Object *obj, struct MUIP_Databases_
 }
 
 ///
-/// Databases_Modification
-ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databases_Modification *msg)
+/// Database_Modification
+ULONG Database_Modification(struct IClass *cl, Object *obj, struct MUIP_Database_Modification *msg)
 {
-   struct Databases_Data *data = INST_DATA(cl, obj);
+   struct Database_Data *data = INST_DATA(cl, obj);
    struct Group *group;
    struct Protocol *protocol;
    struct Service *service;
    struct InetAccess *inet_access;
    struct Inetd *inetd;
    struct Host *host;
-   struct Network *network;
+   struct DB_Network *db_network;
    struct Rpc *rpc;
 
    switch(msg->what)
    {
-      case MUIV_Databases_Modification_NewGroup:
+      case MUIV_Database_Modification_NewGroup:
          DoMethod(data->LV_Groups, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Groups, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          set(win, MUIA_Window_ActiveObject, data->STR_GroupName);
          break;
-      case MUIV_Databases_Modification_GroupName:
+      case MUIV_Database_Modification_GroupName:
          DoMethod(data->LV_Groups, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &group);
          if(group)
          {
@@ -606,13 +606,13 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Groups, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_GroupNumber:
+      case MUIV_Database_Modification_GroupNumber:
          DoMethod(data->LV_Groups, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &group);
          if(group)
             group->ID = xget(data->STR_GroupNumber, MUIA_String_Integer);
          DoMethod(data->LV_Groups, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          break;
-      case MUIV_Databases_Modification_GroupMembers:
+      case MUIV_Database_Modification_GroupMembers:
          DoMethod(data->LV_Groups, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &group);
          if(group)
             strcpy(group->Members, (STRPTR)xget(data->STR_GroupMembers, MUIA_String_Contents));
@@ -620,7 +620,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          break;
 
 
-      case MUIV_Databases_Modification_ProtocolName:
+      case MUIV_Database_Modification_ProtocolName:
          DoMethod(data->LV_Protocols, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &protocol);
          if(protocol)
          {
@@ -628,7 +628,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Protocols, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_ProtocolID:
+      case MUIV_Database_Modification_ProtocolID:
          DoMethod(data->LV_Protocols, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &protocol);
          if(protocol)
          {
@@ -636,7 +636,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Protocols, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_ProtocolAliases:
+      case MUIV_Database_Modification_ProtocolAliases:
          DoMethod(data->LV_Protocols, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &protocol);
          if(protocol)
          {
@@ -646,7 +646,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          break;
 
 
-      case MUIV_Databases_Modification_ServiceName:
+      case MUIV_Database_Modification_ServiceName:
          DoMethod(data->LV_Services, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &service);
          if(service)
          {
@@ -654,7 +654,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Services, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_ServicePort:
+      case MUIV_Database_Modification_ServicePort:
          DoMethod(data->LV_Services, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &service);
          if(service)
          {
@@ -662,7 +662,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Services, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_ServiceAliases:
+      case MUIV_Database_Modification_ServiceAliases:
          DoMethod(data->LV_Services, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &service);
          if(service)
          {
@@ -670,7 +670,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Services, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_ServiceProtocol:
+      case MUIV_Database_Modification_ServiceProtocol:
          DoMethod(data->LV_Services, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &service);
          if(service)
          {
@@ -684,7 +684,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          break;
 
 
-      case MUIV_Databases_Modification_InetAccessService:
+      case MUIV_Database_Modification_InetAccessService:
          DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
          if(inet_access)
          {
@@ -692,7 +692,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_InetAccess, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetAccessHost:
+      case MUIV_Database_Modification_InetAccessHost:
          DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
          if(inet_access)
          {
@@ -700,7 +700,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_InetAccess, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetAccess:
+      case MUIV_Database_Modification_InetAccess:
          DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
          if(inet_access)
          {
@@ -708,7 +708,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_InetAccess, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetAccessLog:
+      case MUIV_Database_Modification_InetAccessLog:
          DoMethod(data->LV_InetAccess, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inet_access);
          if(inet_access)
          {
@@ -718,7 +718,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          break;
 
 
-      case MUIV_Databases_Modification_InetdService:
+      case MUIV_Database_Modification_InetdService:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -726,7 +726,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetdUser:
+      case MUIV_Database_Modification_InetdUser:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -734,7 +734,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetdServer:
+      case MUIV_Database_Modification_InetdServer:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -742,7 +742,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetdCliName:
+      case MUIV_Database_Modification_InetdCliName:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -750,7 +750,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetdArgs:
+      case MUIV_Database_Modification_InetdArgs:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -758,7 +758,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetdActive:
+      case MUIV_Database_Modification_InetdActive:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -766,7 +766,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetdProtocol:
+      case MUIV_Database_Modification_InetdProtocol:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -778,7 +778,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             }
          }
          break;
-      case MUIV_Databases_Modification_InetdSocket:
+      case MUIV_Database_Modification_InetdSocket:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -786,7 +786,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Inetd, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_InetdWait:
+      case MUIV_Database_Modification_InetdWait:
          DoMethod(data->LV_Inetd, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &inetd);
          if(inetd)
          {
@@ -796,7 +796,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          break;
 
 
-      case MUIV_Databases_Modification_HostAddr:
+      case MUIV_Database_Modification_HostAddr:
          DoMethod(data->LV_Hosts, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &host);
          if(host)
          {
@@ -804,7 +804,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Hosts, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_HostName:
+      case MUIV_Database_Modification_HostName:
          DoMethod(data->LV_Hosts, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &host);
          if(host)
          {
@@ -812,7 +812,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Hosts, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_HostAliases:
+      case MUIV_Database_Modification_HostAliases:
          DoMethod(data->LV_Hosts, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &host);
          if(host)
          {
@@ -822,33 +822,33 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          break;
 
 
-      case MUIV_Databases_Modification_NetworkName:
-         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &network);
-         if(network)
+      case MUIV_Database_Modification_NetworkName:
+         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &db_network);
+         if(db_network)
          {
-            strcpy(network->Name, (STRPTR)xget(data->STR_NetworkName, MUIA_String_Contents));
+            strcpy(db_network->Name, (STRPTR)xget(data->STR_NetworkName, MUIA_String_Contents));
             DoMethod(data->LV_Networks, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_NetworkID:
-         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &network);
-         if(network)
+      case MUIV_Database_Modification_NetworkID:
+         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &db_network);
+         if(db_network)
          {
-            network->Number = xget(data->STR_NetworkID, MUIA_String_Integer);
+            db_network->Number = xget(data->STR_NetworkID, MUIA_String_Integer);
             DoMethod(data->LV_Networks, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_NetworkAliases:
-         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &network);
-         if(network)
+      case MUIV_Database_Modification_NetworkAliases:
+         DoMethod(data->LV_Networks, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &db_network);
+         if(db_network)
          {
-            strcpy(network->Aliases, (STRPTR)xget(data->STR_NetworkAliases, MUIA_String_Contents));
+            strcpy(db_network->Aliases, (STRPTR)xget(data->STR_NetworkAliases, MUIA_String_Contents));
             DoMethod(data->LV_Networks, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
 
 
-      case MUIV_Databases_Modification_RpcName:
+      case MUIV_Database_Modification_RpcName:
          DoMethod(data->LV_Rpcs, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &rpc);
          if(rpc)
          {
@@ -856,7 +856,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Rpcs, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_RpcID:
+      case MUIV_Database_Modification_RpcID:
          DoMethod(data->LV_Rpcs, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &rpc);
          if(rpc)
          {
@@ -864,7 +864,7 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
             DoMethod(data->LV_Rpcs, MUIM_NList_Redraw, MUIV_NList_Redraw_Active);
          }
          break;
-      case MUIV_Databases_Modification_RpcAliases:
+      case MUIV_Database_Modification_RpcAliases:
          DoMethod(data->LV_Rpcs, MUIM_NList_GetEntry, MUIV_NList_GetEntry_Active, &rpc);
          if(rpc)
          {
@@ -874,31 +874,31 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
          break;
 
 
-      case MUIV_Databases_Modification_NewProtocol:
+      case MUIV_Database_Modification_NewProtocol:
          DoMethod(data->LV_Protocols, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Protocols, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
-      case MUIV_Databases_Modification_NewService:
+      case MUIV_Database_Modification_NewService:
          DoMethod(data->LV_Services, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Services, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
-      case MUIV_Databases_Modification_NewInetAccess:
+      case MUIV_Database_Modification_NewInetAccess:
          DoMethod(data->LV_InetAccess, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_InetAccess, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
-      case MUIV_Databases_Modification_NewInetd:
+      case MUIV_Database_Modification_NewInetd:
          DoMethod(data->LV_Inetd, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Inetd, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
-      case MUIV_Databases_Modification_NewHost:
+      case MUIV_Database_Modification_NewHost:
          DoMethod(data->LV_Hosts, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Hosts, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
-      case MUIV_Databases_Modification_NewNetwork:
+      case MUIV_Database_Modification_NewNetwork:
          DoMethod(data->LV_Networks, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Networks, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
-      case MUIV_Databases_Modification_NewRpc:
+      case MUIV_Database_Modification_NewRpc:
          DoMethod(data->LV_Rpcs, MUIM_NList_InsertSingle, -1, MUIV_NList_Insert_Bottom);
          set(data->LV_Rpcs, MUIA_NList_Active, MUIV_NList_Active_Bottom);
          break;
@@ -907,8 +907,8 @@ ULONG Databases_Modification(struct IClass *cl, Object *obj, struct MUIP_Databas
 }
 
 ///
-/// Databases_New
-ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
+/// Database_New
+ULONG Database_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    static const struct Hook GroupsList_ConstructHook= { { 0,0 }, (VOID *)GroupsList_ConstructFunc , NULL, NULL };
    static const struct Hook GroupsList_DisplayHook  = { { 0,0 }, (VOID *)GroupsList_DisplayFunc   , NULL, NULL };
@@ -930,7 +930,7 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
    static STRPTR STR_CY_Access[3];
    static STRPTR STR_CY_Socket[3];
    static STRPTR STR_CY_Wait[4];
-   struct Databases_Data tmp;
+   struct Database_Data tmp;
 
    STR_CY_Pages[0] = GetStr(MSG_CY_DatabasePage1);
    STR_CY_Pages[1] = GetStr(MSG_CY_DatabasePage2);
@@ -983,17 +983,11 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
             Child, ColGroup(2),
                Child, MakeKeyLabel2(MSG_LA_GroupName, MSG_CC_GroupName),
-               Child, tmp.STR_GroupName    = MakeKeyString(NULL, 40, MSG_CC_GroupName),
+               Child, tmp.STR_GroupName    = MakeKeyString(40, MSG_CC_GroupName),
                Child, MakeKeyLabel2(MSG_LA_GroupID, MSG_CC_GroupID),
-               Child, tmp.STR_GroupNumber  = TextinputObject,
-                  StringFrame,
-                  MUIA_ControlChar     , *GetStr(MSG_CC_GroupID),
-                  MUIA_CycleChain      , 1,
-                  MUIA_String_MaxLen   , 7,
-                  MUIA_String_Accept   , "-1234567890",
-               End,
+               Child, tmp.STR_GroupNumber  = MakeKeyInteger(7, MSG_CC_GroupID),
                Child, MakeKeyLabel2(MSG_LA_GroupMembers, MSG_CC_GroupMembers),
-               Child, tmp.STR_GroupMembers = MakeKeyString(NULL, 1023, MSG_CC_GroupMembers),
+               Child, tmp.STR_GroupMembers = MakeKeyString(1023, MSG_CC_GroupMembers),
             End,
          End,
          Child, tmp.GR_Hosts = VGroup,
@@ -1028,9 +1022,9 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   MUIA_String_Accept   , "1234567890.",
                End,
                Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
-               Child, tmp.STR_HostName    = MakeKeyString(NULL, 40, MSG_CC_Name),
+               Child, tmp.STR_HostName    = MakeKeyString(40, MSG_CC_Name),
                Child, MakeKeyLabel2(MSG_LA_Aliases, MSG_CC_Aliases),
-               Child, tmp.STR_HostAliases = MakeKeyString(NULL, 80, MSG_CC_Aliases),
+               Child, tmp.STR_HostAliases = MakeKeyString(80, MSG_CC_Aliases),
             End,
          End,
          Child, tmp.GR_Protocols = VGroup,
@@ -1057,17 +1051,11 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
             Child, ColGroup(2),
                Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
-               Child, tmp.STR_ProtocolName = MakeKeyString(NULL, 40, MSG_CC_Name),
+               Child, tmp.STR_ProtocolName = MakeKeyString(40, MSG_CC_Name),
                Child, MakeKeyLabel2(MSG_LA_ID, MSG_CC_ID),
-               Child, tmp.STR_ProtocolID   = TextinputObject,
-                  StringFrame,
-                  MUIA_ControlChar     , *GetStr(MSG_CC_ID),
-                  MUIA_CycleChain      , 1,
-                  MUIA_String_MaxLen   , 7,
-                  MUIA_String_Accept   , "1234567890",
-               End,
+               Child, tmp.STR_ProtocolID   = MakeKeyInteger(7, MSG_CC_ID),
                Child, MakeKeyLabel2(MSG_LA_Aliases, MSG_CC_Aliases),
-               Child, tmp.STR_ProtocolAliases = MakeKeyString(NULL, 80, MSG_CC_Aliases),
+               Child, tmp.STR_ProtocolAliases = MakeKeyString(80, MSG_CC_Aliases),
             End,
          End,
          Child, tmp.GR_Services = VGroup,
@@ -1095,17 +1083,11 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             Child, HGroup,
                Child, ColGroup(2),
                   Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
-                  Child, tmp.STR_ServiceName = MakeKeyString(NULL, 40, MSG_CC_Name),
+                  Child, tmp.STR_ServiceName = MakeKeyString(40, MSG_CC_Name),
                   Child, MakeKeyLabel2(MSG_LA_Port, MSG_CC_Port),
-                  Child, tmp.STR_ServicePort = TextinputObject,
-                     StringFrame,
-                     MUIA_ControlChar     , *GetStr(MSG_CC_Port),
-                     MUIA_CycleChain      , 1,
-                     MUIA_String_MaxLen   , 7,
-                     MUIA_String_Accept   , "1234567890",
-                  End,
+                  Child, tmp.STR_ServicePort = MakeKeyInteger(7, MSG_CC_Port),
                   Child, MakeKeyLabel2(MSG_LA_Aliases, MSG_CC_Aliases),
-                  Child, tmp.STR_ServiceAliases = MakeKeyString(NULL, 80, MSG_CC_Aliases),
+                  Child, tmp.STR_ServiceAliases = MakeKeyString(80, MSG_CC_Aliases),
                End,
                Child, BalanceObject, End,
                Child, VGroup,
@@ -1144,9 +1126,9 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             Child, HGroup,
                Child, ColGroup(2),
                   Child, MakeKeyLabel2(MSG_LA_Service, MSG_CC_Service),
-                  Child, tmp.STR_InetAccessService   = MakeKeyString(NULL, 40, MSG_CC_Service),
+                  Child, tmp.STR_InetAccessService   = MakeKeyString(40, MSG_CC_Service),
                   Child, MakeKeyLabel2(MSG_LA_Host, MSG_CC_Host),
-                  Child, tmp.STR_InetAccessHost      = MakeKeyString(NULL, 80, MSG_CC_Host),
+                  Child, tmp.STR_InetAccessHost      = MakeKeyString(80, MSG_CC_Host),
                   Child, MakeKeyLabel2(MSG_LA_Access, MSG_CC_Access),
                   Child, HGroup,
                      Child, tmp.CY_InetAccess = MakeKeyCycle(STR_CY_Access, MSG_CC_Access),
@@ -1182,18 +1164,18 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
                Child, ColGroup(2),
                   Child, MakeKeyLabel2(MSG_LA_Service, MSG_CC_Service),
                   Child, HGroup,
-                     Child, tmp.STR_InetdService   = MakeKeyString(NULL, 40, MSG_CC_Service),
+                     Child, tmp.STR_InetdService   = MakeKeyString(40, MSG_CC_Service),
                      Child, MakeKeyLabel1(MSG_LA_Enabled, MSG_CC_Enabled),
                      Child, tmp.CH_InetdActive     = MakeKeyCheckMark(TRUE, MSG_CC_Enabled),
                   End,
                   Child, MakeKeyLabel2(MSG_LA_User, MSG_CC_User),
-                  Child, tmp.STR_InetdUser      = MakeKeyString(NULL, 40, MSG_CC_User),
+                  Child, tmp.STR_InetdUser      = MakeKeyString(40, MSG_CC_User),
                   Child, MakeKeyLabel2(MSG_LA_Server, MSG_CC_Server),
-                  Child, tmp.PA_InetdServer     = MakePopAsl(tmp.STR_InetdServer = MakeKeyString(NULL, 80, MSG_CC_Server), GetStr(MSG_LA_Server), FALSE),
+                  Child, tmp.PA_InetdServer     = MakePopAsl(tmp.STR_InetdServer = MakeKeyString(80, MSG_CC_Server), GetStr(MSG_LA_Server), FALSE),
                   Child, MakeKeyLabel2(MSG_LA_CliName, MSG_CC_CliName),
-                  Child, tmp.STR_InetdCliName   = MakeKeyString(NULL, 80, MSG_CC_CliName),
+                  Child, tmp.STR_InetdCliName   = MakeKeyString(80, MSG_CC_CliName),
                   Child, MakeKeyLabel2(MSG_LA_Args, MSG_CC_Args),
-                  Child, tmp.STR_InetdArgs      = MakeKeyString(NULL, 80, MSG_CC_Args),
+                  Child, tmp.STR_InetdArgs      = MakeKeyString(80, MSG_CC_Args),
                End,
                Child, BalanceObject, End,
                Child, VGroup,
@@ -1233,17 +1215,11 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
             Child, ColGroup(2),
                Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
-               Child, tmp.STR_NetworkName    = MakeKeyString(NULL, 40, MSG_CC_Name),
+               Child, tmp.STR_NetworkName    = MakeKeyString(40, MSG_CC_Name),
                Child, MakeKeyLabel2(MSG_LA_ID, MSG_CC_ID),
-               Child, tmp.STR_NetworkID      = TextinputObject,
-                  StringFrame,
-                  MUIA_ControlChar     , *GetStr(MSG_CC_ID),
-                  MUIA_CycleChain      , 1,
-                  MUIA_String_MaxLen   , 5,
-                  MUIA_String_Accept   , "1234567890",
-               End,
+               Child, tmp.STR_NetworkID      = MakeKeyInteger(5, MSG_CC_ID),
                Child, MakeKeyLabel2(MSG_LA_Aliases, MSG_CC_Aliases),
-               Child, tmp.STR_NetworkAliases = MakeKeyString(NULL, 80, MSG_CC_Aliases),
+               Child, tmp.STR_NetworkAliases = MakeKeyString(80, MSG_CC_Aliases),
             End,
          End,
          Child, tmp.GR_Rpc = VGroup,
@@ -1270,24 +1246,17 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
             End,
             Child, ColGroup(2),
                Child, MakeKeyLabel2(MSG_LA_Name, MSG_CC_Name),
-               Child, tmp.STR_RpcName    = MakeKeyString(NULL, 40, MSG_CC_Name),
+               Child, tmp.STR_RpcName    = MakeKeyString(40, MSG_CC_Name),
                Child, MakeKeyLabel2(MSG_LA_ID, MSG_CC_ID),
-               Child, tmp.STR_RpcID      = TextinputObject,
-                  StringFrame,
-                  MUIA_ControlChar     , *GetStr(MSG_CC_ID),
-                  MUIA_CycleChain      , 1,
-                  MUIA_String_MaxLen   , 10,
-                  MUIA_String_Integer  , 0,
-                  MUIA_String_Accept   , "1234567890",
-               End,
+               Child, tmp.STR_RpcID      = MakeKeyInteger(10, MSG_CC_ID),
                Child, MakeKeyLabel2(MSG_LA_Aliases, MSG_CC_Aliases),
-               Child, tmp.STR_RpcAliases = MakeKeyString(NULL, 80, MSG_CC_Aliases),
+               Child, tmp.STR_RpcAliases = MakeKeyString(80, MSG_CC_Aliases),
             End,
          End,
       End,
       TAG_MORE, msg->ops_AttrList))
    {
-      struct Databases_Data *data = INST_DATA(cl,obj);
+      struct Database_Data *data = INST_DATA(cl,obj);
 
       *data = tmp;
 
@@ -1374,54 +1343,55 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       DoMethod(data->CY_Pager      , MUIM_Notify, MUIA_Cycle_Active     , MUIV_EveryTime  , data->GR_Pager, 3, MUIM_Set, MUIA_Group_ActivePage, MUIV_TriggerValue);
 
-      DoMethod(data->LV_Groups     , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Groups);
-      DoMethod(data->LV_Protocols  , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Protocols);
-      DoMethod(data->LV_Services   , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Services);
-      DoMethod(data->LV_InetAccess , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_InetAccess);
-      DoMethod(data->LV_Inetd      , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Inetd);
-      DoMethod(data->LV_Hosts      , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Hosts);
-      DoMethod(data->LV_Networks   , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Networks);
-      DoMethod(data->LV_Rpcs       , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Databases_SetStates, MUIV_Databases_SetStates_Rpcs);
+      DoMethod(data->LV_Groups     , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_Groups);
+      DoMethod(data->LV_Protocols  , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_Protocols);
+      DoMethod(data->LV_Services   , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_Services);
+      DoMethod(data->LV_InetAccess , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_InetAccess);
+      DoMethod(data->LV_Inetd      , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_Inetd);
+      DoMethod(data->LV_Hosts      , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_Hosts);
+      DoMethod(data->LV_Networks   , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_Networks);
+      DoMethod(data->LV_Rpcs       , MUIM_Notify, MUIA_NList_Active     , MUIV_EveryTime  , obj, 2, MUIM_Database_SetStates, MUIV_Database_SetStates_Rpcs);
 
-      DoMethod(data->STR_GroupName        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_GroupName);
-      DoMethod(data->STR_GroupNumber      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_GroupNumber);
-      DoMethod(data->STR_GroupMembers     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_GroupMembers);
-      DoMethod(data->STR_ProtocolName     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ProtocolName);
-      DoMethod(data->STR_ProtocolID       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ProtocolID);
-      DoMethod(data->STR_ProtocolAliases  , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ProtocolAliases);
-      DoMethod(data->STR_ServiceName      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ServiceName);
-      DoMethod(data->STR_ServicePort      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ServicePort);
-      DoMethod(data->STR_ServiceAliases   , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ServiceAliases);
-      DoMethod(data->LV_ServiceProtocol   , MUIM_Notify, MUIA_NList_Active    , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_ServiceProtocol);
-      DoMethod(data->STR_InetAccessService, MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccessService);
-      DoMethod(data->STR_InetAccessHost   , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccessHost);
-      DoMethod(data->CY_InetAccess        , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccess);
-      DoMethod(data->CH_InetAccessLog     , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetAccessLog);
-      DoMethod(data->STR_InetdService     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdService);
-      DoMethod(data->STR_InetdUser        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdUser);
-      DoMethod(data->PA_InetdServer       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdServer);
-      DoMethod(data->STR_InetdArgs        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdArgs);
-      DoMethod(data->CH_InetdActive       , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdActive);
-      DoMethod(data->LV_InetdProtocol     , MUIM_Notify, MUIA_NList_Active    , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdProtocol);
-      DoMethod(data->CY_InetdSocket       , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdSocket);
-      DoMethod(data->CY_InetdWait         , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_InetdWait);
-      DoMethod(data->STR_HostAddr         , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_HostAddr);
-      DoMethod(data->STR_HostName         , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_HostName);
-      DoMethod(data->STR_HostAliases      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_HostAliases);
-      DoMethod(data->STR_NetworkName      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NetworkName);
-      DoMethod(data->STR_NetworkID        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NetworkID);
-      DoMethod(data->STR_NetworkAliases   , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NetworkAliases);
-      DoMethod(data->STR_RpcName          , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_RpcName);
-      DoMethod(data->STR_RpcID            , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_RpcID);
-      DoMethod(data->STR_RpcAliases       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_RpcAliases);
-      DoMethod(data->BT_NewGroup          , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewGroup);
-      DoMethod(data->BT_NewProtocol       , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewProtocol);
-      DoMethod(data->BT_NewService        , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewService);
-      DoMethod(data->BT_NewInetAccess     , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewInetAccess);
-      DoMethod(data->BT_NewInetd          , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewInetd);
-      DoMethod(data->BT_NewHost           , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewHost);
-      DoMethod(data->BT_NewNetwork        , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewNetwork);
-      DoMethod(data->BT_NewRpc            , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Databases_Modification, MUIV_Databases_Modification_NewRpc);
+      DoMethod(data->STR_GroupName        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_GroupName);
+      DoMethod(data->STR_GroupNumber      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_GroupNumber);
+      DoMethod(data->STR_GroupMembers     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_GroupMembers);
+      DoMethod(data->STR_ProtocolName     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_ProtocolName);
+      DoMethod(data->STR_ProtocolID       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_ProtocolID);
+      DoMethod(data->STR_ProtocolAliases  , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_ProtocolAliases);
+      DoMethod(data->STR_ServiceName      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_ServiceName);
+      DoMethod(data->STR_ServicePort      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_ServicePort);
+      DoMethod(data->STR_ServiceAliases   , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_ServiceAliases);
+      DoMethod(data->LV_ServiceProtocol   , MUIM_Notify, MUIA_NList_Active    , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_ServiceProtocol);
+      DoMethod(data->STR_InetAccessService, MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetAccessService);
+      DoMethod(data->STR_InetAccessHost   , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetAccessHost);
+      DoMethod(data->CY_InetAccess        , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetAccess);
+      DoMethod(data->CH_InetAccessLog     , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetAccessLog);
+      DoMethod(data->STR_InetdService     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdService);
+      DoMethod(data->STR_InetdUser        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdUser);
+      DoMethod(data->PA_InetdServer       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdServer);
+      DoMethod(data->STR_InetdCliName     , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdCliName);
+      DoMethod(data->STR_InetdArgs        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdArgs);
+      DoMethod(data->CH_InetdActive       , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdActive);
+      DoMethod(data->LV_InetdProtocol     , MUIM_Notify, MUIA_NList_Active    , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdProtocol);
+      DoMethod(data->CY_InetdSocket       , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdSocket);
+      DoMethod(data->CY_InetdWait         , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_InetdWait);
+      DoMethod(data->STR_HostAddr         , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_HostAddr);
+      DoMethod(data->STR_HostName         , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_HostName);
+      DoMethod(data->STR_HostAliases      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_HostAliases);
+      DoMethod(data->STR_NetworkName      , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NetworkName);
+      DoMethod(data->STR_NetworkID        , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NetworkID);
+      DoMethod(data->STR_NetworkAliases   , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NetworkAliases);
+      DoMethod(data->STR_RpcName          , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_RpcName);
+      DoMethod(data->STR_RpcID            , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_RpcID);
+      DoMethod(data->STR_RpcAliases       , MUIM_Notify, MUIA_String_Contents , MUIV_EveryTime  , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_RpcAliases);
+      DoMethod(data->BT_NewGroup          , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewGroup);
+      DoMethod(data->BT_NewProtocol       , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewProtocol);
+      DoMethod(data->BT_NewService        , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewService);
+      DoMethod(data->BT_NewInetAccess     , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewInetAccess);
+      DoMethod(data->BT_NewInetd          , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewInetd);
+      DoMethod(data->BT_NewHost           , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewHost);
+      DoMethod(data->BT_NewNetwork        , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewNetwork);
+      DoMethod(data->BT_NewRpc            , MUIM_Notify, MUIA_Pressed         , FALSE           , obj, 2, MUIM_Database_Modification, MUIV_Database_Modification_NewRpc);
       DoMethod(data->BT_RemoveGroup       , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Groups    , 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
       DoMethod(data->BT_RemoveProtocol    , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Protocols , 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
       DoMethod(data->BT_RemoveService     , MUIM_Notify, MUIA_Pressed         , FALSE           , data->LV_Services  , 2, MUIM_NList_Remove, MUIV_NList_Remove_Active);
@@ -1453,14 +1423,14 @@ ULONG Databases_New(struct IClass *cl, Object *obj, struct opSet *msg)
 }
 
 ///
-/// Databases_Dispatcher
-SAVEDS ASM ULONG Databases_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
+/// Database_Dispatcher
+SAVEDS ASM ULONG Database_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    switch((ULONG)msg->MethodID)
    {
-      case OM_NEW                      : return(Databases_New              (cl, obj, (APTR)msg));
-      case MUIM_Databases_SetStates    : return(Databases_SetStates        (cl, obj, (APTR)msg));
-      case MUIM_Databases_Modification : return(Databases_Modification     (cl, obj, (APTR)msg));
+      case OM_NEW                      : return(Database_New               (cl, obj, (APTR)msg));
+      case MUIM_Database_SetStates     : return(Database_SetStates         (cl, obj, (APTR)msg));
+      case MUIM_Database_Modification  : return(Database_Modification      (cl, obj, (APTR)msg));
    }
    return(DoSuperMethodA(cl, obj, msg));
 }

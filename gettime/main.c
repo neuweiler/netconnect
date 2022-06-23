@@ -29,10 +29,10 @@ int main(int argc, char *argv[])
 {
    BPTR fh;
    char buf[256];
-//   const char *months="JanFebMarAprMayJunJulAugSepOctNovDec", *days="SunMonTueWedThuFriSat";
+   STRPTR months="JanFebMarAprMayJunJulAugSepOctNovDec"; // *days="SunMonTueWedThuFriSat";
    STRPTR ptr;
    char year[10], month[10], day[10], time[20];
-   ULONG sys_secs;
+   ULONG sys_secs, month_number;
    struct DateTime dat_time;
 
    sprintf(buf, "TCP:%ls/daytime", (argc == 2 ? argv[1] : "localhost"));
@@ -62,10 +62,14 @@ Printf("5: %ls\n", ptr);
                   ptr[2] = NULL;
                   strncpy(year, ptr, sizeof(year));
 
-Printf("time: %ls, date: %ls-%ls-%ls\n", time, day, month, year);
+                  month_number = 13;   // getsystime will fail when month_number can't be found
+                  if(ptr = strstr(months, month))
+                     month_number = (ptr - months) / 3 + 1;
 
-                  sprintf(buf, "%ls-%ls-%ls", day, month, year);
-                  dat_time.dat_Format  = FORMAT_DOS;
+                  sprintf(buf, "%02.2ld-%02.2ls-%02.2ls", month_number, day, year);
+Printf("str_date '%ls'  str_time '%ls'\n", buf, time);
+
+                  dat_time.dat_Format  = FORMAT_USA;
                   dat_time.dat_StrDate = buf;
                   dat_time.dat_StrTime = time;
                   if(StrToDate(&dat_time))
@@ -78,7 +82,7 @@ Printf("time: %ls, date: %ls-%ls-%ls\n", time, day, month, year);
                      Printf("ds_days:%ld\n", dat_time.dat_Stamp.ds_Days);
                      Printf("ds_minutes:%ld\n", dat_time.dat_Stamp.ds_Minute);
                      sys_secs = dat_time.dat_Stamp.ds_Days*86400 + dat_time.dat_Stamp.ds_Minute*60 + atol(&time[6]);
-                     Printf("sys_secs:%ld\n", secs);
+                     Printf("sys_secs:%ld\n", sys_secs);
                      if(BattClockBase = OpenResource("battclock.resource"))
                      {
                         Printf("battclock: %ld\n", ReadBattClock());
@@ -101,6 +105,8 @@ Printf("time: %ls, date: %ls-%ls-%ls\n", time, day, month, year);
                         DeletePort(TimePort);
                      }
                   }
+                  else
+                     Printf("strtodate() failed\n");
                }
             }
          }

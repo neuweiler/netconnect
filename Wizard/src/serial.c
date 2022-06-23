@@ -28,6 +28,7 @@ extern struct Config Config;
 extern struct MUI_CustomClass  *CL_Online;
 extern struct ExecBase *SysBase;
 extern char serial_in[], serial_buffer[];
+extern struct Modem Modem;
 
 ///
 
@@ -210,7 +211,7 @@ VOID serial_delete(VOID)
    SerReadPort = SerWritePort = NULL;
 
    Forbid();
-   if(dev = (struct Device *)FindName(&SysBase->DeviceList, Config.cnf_serialdevice))
+   if(dev = (struct Device *)FindName(&SysBase->DeviceList, Modem.mo_device))
       RemDevice(dev);
    Permit();
 }
@@ -222,11 +223,11 @@ BOOL serial_create(STRPTR device, LONG unit)
    ULONG flags;
 
    flags = SERF_SHARED;
-   if(Config.cnf_flags & CFL_7Wire)
+   if(Modem.mo_flags & MFL_7Wire)
       flags |= SERF_7WIRE;
-   if(!(Config.cnf_flags & CFL_XonXoff))
+   if(!(Modem.mo_flags & MFL_XonXoff))
       flags |= SERF_XDISABLED;
-   if(Config.cnf_flags & CFL_RadBoogie)
+   if(Modem.mo_flags & MFL_RadBoogie)
       flags |= SERF_RAD_BOOGIE;
 
    SerReadPort = CreateMsgPort();
@@ -246,8 +247,8 @@ BOOL serial_create(STRPTR device, LONG unit)
          {
             /* Set up our serial parameters */
             SerWriteReq->IOSer.io_Command   = SDCMD_SETPARAMS;
-            SerWriteReq->io_Baud      = (Config.cnf_baudrate < 300 ? 38400 : Config.cnf_baudrate);
-            SerWriteReq->io_RBufLen   = (Config.cnf_serbuflen < 512 ? 512 : Config.cnf_serbuflen);
+            SerWriteReq->io_Baud      = (Modem.mo_baudrate < 300 ? 38400 : Modem.mo_baudrate);
+            SerWriteReq->io_RBufLen   = (Modem.mo_serbuflen < 512 ? 512 : Modem.mo_serbuflen);
             SerWriteReq->io_ReadLen   = 8;
             SerWriteReq->io_WriteLen  = 8;
             SerWriteReq->io_StopBits  = 1;
@@ -291,18 +292,18 @@ VOID serial_hangup(VOID)
       {
          serial_delete();
          Delay(50);
-         serial_create(Config.cnf_serialdevice, Config.cnf_serialunit);
+         serial_create(Modem.mo_device, Modem.mo_unit);
       }
    }
 
    if(serial_carrier())
    {
       serial_send("+", 1);
-      Delay(10);
+      Delay(Modem.mo_commanddelay);
       serial_send("+", 1);
-      Delay(10);
+      Delay(Modem.mo_commanddelay);
       serial_send("+", 1);
-      Delay(10);
+      Delay(50);
       serial_send("ATH0\r", -1);
    }
    else

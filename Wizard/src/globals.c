@@ -19,18 +19,16 @@ struct   Library   *NetConnectBase= NULL;
 
 ///
 /// Other data
-struct Config  Config;
-struct ISP     ISP;
 struct Interface Iface;
+struct Modem Modem;
 
 struct Process *proc;
 struct StackSwapStruct StackSwapper;
-
+struct   IOExtSer *SerReadReq;
+struct   MsgPort  *SerReadPort;
+struct   IOExtSer *SerWriteReq;
+struct   MsgPort  *SerWritePort;
 struct Catalog       *cat           = NULL;   /* pointer to our locale catalog */
-struct IOExtSer      *SerReadReq    = NULL;   /* Serial IORequest */
-struct MsgPort       *SerReadPort   = NULL;   /* Serial reply port */
-struct IOExtSer      *SerWriteReq   = NULL;   /* Serial IORequest */
-struct MsgPort       *SerWritePort  = NULL;   /* Serial reply port */
 struct MsgPort       *MainPort  = NULL;   /* port to comunicate with mainProcess */
 
 ULONG sigs = NULL;
@@ -48,7 +46,7 @@ char serial_buffer_old1[81];
 char serial_buffer_old2[81];
 WORD ser_buf_pos, key_buf_pos;
 BOOL keyboard_input = FALSE;
-BOOL use_loginscript, use_modem, no_picture, dialup = FALSE, no_carrier = FALSE;
+BOOL no_picture, dialup = FALSE, no_carrier = FALSE, use_loginscript, use_modem, use_old_modem;
 
 ULONG *colors[NUM_PAGES];
 UBYTE *bodies[NUM_PAGES];

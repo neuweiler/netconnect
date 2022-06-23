@@ -31,7 +31,7 @@ genesis.library : $(OBJS)
          LIBFD pragmas/genesis_lib.fd
          LIB $(LIBS)
          LIBVERSION 3 LIBREVISION 0
-         LIBID "genesis 3.0.3 (03.10.98)"
+         LIBID "genesis 3.0.5 (12.10.98)"
          MAP genesis.library.map
    <
       slink from genesis.library to AmiTCP:libs/genesis.library nodebug noicons

@@ -1,125 +1,16 @@
-History for GenesisWizard
+History for GENESiSWizard
 =========================
 
-2.0.2 (19.04.98)
+
+1.0.0 (06.12.98)
 ----------------
 
-* pages are now built at startup and no longer dynamically.
-  this improoves speed and eliminates problems when switching
-  pages but eats much more memory.
-* removed modem-detect since it caused more trouble than it
-  helped (e.g. isdn) and only 7 modem types were supported.
-* added page #2 to choose between modem/direct connection.
+* first official release.
 
 
-2.0.3 (27.04.98)
+1.0.1 (30.12.98)
 ----------------
 
-* readded all those fancy wiz-pics again.. minor growth of
-  filesize :)
-* removed "isp info" pages. if the ip, gateway / destination
-  or DNS addresses are unknown before iface is put online
-  then requesters will appear (in the future).
-* added a page to enter sanaII configuration details (config
-  file and interface parameters).
+* destination IP address obtained by bootp is now beeing used.
+* cleaned up handling of IP addresses.
 
-2.1.0 (30.04.98)
-----------------
-
-* ready for beta testing again.. (especially sanaII section)
-* now requesters will popup when one of those is missing:
-  ip addr, gateway addr, dns addr, hostname, domainname
-* env:apppdns1 was not deleted (misspelled filename in DeleteFile())
-  and thus they were probably reused after switching the provider config.
-
-2.1.1 (04.05.98)
-----------------
-
-* If gateway or dns were given manually, they will be shown properly now
-  in the display-config-window.
-* temporarely added debug information.. to locate the point where ominous
-  crashes occur (no enforcer hits, only one big bang).
-
-2.1.2 (12.05.98)
-----------------
-
-* moved back from stormc to sasc => 12% smaller code..
-* modem now gets hungup with a dtr drop.
-* you can go back now and retry the login procedure.
-* corrected minor bug in saving prefs file.
-
-2.1.3 (07.06.98)
-----------------
-
-* localized everything, reworked catalog file.
-* now also pops up a requester when dest-ip is missing for point2point
-  device.
-* config details now get displayed in a different way (and printed).
-* moved some functions to genesis.library => use genesis.library from
-  7.6.1998 or later.
-
-2.1.4 (24.06.98)
-----------------
-
-* included support for netconnect.library
-* now it's possible to go on if modem doesn't report "OK" on AAT or
-  user entered init string.
-* if user wasn't defined in db/passwd when savin config, it is beeing
-  added and a home directory is created (amitcp:home/loginname).
-* the wizard now respects settings that were previously stored with
-  genesisprefs/wizard: baudrate, modemname, initstring, etc.
-
-2.1.5 (01.07.98)
-----------------
-
-* when wizard adds user to db/passwd, it tells genesis.library to
-  reload the userdatabase.
-* as a workaround "ATZ\r" is beeing sent before the init-string. this should
-  help to avoid problems with some crappy modems.
-
-2.1.6 (05.07.98)
-----------------
-
-* modified about & copyright texts. included "thanks to" part. If someone
-  thinks (s)he has been missed, please let me know.
-* added Delay(10); after each command that's sent to the modem. could fix
-  problems with pace modem.
-* fixed enforcer hit when moving back from loginscript recorder and forward
-  again. caused by pending serial read request which wasn't killed when
-  moving back.
-* removed help button since we don't have any amigaguide help file.
-
-2.1.7 (06.07.98)
-----------------
-
-* eof mode and all compressions are now disabled to provide max. compatibility
-  with providers, modems and serial cards.
-
-2.2.0 (09.07.98)
-----------------
-
-* full version for NC2
-* no longer pops up "try to access net now" req in demo mode => hangs up
-  immediately.
-* does no longer timeout. it's enough if genesis does.
-
-2.2.1 (03.08.98)
-----------------
-
-* changed dial sequence so it should work with those modems which refused to
-  dial.
-* dropped BOOTP support. will be replaced with DHCP in next rel.
-
-2.3.0 (24.9.98) Italian amiga show
----------------
-
-* bootp in again.
-* about window now says if program was compiled for NC
-* added support for genesis' own keyfile system.
-
-2.3.1 (30.9.98)
----------------
-
-* if after CONNECT no CD is present => don't set "CD" or "cd yes" in
-  sana2 config files. => should now work with modems that don't support
-  CD.

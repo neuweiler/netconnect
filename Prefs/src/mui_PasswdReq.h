@@ -1,6 +1,6 @@
-#define MUIM_PasswdReq_OldActive             (TAGBASE_PREFS | 0x10a0)
-#define MUIM_PasswdReq_Pw2Active             (TAGBASE_PREFS | 0x10a1)
-#define MUIA_PasswdReq_OldPassword           (TAGBASE_PREFS | 0x10a2)
+#define MUIM_PasswdReq_OldActive             (TAGBASE_PREFS | 0x1090)
+#define MUIM_PasswdReq_Pw2Active             (TAGBASE_PREFS | 0x1091)
+#define MUIA_PasswdReq_OldPassword           (TAGBASE_PREFS | 0x1092)
 
 struct PasswdReq_Data
 {

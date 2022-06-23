@@ -18,9 +18,10 @@ LONG GetEnvDOS(STRPTR name, STRPTR buffer, LONG max_len);
 STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep);
 VOID EscapeString(STRPTR buffer, STRPTR str);
 BOOL have_ppp_frame(UBYTE *data, ULONG count);
-BOOL load_config(STRPTR file, struct Config *config);
-BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct Config *config);
-VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Config *config);
+VOID clear_config(VOID);
+BOOL load_config(STRPTR file);
+BOOL save_config(STRPTR file);
+VOID print_config(BPTR fh);
 VOID clear_list(struct MinList *list);
 BOOL launch_amitcp(VOID);
 LONG amirexx_do_command(const char *fmt, ...);
@@ -82,4 +83,6 @@ VOID serial_delete(VOID);
 LONG __stdargs StackCall(LONG *Success, LONG StackSize, LONG ArgCount, LONG (* __stdargs Function)(...), ...);
 LONG StackSize(struct Task *Task);
 ///
+BOOL is_inaddr_any(STRPTR addr);
+
 

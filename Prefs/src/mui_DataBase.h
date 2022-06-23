@@ -1,60 +1,60 @@
-#define MUIM_Databases_SetStates                (TAGBASE_PREFS | 0x1050)
-#define MUIM_Databases_Modification             (TAGBASE_PREFS | 0x1051)
+#define MUIM_Database_SetStates                (TAGBASE_PREFS | 0x1030)
+#define MUIM_Database_Modification             (TAGBASE_PREFS | 0x1031)
 
-#define MUIV_Databases_SetStates_Groups            0
-#define MUIV_Databases_SetStates_Protocols         1
-#define MUIV_Databases_SetStates_Services          2
-#define MUIV_Databases_SetStates_InetAccess        3
-#define MUIV_Databases_SetStates_Inetd             4
-#define MUIV_Databases_SetStates_Hosts             5
-#define MUIV_Databases_SetStates_Networks          6
-#define MUIV_Databases_SetStates_Rpcs              7
+#define MUIV_Database_SetStates_Groups            0
+#define MUIV_Database_SetStates_Protocols         1
+#define MUIV_Database_SetStates_Services          2
+#define MUIV_Database_SetStates_InetAccess        3
+#define MUIV_Database_SetStates_Inetd             4
+#define MUIV_Database_SetStates_Hosts             5
+#define MUIV_Database_SetStates_Networks          6
+#define MUIV_Database_SetStates_Rpcs              7
 
-#define MUIV_Databases_Modification_NewGroup          1
-#define MUIV_Databases_Modification_GroupName         2
-#define MUIV_Databases_Modification_GroupNumber       3
-#define MUIV_Databases_Modification_GroupMembers      4
-#define MUIV_Databases_Modification_ProtocolName      5
-#define MUIV_Databases_Modification_ProtocolID        6
-#define MUIV_Databases_Modification_ProtocolAliases   7
-#define MUIV_Databases_Modification_ServiceName       8
-#define MUIV_Databases_Modification_ServicePort       9
-#define MUIV_Databases_Modification_ServiceAliases    10
-#define MUIV_Databases_Modification_ServiceProtocol   11
-#define MUIV_Databases_Modification_InetAccessService 12
-#define MUIV_Databases_Modification_InetAccessHost    13
-#define MUIV_Databases_Modification_InetAccess        14
-#define MUIV_Databases_Modification_InetAccessLog     15
-#define MUIV_Databases_Modification_InetdService      16
-#define MUIV_Databases_Modification_InetdUser         17
-#define MUIV_Databases_Modification_InetdServer       18
-#define MUIV_Databases_Modification_InetdCliName      19
-#define MUIV_Databases_Modification_InetdArgs         20
-#define MUIV_Databases_Modification_InetdActive       21
-#define MUIV_Databases_Modification_InetdProtocol     22
-#define MUIV_Databases_Modification_InetdSocket       23
-#define MUIV_Databases_Modification_InetdWait         24
-#define MUIV_Databases_Modification_HostAddr          25
-#define MUIV_Databases_Modification_HostName          26
-#define MUIV_Databases_Modification_HostAliases       27
-#define MUIV_Databases_Modification_NetworkName       28
-#define MUIV_Databases_Modification_NetworkID         29
-#define MUIV_Databases_Modification_NetworkAliases    30
-#define MUIV_Databases_Modification_RpcName           31
-#define MUIV_Databases_Modification_RpcID             32
-#define MUIV_Databases_Modification_RpcAliases        33
-#define MUIV_Databases_Modification_NewProtocol       34
-#define MUIV_Databases_Modification_NewService        35
-#define MUIV_Databases_Modification_NewInetAccess     36
-#define MUIV_Databases_Modification_NewInetd          37
-#define MUIV_Databases_Modification_NewHost           38
-#define MUIV_Databases_Modification_NewNetwork        39
-#define MUIV_Databases_Modification_NewRpc            40
+#define MUIV_Database_Modification_NewGroup          1
+#define MUIV_Database_Modification_GroupName         2
+#define MUIV_Database_Modification_GroupNumber       3
+#define MUIV_Database_Modification_GroupMembers      4
+#define MUIV_Database_Modification_ProtocolName      5
+#define MUIV_Database_Modification_ProtocolID        6
+#define MUIV_Database_Modification_ProtocolAliases   7
+#define MUIV_Database_Modification_ServiceName       8
+#define MUIV_Database_Modification_ServicePort       9
+#define MUIV_Database_Modification_ServiceAliases    10
+#define MUIV_Database_Modification_ServiceProtocol   11
+#define MUIV_Database_Modification_InetAccessService 12
+#define MUIV_Database_Modification_InetAccessHost    13
+#define MUIV_Database_Modification_InetAccess        14
+#define MUIV_Database_Modification_InetAccessLog     15
+#define MUIV_Database_Modification_InetdService      16
+#define MUIV_Database_Modification_InetdUser         17
+#define MUIV_Database_Modification_InetdServer       18
+#define MUIV_Database_Modification_InetdCliName      19
+#define MUIV_Database_Modification_InetdArgs         20
+#define MUIV_Database_Modification_InetdActive       21
+#define MUIV_Database_Modification_InetdProtocol     22
+#define MUIV_Database_Modification_InetdSocket       23
+#define MUIV_Database_Modification_InetdWait         24
+#define MUIV_Database_Modification_HostAddr          25
+#define MUIV_Database_Modification_HostName          26
+#define MUIV_Database_Modification_HostAliases       27
+#define MUIV_Database_Modification_NetworkName       28
+#define MUIV_Database_Modification_NetworkID         29
+#define MUIV_Database_Modification_NetworkAliases    30
+#define MUIV_Database_Modification_RpcName           31
+#define MUIV_Database_Modification_RpcID             32
+#define MUIV_Database_Modification_RpcAliases        33
+#define MUIV_Database_Modification_NewProtocol       34
+#define MUIV_Database_Modification_NewService        35
+#define MUIV_Database_Modification_NewInetAccess     36
+#define MUIV_Database_Modification_NewInetd          37
+#define MUIV_Database_Modification_NewHost           38
+#define MUIV_Database_Modification_NewNetwork        39
+#define MUIV_Database_Modification_NewRpc            40
 
-struct MUIP_Databases_SetStates        { ULONG MethodID; LONG page; };
-struct MUIP_Databases_Modification     { ULONG MethodID; LONG what; };
+struct MUIP_Database_SetStates        { ULONG MethodID; LONG page; };
+struct MUIP_Database_Modification     { ULONG MethodID; LONG what; };
 
-struct Databases_Data
+struct Database_Data
 {
    Object *CY_Pager;
    Object *GR_Pager;

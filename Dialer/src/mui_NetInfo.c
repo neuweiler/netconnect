@@ -14,6 +14,7 @@
 /// external variables
 extern Object *app, *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
+extern struct Config Config;
 
 ///
 
@@ -21,14 +22,13 @@ extern struct MUI_CustomClass  *CL_MainWindow;
 ULONG NetInfo_Update(struct IClass *cl, Object *obj, Msg msg)
 {
    struct NetInfo_Data *data = INST_DATA(cl,obj);
-   struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
    struct Interface *iface;
 
    set(data->LI_Ifaces, MUIA_List_Quiet, TRUE);
    DoMethod(data->LI_Ifaces, MUIM_List_Clear);
-   if(mw_data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&mw_data->isp.isp_ifaces)
+   if(Config.cnf_ifaces.mlh_TailPred != (struct MinNode *)&Config.cnf_ifaces)
    {
-      iface = (struct Interface *)mw_data->isp.isp_ifaces.mlh_Head;
+      iface = (struct Interface *)Config.cnf_ifaces.mlh_Head;
       while(iface->if_node.mln_Succ)
       {
          DoMethod(data->LI_Ifaces, MUIM_List_InsertSingle, iface, MUIV_List_Insert_Bottom);
@@ -58,18 +58,18 @@ SAVEDS ASM LONG Iface_DisplayFunc(register __a2 char **array, register __a1 stru
    if(iface)
    {
       *array++ = iface->if_name;
-      *array++ = (iface->if_flags & IFL_IsOnline ? "online" : "offline");
+      *array++ = (iface->if_flags & IFL_IsOnline ? GetStr(MSG_TX_Online) : GetStr(MSG_TX_Offline));
       *array++ = iface->if_addr;
       *array++ = iface->if_dst;
       *array   = iface->if_gateway;
    }
    else
    {
-      *array++ = GetStr("\033bIface");
-      *array++ = GetStr("\033bStatus");
-      *array++ = GetStr("\033bIP address");
-      *array++ = GetStr("\033bDestination");
-      *array   = GetStr("\033bGateway");
+      *array++ = GetStr(MSG_TX_Iface);
+      *array++ = GetStr(MSG_TX_Status);
+      *array++ = GetStr(MSG_TX_IPAddr);
+      *array++ = GetStr(MSG_TX_Destination);
+      *array   = GetStr(MSG_TX_Gateway);
    }
    return(NULL);
 }
@@ -83,7 +83,7 @@ ULONG NetInfo_New(struct IClass *cl, Object *obj, Msg msg)
    struct NetInfo_Data tmp;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title       , "GENESiS · Network status",
+      MUIA_Window_Title       , GetStr(MSG_TX_NetinfoWindowTitle),
       MUIA_Window_ID          , MAKE_ID('N','I','N','F'),
       MUIA_Window_Height      , MUIV_Window_Height_MinMax(5),
       MUIA_Window_Width       , MUIV_Window_Width_MinMax(10),

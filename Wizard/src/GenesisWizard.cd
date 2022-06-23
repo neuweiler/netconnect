@@ -1,6 +1,5 @@
 #language english
 #version 2
-#lengthbytes 0
 ;
 ;
 ; general stuff
@@ -26,13 +25,16 @@ MSG_ReqBT_IgnoreCancel (//)
 *_Ignore|_Cancel
 ;
 MSG_ReqBT_Abort (//)
-*_Abort
+Abort
 ;
 MSG_ReqBT_ContinueAbort (//)
 _Continue|*\033b_Abort
 ;
 MSG_BT_ViewConfigInfo (//)
 _View configuration information
+;
+MSG_ReqBT_ReuseSpecify (//)
+*_Reuse|_Specify
 ;
 ;
 ; normal buttons
@@ -52,7 +54,7 @@ _Add
 ;
 ;
 MSG_TX_MainWindowTitle (//)
-GENESiS Wizard  © 1997,98 by Michael Neuweiler & Active Technologies
+GENESiS Wizard  © 1997-99 by Michael Neuweiler & Active Technologies
 ;
 MSG_TX_NoDSR (//)
 Could not detect the DSR (Dataset ready)\nsignal from your modem. If it wasn't\nswitched on, please switch it on now and\nchoose cancel.
@@ -62,6 +64,12 @@ Your modem is not responding with \"OK\"\nto the init string. Please make sure t
 ;
 MSG_TX_NoOKOnAT (//)
 Your modem is not responding to basic commands.\nPlease make sure the modem is switched on,\nproperly connected and the correct driver\nwas chosen.
+;
+MSG_TX_UseOldModem (//)
+GENESiS Wizard found that you've already configured\na modem previously. Would you like to \033breuse\033n it or\n would you like to \033bspecify a new modem\033n ?\n\nModem:  %ls\nDevice: %ls, Unit %ld
+;
+MSG_TX_CheckingModem (//)
+\033cchecking modem...
 ;
 MSG_TX_SpecifyDialPrefix (//)
 You must specify a \033bdial prefix\033n !\nOtherwise the modem won't\nbe able to dial.
@@ -193,7 +201,7 @@ MSG_HELP_PhoneNumber (//)
 Enter the phone number of your provider here.\nYou can enter multiple numbers by separating\nthem with a '|' vertical bar sign.
 ;
 MSG_TX_InfoLoginName (//)
-Please enter the \033blogin name\033n chosen to connect to your\nInternet Service Provider (loginname is sometimes referred\nto as the \"user-id\":
+Please enter the \033blogin name\033n chosen to connect to your\nInternet Service Provider (loginname is sometimes referred\nto as the \"user-id\"):
 ;
 MSG_TX_InfoPassword (//)
 Enter your \033bpassword\033n needed to connect to your Internet\nService Provider:
@@ -475,6 +483,25 @@ MSG_HELP_ConfigParams (//)
 Certain sana-II devices require additional parameters.\nThis is the template:\n\nIPTYPE/N/K, ADDR=ADDRESS/K, ARPTYPE=IPARPTYPE/N/K,\nIPREQ=IPREQUESTS/N/K, ARPREQ=ARPREQUESTS/N/K, WRITEREQ=WRITEREQUESTS/N/K,\nNOTRACKING/S, NOQUICKIO/S, FILTER/S, NOARP/S, P2P=POINT2POINT/S,\nNOSIMPLEX/S, LOOPBACK/S
 ;
 ;
+; mui_about.c
+;
+;
+MSG_TX_About1a (//)
+\n\033c\033b\033uGENESiS Wizard - Get easily connected\033n\n\n\033cVersion
+;
+MSG_TX_About1b (//)
+All Rights Reserved\n
+;
+MSG_TX_About2 (//)
+\n\033cRegistered to:\n\033i
+;
+MSG_TX_About3 (//)
+\n\033cSupport Mailing list:\n\033i<GENESiS-request@vapor.com>\033n\n\033cSupport FTP site:\n\033iftp://ftp.vapor.com/pub/genesis\033n\n\033cSupport WWW site:\n\033ihttp://www.vapor.com/genesis\033n\n\nThanks go to:\nOliver Wagner, NSDI Group, Simone Tellini, Niels Heuer,\nChristoph Dietz, Thomas Bickel and many more.
+;
+MSG_TX_About4 (//)
+\n\033cGENESiS uses the MUI object library\nMUI is © 1992-97 by Stefan Stunz <stuntz@sasg.com>\n\nNList.mcc, NListview.mcc are © 1996-98 Gilles Masson\nBusy.mcc is © 1994-97 kmel, Klaus Melchior\nTerm.mcc is © 1996 by Mathias Mischler\n\nAmiTCP is © by NSDI\nGENESiS uses code that was kindly provided by NSDI
+;
+;
 ; amiga.c
 ;
 ;
@@ -500,7 +527,7 @@ MSG_LA_LoginName (//)
 Login name:
 ;
 MSG_TX_InfoTitle (//)
-GENESiS network configuration\n----------------------------\n\nGENESiS Wizard Copyright © 1997,98 by Michael Neuweiler & Active Technologies\n\n\n
+GENESiS network configuration\n----------------------------\n\nGENESiS Wizard Copyright © 1997-99 by Michael Neuweiler & Active Technologies\n\n\n
 ;
 MSG_TX_ObtainedBy (//)
 obtained by

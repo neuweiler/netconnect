@@ -14,6 +14,10 @@
 extern struct Library *MUIMasterBase;
 extern Object *app, *win, *status_win;
 extern struct Config Config;
+extern struct   IOExtSer *SerReadReq;
+extern struct   MsgPort  *SerReadPort;
+extern struct   IOExtSer *SerWriteReq;
+extern struct   MsgPort  *SerWritePort;
 extern struct MUI_CustomClass  *CL_Online;
 extern int dialing_try, dial_number;
 extern BOOL keyboard_input;
@@ -21,10 +25,9 @@ extern BOOL use_loginscript;
 extern char serial_in[], serial_buffer[], serial_buffer_old1[], serial_buffer_old2[];
 extern char keyboard_buffer[];
 extern WORD ser_buf_pos, key_buf_pos;
-extern struct   MsgPort        *SerReadPort;
-extern struct   IOExtSer       *SerReadReq, *SerWriteReq;
-extern struct ISP ISP;
 extern BOOL no_carrier;
+extern struct Interface Iface;
+extern struct Modem Modem;
 
 ///
 
@@ -38,7 +41,7 @@ VOID add_sl(LONG command, STRPTR contents)
       sl->sl_command = command;
       if(contents)
          strncpy(sl->sl_contents, contents, sizeof(sl->sl_contents));
-      AddTail((struct List *)&ISP.isp_loginscript, (struct Node *)sl);
+      AddTail((struct List *)&Iface.if_loginscript, (struct Node *)sl);
    }
 }
 
@@ -91,23 +94,23 @@ ULONG LoginScript_SerialInput(struct IClass *cl, Object *obj, Msg msg)
                strcpy(serial_buffer_old2, serial_buffer_old1);
                strcpy(serial_buffer_old1, serial_buffer);
 
-               if(strstr(serial_buffer, "CONNECT") == serial_buffer && !use_loginscript)
+               if(strstr(serial_buffer, Modem.mo_connect) == serial_buffer && !use_loginscript)
                {
                   serial_buffer[0] = NULL;   // to make sure it doesn't get called twice
-                  DoMethod(obj, MUIM_LoginScript_GoOnline);
+                  DoMethod(app, MUIM_Application_PushMethod, obj, 1, MUIM_LoginScript_GoOnline);
                }
-               if(strstr(serial_buffer, "NO DIAL TONE") == serial_buffer || strstr(serial_buffer, "NO DIALTONE") == serial_buffer)
+               if(strstr(serial_buffer, Modem.mo_nodialtone) == serial_buffer)
                {
                   serial_buffer[0] = NULL;   // otherwise the req is opened twice
                   MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_NoDialtone));
                }
-               if((strstr(serial_buffer, "NO CARRIER") == serial_buffer || strstr(serial_buffer, "BUSY") == serial_buffer) && dialing_try)
+               if((strstr(serial_buffer, Modem.mo_nocarrier) == serial_buffer || strstr(serial_buffer, Modem.mo_busy) == serial_buffer) && dialing_try)
                {
                   serial_buffer[0] = NULL;
                   set(app, MUIA_Application_Sleep, TRUE);
                   dial_number++;
                   Delay(80);
-                  DoMethod(obj, MUIM_LoginScript_Dial, FALSE);
+                  DoMethod(app, MUIM_Application_PushMethod, obj, 2, MUIM_LoginScript_Dial, FALSE);
                   set(app, MUIA_Application_Sleep, FALSE);
                }
                serial_buffer[0] = NULL;
@@ -142,7 +145,7 @@ ULONG LoginScript_SerialInput(struct IClass *cl, Object *obj, Msg msg)
                         serial_stopread();
                         data->ihnode_added = FALSE;
                      }
-                     DoMethod(obj, MUIM_LoginScript_GoOnline);
+                     DoMethod(app, MUIM_Application_PushMethod, obj, 1, MUIM_LoginScript_GoOnline);
                   }
                break;
             }
@@ -174,22 +177,22 @@ ULONG LoginScript_KeyboardInput(struct IClass *cl, Object *obj, Msg msg)
          switch((ULONG)ptr[1])
          {
             case '0':
-               DoMethod(obj, MUIM_LoginScript_Dial, TRUE);
+               DoMethod(app, MUIM_Application_PushMethod, obj, 2, MUIM_LoginScript_Dial, TRUE);
                break;
             case '1':
-               DoMethod(obj, MUIM_LoginScript_GoOnline);
+               DoMethod(app, MUIM_Application_PushMethod, obj, 1, MUIM_LoginScript_GoOnline);
                break;
             case '2':
-               DoMethod(obj, MUIM_LoginScript_HangUp);
+               DoMethod(app, MUIM_Application_PushMethod, obj, 1, MUIM_LoginScript_HangUp);
                break;
             case '3':
-               DoMethod(obj, MUIM_LoginScript_SendLogin);
+               DoMethod(app, MUIM_Application_PushMethod, obj, 1, MUIM_LoginScript_SendLogin);
                break;
             case '4':
-               DoMethod(obj, MUIM_LoginScript_SendPassword);
+               DoMethod(app, MUIM_Application_PushMethod, obj, 1, MUIM_LoginScript_SendPassword);
                break;
             case '5':
-               DoMethod(obj, MUIM_LoginScript_SendBreak);
+               DoMethod(app, MUIM_Application_PushMethod, obj, 1, MUIM_LoginScript_SendBreak);
                break;
          }
       }
@@ -248,7 +251,7 @@ ULONG LoginScript_Dial(struct IClass *cl, Object *obj, struct MUIP_LoginScript_D
       dialing_try = 1;
       dial_number = 0;
       do_keyboard();
-      clear_list(&ISP.isp_loginscript);
+      clear_list(&Iface.if_loginscript);
       add_sl(SL_Dial, NULL);
    }
 
@@ -258,7 +261,7 @@ ULONG LoginScript_Dial(struct IClass *cl, Object *obj, struct MUIP_LoginScript_D
    FOREVER
    {
       i = dial_number;
-      ptr = ISP.isp_phonenumber;
+      ptr = Iface.if_phonenumber;
       while(i-- > 0 && ptr)
       {
          ptr++;
@@ -299,26 +302,25 @@ ULONG LoginScript_Dial(struct IClass *cl, Object *obj, struct MUIP_LoginScript_D
    }
 
    serial_send("\r", -1);
-   Delay(10);
-   serial_send("AAT\r", -1);
-   serial_waitfor("OK", NULL, NULL, 1);
+   Delay(Modem.mo_commanddelay);
+   serial_send("AT\r", -1);
+   serial_waitfor(Modem.mo_ok, NULL, NULL, 1);
    DoMethod(data->TR_Terminal, TCM_WRITE, serial_buffer, strlen(serial_buffer));
-   Delay(10);
+   Delay(Modem.mo_commanddelay);
 
-   EscapeString(buffer1, Config.cnf_initstring);
-   strcat(buffer1, "\r");
+   EscapeString(buffer1, Modem.mo_init);
    serial_send(buffer1, -1);
-   serial_waitfor("OK", NULL, NULL, 3);
+   serial_waitfor(Modem.mo_ok, NULL, NULL, 3);
    DoMethod(data->TR_Terminal, TCM_WRITE, serial_buffer, strlen(serial_buffer));
-   Delay(10);
+   Delay(Modem.mo_commanddelay);
 
    serial_startread(serial_in, 1);
    DoMethod(app, MUIM_Application_AddInputHandler, &data->ihnode);
    data->ihnode_added = TRUE;
 
-   EscapeString(buffer1, Config.cnf_dialprefix);
+   EscapeString(buffer1, Modem.mo_dialprefix);
    strcat(buffer1, buffer2);
-   strcat(buffer1, "\r");
+   EscapeString(&buffer1[strlen(buffer1)], Modem.mo_dialsuffix);
    serial_send(buffer1, -1);
 
    return(NULL);
@@ -332,9 +334,13 @@ ULONG LoginScript_GoOnline(struct IClass *cl, Object *obj, Msg msg)
 
    if(!serial_carrier())
    {
-      if(!(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_ContinueAbort), GetStr(MSG_TX_WarningNoCarrierOnline))))
-         return(NULL);
-      no_carrier = TRUE;
+      Delay(50);
+      if(!serial_carrier())
+      {
+         if(!(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_ContinueAbort), GetStr(MSG_TX_WarningNoCarrierOnline))))
+            return(NULL);
+         no_carrier = TRUE;
+      }
    }
 
    if(data->ihnode_added)
@@ -363,8 +369,6 @@ ULONG LoginScript_GoOnline(struct IClass *cl, Object *obj, Msg msg)
 /// LoginScript_HangUp
 ULONG LoginScript_HangUp(struct IClass *cl, Object *obj, Msg msg)
 {
-//   struct LoginScript_Data *data = INST_DATA(cl, obj);
-
    set(obj, MUIA_Window_Sleep, TRUE);
 
    dialing_try = 0;
@@ -389,7 +393,7 @@ ULONG LoginScript_SendLogin(struct IClass *cl, Object *obj, Msg msg)
    do_serial();
    add_sl(SL_SendLogin, NULL);
 
-   sprintf(buffer, "%ls\r", ISP.isp_login);
+   sprintf(buffer, "%ls\r", Iface.if_login);
    serial_send(buffer, -1);
 
    return(NULL);
@@ -407,7 +411,7 @@ ULONG LoginScript_SendPassword(struct IClass *cl, Object *obj, Msg msg)
    do_serial();
    add_sl(SL_SendPassword, NULL);
 
-   sprintf(buffer, "%ls\r", ISP.isp_password);
+   sprintf(buffer, "%ls\r", Iface.if_password);
    serial_send(buffer, -1);
 
    return(NULL);

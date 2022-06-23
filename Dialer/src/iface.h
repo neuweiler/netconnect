@@ -32,10 +32,9 @@ struct Interface_Data {
   u_char ifd_haddr[16];    /* the hw address itself */
   short  ifd_flags;        /* interface flags */
   u_long ifd_addr;         /* our configured address */
-  u_long ifd_dst;          /* destination (or broadcast) address */
-  u_long ifd_netmask;
-  u_long ifd_gateway;
-  u_long ifd_MTU;          /* interface maximum transfer unit size */
+//  u_long ifd_netmask;
+//  u_long ifd_gateway;
+//  u_long ifd_MTU;          /* interface maximum transfer unit size */
 /* private: */
   int ifd_fd;              /* socket descriptor used for ioctl's */
 /* optional sana2 info */
@@ -45,7 +44,7 @@ struct Interface_Data {
 
 struct Interface_Data *iface_alloc(struct Library *SocketBase);
 void iface_free(struct Library *SocketBase, struct Interface_Data *iface_data);
-BOOL iface_init(struct Library *SocketBase, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp, struct Config *conf);
+BOOL iface_init(struct Library *SocketBase, struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf);
 void iface_deinit(struct Interface_Data *iface_data);
 
 void iface_close_sana2(struct Interface_Data *iface_data);
@@ -56,7 +55,7 @@ void  iface_cleanup_bootp(struct Library *SocketBase, struct Interface_Data *ifa
 BOOL iface_online(struct Library *SocketBase, struct Interface_Data *iface_data);
 BOOL    iface_offline(struct Library *SocketBase, struct Interface_Data * iface_data);
 
-BOOL    iface_runscript(struct Interface_Data * iface_data, struct Interface *iface, struct ISP *isp, struct Config *conf);
+BOOL    iface_runscript(struct Interface *iface, struct Modem *modem);
 BOOL    iface_config(struct Library *SocketBase, struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf);
 
 int route_add(struct Library *SocketBase, int fd, short flags, u_long from, u_long to, BOOL    force);

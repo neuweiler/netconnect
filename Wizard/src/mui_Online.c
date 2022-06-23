@@ -39,7 +39,6 @@ extern WORD ser_buf_pos;
 extern BOOL dialup;
 extern const char AmiTCP_PortName[];
 extern struct Interface Iface;
-extern struct ISP ISP;
 extern struct Library *NetConnectBase;
 
 ///
@@ -55,6 +54,18 @@ BOOL get_request(STRPTR text, STRPTR buffer, struct Process *proc)
    if((sigs & SIGBREAKF_CTRL_D) && *buffer)
       return(TRUE);
 
+   return(FALSE);
+}
+
+///
+/// is_inaddr_any
+BOOL is_inaddr_any(STRPTR addr)
+{
+   if(!*addr || !strcmp(addr, "0.0.0.0") || (inet_addr(addr) == INADDR_NONE) || (inet_addr(addr) == INADDR_ANY))
+   {
+      *addr = NULL;
+      return(TRUE);
+   }
    return(FALSE);
 }
 
@@ -88,41 +99,34 @@ BOOL netmask_check(ULONG netmask, ULONG ipaddr)
 
 ///
 /// config_complete
-BOOL config_complete(struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp)
+BOOL config_complete(struct Interface_Data *iface_data, struct Interface *iface)
 {
-   struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
-   char *tmpstr;
-
    // Special checks for point-to-point interfaces
    if(!dialup && iface_data->ifd_flags & IFF_POINTOPOINT)
    {
       // try to find destination IP for a p-to-p link if not given
-      if(!*iface->if_dst)
+      if(is_inaddr_any(iface->if_dst))
       {
-         if(*iface->if_gateway)
+         if(!is_inaddr_any(iface->if_gateway))
          {
             syslog_AmiTCP(LOG_DEBUG, "Using the default gateway address as destination address.");
-            strcpy(iface->if_dst, iface->if_gateway);
+            strncpy(iface->if_dst, iface->if_gateway, sizeof(iface->if_dst));
          }
          // Use a fake IP address for the destination IP address if nothing else is available.
          else
          {
-Printf("Destination & Gateway are missing. Use requester\n");
-            if(!get_request(GetStr(MSG_TX_NoDestinationReq), Iface.if_dst, data->TCPHandler))
-            {
-               syslog_AmiTCP(LOG_DEBUG, "Using a 'fake' IP address 0.1.2.3 as the destination address.");
-               strcpy(iface->if_dst, "0.1.2.3");
-            }
-            dst_assign = CNF_Assign_Static;
+            syslog_AmiTCP(LOG_DEBUG, "Using the local IP address %ls as a 'fake' destination IP address.", iface->if_addr);
+            strncpy(iface->if_dst, iface->if_addr, sizeof(iface->if_dst));
+            dst_assign = addr_assign;
          }
       }
       // use destination as default gateway if not given
-      if(!*iface->if_gateway)
+      if(is_inaddr_any(iface->if_gateway))
       {
-         if(*iface->if_dst)
+         if(!is_inaddr_any(iface->if_dst))
          {
             syslog_AmiTCP(LOG_DEBUG, "Using the destination address as default gateway address.");
-            strcpy(iface->if_gateway, iface->if_dst);
+            strncpy(iface->if_gateway, iface->if_dst, sizeof(iface->if_gateway));
             gw_assign = dst_assign;
          }
          // could try existing destination, existing gateway etc.
@@ -133,7 +137,7 @@ Printf("Destination & Gateway are missing. Use requester\n");
 
    // netmask will be set to default by AmiTCP if not present at all
    // warn if default netmask will be used on a broadcast interface
-   if(!*iface->if_netmask && iface_data->ifd_flags & IFF_BROADCAST)
+   if(is_inaddr_any(iface->if_netmask) && (iface_data->ifd_flags & IFF_BROADCAST))
       syslog_AmiTCP(LOG_DEBUG, "Note: Default netmask will be used for the interface %ls", iface->if_name);
 
    // One additional validity test for the netmask we might now have the IP
@@ -143,33 +147,6 @@ Printf("Destination & Gateway are missing. Use requester\n");
       *iface->if_netmask = NULL;
    }
 
-   // Checks for host name and domain name:
-   // 1. If hostname is not set, try to get it from an environment variable
-   // 2. If host name contains the domain part, check if domain name is not set, and set it.
-   // 3. If host name does not contain the domain part, check if we can complete the name from the domain name.
-   if((tmpstr = strchr(isp->isp_hostname, '.')) != NULL)
-   {
-      if(isp->isp_domainnames.mlh_TailPred == (struct MinNode *)&isp->isp_domainnames)
-         add_server(&isp->isp_domainnames, tmpstr+1);
-   }
-   else // dot NOT present on the host name
-   {
-      if((isp->isp_domainnames.mlh_TailPred != (struct MinNode *)&isp->isp_domainnames) && *isp->isp_hostname)
-      {
-         struct ServerEntry *server;
-
-         server = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
-         if(server->se_node.mln_Succ)
-         {
-            size_t hostnamelen = strlen(isp->isp_hostname);
-
-            // Concatenate "." and domain name to the host name
-            if(sizeof(isp->isp_hostname) > strlen(server->se_name) + hostnamelen + 1)
-               isp->isp_hostname[hostnamelen++] = '.';
-            strcpy(isp->isp_hostname + hostnamelen, server->se_name);
-         }
-      }
-   }
    return(TRUE);
 }
 
@@ -189,11 +166,12 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    *Iface.if_addr    = NULL;
    *Iface.if_dst     = NULL;
    *Iface.if_gateway = NULL;
-   strcpy(Iface.if_netmask, "255.255.255.0");
+   strcpy(Iface.if_netmask, "255.255.255.255");
    Iface.if_MTU = 1500;
-   *ISP.isp_hostname = NULL;
-   clear_list(&ISP.isp_nameservers);
-   clear_list(&ISP.isp_domainnames);
+   *Iface.if_hostname = NULL;
+   Iface.if_flags = IFL_UseHostName | IFL_UseDomainName;
+   clear_list(&Iface.if_nameservers);
+   clear_list(&Iface.if_domainnames);
    addr_assign = dst_assign = dns_assign = domainname_assign = gw_assign = NULL;
 
    if(fh = Open("AmiTCP:db/resolv.conf", MODE_NEWFILE))
@@ -249,11 +227,8 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
 
    if(data->abort)   goto abort;
 
-   if(amirexx_do_command("RESET RESOLV") != RETURN_OK)
-      Printf("ERROR: Could not reset resolv database.\n");
-
-   if(*Iface.if_addr && !addr_assign)
-      addr_assign  = CNF_Assign_Static;
+   if(!is_inaddr_any(Iface.if_addr) && !addr_assign)
+      addr_assign  = ASSIGN_Static;
 
    if(!(iface_data = iface_alloc()))
    {
@@ -266,37 +241,41 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    if(data->abort)   goto abort;
 Printf("init iface\n");
    NCL_CallMeSometimes();
-   if(!(iface_init(iface_data, &Iface, &ISP, &Config)))
+   if(!(iface_init(iface_data, &Iface)))
       goto abort;
 Printf("iface initialized\n");
 
    // get appp.device's ms-dns addresses
-   ReadFile("ENV:APPPdns1", buffer, 20);
-   if(!find_server_by_name(&ISP.isp_nameservers, buffer))
-      add_server(&ISP.isp_nameservers, buffer);
-   ReadFile("ENV:APPPdns2", buffer, 20);
-   if(!find_server_by_name(&ISP.isp_nameservers, buffer))
-      add_server(&ISP.isp_nameservers, buffer);
+   if(ReadFile("ENV:APPPdns1", buffer, 20) > 0)
+   {
+      add_server(&Iface.if_nameservers, buffer);
+      Iface.if_flags |= IFL_UseNameServer;
+   }
+   if(ReadFile("ENV:APPPdns2", buffer, 20) > 0)
+   {
+      add_server(&Iface.if_nameservers, buffer);
+      Iface.if_flags |= IFL_UseNameServer;
+   }
 
-   if(*Iface.if_addr && !addr_assign)
-      addr_assign = CNF_Assign_IFace;
-   if(*Iface.if_gateway && !gw_assign)
-      gw_assign = CNF_Assign_IFace;
-   if(*Iface.if_dst && !dst_assign)
-      dst_assign = CNF_Assign_IFace;
-   if((ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers) && !dns_assign)
-      dns_assign = CNF_Assign_IFace;
+   if(!is_inaddr_any(Iface.if_addr) && !addr_assign)
+      addr_assign = ASSIGN_IFace;
+   if(!is_inaddr_any(Iface.if_gateway) && !gw_assign)
+      gw_assign = ASSIGN_IFace;
+   if(!is_inaddr_any(Iface.if_dst) && !dst_assign)
+      dst_assign = ASSIGN_IFace;
+   if((Iface.if_nameservers.mlh_TailPred != (struct MinNode *)&Iface.if_nameservers) && !dns_assign)
+      dns_assign = ASSIGN_IFace;
 
    if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_SendingBOOTP), NULL);
    if(data->abort)   goto abort;
 Printf("preparing BOOTP\n");
 
-   iface_prepare_bootp(iface_data, &Iface, &Config);
+   iface_prepare_bootp(iface_data, &Iface);
    if(bpc = bootpc_create())
    {
 Printf("do BOOTP\n");
-      if(bootpc_do(bpc, iface_data, &Iface, &ISP))
+      if(bootpc_do(bpc, iface_data, &Iface))
       {
          Printf("BOOTP failed to have an answer.\n");
          if(data->abort)   goto abort;
@@ -316,41 +295,41 @@ Printf("delete BOOTP\n");
    else
       Printf("WARNING: No memory for BOOTP request !\n");
 Printf("Cleanup BOOTP\n");
-   iface_cleanup_bootp(iface_data, &Config);
+   iface_cleanup_bootp(iface_data);
 
    if(data->abort)   goto abort;
 
-   if(*Iface.if_addr && !addr_assign)
-      addr_assign = CNF_Assign_BOOTP;
-   if(*Iface.if_dst && !dst_assign)
-      dst_assign = CNF_Assign_BOOTP;
-   if(*Iface.if_gateway && !gw_assign)
-      gw_assign = CNF_Assign_BOOTP;
-   if((ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers) && !dns_assign)
-      dns_assign = CNF_Assign_BOOTP;
-   if((ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames) && !domainname_assign)
-      domainname_assign = CNF_Assign_BOOTP;
+   if(!is_inaddr_any(Iface.if_addr) && !addr_assign)
+      addr_assign = ASSIGN_BOOTP;
+   if(!is_inaddr_any(Iface.if_dst) && !dst_assign)
+      dst_assign = ASSIGN_BOOTP;
+   if(!is_inaddr_any(Iface.if_gateway) && !gw_assign)
+      gw_assign = ASSIGN_BOOTP;
+   if((Iface.if_nameservers.mlh_TailPred != (struct MinNode *)&Iface.if_nameservers) && !dns_assign)
+      dns_assign = ASSIGN_BOOTP;
+   if((Iface.if_domainnames.mlh_TailPred != (struct MinNode *)&Iface.if_domainnames) && !domainname_assign)
+      domainname_assign = ASSIGN_BOOTP;
 
    if(data->abort)   goto abort;
 
-   if(!*Iface.if_addr)
+   if(is_inaddr_any(Iface.if_addr))
    {
 Printf("IP is missing. Use requester\n");
       get_request(GetStr(MSG_TX_NoIPReq), Iface.if_addr, data->TCPHandler);
-      addr_assign = CNF_Assign_Static;
+      addr_assign = ASSIGN_Static;
    }
 Printf("IP : %ls\n", Iface.if_addr);
 
    if(data->abort)   goto abort;
 
-   if(!*Iface.if_addr && !data->abort)
+   if(is_inaddr_any(Iface.if_addr) && !data->abort)
    {
       DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Abort), GetStr(MSG_TX_ErrorNoIP), NULL);
       goto abort;
    }
 
 Printf("check if config is complete\n");
-   if(!config_complete(iface_data, &Iface, &ISP))
+   if(!config_complete(iface_data, &Iface))
    {
       syslog_AmiTCP(LOG_CRIT, "Not enough information to configure '%ls'.", Iface.if_name);
       goto abort;
@@ -361,7 +340,7 @@ Printf("check if config is complete\n");
    NCL_CallMeSometimes();
 Printf("configure interface\n");
 
-   if(!(iface_config(iface_data, &Iface, &Config)))
+   if(!(iface_config(iface_data, &Iface)))
    {
       sprintf(buffer, GetStr(MSG_TX_ErrorConfigIface), Iface.if_name);
       if(!data->abort)
@@ -373,15 +352,8 @@ Printf("configure interface\n");
 
    if(!dialup)
    {
-Printf("got the pro version\n");
-      if(!*Iface.if_gateway)
-      {
-Printf("gateway was missing\n");
-         get_request(GetStr(MSG_TX_NoGatewayReq), Iface.if_gateway, data->TCPHandler);
-         gw_assign = CNF_Assign_Static;
-      }
 Printf("add route to def gateway: %ls\n", Iface.if_gateway);
-      if(!*Iface.if_gateway)
+      if(is_inaddr_any(Iface.if_gateway))
          syslog_AmiTCP(LOG_WARNING, "Default gateway information not found.");
       else
          route_add(iface_data->ifd_fd, RTF_UP|RTF_GATEWAY, INADDR_ANY, inet_addr(Iface.if_gateway), TRUE /* force */);
@@ -396,27 +368,31 @@ Printf("free iface\n");
    iface_data = NULL;
 
 Printf("checking nameservers\n");
-   if(ISP.isp_nameservers.mlh_TailPred == (struct MinNode *)&ISP.isp_nameservers)
+   if(Iface.if_nameservers.mlh_TailPred == (struct MinNode *)&Iface.if_nameservers)
    {
       while(get_request(GetStr(MSG_TX_NoDNSReq), buffer, data->TCPHandler))
-         add_server(&ISP.isp_nameservers, buffer);
-      dns_assign = CNF_Assign_Static;
+         add_server(&Iface.if_nameservers, buffer);
+      dns_assign = ASSIGN_Static;
    }
 
-   if(ISP.isp_nameservers.mlh_TailPred == (struct MinNode *)&ISP.isp_nameservers)
+   if(Iface.if_nameservers.mlh_TailPred == (struct MinNode *)&Iface.if_nameservers)
    {
       DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), (APTR)GetStr(MSG_TX_WarningNoDNS), NULL);
-      add_server(&ISP.isp_nameservers, "198.41.0.4");
-      add_server(&ISP.isp_nameservers, "128.9.0.107");
-      ISP.isp_flags |= ISF_DontQueryHostname;
-      dns_assign = CNF_Assign_Root;
+      add_server(&Iface.if_nameservers, "198.41.0.4");
+      add_server(&Iface.if_nameservers, "128.9.0.107");
+      Iface.if_flags &= ~IFL_UseHostName;
+      Iface.if_flags &= ~IFL_UseDomainName;
+      dns_assign = ASSIGN_Root;
    }
+
+   // now take care of resolv
+   amirexx_do_command("RESET RESOLV");
 
 Printf("tell amitcp about nameservers\n");
    // add in reverse order since each entry is added to top of list
-   if(ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)
+   if(Iface.if_nameservers.mlh_TailPred != (struct MinNode *)&Iface.if_nameservers)
    {
-      server = (struct ServerEntry *)ISP.isp_nameservers.mlh_TailPred;
+      server = (struct ServerEntry *)Iface.if_nameservers.mlh_TailPred;
       while(server->se_node.mln_Pred)
       {
          if(amirexx_do_command("ADD START NAMESERVER %ls", server->se_name) != RETURN_OK)
@@ -430,44 +406,40 @@ Printf("tell amitcp about nameservers\n");
 Printf("check hostname / domainname\n");
 
    // is hostname or domainname missing but got rest ?
-   if((*Iface.if_addr && (ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)) &&
-      (!*ISP.isp_hostname || ISP.isp_domainnames.mlh_TailPred == (struct MinNode *)&ISP.isp_domainnames))
+   if(Iface.if_flags & (IFL_UseHostName | IFL_UseDomainName))
    {
+      struct hostent *host;
+      STRPTR ptr;
+      ULONG addr;
+
       DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_GetDomain), NULL);
       if(data->abort)   goto abort;
 
-      if(!*ISP.isp_hostname && (!(ISP.isp_flags & ISF_DontQueryHostname)))
-         gethostname(ISP.isp_hostname, sizeof(ISP.isp_hostname));
-      if(!*ISP.isp_hostname)
-         get_request(GetStr(MSG_TX_NoHostnameReq), ISP.isp_hostname, data->TCPHandler);
-
-      if(ISP.isp_domainnames.mlh_TailPred == (struct MinNode *)&ISP.isp_domainnames && *ISP.isp_hostname)
+      addr = inet_addr(Iface.if_addr);
+      if(host = gethostbyaddr((char *)&addr, 4, AF_INET))
       {
-         STRPTR ptr;
-
-         if(ptr = strchr(ISP.isp_hostname, '.'))
-         {
-            ptr++;
-            add_server(&ISP.isp_domainnames, ptr);
-         }
-         domainname_assign = CNF_Assign_DNSQuery;
+         if((Iface.if_flags & IFL_UseDomainName) && *host->h_name)
+            if(ptr = strchr(host->h_name, '.'))
+               add_server(&Iface.if_domainnames, ++ptr);
+         if((Iface.if_flags & IFL_UseHostName) && *host->h_name)
+            strncpy(Iface.if_hostname, host->h_name, sizeof(Iface.if_hostname));
       }
    }
    if(data->abort)   goto abort;
 
-   if(ISP.isp_domainnames.mlh_TailPred == (struct MinNode *)&ISP.isp_domainnames && *ISP.isp_hostname)
+   if(Iface.if_domainnames.mlh_TailPred == (struct MinNode *)&Iface.if_domainnames)
    {
 Printf("No domainname. Use requester.\n");
       if(get_request(GetStr(MSG_TX_NoDomainnameReq), buffer, data->TCPHandler))
       {
-         add_server(&ISP.isp_domainnames, buffer);
-         domainname_assign = CNF_Assign_Static;
+         add_server(&Iface.if_domainnames, buffer);
+         domainname_assign = ASSIGN_Static;
       }
    }
 Printf("tell amitcp about domainnames\n");
-   if(ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames)
+   if(Iface.if_domainnames.mlh_TailPred != (struct MinNode *)&Iface.if_domainnames)
    {
-      server = (struct ServerEntry *)ISP.isp_domainnames.mlh_TailPred;
+      server = (struct ServerEntry *)Iface.if_domainnames.mlh_TailPred;
       while(server->se_node.mln_Pred)
       {
          if(amirexx_do_command("ADD START DOMAIN %ls", server->se_name) != RETURN_OK)
@@ -480,44 +452,18 @@ Printf("could not tell AmiTCP about domainname '%ls'.\n", server->se_name);
       DoMainMethod(win, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_WarningNoDomain), NULL);
 
    if(data->abort)   goto abort;
-Printf("tell amitcp about hostname: %ls\n", ISP.isp_hostname);
+Printf("tell amitcp about hostname: %ls\n", Iface.if_hostname);
 
-   if(*ISP.isp_hostname)
+   if(*Iface.if_hostname)
    {
-      if(amirexx_do_command("ADD START HOST %ls %ls", Iface.if_addr, ISP.isp_hostname) != RETURN_OK)
-Printf("could not tell AmiTCP about hostname '%ls'.\n", ISP.isp_hostname);
+      if(amirexx_do_command("ADD START HOST %ls %ls", Iface.if_addr, Iface.if_hostname) != RETURN_OK)
+Printf("could not tell AmiTCP about hostname '%ls'.\n", Iface.if_hostname);
    }
    else
       Printf("WARNING: Got no hostname !\n");
 
    if(data->abort)   goto abort;
 Printf("save new resolv.conf\n");
-
-   if(fh = Open("AmiTCP:db/resolv.conf", MODE_NEWFILE))
-   {
-      FPrintf(fh, "; This file is built dynamically - do not edit\n");
-      FPrintf(fh, "; Name Servers\n");
-      if(ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)
-      {
-         server = (struct ServerEntry *)ISP.isp_nameservers.mlh_Head;
-         while(server->se_node.mln_Succ)
-         {
-            FPrintf(fh, "NAMESERVER %ls\n", server->se_name);
-            server = (struct ServerEntry *)server->se_node.mln_Succ;
-         }
-      }
-      FPrintf(fh, "; Search domains\n");
-      if(ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames)
-      {
-         server = (struct ServerEntry *)ISP.isp_domainnames.mlh_Head;
-         while(server->se_node.mln_Succ)
-         {
-            FPrintf(fh, "DOMAIN %ls\n", server->se_name);
-            server = (struct ServerEntry *)server->se_node.mln_Succ;
-         }
-      }
-      Close(fh);
-   }
 
    if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_Finished), NULL);

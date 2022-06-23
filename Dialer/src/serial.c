@@ -14,8 +14,6 @@
 /// external variables
 extern struct ExecBase *SysBase;
 extern struct Library  *OwnDevUnitBase;
-extern struct IOExtSer *SerReadReq, *SerWriteReq;
-extern struct MsgPort  *SerReadPort, *SerWritePort;
 extern Object *app;
 extern Object *win;
 extern Object *status_win;
@@ -26,52 +24,50 @@ extern BOOL SerialLocked;
 ///
 
 /// serial_stopread
-VOID serial_stopread(VOID)
+VOID serial_stopread(struct Modem *modem)
 {
-   if(SerReadReq)
+   if(modem->mo_serreq)
    {
-      if(!(CheckIO((struct IORequest *)SerReadReq)))
-         AbortIO((struct IORequest *)SerReadReq);
+      if(!(CheckIO((struct IORequest *)modem->mo_serreq)))
+         AbortIO((struct IORequest *)modem->mo_serreq);
 
-      WaitIO((struct IORequest *)SerReadReq);
+      WaitIO((struct IORequest *)modem->mo_serreq);
    }
 }
 
 ///
 /// serial_startread
-VOID serial_startread(STRPTR data, LONG len)
+VOID serial_startread(struct Modem *modem, STRPTR data, LONG len)
 {
-   if(SerReadReq)
+   if(modem->mo_serreq)
    {
-      SerReadReq->IOSer.io_Command  = CMD_READ;
-      SerReadReq->IOSer.io_Length   = len;
-      SerReadReq->IOSer.io_Data     = data;
+      modem->mo_serreq->IOSer.io_Command  = CMD_READ;
+      modem->mo_serreq->IOSer.io_Length   = len;
+      modem->mo_serreq->IOSer.io_Data     = data;
 
-      SetSignal(0, 1L << SerReadPort->mp_SigBit);
-
-      SendIO((struct IORequest *)SerReadReq);
+      SendIO((struct IORequest *)modem->mo_serreq);
    }
 }
 
 ///
 /// serial_send
-VOID serial_send(STRPTR cmd, LONG len)
+VOID serial_send(struct Modem *modem, STRPTR cmd, LONG len)
 {
-   if(SerWriteReq && *cmd)
+   if(modem->mo_serreq && *cmd)
    {
       if(len < 0)
          len = strlen(cmd);
 
-      SerWriteReq->IOSer.io_Length  = len;
-      SerWriteReq->IOSer.io_Command = CMD_WRITE;
-      SerWriteReq->IOSer.io_Data    = cmd;
-      DoIO((struct IORequest *)SerWriteReq);
+      modem->mo_serreq->IOSer.io_Length  = len;
+      modem->mo_serreq->IOSer.io_Command = CMD_WRITE;
+      modem->mo_serreq->IOSer.io_Data    = cmd;
+      DoIO((struct IORequest *)modem->mo_serreq);
    }
 }
 
 ///
 /// serial_waitfor
-BOOL serial_waitfor(STRPTR string, int secs)
+BOOL serial_waitfor(struct Modem *modem, STRPTR string, int secs)
 {
    struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
    ULONG sig;
@@ -96,15 +92,15 @@ BOOL serial_waitfor(STRPTR string, int secs)
             SendIO((struct IORequest *)time_req);
             timer_running = TRUE;
 
-            serial_startread(ser_buf, 1);
+            serial_startread(modem, ser_buf, 1);
             while(!data->abort)
             {
-               sig = Wait((1L << SerReadPort->mp_SigBit) | (1L<< time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
-               if(sig & (1L << SerReadPort->mp_SigBit))
+               sig = Wait((1L << modem->mo_serport->mp_SigBit) | (1L<< time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
+               if(sig & (1L << modem->mo_serport->mp_SigBit))
                {
-                  if(CheckIO((struct IORequest *)SerReadReq))
+                  if(CheckIO((struct IORequest *)modem->mo_serreq))
                   {
-                     WaitIO((struct IORequest *)SerReadReq);
+                     WaitIO((struct IORequest *)modem->mo_serreq);
 
                      buffer[buf_pos++] = ser_buf[0];
                      buffer[buf_pos] = NULL;
@@ -115,7 +111,7 @@ BOOL serial_waitfor(STRPTR string, int secs)
                      if(strstr(buffer, string))
                      {
                         // find out connection speed and copy to config
-                        if(!strcmp(string, "CONNECT"))
+                        if(!strcmp(string, modem->mo_connect))
                         {
                            if(ser_buf[0] == '\r')
                            {
@@ -130,11 +126,11 @@ BOOL serial_waitfor(STRPTR string, int secs)
 
                      if(ser_buf[0] == '\r' || ser_buf[0] == '\n' || ser_buf[0] == NULL || buf_pos > 1020)
                      {
-                        if(strstr(buffer, "NO CARRIER") || strstr(buffer, "NO DIALTONE") || strstr(buffer, "NODIALTONE") || strstr(buffer, "BUSY"))
+                        if(strstr(buffer, modem->mo_nocarrier) || strstr(buffer, modem->mo_nodialtone) || strstr(buffer, modem->mo_busy))
                            break;
                         buf_pos = 0;
                      }
-                     serial_startread(ser_buf, 1);
+                     serial_startread(modem, ser_buf, 1);
                   }
                }
                if(sig & (1L << time_port->mp_SigBit))
@@ -149,7 +145,7 @@ BOOL serial_waitfor(STRPTR string, int secs)
                if(sig & SIGBREAKF_CTRL_C)
                   break;
             }
-            serial_stopread();
+            serial_stopread(modem);
 
             if(timer_running)
             {
@@ -170,170 +166,243 @@ BOOL serial_waitfor(STRPTR string, int secs)
 }
 
 ///
+/// serial_readln
+BOOL serial_readln(struct Modem *modem, STRPTR buffer, ULONG buf_len, int secs, BOOL echo)
+{
+   ULONG sig;
+   struct timerequest *time_req; // have to open our own timer, global one is for main task. won't work if used in different task
+   struct MsgPort *time_port;
+   char ser_buf[3];
+   int buf_pos = 0;
+   BOOL timer_running = FALSE, success = FALSE;
+
+   if(time_port = CreateMsgPort())
+   {
+      if(time_req = (struct timerequest *)CreateIORequest(time_port, sizeof(struct timerequest)))
+      {
+         if(!(OpenDevice("timer.device", UNIT_VBLANK, (struct IORequest *)time_req, 0)))
+         {
+            time_req->tr_node.io_Command   = TR_ADDREQUEST;
+            time_req->tr_time.tv_secs      = secs;
+            time_req->tr_time.tv_micro     = NULL;
+            SetSignal(0, 1L << time_port->mp_SigBit);
+            SendIO((struct IORequest *)time_req);
+            timer_running = TRUE;
+
+            serial_startread(modem, ser_buf, 1);
+            FOREVER
+            {
+               sig = Wait((1L << modem->mo_serport->mp_SigBit) | (1L<< time_port->mp_SigBit) | SIGBREAKF_CTRL_C);
+               if(sig & (1L << modem->mo_serport->mp_SigBit))
+               {
+                  if(CheckIO((struct IORequest *)modem->mo_serreq))
+                  {
+                     WaitIO((struct IORequest *)modem->mo_serreq);
+
+                     buffer[buf_pos++] = ser_buf[0];
+                     buffer[buf_pos] = NULL;
+
+                     if(echo)
+                        serial_send(modem, ser_buf, 1);
+
+                     if(ser_buf[0] == '\r' || ser_buf[0] == '\n' || ser_buf[0] == NULL || buf_pos > buf_len - 2)
+                     {
+                        success = TRUE;
+                        break;
+                     }
+                     serial_startread(modem, ser_buf, 1);
+                  }
+               }
+               if(sig & (1L << time_port->mp_SigBit))
+               {
+                  if(CheckIO((struct IORequest *)time_req))
+                  {
+                     WaitIO((struct IORequest *)time_req);
+                     timer_running = FALSE;
+                     break;
+                  }
+               }
+               if(sig & SIGBREAKF_CTRL_C)
+                  break;
+            }
+            serial_stopread(modem);
+
+            if(timer_running)
+            {
+               if(!CheckIO((struct IORequest *)time_req))
+               {
+                  AbortIO((struct IORequest *)time_req);
+                  WaitIO((struct IORequest *)time_req);
+               }
+               timer_running = FALSE;
+            }
+            CloseDevice((struct IORequest *)time_req);
+         }
+         DeleteIORequest((struct IORequest *)time_req);
+      }
+      DeleteMsgPort(time_port);
+   }
+   return(success);
+}
+
+///
 /// serial_carrier
-BOOL serial_carrier(VOID)
+BOOL serial_carrier(struct Modem *modem)
 {
    ULONG CD = 1<<5;
 
-   if(!SerWriteReq)
+   if(!modem->mo_serreq)
       return(FALSE);
-   SerWriteReq->IOSer.io_Command = SDCMD_QUERY;
-   DoIO((struct IORequest *)SerWriteReq);
-   return((BOOL)(CD & SerWriteReq->io_Status ? FALSE : TRUE));
+   modem->mo_serreq->IOSer.io_Command = SDCMD_QUERY;
+   DoIO((struct IORequest *)modem->mo_serreq);
+   return((BOOL)(CD & modem->mo_serreq->io_Status ? FALSE : TRUE));
 }
 
 ///
 /// serial_dsr
-BOOL serial_dsr(VOID)
+BOOL serial_dsr(struct Modem *modem)
 {
    ULONG DSR = 1<<3;
 
-   if(!SerWriteReq)
+   if(!modem->mo_serreq)
       return(FALSE);
-   SerWriteReq->IOSer.io_Command = SDCMD_QUERY;
-   DoIO((struct IORequest *)SerWriteReq);
-   return((BOOL)(DSR & SerWriteReq->io_Status ? FALSE : TRUE));
+   modem->mo_serreq->IOSer.io_Command = SDCMD_QUERY;
+   DoIO((struct IORequest *)modem->mo_serreq);
+   return((BOOL)(DSR & modem->mo_serreq->io_Status ? FALSE : TRUE));
 }
 
 ///
 /// serial_hangup
-VOID serial_hangup(struct Library *SocketBase)
+VOID serial_hangup(struct Modem *modem, struct Library *SocketBase)
 {
-   serial_delete();
-   Delay(100);
-   if(serial_create(SocketBase))
+   if(modem)
    {
-      if(serial_carrier())
+      if(serial_create(modem, SocketBase))
       {
-         serial_send("+", 1);
-         Delay(10);
-         serial_send("+", 1);
-         Delay(10);
-         serial_send("+", 1);
-         Delay(100);
-         serial_send("ATH0\r", -1);
-         Delay(10);
-      }
-      else
-      {
-         serial_send("\r", 1);
-         Delay(10);
-      }
+         if(serial_carrier(modem))
+         {
+            serial_send(modem, "+", 1);
+            Delay(modem->mo_commanddelay);
+            serial_send(modem, "+", 1);
+            Delay(modem->mo_commanddelay);
+            serial_send(modem, "+", 1);
+            Delay(100);
+            serial_send(modem, "ATH0\r", -1);
+            Delay(modem->mo_commanddelay);
+         }
+         else
+         {
+            serial_send(modem, "\r", 1);
+            Delay(modem->mo_commanddelay);
+         }
 
-      serial_delete();
+         serial_delete(modem);
+      }
    }
 }
 
 ///
 /// serial_clear
-VOID serial_clear(VOID)
+VOID serial_clear(struct Modem *modem)
 {
-   if(SerReadReq)
+   if(modem->mo_serreq)
    {
-      serial_stopread();
+      serial_stopread(modem);
 
-      SerReadReq->IOSer.io_Command = CMD_CLEAR;
-      DoIO((struct IORequest *)SerReadReq);
+      modem->mo_serreq->IOSer.io_Command = CMD_CLEAR;
+      DoIO((struct IORequest *)modem->mo_serreq);
    }
 }
 
 ///
 
 /// serial_delete
-VOID serial_delete(VOID)
+VOID serial_delete(struct Modem *modem)
 {
    struct Device *dev;
 
-   if(SerReadReq && SerReadReq->IOSer.io_Device)
+   if(modem->mo_serreq && modem->mo_serreq->IOSer.io_Device)
    {
-      if(!CheckIO((struct IORequest *)SerReadReq))
+      if(!CheckIO((struct IORequest *)modem->mo_serreq))
       {
-         AbortIO((struct IORequest *)SerReadReq);
-         WaitIO((struct IORequest *)SerReadReq);
+         AbortIO((struct IORequest *)modem->mo_serreq);
+         WaitIO((struct IORequest *)modem->mo_serreq);
       }
-      CloseDevice((struct IORequest *)SerReadReq);
+      CloseDevice((struct IORequest *)modem->mo_serreq);
    }
-   if(SerReadReq)    DeleteExtIO((struct IORequest *)SerReadReq);
-   if(SerReadPort)   DeleteMsgPort(SerReadPort);
-   if(SerWriteReq)   DeleteExtIO((struct IORequest *)SerWriteReq);
-   if(SerWritePort)  DeleteMsgPort(SerWritePort);
+   if(modem->mo_serreq)    DeleteExtIO((struct IORequest *)modem->mo_serreq);
+   if(modem->mo_serport)   DeleteMsgPort(modem->mo_serport);
 
-   SerReadReq  = SerWriteReq  = NULL;
-   SerReadPort = SerWritePort = NULL;
+   modem->mo_serreq  = NULL;
+   modem->mo_serport = NULL;
 
-   if(SerialLocked && OwnDevUnitBase && *Config.cnf_serialdevice)
-      FreeDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit);
-   SerialLocked = FALSE;
+   if((modem->mo_flags & MFL_SerialLocked) && OwnDevUnitBase && *modem->mo_device)
+   {
+      FreeDevUnit(modem->mo_device, modem->mo_unit);
+      modem->mo_flags &= ~MFL_SerialLocked;
+   }
 
    Forbid();
-   if(dev = (struct Device *)FindName(&SysBase->DeviceList, Config.cnf_serialdevice))
+   if(dev = (struct Device *)FindName(&SysBase->DeviceList, modem->mo_device))
       RemDevice(dev);
    Permit();
 }
 
 ///
 /// serial_create
-BOOL serial_create(struct Library *SocketBase)
+BOOL serial_create(struct Modem *modem, struct Library *SocketBase)
 {
    ULONG flags;
 
+   if(!modem || modem->mo_serreq)
+      return(FALSE);
+
    flags = SERF_SHARED;
-   if(Config.cnf_flags & CFL_7Wire)
+   if(modem->mo_flags & MFL_7Wire)
       flags |= SERF_7WIRE;
-   if(!(Config.cnf_flags & CFL_XonXoff))
+   if(!(modem->mo_flags & MFL_XonXoff))
       flags |= SERF_XDISABLED;
-   if(Config.cnf_flags & CFL_RadBoogie)
+   if(modem->mo_flags & MFL_RadBoogie)
       flags |= SERF_RAD_BOOGIE;
 
-   if((Config.cnf_flags & CFL_OwnDevUnit) && OwnDevUnitBase)
+   if((modem->mo_flags & MFL_OwnDevUnit) && OwnDevUnitBase)
    {
-      if(!AttemptDevUnit(Config.cnf_serialdevice, Config.cnf_serialunit, "GENESiS", NULL))
-         SerialLocked = TRUE;
+      if(!AttemptDevUnit(modem->mo_device, modem->mo_unit, "GENESiS", NULL))
+         modem->mo_flags |= MFL_SerialLocked;
       else
          return(FALSE);
    }
 
-   SerReadPort = CreateMsgPort();
-   SerWritePort = CreateMsgPort();
-
-   if(SerReadPort && SerWritePort)
+   if(modem->mo_serport = CreateMsgPort())
    {
-      SerReadReq  = (struct IOExtSer *)CreateExtIO(SerReadPort , sizeof(struct IOExtSer));
-      SerWriteReq = (struct IOExtSer *)CreateExtIO(SerWritePort, sizeof(struct IOExtSer));
-
-      if(SerReadReq && SerWriteReq)
+      if(modem->mo_serreq = (struct IOExtSer *)CreateExtIO(modem->mo_serport, sizeof(struct IOExtSer)))
       {
          // set flags before OpenDevice()
-         SerReadReq->io_SerFlags = flags;
+         modem->mo_serreq->io_SerFlags = flags;
    
-         if(!OpenDevice(Config.cnf_serialdevice, Config.cnf_serialunit, (struct IORequest *)SerReadReq, 0))
+         if(!OpenDevice(modem->mo_device, modem->mo_unit, (struct IORequest *)modem->mo_serreq, 0))
          {
             // Set up our serial parameters
-            SerReadReq->IOSer.io_Command   = SDCMD_SETPARAMS;
-            SerReadReq->io_Baud      = Config.cnf_baudrate;
-            SerReadReq->io_RBufLen   = (Config.cnf_serbuflen < 512 ? 512 : Config.cnf_serbuflen);
-            SerReadReq->io_ReadLen   = 8;
-            SerReadReq->io_WriteLen  = 8;
-            SerReadReq->io_StopBits  = 1;
-            SerReadReq->io_SerFlags  = flags;
-            SerReadReq->io_TermArray.TermArray0 =
-            SerReadReq->io_TermArray.TermArray1 = 0;
+            modem->mo_serreq->IOSer.io_Command   = SDCMD_SETPARAMS;
+            modem->mo_serreq->io_Baud      = modem->mo_baudrate;
+            modem->mo_serreq->io_RBufLen   = (modem->mo_serbuflen < 512 ? 512 : modem->mo_serbuflen);
+            modem->mo_serreq->io_ReadLen   = 8;
+            modem->mo_serreq->io_WriteLen  = 8;
+            modem->mo_serreq->io_StopBits  = 1;
+            modem->mo_serreq->io_SerFlags  = flags;
+            modem->mo_serreq->io_TermArray.TermArray0 =
+            modem->mo_serreq->io_TermArray.TermArray1 = 0;
 
-            if(!DoIO((struct IORequest *)SerReadReq))
-            {
-               memcpy(SerWriteReq, SerReadReq, sizeof(struct IOExtSer));
-               SerWriteReq->IOSer.io_Message.mn_ReplyPort = SerWritePort;
-
+            if(!DoIO((struct IORequest *)modem->mo_serreq))
                return(TRUE);
-            }
             else
-               syslog_AmiTCP(SocketBase, LOG_ERR, "serial_create: SETPARAMS failed.");
+               syslog_AmiTCP(SocketBase, LOG_ERR, GetStr(MSG_SYSLOG_SerialSetparamsFailed));
          }
       }
    }
-   syslog_AmiTCP(SocketBase, LOG_CRIT, "serial_create: could not open serial device (%ls, unit %ld).", Config.cnf_serialdevice, Config.cnf_serialunit);
+   syslog_AmiTCP(SocketBase, LOG_CRIT, GetStr(MSG_SYSLOG_CouldNotOpenSerialDevice), modem->mo_device, modem->mo_unit);
 
-   serial_delete();
+   serial_delete(modem);
 
    return(FALSE);
 }

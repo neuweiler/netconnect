@@ -71,15 +71,15 @@ static char * opt_names[] =
   "EXTEN_FILE",
 };
 
-int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp)
+int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface)
 {
    struct bootp *bp = bpc->bpc_rcv_packet;
 
    // Check our own IP
-   if(iface_data->ifd_addr == INADDR_ANY && bp->bp_yiaddr.s_addr != INADDR_ANY)
+   if(is_inaddr_any(iface->if_addr) && bp->bp_yiaddr.s_addr != INADDR_ANY)
    {
-      iface_data->ifd_addr = bp->bp_yiaddr.s_addr;
-      syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: got IP address %ls from BOOTP reply.", Inet_NtoA(iface_data->ifd_addr));
+      strncpy(iface->if_addr, Inet_NtoA(bp->bp_yiaddr.s_addr), sizeof(iface->if_addr));
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: got IP address %ls from BOOTP reply.", iface->if_addr);
    }
 
    // Check RFC options
@@ -91,6 +91,7 @@ int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct
       u_char *opt_end = (char *)bp + bpc->bpc_rcv_len;
       int    optcount = 0;
       int    tmplen;
+      ULONG tmp_addr;
 
       syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: received valid BOOTP reply.");
 
@@ -106,39 +107,41 @@ int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct
             break;         // no
 
          if(option <= TAG_EXTEN_FILE)
-            syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: option: %ls, value: %ld", opt_names[option], (ULONG)*opt_ptr);
+            syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: option: %ls, value: %ld (%ls)", opt_names[option], *(ULONG *)opt_ptr, Inet_NtoA(*(ULONG *)opt_ptr));
          else
-            syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: option: %ld, value: %ld", option, (ULONG)*opt_ptr);
+            syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: option: %ld, value: %ld (%ls)", option, *(ULONG *)opt_ptr, Inet_NtoA(*(ULONG *)opt_ptr));
 
          optcount++;
 
          if(option == TAG_SUBNET_MASK)
          {
-            if(iface_data->ifd_netmask == INADDR_ANY && opt_len == 4)
-               memcpy(&iface_data->ifd_netmask, opt_ptr, 4);
+            if(is_inaddr_any(iface->if_netmask) && opt_len == 4)
+            {
+               memcpy(&tmp_addr, opt_ptr, 4);
+               strncpy(iface->if_netmask, Inet_NtoA(tmp_addr), sizeof(iface->if_netmask));
+            }
          }
          else if(option == TAG_GATEWAY)    // using only first gateway
          {
-            if(iface_data->ifd_gateway == INADDR_ANY && opt_len >= 4)
-               memcpy(&iface_data->ifd_gateway, opt_ptr, 4);
+            if(is_inaddr_any(iface->if_gateway) && opt_len >= 4)
+            {
+               memcpy(&tmp_addr, opt_ptr, 4);
+               strncpy(iface->if_gateway, Inet_NtoA(tmp_addr), sizeof(iface->if_netmask));
+            }
          }
          else if(option == TAG_DOMAIN_SERVER)
          {
-            ULONG tmp_addr;
-
             for(tmplen = 0; tmplen + 4 <= opt_len; tmplen += 4)
             {
                memcpy(&tmp_addr, &opt_ptr[tmplen], 4);
-
-               if(!find_server_by_name(&isp->isp_nameservers, Inet_NtoA(tmp_addr)))
-                  add_server(&isp->isp_nameservers, Inet_NtoA(tmp_addr));
+               add_server(&iface->if_nameservers, Inet_NtoA(tmp_addr));
             }
          }
          else if(option == TAG_HOST_NAME)
          {
-            tmplen = MIN(opt_len, sizeof(isp->isp_hostname)-1);
-            memcpy(isp->isp_hostname, opt_ptr, tmplen);
-            isp->isp_hostname[tmplen] = '\0';
+            tmplen = MIN(opt_len, sizeof(iface->if_hostname)-1);
+            memcpy(iface->if_hostname, opt_ptr, tmplen);
+            iface->if_hostname[tmplen] = '\0';
          }
          else if(option == TAG_DOMAIN_NAME)
          {
@@ -147,9 +150,7 @@ int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct
             tmplen = MIN(opt_len, sizeof(buf) - 1);
             memcpy(buf, opt_ptr, tmplen);
             buf[tmplen] = '\0';
-
-            if(!find_server_by_name(&isp->isp_nameservers, buf))
-               add_server(&isp->isp_domainnames, buf);
+            add_server(&iface->if_domainnames, buf);
          }
 
          opt_ptr += opt_len;
@@ -157,10 +158,10 @@ int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct
    }
 
    // Additional test to get some working destination address
-   if(iface_data->ifd_flags & IFF_POINTOPOINT && iface_data->ifd_dst == INADDR_ANY && iface_data->ifd_gateway == INADDR_ANY && bp->bp_siaddr.s_addr != INADDR_ANY)
+   if((iface_data->ifd_flags & IFF_POINTOPOINT) && is_inaddr_any(iface->if_dst) && bp->bp_siaddr.s_addr != INADDR_ANY)
    {
-      iface_data->ifd_dst = bp->bp_siaddr.s_addr;
-      syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: using BOOTP server address %ls as destination addr.", Inet_NtoA(iface_data->ifd_dst));
+      strncpy(iface->if_dst, Inet_NtoA(bp->bp_siaddr.s_addr), sizeof(iface->if_dst));
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_examine: using BOOTP server address %ls as destination addr.", iface->if_dst);
    }
 
    return(0);
@@ -191,7 +192,7 @@ int bootpc_send(struct bootpc *bpc, int fd, struct sockaddr_in *to)
 
 ///
 /// bootpc_do
-int bootpc_do(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp)
+int bootpc_do(struct bootpc *bpc, struct Interface_Data *iface_data, struct Interface *iface)
 {
    int fd = iface_data->ifd_fd;
    short secs;
@@ -222,8 +223,6 @@ int bootpc_do(struct bootpc *bpc, struct Interface_Data *iface_data, struct Inte
    if(bind(fd, (struct sockaddr *)&sin_client, sizeof(sin_client)) < 0)
    {
       syslog_AmiTCP(LOG_ERR, "bind BOOTPC port: %m");
-      if(errno == EACCES)
-         syslog_AmiTCP(LOG_DEBUG, "bootpc_do: you need to run this as root");
       return(errno);
    }
 
@@ -245,10 +244,10 @@ int bootpc_do(struct bootpc *bpc, struct Interface_Data *iface_data, struct Inte
    }
 
   // Fill in the client IP address.
-   if(iface_data->ifd_addr != INADDR_ANY)
+   if(!is_inaddr_any(iface->if_addr))
    {
-      syslog_AmiTCP(LOG_DEBUG, "bootpc_do: using IP addr %ls in BOOTP request.", Inet_NtoA(iface_data->ifd_addr));
-      bp->bp_ciaddr.s_addr = iface_data->ifd_addr;
+      syslog_AmiTCP(LOG_DEBUG, "bootpc_do: using IP addr %ls in BOOTP request.", iface->if_addr);
+      bp->bp_ciaddr.s_addr = inet_addr(iface->if_addr);
    }
   
    memcpy(bp->bp_vend, vm_rfc1048, sizeof(vm_rfc1048)); // copy default verdor data
@@ -305,7 +304,7 @@ int bootpc_do(struct bootpc *bpc, struct Interface_Data *iface_data, struct Inte
       bpc->bpc_rcv_len = n;  // store the actual length of the reply
 
       syslog_AmiTCP(LOG_DEBUG, "bootpc_do: received BOOTP reply from %ls:%ld", Inet_NtoA(sin_from.sin_addr.s_addr), sin_from.sin_port);
-      return(bootpc_examine(bpc, iface_data, iface, isp));
+      return(bootpc_examine(bpc, iface_data, iface));
    }
 
    syslog_AmiTCP(LOG_WARNING, "bootpc_do: no response to BOOTP request...");

@@ -17,25 +17,25 @@
 #define USE_LOGO_COLORS
 #include "images/logo.h"
 
-#define USE_DATABASES_HEADER
-#define USE_DATABASES_BODY
-#define USE_DATABASES_COLORS
-#include "images/databases.h"
+#define USE_DATABASE_HEADER
+#define USE_DATABASE_BODY
+#define USE_DATABASE_COLORS
+#include "images/database.h"
 
-#define USE_DIALER_HEADER
-#define USE_DIALER_BODY
-#define USE_DIALER_COLORS
-#include "images/dialer.h"
+#define USE_OPTIONS_HEADER
+#define USE_OPTIONS_BODY
+#define USE_OPTIONS_COLORS
+#include "images/options.h"
 
-#define USE_MODEM_HEADER
-#define USE_MODEM_BODY
-#define USE_MODEM_COLORS
-#include "images/modem.h"
+#define USE_MODEMS_HEADER
+#define USE_MODEMS_BODY
+#define USE_MODEMS_COLORS
+#include "images/modems.h"
 
-#define USE_PROVIDER_HEADER
-#define USE_PROVIDER_BODY
-#define USE_PROVIDER_COLORS
-#include "images/provider.h"
+#define USE_INTERFACES_HEADER
+#define USE_INTERFACES_BODY
+#define USE_INTERFACES_COLORS
+#include "images/interfaces.h"
 
 #define USE_DEFAULT_HEADER
 #define USE_DEFAULT_BODY
@@ -95,7 +95,6 @@ struct NewMenu MainWindowMenu[] =
    { NM_TITLE, (STRPTR)MSG_MENU_SETTINGS  , 0               , 0, 0, (APTR)0            },
    { NM_ITEM , (STRPTR)MSG_MENU_LOAD      , MSG_CC_LOAD     , 0, 0, (APTR)MEN_LOAD     },
    { NM_ITEM , (STRPTR)MSG_MENU_IMPORT    , MSG_CC_IMPORT   , 0, 0, (APTR)MEN_IMPORT   },
-   { NM_ITEM , (STRPTR)MSG_MENU_IMPORTOLD , MSG_CC_IMPORTOLD, 0, 0, (APTR)MEN_IMPORTOLD},
    { NM_ITEM , (STRPTR)MSG_MENU_SAVE      , MSG_CC_SAVE     , 0, 0, (APTR)MEN_SAVE     },
    { NM_ITEM , (STRPTR)MSG_MENU_SAVEAS    , MSG_CC_SAVEAS   , 0, 0, (APTR)MEN_SAVEAS   },
    { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },
@@ -109,19 +108,19 @@ struct NewMenu MainWindowMenu[] =
 
 /// MUI Class pointers
 
-struct MUI_CustomClass  *CL_About;
-struct MUI_CustomClass  *CL_Databases;
-struct MUI_CustomClass  *CL_Dialer;
-struct MUI_CustomClass  *CL_MainWindow;
-struct MUI_CustomClass  *CL_Modem;
-struct MUI_CustomClass  *CL_PasswdReq;
+struct MUI_CustomClass *CL_MainWindow;
+struct MUI_CustomClass *CL_About;
+struct MUI_CustomClass *CL_Interfaces;
+struct MUI_CustomClass *CL_IfaceWindow;
+struct MUI_CustomClass *CL_Options;
+struct MUI_CustomClass *CL_Modems;
+struct MUI_CustomClass *CL_ModemWindow;
+struct MUI_CustomClass *CL_Database;
+struct MUI_CustomClass *CL_LogLevel;
 #ifdef INTERNAL_USER
-struct MUI_CustomClass  *CL_User;
-struct MUI_CustomClass  *CL_UserWindow;
+struct MUI_CustomClass *CL_User;
+struct MUI_CustomClass *CL_UserWindow;
 #endif
-struct MUI_CustomClass  *CL_Provider;
-struct MUI_CustomClass  *CL_ProviderWindow;
-struct MUI_CustomClass  *CL_IfaceWindow;
 
 ///
 /// MUI stuff

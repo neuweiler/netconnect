@@ -34,6 +34,7 @@ struct sana2 * sana2_create(STRPTR device, LONG unit);
 void sana2_delete(struct sana2 *s2);
 void sana2_print(struct sana2 *s2);
 BOOL    sana2_getaddresses(struct Library *SocketBase, struct sana2 *s2, struct Interface *iface);
+BOOL    sana2_do_icmp(struct Library *SocketBase, struct sana2 *s2, struct Interface *iface);
 BOOL    sana2_online(struct Library *SocketBase, struct sana2 *s2);
 BOOL    sana2_offline(struct Library *SocketBase, struct sana2 *s2);
 BOOL    sana2_devicequery(struct sana2 *s2);

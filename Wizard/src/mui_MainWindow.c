@@ -26,7 +26,7 @@
 /// external variables
 extern struct Library *MUIMasterBase;
 extern Object *app, *win, *status_win;
-extern struct Config Config;
+extern struct Modem Modem;
 extern struct IOExtSer  *SerReadReq;
 extern struct MsgPort   *SerReadPort;
 extern struct IOExtSer  *SerWriteReq;
@@ -35,9 +35,8 @@ extern struct MUI_CustomClass *CL_Online, *CL_Finished, *CL_Protocol, *CL_LoginS
                               *CL_ModemStrings, *CL_Sana2, *CL_SerialModem, *CL_SerialSana,
                               *CL_UserInfo, *CL_Welcome, *CL_SanaConfig, *CL_Request,
                               *CL_About;
-extern BOOL use_loginscript, use_modem, no_picture, keyboard_input;
+extern BOOL use_loginscript, use_modem, no_picture, keyboard_input, use_old_modem;
 extern int dialing_try;
-extern struct ISP ISP;
 extern struct Interface Iface;
 
 extern int addr_assign, dst_assign, dns_assign, domainname_assign;
@@ -88,26 +87,26 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
       {
          struct SerialModem_Data *sm_data = INST_DATA(CL_SerialModem->mcc_Class, data->GR_SerialModem);
 
-         strncpy(Config.cnf_serialdevice, (STRPTR)xget(sm_data->STR_SerialDevice, MUIA_String_Contents), 80);
-         Config.cnf_serialunit = xget(sm_data->SL_SerialUnit, MUIA_Numeric_Value);
-         strncpy(Config.cnf_modemname, (STRPTR)xget(sm_data->TX_ModemName, MUIA_Text_Contents), 80);
+         strncpy(Modem.mo_device, (STRPTR)xget(sm_data->STR_SerialDevice, MUIA_String_Contents), sizeof(Modem.mo_device));
+         Modem.mo_unit = xget(sm_data->SL_SerialUnit, MUIA_Numeric_Value);
+         strncpy(Modem.mo_name, (STRPTR)xget(sm_data->TX_ModemName, MUIA_Text_Contents), sizeof(Modem.mo_name));
          break;
       }
       case PAGE_ModemStrings:
       {
          struct ModemStrings_Data *ms_data = INST_DATA(CL_ModemStrings->mcc_Class, data->GR_ModemStrings);
 
-         strncpy(Config.cnf_initstring, (STRPTR)xget(ms_data->STR_InitString, MUIA_String_Contents), 80);
-         strncpy(Config.cnf_dialprefix, (STRPTR)xget(ms_data->STR_DialPrefix, MUIA_String_Contents), 80);
+         strncpy(Modem.mo_init, (STRPTR)xget(ms_data->STR_InitString, MUIA_String_Contents), sizeof(Modem.mo_init));
+         strncpy(Modem.mo_dialprefix, (STRPTR)xget(ms_data->STR_DialPrefix, MUIA_String_Contents), sizeof(Modem.mo_dialprefix));
          break;
       }
       case PAGE_UserInfo:
       {
          struct UserInfo_Data *ui_data = INST_DATA(CL_UserInfo->mcc_Class, data->GR_UserInfo);
 
-         strncpy(ISP.isp_login       , (STRPTR)xget(ui_data->STR_LoginName, MUIA_String_Contents)   , sizeof(ISP.isp_login));
-         strncpy(ISP.isp_password    , (STRPTR)xget(ui_data->STR_Password, MUIA_String_Contents)    , sizeof(ISP.isp_password));
-         strncpy(ISP.isp_phonenumber , (STRPTR)xget(ui_data->STR_PhoneNumber, MUIA_String_Contents) , sizeof(ISP.isp_phonenumber));
+         strncpy(Iface.if_login       , (STRPTR)xget(ui_data->STR_LoginName, MUIA_String_Contents)   , sizeof(Iface.if_login));
+         strncpy(Iface.if_password    , (STRPTR)xget(ui_data->STR_Password, MUIA_String_Contents)    , sizeof(Iface.if_password));
+         strncpy(Iface.if_phonenumber , (STRPTR)xget(ui_data->STR_PhoneNumber, MUIA_String_Contents) , sizeof(Iface.if_phonenumber));
          break;
       }
       case PAGE_Protocol:
@@ -120,7 +119,7 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(Iface.if_sana2device, "DEVS:Networks/aslip.device");
             Iface.if_sana2unit = 0;
             strcpy(Iface.if_sana2config, "ENV:Sana2/aslip0.config");
-            sprintf(sana2configtext, "%ls %ld %ld Shared %%a 7Wire MTU=%ld ", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate, Iface.if_MTU);
+            sprintf(sana2configtext, "%ls %ld %ld Shared %%a 7Wire MTU=%ld ", Modem.mo_device, Modem.mo_unit, Modem.mo_baudrate, Iface.if_MTU);
             Iface.if_sana2configtext = sana2configtext;
             strcpy(Iface.if_name, "slip");
             Iface.if_flags |= IFL_SLIP;
@@ -130,7 +129,7 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(Iface.if_sana2device, "DEVS:Networks/appp.device");
             Iface.if_sana2unit = 0;
             strcpy(Iface.if_sana2config, "ENV:Sana2/appp0.config");
-            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %%a\ncd no\nuser %%u\nsecret %%p\ncd yes\nmppcomp no\nvjcomp no\nbsdcomp no\ndeflatecomp no\neof no\ndebug = 1\ndebug_window = 1\nlog_file = AmiTCP:log/appp.log\ncon_window = NIL:\n", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate);
+            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %%a\ncd no\nuser %%u\nsecret %%p\ncd yes\nmppcomp no\nvjcomp no\nbsdcomp no\ndeflatecomp no\neof no\ndebug = 1\ndebug_window = 1\nlog_file = AmiTCP:log/appp.log\ncon_window = NIL:\n", Modem.mo_device, Modem.mo_unit, Modem.mo_baudrate);
             Iface.if_sana2configtext = sana2configtext;
             strcpy(Iface.if_name, "ppp");
             Iface.if_flags |= IFL_PPP;
@@ -143,7 +142,7 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
          struct SanaConfig_Data *sc_data = INST_DATA(CL_SanaConfig->mcc_Class, data->GR_SanaConfig);
          STRPTR ptr;
 
-         Config.cnf_serialdevice[0] = NULL;
+         Modem.mo_device[0] = NULL;
          strcpy(Iface.if_sana2device, (STRPTR)xget(s2_data->STR_SanaDevice, MUIA_String_Contents));
          Iface.if_sana2unit = xget(s2_data->SL_SanaUnit, MUIA_Numeric_Value);
          strncpy(Iface.if_name, FilePart(Iface.if_sana2device), 20);
@@ -151,12 +150,10 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
             *ptr = NULL;
          sprintf(&Iface.if_name[(strlen(Iface.if_name) > 14 ? 14 : strlen(Iface.if_name))], "%ld", Iface.if_sana2unit);
          strlwr(Iface.if_name);
-         if(!strlen((STRPTR)xget(sc_data->STR_Sana2ConfigFile, MUIA_String_Contents)))
-         {
-            sprintf(Iface.if_sana2config, "ENV:Sana2/%ls.config", Iface.if_name);
-            setstring(sc_data->STR_Sana2ConfigFile, Iface.if_sana2config);
-            DoMethod(data->GR_SanaConfig, MUIM_SanaConfig_LoadConfig);
-         }
+
+         sprintf(Iface.if_sana2config, "ENV:Sana2/%ls.config", Iface.if_name);
+         setstring(sc_data->STR_Sana2ConfigFile, Iface.if_sana2config);
+         DoMethod(data->GR_SanaConfig, MUIM_SanaConfig_LoadConfig);
 
          break;
       }
@@ -165,9 +162,9 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
          struct SanaConfig_Data *sc_data = INST_DATA(CL_SanaConfig->mcc_Class, data->GR_SanaConfig);
 
          strcpy(Iface.if_sana2config, (STRPTR)xget(sc_data->STR_Sana2ConfigFile, MUIA_String_Contents));
-         strcpy(sana2configtext, (STRPTR)xget(sc_data->TI_Sana2ConfigText, MUIA_String_Contents));
+         strncpy(sana2configtext, (STRPTR)xget(sc_data->TI_Sana2ConfigText, MUIA_String_Contents), 1023);
          Iface.if_sana2configtext = sana2configtext;
-         strcpy(configparams, (STRPTR)xget(sc_data->STR_ConfigParams, MUIA_String_Contents));
+         strncpy(configparams, (STRPTR)xget(sc_data->STR_ConfigParams, MUIA_String_Contents), MAXPATHLEN);
          Iface.if_configparams = configparams;
          Iface.if_flags = NULL;
       }
@@ -188,7 +185,25 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
       case PAGE_SerialSana:
       {
          if(use_modem)
+         {
             data->Page = PAGE_SerialModem;
+            if(use_old_modem)
+            {
+               if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_ReuseSpecify), GetStr(MSG_TX_UseOldModem), Modem.mo_name, Modem.mo_device, Modem.mo_unit))
+               {
+                  if(serial_create(Modem.mo_device, Modem.mo_unit))
+                     data->Page = PAGE_UserInfo;
+                  else
+                     MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_CouldNotOpenDevice_Unit), Modem.mo_device, Modem.mo_unit);
+               }
+               else
+               {
+                  use_old_modem = FALSE;
+                  Modem.mo_id = ((int)(&Modem) % 100) + 100;
+                  Iface.if_modemid = Modem.mo_id;
+               }
+            }
+         }
          else
             data->Page = PAGE_Sana2;
          break;
@@ -197,8 +212,8 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
       {
          struct SerialModem_Data *sm_data = INST_DATA(CL_SerialModem->mcc_Class, data->GR_SerialModem);
 
-         Config.cnf_flags &= ~CFL_IgnoreDSR;
-         if(serial_create(Config.cnf_serialdevice, Config.cnf_serialunit))
+         Modem.mo_flags &= ~MFL_IgnoreDSR;
+         if(serial_create(Modem.mo_device, Modem.mo_unit))
          {
             if(!serial_dsr())
             {
@@ -207,7 +222,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
                {
                   if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_IgnoreCancel), GetStr(MSG_TX_NoDSR)))
                   {
-                     Config.cnf_flags |= CFL_IgnoreDSR;
+                     Modem.mo_flags |= MFL_IgnoreDSR;
                      data->Page = PAGE_ModemStrings;
                   }
                   else
@@ -221,7 +236,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
          }
          else
          {
-            MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_CouldNotOpenDevice_Unit), Config.cnf_serialdevice, Config.cnf_serialunit);
+            MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_CouldNotOpenDevice_Unit), Modem.mo_device, Modem.mo_unit);
             set(win, MUIA_Window_ActiveObject, sm_data->STR_SerialDevice);
          }
          break;
@@ -229,23 +244,51 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
       case PAGE_ModemStrings:
       {
          struct ModemStrings_Data *ms_data = INST_DATA(CL_ModemStrings->mcc_Class, data->GR_ModemStrings);
+         Object *tmp_win;
 
-         if(*Config.cnf_dialprefix)
+         if(*Modem.mo_dialprefix)
          {
             set(app, MUIA_Application_Sleep, TRUE);
 
+            if(tmp_win = WindowObject,
+               MUIA_Window_Title       , NULL,
+               MUIA_Window_Activate    , FALSE,
+               MUIA_Window_CloseGadget , FALSE,
+               MUIA_Window_LeftEdge    , MUIV_Window_LeftEdge_Centered,
+               MUIA_Window_TopEdge     , MUIV_Window_TopEdge_Centered,
+               MUIA_Window_RefWindow   , win,
+               MUIA_Window_DepthGadget , FALSE,
+               MUIA_Window_SizeGadget  , FALSE,
+               MUIA_Window_DragBar     , FALSE,
+               WindowContents, VGroup,
+                  Child, HVSpace,
+                  Child, HGroup,
+                     Child, HVSpace,
+                     Child, MakeText(GetStr(MSG_TX_CheckingModem)),
+                     Child, HVSpace,
+                  End,
+                  Child, HVSpace,
+               End,
+            End)
+            {
+               DoMethod(app, OM_ADDMEMBER, tmp_win);
+               set(tmp_win, MUIA_Window_Open, TRUE);
+            }
+
             serial_send("\r", -1);
-            Delay(10);
-            serial_send("AAT\r", -1);
-            if(serial_waitfor("OK", NULL, NULL, 3))
+            Delay(Modem.mo_commanddelay);
+            serial_send("AT\r", -1);
+            serial_waitfor(Modem.mo_ok, NULL, NULL, 1);
+            Delay(Modem.mo_commanddelay);
+            serial_send("AT\r", -1);
+            if(serial_waitfor(Modem.mo_ok, NULL, NULL, 3))
             {
                char buffer[MAXPATHLEN];
 
-               Delay(10);
-               EscapeString(buffer, Config.cnf_initstring);
-               strcat(buffer, "\r");
+               Delay(Modem.mo_commanddelay);
+               EscapeString(buffer, Modem.mo_init);
                serial_send(buffer, -1);
-               if(serial_waitfor("OK", NULL, NULL, 3))
+               if(serial_waitfor(Modem.mo_ok, NULL, NULL, 3))
                   data->Page = PAGE_UserInfo;
                else
                {
@@ -258,6 +301,14 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
                if(MUI_Request(app, win, NULL,  NULL, GetStr(MSG_ReqBT_IgnoreCancel), GetStr(MSG_TX_NoOKOnAT)))
                   data->Page = PAGE_UserInfo;
             }
+
+            if(tmp_win)
+            {
+               set(tmp_win, MUIA_Window_Open, FALSE);
+               DoMethod(app, OM_REMMEMBER, tmp_win);
+               MUI_DisposeObject(tmp_win);
+            }
+
             set(app, MUIA_Application_Sleep, FALSE);
          }
          else
@@ -271,9 +322,9 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
       {
          struct UserInfo_Data *ui_data = INST_DATA(CL_UserInfo->mcc_Class, data->GR_UserInfo);
 
-         if(*ISP.isp_login)
+         if(*Iface.if_login)
          {
-            if(*ISP.isp_phonenumber)
+            if(*Iface.if_phonenumber)
             {
                data->Page = PAGE_Protocol;
             }
@@ -296,7 +347,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
          struct Finished_Data *fi_data = INST_DATA(CL_Finished->mcc_Class, data->GR_Finished);
 
          if(xget(fi_data->CH_Config, MUIA_Selected))
-            if(!(save_config((STRPTR)xget(fi_data->STR_Config, MUIA_String_Contents), &ISP, &Iface, &Config)))
+            if(!(save_config((STRPTR)xget(fi_data->STR_Config, MUIA_String_Contents))))
                MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_ErrorSaveConfig), xget(fi_data->STR_Config, MUIA_String_Contents));
          if(xget(fi_data->CH_Info, MUIA_Selected))
          {
@@ -304,7 +355,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
 
             if(fh = Open((STRPTR)xget(fi_data->STR_Info, MUIA_String_Contents), MODE_NEWFILE))
             {
-               print_config(fh, &ISP, &Iface, &Config);
+               print_config(fh);
                Close(fh);
             }
             else
@@ -316,7 +367,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
 
             if(fh = Open((STRPTR)xget(fi_data->STR_Printer, MUIA_String_Contents), MODE_NEWFILE))
             {
-               print_config(fh, &ISP, &Iface, &Config);
+               print_config(fh);
                Close(fh);
             }
             else
@@ -327,8 +378,6 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
       }
       case PAGE_SanaConfig:
       {
-//         struct SanaConfig_Data *sc_data = INST_DATA(CL_SanaConfig->mcc_Class, data->GR_SanaConfig);
-
          set(app, MUIA_Application_Sleep, TRUE);
          if(status_win = NewObject(CL_Online->mcc_Class, NULL, TAG_DONE))
          {
@@ -386,6 +435,12 @@ ULONG MainWindow_BackPage(struct IClass *cl, Object *obj, Msg msg)
          }
          else
             data->Page = PAGE_SanaConfig;
+         break;
+      case PAGE_UserInfo:
+         if(use_old_modem)
+            data->Page = PAGE_SerialSana;
+         else
+            data->Page--;
          break;
       default:
          data->Page--;
@@ -453,7 +508,7 @@ ULONG MainWindow_SetPage(struct IClass *cl, Object *obj, Msg msg)
          DoMethod(ls_data->BT_GoOnline, MUIM_MultiSet, MUIA_Disabled, !use_loginscript,
             ls_data->BT_GoOnline, ls_data->BT_SendLogin, ls_data->BT_SendPassword, ls_data->BT_SendBreak, NULL);
 
-         clear_list(&ISP.isp_loginscript);
+         clear_list(&Iface.if_loginscript);
          keyboard_input = FALSE;
 
          serial_startread(serial_in, 1);

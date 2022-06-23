@@ -58,48 +58,48 @@ static const struct Hook ScriptList_DisplayHook= { { 0,0 }, (VOID *)ScriptList_D
 ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
 {
 //   struct Finished_Data *data = INST_DATA(cl, obj);
+   struct ScriptLine *script_line;
+   struct ServerEntry *server;
    Object *window, *script;
    char ip_info[41], dest_info[41], gw_info[41], dns1_info[41], dns2_info[41], device_info[81], domain_info[81];
 
-   if(addr_assign == CNF_Assign_Static)
+   if(addr_assign == ASSIGN_Static)
       sprintf(ip_info, "%ls (%ls)", Iface.if_addr, GetStr(MSG_TX_Static));
    else
    {
       strcpy(ip_info, GetStr(MSG_TX_Dynamic));
-      strcat(ip_info, (addr_assign == CNF_Assign_BOOTP ? " (BOOTP)" : " (ICPC)"));
+      strcat(ip_info, (addr_assign == ASSIGN_BOOTP ? " (BOOTP)" : " (ICPC)"));
    }
 
-   if(dst_assign == CNF_Assign_Static)
+   if(dst_assign == ASSIGN_Static)
       sprintf(dest_info, "%ls (%ls)", Iface.if_dst, GetStr(MSG_TX_Static));
    else
    {
       strcpy(dest_info, GetStr(MSG_TX_Dynamic));
-      strcat(dest_info, (dst_assign == CNF_Assign_BOOTP ? " (BOOTP)" : " (ICPC)"));
+      strcat(dest_info, (dst_assign == ASSIGN_BOOTP ? " (BOOTP)" : " (ICPC)"));
    }
 
-   if(gw_assign == CNF_Assign_Static)
+   if(gw_assign == ASSIGN_Static)
       sprintf(gw_info, "%ls (%ls)", Iface.if_gateway, GetStr(MSG_TX_Static));
    else
    {
       strcpy(gw_info, GetStr(MSG_TX_Dynamic));
-      strcat(gw_info, (gw_assign == CNF_Assign_BOOTP ? " (BOOTP)" : " (ICPC)"));
+      strcat(gw_info, (gw_assign == ASSIGN_BOOTP ? " (BOOTP)" : " (ICPC)"));
    }
 
    *dns1_info = *dns2_info = NULL;
-   if(ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers)
+   if(Iface.if_nameservers.mlh_TailPred != (struct MinNode *)&Iface.if_nameservers)
    {
-      struct ServerEntry *server;
-
-      server = (struct ServerEntry *)ISP.isp_nameservers.mlh_TailPred;
+      server = (struct ServerEntry *)Iface.if_nameservers.mlh_TailPred;
       if(server->se_node.mln_Pred)
       {
          strcpy(dns1_info, server->se_name);
-         strcat(dns1_info, (dns_assign == CNF_Assign_BOOTP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
+         strcat(dns1_info, (dns_assign == ASSIGN_BOOTP ? " (BOOTP)" : (dns_assign == ASSIGN_Root ? " (ROOT)" : " (MSDNS)")));
          server = (struct ServerEntry *)server->se_node.mln_Pred;
          if(server->se_node.mln_Pred)
          {
             strcpy(dns2_info, server->se_name);
-            strcat(dns2_info, (dns_assign == CNF_Assign_BOOTP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
+            strcat(dns2_info, (dns_assign == ASSIGN_BOOTP ? " (BOOTP)" : (dns_assign == ASSIGN_Root ? " (ROOT)" : " (MSDNS)")));
          }
       }
    }
@@ -109,11 +109,9 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
       strcpy(dns2_info, GetStr(MSG_TX_Undefined));
 
    *domain_info = NULL;
-   if(ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames)
+   if(Iface.if_domainnames.mlh_TailPred != (struct MinNode *)&Iface.if_domainnames)
    {
-      struct ServerEntry *server;
-
-      server = (struct ServerEntry *)ISP.isp_domainnames.mlh_TailPred;
+      server = (struct ServerEntry *)Iface.if_domainnames.mlh_TailPred;
       if(server->se_node.mln_Pred)
          strcpy(domain_info, server->se_name);
    }
@@ -157,7 +155,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
             Child, Label(GetStr(MSG_LA_DomainName)),
             Child, MakeText(domain_info),
             Child, Label(GetStr(MSG_LA_HostName)),
-            Child, MakeText((*ISP.isp_hostname ? (STRPTR)ISP.isp_hostname : GetStr(MSG_TX_Undefined))),
+            Child, MakeText((*Iface.if_hostname ? (STRPTR)Iface.if_hostname : GetStr(MSG_TX_Undefined))),
          End,
          Child, script = ListviewObject,
             MUIA_ShowMe          , use_modem,
@@ -181,12 +179,9 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
       set(app, MUIA_Application_Sleep, TRUE);
       DoMethod(app, OM_ADDMEMBER, window);
 
-
-      if(ISP.isp_loginscript.mlh_TailPred != (struct MinNode *)&ISP.isp_loginscript)
+      if(Iface.if_loginscript.mlh_TailPred != (struct MinNode *)&Iface.if_loginscript)
       {
-         struct ScriptLine *script_line;
-
-         script_line = (struct ScriptLine *)ISP.isp_loginscript.mlh_Head;
+         script_line = (struct ScriptLine *)Iface.if_loginscript.mlh_Head;
          while(script_line->sl_node.mln_Succ)
          {
             DoMethod(script, MUIM_List_InsertSingle, script_line, MUIV_List_Insert_Bottom);

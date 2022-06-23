@@ -1,7 +1,7 @@
-#define MUIM_User_SetStates               (TAGBASE_PREFS | 0x1030)
-#define MUIM_User_NewUser                 (TAGBASE_PREFS | 0x1031)
-#define MUIM_User_Edit                    (TAGBASE_PREFS | 0x1032)
-#define MUIM_User_EditFinish              (TAGBASE_PREFS | 0x1033)
+#define MUIM_User_SetStates               (TAGBASE_PREFS | 0x10a0)
+#define MUIM_User_NewUser                 (TAGBASE_PREFS | 0x10a1)
+#define MUIM_User_Edit                    (TAGBASE_PREFS | 0x10a2)
+#define MUIM_User_EditFinish              (TAGBASE_PREFS | 0x10a3)
 
 struct MUIP_User_EditFinish   { ULONG MethodID; Object *win; LONG ok; };
 

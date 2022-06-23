@@ -1,0 +1,44 @@
+###############################################################################
+#
+#  SMakefile
+#
+#  Makefile for the `SMake' utility required to build 'conver'
+#  to convert old genesis.config into new one
+#
+#  1998 by Michael Neuweiler
+#
+###############################################################################
+
+.c.o:
+   sc $(CFLAGS) $(GST) $(OPTIONS) $*.c
+
+.asm.o:
+   ASM -D $*.asm
+
+CPU      = ANY
+OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
+
+OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
+GST      = GSTIMM GST=/includes.gst
+
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetInclude: IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU)
+
+LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
+#LFLAGS  = SC SD NOICONS MAXHUNK 100000
+
+OBJS     = main.o
+LIBS     = lib:amiga.lib lib:sc.lib
+
+all:   /includes.gst genesis_converter
+
+genesis_converter:   $(OBJS)
+   SLINK WITH T:converter.WITH <<!(T:converter.WITH)
+      FROM  lib:c.o $(OBJS)
+      TO    genesis_converter
+      LIB   $(LIBS)
+      MAP   genesis_converter.map H
+      $(LFLAGS)
+   <
+
+
+main.o : main.c

@@ -21,25 +21,36 @@ extern Object *win, *app;
 ///
 
 /// About_New
-ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
+ULONG About_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct About_Data tmp;
-   char info1[512], info2[512];
+   STRPTR info1, info2;
 
-   strcpy(info1, "\033c\033b\033u\nGENESiS Preferences\033n\033c\n\n" \
-                 "\033cVersion " VERTAG);
+   if(!(info1 = AllocVec(512, MEMF_ANY)))
+      return(NULL);
+   if(!(info2 = AllocVec(512, MEMF_ANY)))
+   {
+      FreeVec(info1);
+      return(NULL);
+   }
+
+   strcpy(info1, GetStr(MSG_TX_About1a));
+   strncat(info1, " " VERTAG, 512);
 #ifdef NETCONNECT
-   strcat(info1, " - NetConnect");
+   strncat(info1, " - NetConnect", 512);
 #endif
-   strcat(info1, "\n\n"\
-                 "\033n\033cCopyright © 1997-98 by\n" \
-                 "\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n"\
-                 "All Rights Reserved\n");
+   strncat(info1, "\n\n\033n\033cCopyright © 1997-99 by\n", 512);
+   strncat(info1, "\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n", 512);
+   strncat(info1, GetStr(MSG_TX_About1b), 512);
 
-   sprintf(info2, "\n\033cRegistered to:\n" \
-                  "\033i%ls\n(%ls)\n\n" \
-                  "\033n\033cARexx port:\n" \
-                  "\033i'%ls'\n", NCL_GetOwner(), NCL_GetSerial(), xget(app, MUIA_Application_Base));
+   // don't replace with sprintf, will overfill info2 and cause enf. hit !!
+   strcpy(info2, GetStr(MSG_TX_About2));
+   strncat(info2, NCL_GetOwner(), 512);
+   strncat(info2, "\n(", 512);
+   strncat(info2, NCL_GetSerial(), 512);
+   strncat(info2, ")\n\n\033n\033cARexx port:\n\033i'", 512);
+   strncat(info2, (STRPTR)xget(app, MUIA_Application_Base), 512);
+   strncat(info2, "'\n", 512);
 
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Window_Title       , "GENESiSPrefs · Copyright Information",
@@ -94,18 +105,11 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
                End,
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
-                  MUIA_Text_Contents, "\n\033cSupport site:\n\033ihttp://www.active-net.co.uk\n\n"\
-                                      "\033nThanks go to:\nOliver Wagner, NSDI Group, Simone Tellini, Niels Heuer,\nChristoph Dietz, Thomas Bickel and many more.",
+                  MUIA_Text_Contents, GetStr(MSG_TX_About3),
                End,
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
-                  MUIA_Text_Contents, "\n\033cGENESiS uses the MUI object library\n",
-//                                      "MUI is © 1992-97 by Stefan Stunz <stuntz@sasg.com>\n" \
-//                                      "\n" \
-//                                      "NList.mcc, NListview.mcc are © 1996-98 Gilles Masson\n" \
-//                                      "\n" \
-//                                      "AmiTCP is © by NSDI\n" \
-//                                      "GENESiS uses code that was kindly provided by NSDI",
+                  MUIA_Text_Contents, GetStr(MSG_TX_About4),
                End,
             End,
          End,
@@ -116,20 +120,24 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
          End,
       End))
    {
-      struct About_Data *data = INST_DATA(cl,obj);
+      struct About_Data *data = INST_DATA(cl, obj);
 
       *data = tmp;
-/*
+
       set(tmp.BT_Button, MUIA_CycleChain, 1);
       set(obj, MUIA_Window_ActiveObject, tmp.BT_Button);
 
       DoMethod(obj, MUIM_Notify, MUIA_Window_CloseRequest, TRUE ,
          MUIV_Notify_Application, 6, MUIM_Application_PushMethod,
          win, 3, MUIM_MainWindow_AboutFinish, obj);
-*/      DoMethod(data->BT_Button, MUIM_Notify, MUIA_Pressed, FALSE ,
+      DoMethod(tmp.BT_Button, MUIM_Notify, MUIA_Pressed, FALSE ,
          MUIV_Notify_Application, 6, MUIM_Application_PushMethod,
          win, 3, MUIM_MainWindow_AboutFinish, obj);
    }
+
+   FreeVec(info1);
+   FreeVec(info2);
+
    return((ULONG)obj);
 }
 
@@ -138,7 +146,7 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 SAVEDS ASM ULONG About_Dispatcher(register __a0 struct IClass *cl, register __a2 Object *obj, register __a1 Msg msg)
 {
    if(msg->MethodID == OM_NEW)
-      return(About_New(cl,obj,(APTR)msg));
+      return(About_New(cl, obj, (APTR)msg));
 
    return(DoSuperMethodA(cl, obj, msg));
 }

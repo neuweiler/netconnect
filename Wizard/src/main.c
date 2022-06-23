@@ -53,12 +53,10 @@ extern Object *app;
 extern Object *win;
 extern char serial_buffer[], serial_buffer_old1[], serial_buffer_old2[];
 extern WORD ser_buf_pos;
-extern struct Config Config;
 extern ULONG sigs;
-extern BOOL no_picture, use_loginscript;
-extern struct ISP ISP;
+extern BOOL no_picture, use_loginscript, use_old_modem;
 extern struct Interface Iface;
-
+extern struct Modem Modem;
 extern ULONG *colors[NUM_PAGES], setup_page0_colors[], setup_page1_colors[], setup_page2_colors[],
              setup_page3_colors[], setup_page4_colors[], setup_page5_colors[], setup_page6_colors[],
              setup_page7_colors[];
@@ -92,8 +90,8 @@ BOOL init_libs(VOID)
    if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
       Printf(GetStr(MSG_TX_ErrorOpenX), "netconnect.library\n");
 #else
-   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 5)))
-      Printf(GetStr(MSG_TX_ErrorOpenX), "AmiTCP:libs/genesiskey.library\n");
+   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 6)))
+      Printf(GetStr(MSG_TX_ErrorOpenX), "AmiTCP:libs/genesiskey.library (ver 6.0)\n");
 #endif
    if(!(MUIMasterBase  = OpenLibrary("muimaster.library"   , 11)))
       Printf(GetStr(MSG_TX_ErrorOpenX), "muimaster.library.\n");
@@ -179,9 +177,7 @@ VOID exit_ports(VOID)
 BOOL init_ports(VOID)
 {
    if(MainPort = CreateMsgPort())
-   {
       return(TRUE);
-   }
 
    exit_ports();
    return(FALSE);
@@ -301,8 +297,9 @@ VOID Handler(VOID)
 #else
                MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG,
 #endif
-               MUIA_Application_Copyright    , "Michael Neuweiler 1997,98",
+               MUIA_Application_Copyright    , "Michael Neuweiler & Active Technologies 1997-99",
                MUIA_Application_Description  , GetStr(MSG_AppDescription),
+               MUIA_Application_SingleTask   , TRUE,
                MUIA_Application_Window       , win = NewObject(CL_MainWindow->mcc_Class, NULL, TAG_DONE),
             End)
             {
@@ -326,41 +323,26 @@ VOID Handler(VOID)
                ser_buf_pos = 0;
                serial_buffer_old1[0] = NULL;
                serial_buffer_old2[0] = NULL;
+               use_loginscript = use_old_modem = FALSE;
 
-               bzero(&Config, sizeof(struct Config));
-               Config.cnf_baudrate = 38400;
-               Config.cnf_flags = CFL_7Wire | CFL_RadBoogie;
-               Config.cnf_serbuflen = 16384;
-               Config.cnf_redialattempts = 10;
-               Config.cnf_redialdelay = 5;
-               if(load_config("AmiTCP:db/genesis.conf", &Config))
+               bzero(&Modem, sizeof(struct Modem));
+               bzero(&Iface, sizeof(struct Interface));
+               NewList((struct List *)&Iface.if_events);
+               NewList((struct List *)&Iface.if_loginscript);
+               NewList((struct List *)&Iface.if_nameservers);
+               NewList((struct List *)&Iface.if_domainnames);
+
+               if(load_config(DEFAULT_CONFIGFILE))
                {
                   struct SerialModem_Data *sm_data = INST_DATA(CL_SerialModem->mcc_Class, data->GR_SerialModem);
                   struct ModemStrings_Data *ms_data = INST_DATA(CL_ModemStrings->mcc_Class, data->GR_ModemStrings);
 
-                  if(*Config.cnf_serialdevice)
-                     setstring(sm_data->STR_SerialDevice, Config.cnf_serialdevice);
-                  setslider(sm_data->SL_SerialUnit, Config.cnf_serialunit);
-                  if(*Config.cnf_modemname)
-                     set(sm_data->TX_ModemName, MUIA_Text_Contents, Config.cnf_modemname);
-
-                  if(*Config.cnf_initstring)
-                     setstring(ms_data->STR_InitString, Config.cnf_initstring);
-                  if(*Config.cnf_dialprefix)
-                     setstring(ms_data->STR_DialPrefix, Config.cnf_dialprefix);
+                  setstring(sm_data->STR_SerialDevice, Modem.mo_device);
+                  setslider(sm_data->SL_SerialUnit, Modem.mo_unit);
+                  set(sm_data->TX_ModemName, MUIA_Text_Contents, Modem.mo_name);
+                  setstring(ms_data->STR_InitString, Modem.mo_init);
+                  setstring(ms_data->STR_DialPrefix, Modem.mo_dialprefix);
                }
-
-               bzero(&ISP, sizeof(struct ISP));
-               NewList((struct List *)&ISP.isp_loginscript);
-               NewList((struct List *)&ISP.isp_nameservers);
-               NewList((struct List *)&ISP.isp_domainnames);
-               strcpy(ISP.isp_name, GetStr(MSG_TX_ConfigName));
-               strcpy(ISP.isp_comment, GetStr(MSG_TX_ConfigComment));
-
-               bzero(&Iface, sizeof(struct Interface));
-               strcpy(Iface.if_netmask, "255.255.255.0");
-               Iface.if_MTU    = 1500;
-               use_loginscript = FALSE;
 
 #ifdef DEMO
                DoMethod(win, MUIM_MainWindow_About);
@@ -384,9 +366,7 @@ VOID Handler(VOID)
                app = NULL;
 
                serial_delete();
-               clear_list(&ISP.isp_loginscript);
-               clear_list(&ISP.isp_nameservers);
-               clear_list(&ISP.isp_domainnames);
+               clear_config();
             }
             else
                MUI_Request(0,0,0,0, GetStr(MSG_ReqBT_Abort), GetStr(MSG_TX_ErrorMUIApp));

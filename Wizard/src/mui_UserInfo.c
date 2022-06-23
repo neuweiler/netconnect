@@ -12,8 +12,8 @@
 /// external variables
 extern struct Library *MUIMasterBase;
 extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct Config Config;
-extern struct ISP ISP;
+extern struct Modem Modem;
+extern struct Interface Iface;
 
 ///
 
@@ -30,11 +30,11 @@ ULONG UserInfo_AddPhone(struct IClass *cl, Object *obj, struct MUIP_UserInfo_Add
       {
          if(*ptr)
          {
-            strcpy(ISP.isp_phonenumber, (STRPTR)xget(data->STR_PhoneNumber, MUIA_String_Contents));
-            if(*ISP.isp_phonenumber)
-               strncat(ISP.isp_phonenumber, " | ", sizeof(ISP.isp_phonenumber));
-            strncat(ISP.isp_phonenumber, ptr, sizeof(ISP.isp_phonenumber));
-            set(data->STR_PhoneNumber, MUIA_String_Contents, ISP.isp_phonenumber);
+            strcpy(Iface.if_phonenumber, (STRPTR)xget(data->STR_PhoneNumber, MUIA_String_Contents));
+            if(*Iface.if_phonenumber)
+               strncat(Iface.if_phonenumber, " | ", sizeof(Iface.if_phonenumber));
+            strncat(Iface.if_phonenumber, ptr, sizeof(Iface.if_phonenumber));
+            set(data->STR_PhoneNumber, MUIA_String_Contents, Iface.if_phonenumber);
          }
       }
    }
@@ -75,7 +75,6 @@ ULONG UserInfo_New(struct IClass *cl, Object *obj, struct opSet *msg)
             MUIA_CycleChain      , 1,
             StringFrame,
             MUIA_String_MaxLen   , 80,
-            MUIA_String_Accept, "1234567890 |",
          End,
          MUIA_Popstring_Button      , PopButton(MUII_PopUp),
          MUIA_Popobject_Object      , VGroup,

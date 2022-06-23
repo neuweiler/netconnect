@@ -125,15 +125,27 @@ Object *MakeButton(STRPTR string)
 
 ///
 /// MakeKeyString
-Object *MakeKeyString(STRPTR string, LONG len, STRPTR c)
+Object *MakeKeyString(LONG len, STRPTR c)
 {
    return(TextinputObject,
       StringFrame,
       MUIA_CycleChain         , 1,
       MUIA_Textinput_Multiline, FALSE,
-      MUIA_Textinput_Contents , string,
       MUIA_Textinput_MaxLen   , len,
       MUIA_ControlChar        , *GetStr(c),
+      End);
+}
+
+///
+/// MakeKeyInteger
+Object *MakeKeyInteger(LONG len, STRPTR c)
+{
+   return(TextinputObject,
+      StringFrame,
+      MUIA_ControlChar     , *GetStr(c),
+      MUIA_CycleChain      , 1,
+      MUIA_String_MaxLen   , len,
+      MUIA_String_Accept   , "-0123456789",
       End);
 }
 
@@ -292,6 +304,122 @@ VOID clear_list(struct MinList *list)
          e1 = e2;
       }
    }
+}
+
+///
+/// add_server
+struct ServerEntry *add_server(struct MinList *list, STRPTR name)
+{
+   struct ServerEntry *server;
+
+   if(!name || !*name || !strcmp(name, "0.0.0.0"))
+      return(NULL);
+
+   if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
+   {
+      strncpy(server->se_name, name, sizeof(server->se_name) - 1);
+      AddTail((struct List *)list, (struct Node *)server);
+   }
+   return(server);
+}
+
+///
+/// add_script_line
+struct ScriptLine *add_script_line(struct MinList *list, int command, STRPTR contents, int userdata)
+{
+   struct ScriptLine *script_line;
+
+   if(list)
+   {
+      if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR))
+      {
+         script_line->sl_command = command;
+         script_line->sl_userdata = userdata;
+         if(contents)
+            strncpy(script_line->sl_contents, contents, sizeof(script_line->sl_contents));
+
+         AddTail((struct List *)list, (struct Node *)script_line);
+      }
+   }
+   return(script_line);
+}
+///
+/// uniquify_modem_id
+VOID uniquify_modem_id(Object *list, struct Modem *modem)
+{
+   ULONG pos;
+   struct Modem *tmp_modem;
+
+   if(modem && list)
+   {
+      pos = 0;
+      FOREVER
+      {
+         DoMethod(list, MUIM_List_GetEntry, pos++, &tmp_modem);
+         if(!tmp_modem)
+            break;
+         if((tmp_modem != modem) && (tmp_modem->mo_id == modem->mo_id))
+         {
+            modem->mo_id++;
+            pos = 0;
+         }
+      }
+   }
+}
+
+///
+/// uniquify_iface_name
+VOID uniquify_iface_name(Object *list, struct Interface *iface)
+{
+   ULONG pos;
+   struct Interface *tmp_iface;
+   char buf[21];
+   SHORT i;
+
+   if(iface && list)
+   {
+      strncpy(buf, iface->if_name, sizeof(buf));
+
+      pos = 0;
+      i = 0;
+      while(i < 100)
+      {
+         DoMethod(list, MUIM_List_GetEntry, pos++, &tmp_iface);
+         if(!tmp_iface)
+            break;
+         if((tmp_iface != iface) && (!strcmp(tmp_iface->if_name, buf)))
+         {
+            i++;
+            iface->if_name[sizeof(iface->if_name) - 3] = NULL; // cut down to right size (max-2)
+            sprintf(buf, "%ls%ld", iface->if_name, i);
+            pos = 0;
+         }
+      }
+
+      strncpy(iface->if_name, buf, sizeof(iface->if_name));
+   }
+}
+
+///
+/// get_modem_by_id
+struct Modem *get_modem_by_id(Object *list, int id)
+{
+   struct Modem *modem = NULL;
+   ULONG pos;
+
+   if(list)
+   {
+      pos = 0;
+      FOREVER
+      {
+         DoMethod(list, MUIM_List_GetEntry, pos++, &modem);
+         if(!modem)
+            break;
+         if(modem->mo_id == id)
+            break;
+      }
+   }
+   return(modem);
 }
 
 ///

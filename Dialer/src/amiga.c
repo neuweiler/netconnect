@@ -16,8 +16,8 @@
 
 ///
 /// defines
-enum { ARG_PROVIDER, ARG_USER, ARG_PASSWORD, ARG_WAITSTACK, ARGS };
-#define ARGTEMPLATE "PROVIDER/K,USER/K,PW=PASSWORD/K,WAITSTACK/N"
+enum { ARG_ONLINE, ARG_USER, ARG_PASSWORD, ARG_WAITSTACK, ARGS };
+#define ARGTEMPLATE "O=ONLINE/M,U=USER/K,PW=PASSWORD/K,WS=WAITSTACK/N"
 
 ///
 /// external variables
@@ -32,9 +32,9 @@ extern struct MsgPort *MainPort;
 extern struct Config Config;
 extern struct User *current_user;
 extern int waitstack;
-extern char default_provider[];
 extern struct CommandLineInterface *LocalCLI;
 extern struct Library *NetConnectBase;
+extern struct MinList args_ifaces_online;
 
 ///
 
@@ -307,8 +307,22 @@ BOOL parse_arguments(VOID)
             {
                success = TRUE;
 
-               if(ArgArray[ARG_PROVIDER])
-                  strncpy(default_provider, ArgArray[ARG_PROVIDER], 80);
+               if(ArgArray[ARG_ONLINE])
+               {
+                  STRPTR *iface_arr;
+                  struct ScriptLine *entry;
+
+                  iface_arr = (STRPTR *)ArgArray[ARG_ONLINE];
+                  while(*iface_arr)
+                  {
+                     if(entry = (struct ScriptLine *)AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+                     {
+                        strncpy(entry->sl_contents, *iface_arr, sizeof(entry->sl_contents));
+                        AddTail((struct List *)&args_ifaces_online, (struct Node *)entry);
+                     }
+                     iface_arr++;
+                  }
+               }
                if(ArgArray[ARG_USER])
                {
                   if(current_user)
@@ -341,8 +355,17 @@ BOOL parse_arguments(VOID)
 
             success = TRUE;
 
-            if(Type = FindToolType(Icon->do_ToolTypes, "PROVIDER"))
-               strncpy(default_provider, Type, 80);
+            if(Type = FindToolType(Icon->do_ToolTypes, "ONLINE"))
+            {
+               struct ScriptLine *entry;
+
+               if(entry = (struct ScriptLine *)AllocVec(sizeof(struct ScriptLine), MEMF_ANY))
+               {
+                  strncpy(entry->sl_contents, Type, sizeof(entry->sl_contents));
+                  AddTail((struct List *)&args_ifaces_online, (struct Node *)entry);
+               }
+            }
+
             if(Type = FindToolType(Icon->do_ToolTypes, "USER"))
             {
                STRPTR password;
@@ -369,66 +392,21 @@ BOOL parse_arguments(VOID)
 }
 
 ///
-/// load_reconnect
-BOOL load_reconnect(VOID)
+/// clear_list
+VOID clear_list(struct MinList *list)
 {
-   struct ParseConfig_Data pc_data;
-   struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-   struct Interface *iface = NULL;
-   BOOL success = FALSE;
+   struct MinNode *e1, *e2;
 
-   if(ParseConfig("AmiTCP:db/reconnect.conf", &pc_data))
+   if(list->mlh_TailPred != (struct MinNode *)list)
    {
-      while(ParseNext(&pc_data))
+      e1 = list->mlh_Head;
+      while(e2 = e1->mln_Succ)
       {
-         if(!stricmp(pc_data.pc_argument, "ISP"))
-         {
-Printf("setting tx_provider\n");
-            DoMethod(win, MUIM_MainWindow_ChangeProvider, pc_data.pc_contents, FALSE);
-Printf("returned from set(tx_provider\n");
-            strncpy(default_provider, pc_data.pc_contents, 80);
-            success = TRUE;
-            break;
-         }
+         Remove((struct Node *)e1);
+         FreeVec(e1);
+         e1 = e2;
       }
-      if(success)
-      {
-Printf("continuing parse reconnect\n");
-         while(ParseNext(&pc_data))
-         {
-            if(!stricmp(pc_data.pc_argument, "DomainName"))
-            {
-               if(!find_server_by_name(&data->isp.isp_domainnames, pc_data.pc_contents))
-                  add_server(&data->isp.isp_domainnames, pc_data.pc_contents);
-            }
-            if(!stricmp(pc_data.pc_argument, "NameServer"))
-            {
-               if(!find_server_by_name(&data->isp.isp_nameservers, pc_data.pc_contents))
-                  add_server(&data->isp.isp_nameservers, pc_data.pc_contents);
-            }
-            if(!stricmp(pc_data.pc_argument, "Interface"))
-            {
-               if(iface = find_by_name(&data->isp.isp_ifaces, pc_data.pc_contents))
-               {
-                  if(iface->if_flags & IFL_IsOnline)
-                     iface = NULL;
-                  else
-                     iface->if_flags |= IFL_PutOnline;
-Printf("iface: '%ls'\n", iface->if_name);
-               }
-Printf("contents: '%ls'\n", pc_data.pc_contents);
-            }
-            if(!stricmp(pc_data.pc_argument, "IPAddr") && iface)
-               strncpy(iface->if_addr, pc_data.pc_contents, sizeof(iface->if_addr));
-            if(!stricmp(pc_data.pc_argument, "DestIP") && iface)
-               strncpy(iface->if_dst, pc_data.pc_contents, sizeof(iface->if_dst));
-            if(!stricmp(pc_data.pc_argument, "Gateway") && iface)
-               strncpy(iface->if_gateway, pc_data.pc_contents, sizeof(iface->if_gateway));
-         }
-      }
-      ParseEnd(&pc_data);
    }
-   return(success);
 }
 
 ///
@@ -438,21 +416,54 @@ VOID clear_config(struct Config *conf)
    struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
    APTR display_item;
 
+   // free memory
+
    if(conf->cnf_startup)
       FreeVec(conf->cnf_startup);
    if(conf->cnf_shutdown)
       FreeVec(conf->cnf_shutdown);
 
-   bzero(conf, sizeof(struct Config));
+   clear_list(&conf->cnf_modems);
 
-   strcpy(conf->cnf_serialdevice, "serial.device");
-   strcpy(conf->cnf_initstring, "AT&F&D2");
-   strcpy(conf->cnf_dialprefix, "ATDT");
-   conf->cnf_baudrate        = 38400;
-   conf->cnf_redialattempts  = 10;
-   conf->cnf_redialdelay     = 5;
-   conf->cnf_flags = CFL_7Wire | CFL_RadBoogie | CFL_ShowLog | CFL_ShowLeds | CFL_ShowConnect |
-      CFL_ShowOnlineTime | CFL_ShowButtons | CFL_ShowProvider | CFL_ShowUser | CFL_ShowStatusWin |
+   if(conf->cnf_ifaces.mlh_TailPred != (struct MinNode *)&conf->cnf_ifaces)
+   {
+      struct Interface *iface1, *iface2;
+
+      iface1 = (struct Interface *)conf->cnf_ifaces.mlh_Head;
+      while(iface2 = (struct Interface *)iface1->if_node.mln_Succ)
+      {
+/*         while(iface1->if_dialin)
+         {
+            Signal(iface1->if_dialin, SIGBREAKF_CTRL_C);
+            Delay(20);
+         }
+*/
+         if(iface1->if_sana2configtext)
+            FreeVec(iface1->if_sana2configtext);
+         if(iface1->if_configparams)
+            FreeVec(iface1->if_configparams);
+
+         clear_list(&iface1->if_loginscript);
+         clear_list(&iface1->if_events);
+         clear_list(&iface1->if_nameservers);
+         clear_list(&iface1->if_domainnames);
+
+         Remove((struct Node *)iface1);
+         FreeVec(iface1);
+         iface1 = iface2;
+      }
+   }
+
+   // zero/init memory
+
+   bzero(conf, sizeof(struct Config));
+   NewList((struct List *)&Config.cnf_ifaces);
+   NewList((struct List *)&Config.cnf_modems);
+
+   // init basic values
+
+   conf->cnf_flags = CFL_ShowLog | CFL_ShowLeds | CFL_ShowConnect | CFL_ShowOnlineTime |
+      CFL_ShowButtons | CFL_ShowInterface | CFL_ShowUser | CFL_ShowStatusWin |
       CFL_ShowSerialInput | CFL_StartupOpenWin | CFL_StartupInetd | CFL_StartupLoopback |
       CFL_StartupTCP;
 
@@ -460,66 +471,12 @@ VOID clear_config(struct Config *conf)
    DoMethod(display_item, MUIM_SetUData, MEN_TIMEONLINE  , MUIA_Menuitem_Checked, TRUE);
    DoMethod(display_item, MUIM_SetUData, MEN_LEDS        , MUIA_Menuitem_Checked, TRUE);
    DoMethod(display_item, MUIM_SetUData, MEN_CONNECT     , MUIA_Menuitem_Checked, TRUE);
-   DoMethod(display_item, MUIM_SetUData, MEN_PROVIDER    , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_INTERFACE   , MUIA_Menuitem_Checked, TRUE);
    DoMethod(display_item, MUIM_SetUData, MEN_USER        , MUIA_Menuitem_Checked, TRUE);
    DoMethod(display_item, MUIM_SetUData, MEN_LOG         , MUIA_Menuitem_Checked, TRUE);
    DoMethod(display_item, MUIM_SetUData, MEN_BUTTONS     , MUIA_Menuitem_Checked, TRUE);
    DoMethod(display_item, MUIM_SetUData, MEN_STATUS      , MUIA_Menuitem_Checked, TRUE);
    DoMethod(display_item, MUIM_SetUData, MEN_SERIAL      , MUIA_Menuitem_Checked, TRUE);
-}
-
-///
-/// clear_isp
-VOID clear_isp(struct ISP *isp)
-{
-   if(isp->isp_ifaces.mlh_TailPred != (struct MinNode *)&isp->isp_ifaces)
-   {
-      struct Interface *iface1, *iface2;
-
-      iface1 = (struct Interface *)isp->isp_ifaces.mlh_Head;
-      while(iface2 = (struct Interface *)iface1->if_node.mln_Succ)
-      {
-         if(iface1->if_sana2configtext)
-            FreeVec(iface1->if_sana2configtext);
-         if(iface1->if_configparams)
-            FreeVec(iface1->if_configparams);
-
-         if(iface1->if_events.mlh_TailPred != (struct MinNode *)&iface1->if_events)
-         {
-            struct ScriptLine *sl1, *sl2;
-
-            sl1 = (struct ScriptLine *)iface1->if_events.mlh_Head;
-            while(sl2 = (struct ScriptLine *)sl1->sl_node.mln_Succ)
-            {
-               Remove((struct Node *)sl1);
-               FreeVec(sl1);
-               sl1 = sl2;
-            }
-         }
-         Remove((struct Node *)iface1);
-         FreeVec(iface1);
-         iface1 = iface2;
-      }
-   }
-
-   if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
-   {
-      struct ScriptLine *sl1, *sl2;
-
-      sl1 = (struct ScriptLine *)isp->isp_loginscript.mlh_Head;
-      while(sl2 = (struct ScriptLine *)sl1->sl_node.mln_Succ)
-      {
-         Remove((struct Node *)sl1);
-         FreeVec(sl1);
-         sl1 = sl2;
-      }
-   }
-
-   bzero(isp, sizeof(struct ISP));
-   NewList((struct List *)&isp->isp_nameservers);
-   NewList((struct List *)&isp->isp_domainnames);
-   NewList((struct List *)&isp->isp_ifaces);
-   NewList((struct List *)&isp->isp_loginscript);
 }
 
 ///
@@ -547,6 +504,30 @@ VOID iterate_ifacelist(struct MinList *list, int set_mode)
                if(!(iface->if_flags & IFL_IsOnline))
                   iface->if_flags |= IFL_PutOnline;
                break;
+            case 3:  // launch dialin proc
+               if(iface->if_flags & IFL_DialIn)
+                  launch_dialin(iface);
+               break;
+            case 4:  // put online which are specified in arguments
+               if(args_ifaces_online.mlh_TailPred != (struct MinNode *)&args_ifaces_online)
+               {
+                  struct ScriptLine *entry;
+
+                  entry = (struct ScriptLine *)args_ifaces_online.mlh_Head;
+                  while(entry->sl_node.mln_Succ)
+                  {
+                     if(!stricmp(entry->sl_contents, iface->if_name))
+                     {
+                        if(!(iface->if_flags & IFL_IsOnline))
+                           iface->if_flags |= IFL_PutOnline;
+                        Remove((struct Node *)entry);
+                        FreeVec(entry);
+                        break;
+                     }
+                     entry = (struct ScriptLine *)entry->sl_node.mln_Succ;
+                  }
+               }
+               break;
          }
          iface = (struct Interface *)iface->if_node.mln_Succ;
       }
@@ -573,8 +554,8 @@ BOOL is_one_online(struct MinList *list)
 }
 
 ///
-/// find_by_name
-struct Interface *find_by_name(struct MinList *list, STRPTR name)
+/// find_iface_by_name
+struct Interface *find_iface_by_name(struct MinList *list, STRPTR name)
 {
    struct Interface *iface;
 
@@ -589,23 +570,6 @@ struct Interface *find_by_name(struct MinList *list, STRPTR name)
       }
    }
    return(NULL);
-}
-
-///
-/// add_server
-struct ServerEntry *add_server(struct MinList *list, STRPTR name)
-{
-   struct ServerEntry *server;
-
-   if(!name || !*name || !strcmp(name, "0.0.0.0"))
-      return(NULL);
-
-   if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
-   {
-      strncpy(server->se_name, name, sizeof(server->se_name) - 1);
-      AddTail((struct List *)list, (struct Node *)server);
-   }
-   return(server);
 }
 
 ///
@@ -627,6 +591,72 @@ struct ServerEntry *find_server_by_name(struct MinList *list, STRPTR name)
    return(NULL);
 }
 
+///
+/// find_modem_by_id
+struct Modem *find_modem_by_id(struct MinList *list, int id)
+{
+   struct Modem *modem = NULL;
+
+   if(list->mlh_TailPred != (struct MinNode *)list)
+   {
+      modem = (struct Modem *)list->mlh_Head;
+      while(modem->mo_node.mln_Succ)
+      {
+         if(modem->mo_id == id)
+            break;
+         modem = (struct Modem *)modem->mo_node.mln_Succ;
+      }
+   }
+   return(modem);
+}
+
+///
+/// add_server
+struct ServerEntry *add_server(struct MinList *list, STRPTR name, BOOL top)
+{
+   struct ServerEntry *server;
+
+   if(!name || !*name || !strcmp(name, "0.0.0.0"))
+      return(NULL);
+
+   // remove old entry => so this entry really gets to top of list
+   if(server = find_server_by_name(list, name))
+   {
+      Remove((struct Node *)server);
+      FreeVec(server);
+   }
+
+   if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
+   {
+      strncpy(server->se_name, name, sizeof(server->se_name) - 1);
+      if(top)
+         AddHead((struct List *)list, (struct Node *)server);
+      else
+         AddTail((struct List *)list, (struct Node *)server);
+   }
+   return(server);
+}
+
+///
+/// add_script_line
+struct ScriptLine *add_script_line(struct MinList *list, int command, STRPTR contents, int userdata)
+{
+   struct ScriptLine *script_line;
+
+   if(list)
+   {
+      if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR))
+      {
+         script_line->sl_command  = command;
+         script_line->sl_userdata = userdata;
+         if(contents)
+            strncpy(script_line->sl_contents, contents, sizeof(script_line->sl_contents));
+
+         AddTail((struct List *)list, (struct Node *)script_line);
+      }
+   }
+   return(script_line);
+}
 ///
 
 /// run_async
@@ -819,9 +849,11 @@ BOOL launch_amitcp(VOID)
 
    if(FindPort((STRPTR)AmiTCP_PortName))
    {
+      BPTR fh;
+
       if(!LockSocketBase)
       {
-         LockSocketBase = NCL_OpenSocket();;
+         LockSocketBase = NCL_OpenSocket();
          if(SocketBase = LockSocketBase)
          {
             if(Config.cnf_flags & CFL_StartupLoopback)
@@ -862,6 +894,17 @@ BOOL launch_amitcp(VOID)
                if(TX_Info)
                   set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_LaunchingInetd));
                run_async("AmiTCP:bin/inetd");
+            }
+
+            if(fh = Open("AmiTCP:db/sockswrapper.conf", MODE_OLDFILE))
+            {
+               BOOL use_socks = FALSE;
+
+               Read(fh, &use_socks, sizeof(BOOL));
+               Close(fh);
+
+               if(use_socks)
+                  run_async("AmiTCP:bin/socks5");
             }
 
             SocketBase = NULL;
@@ -948,6 +991,32 @@ BOOL safe_put_to_port(struct Message *message, STRPTR portname)
       PutMsg(port, message);
    Permit();
    return((BOOL)(port ? TRUE : FALSE));
+}
+
+///
+/// launch_dialin
+VOID launch_dialin(struct Interface *iface)
+{
+/*   if(!iface->if_dialin && !(iface->if_flags & IFL_IsOnline))
+   {
+      char args[21];
+
+      sprintf(args, "%ld", iface);
+      if(iface->if_dialin = CreateNewProcTags(
+         NP_Entry       , DialinHandler,
+         NP_Name        , "GENESiS port watcher",
+         NP_StackSize   , 16384,
+         NP_WindowPtr   , -1,
+         NP_Arguments   , args,
+NP_Output, Open("CON:/300/640/200/GENESiS port watcher/AUTO/WAIT/CLOSE", MODE_NEWFILE),
+         TAG_END))
+      {
+         return;
+      }
+      else
+         MUI_Request(app, win, NULL, NULL, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorLaunchSubtask));
+   }
+*/
 }
 
 ///
@@ -1095,24 +1164,13 @@ SAVEDS ASM LONG txtobjfunc(register __a2 Object *list, register __a1 Object *txt
 struct Hook txtobj_hook = { { 0,0 }, (VOID *)txtobjfunc , NULL, NULL };
 
 ///
-/// objtxtfunc
-SAVEDS ASM VOID objtxtfunc(register __a2 Object *list,register __a1 Object *txt)
-{
-   char *x;
-
-   DoMethod(list, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
-   if(x)
-      set(txt, MUIA_Text_Contents, x);
-}
-struct Hook objtxt_hook = { { 0,0 }, (VOID *)objtxtfunc , NULL, NULL };
-
-///
 /// des_func
 SAVEDS ASM VOID des_func(register __a2 APTR pool, register __a1 APTR ptr)
 {
    if(ptr)
       FreeVec(ptr);
 }
+struct Hook des_hook   = { {NULL, NULL}, (VOID *)des_func  , NULL, NULL};
 
 ///
 

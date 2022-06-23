@@ -129,7 +129,7 @@ static struct TagItem tagfilter[] = {
 
 ///
 /// iface_init
-BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp, struct Config *conf)
+BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface)
 {
    struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
 
@@ -151,7 +151,6 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
    strcpy(iface_data->ifd_name, iface->if_name);
    // clear pointers to resources we possibly own
    iface_data->ifd_s2 = NULL;
-   iface_data->ifd_gateway = inet_addr(iface->if_gateway);
 
    if(strcmp(iface->if_name, LOOPBACK_NAME))   // lo0 is not in the database
    {
@@ -166,35 +165,37 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
             UnLock(fh);
          if(fh = Open(iface->if_sana2config, MODE_NEWFILE))
          {
-            ptr = iface->if_sana2configtext;
-            while(*ptr)
+            if(ptr = iface->if_sana2configtext)
             {
-               switch(*ptr)
+               while(*ptr)
                {
-                  case '%':
-                     ptr++;
-                     switch(*ptr)
-                     {
-                        case 'a':
-                           FPrintf(fh, "%ls", (*iface->if_addr ? iface->if_addr : "0.0.0.0"));
-                           break;
-                        case 'u':
-                           FPrintf(fh, "%ls", isp->isp_login);
-                           break;
-                        case 'p':
-                           FPrintf(fh, "%ls", isp->isp_password);
-                           break;
-                        default:
-                           FPrintf(fh, "%%%lc", *ptr);
-                           break;
-                     }
-                     break;
+                  switch(*ptr)
+                  {
+                     case '%':
+                        ptr++;
+                        switch(*ptr)
+                        {
+                           case 'a':
+                              FPrintf(fh, "%ls", (is_inaddr_any(iface->if_addr) ? "0.0.0.0" : iface->if_addr));
+                              break;
+                           case 'u':
+                              FPrintf(fh, "%ls", iface->if_login);
+                              break;
+                           case 'p':
+                              FPrintf(fh, "%ls", iface->if_password);
+                              break;
+                           default:
+                              FPrintf(fh, "%%%lc", *ptr);
+                              break;
+                        }
+                        break;
 
-                  default:
-                     FPrintf(fh, "%lc", *ptr);
-                     break;
+                     default:
+                        FPrintf(fh, "%lc", *ptr);
+                        break;
+                  }
+                  ptr++;
                }
-               ptr++;
             }
             Close(fh);
          }
@@ -230,6 +231,7 @@ Printf("query device info\n");
       {
 Printf("is a device that operates over serial line\n");
 Printf("put iface offline\n");
+
          if(!iface_offline(iface_data))
             goto fail;
 
@@ -244,6 +246,15 @@ Printf("get addresses\n");
          if(!sana2_getaddresses(iface_data->ifd_s2, iface))
             syslog_AmiTCP(LOG_WARNING, "iface_init: sana2_getaddresses() failed");
       }
+      else
+      {
+         if(!iface_online(iface_data))
+            goto fail;
+      }
+
+      // we have no local or destination address => do icmp info req before closing sana2
+//      if((is_inaddr_any(iface->if_dst) && is_inaddr_any(iface->if_gateway)) || is_inaddr_any(iface->if_addr))
+//          sana2_do_icmp(iface_data->ifd_s2, iface);
 
        // The Sana2 device needs to be closed here (before AmiTCP gets to know
        // about the device) because of the bugs of the original CBM slip-driver
@@ -264,15 +275,6 @@ Printf("getaddr, flags, etc.\n");
    // Fetch the interface flags
    if(iface_getflags(iface_data, &iface_data->ifd_flags))
       goto fail;
-   // get interface dst/broadcast address
-   if(iface_getdstaddr(iface_data, &iface_data->ifd_dst))
-      goto fail;
-   // get interface netmask
-   if(iface_getnetmask(iface_data, &iface_data->ifd_netmask))
-      goto fail;
-   // get interface mtu
-   if(iface_getmtu(iface_data, (int *)&iface_data->ifd_MTU))
-      goto fail;
    if(iface_getlinkinfo(iface_data))
       goto fail;
 Printf("iface_init completed\n");
@@ -289,7 +291,6 @@ Printf("iface_init failed\n");
 /// iface_deinit
 VOID iface_deinit(struct Interface_Data *iface_data)
 {
-   // we keep the serial.dev open
 Printf("iface_deinit: close sana2\n");
    iface_close_sana2(iface_data);
 }
@@ -307,7 +308,7 @@ VOID iface_close_sana2(struct Interface_Data *iface_data)
 
 ///
 /// iface_prepare_bootp
-BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf)
+BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *iface)
 {
    LONG on = 1;
 
@@ -331,9 +332,6 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
 
    if(iface_setaddr(iface_data, inet_addr(iface->if_addr)))
       return(FALSE);
-   iface_data->ifd_addr = inet_addr(iface->if_addr);
-   iface_getdstaddr(iface_data, &iface_data->ifd_dst);      // These may also have changed,
-   iface_getnetmask(iface_data, &iface_data->ifd_netmask);  //   when the address is changed
 
    // Mark the socket to allow broadcasting. Note that this is now done for point-to-point interfaces as well.
    if(setsockopt(iface_data->ifd_fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0)
@@ -343,14 +341,14 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
 
    if(iface_data->ifd_flags & IFF_BROADCAST)
    {
-      if(!*iface->if_addr || *iface->if_netmask)
+      if(is_inaddr_any(iface->if_addr) || !is_inaddr_any(iface->if_netmask))
       {
          // Set up the netmask if IP is 0.0.0.0 or mask is explicitly given.
          if(iface_setnetmask(iface_data, inet_addr(iface->if_netmask)))
-         return(FALSE);
+            return(FALSE);
       }
 
-      if(!*iface->if_addr || *iface->if_dst)
+      if(is_inaddr_any(iface->if_addr) || !is_inaddr_any(iface->if_dst))
       {
          ULONG addr;
 
@@ -359,9 +357,9 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
             addr = INADDR_BROADCAST;
          else
             addr = inet_addr(iface->if_dst);
-      
+
          if(iface_setdstaddr(iface_data, addr))
-            return FALSE;
+            return(FALSE);
       }
    }
 
@@ -369,30 +367,23 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
    {
       ULONG addr;
 
-      if(!*iface->if_dst)
-      {
-         if(iface_data->ifd_dst == INADDR_ANY)
-            addr = 0x00010203;      // fake address
-         else
-            addr = iface_data->ifd_dst;
-
-         if(iface_data->ifd_addr == addr) // must be different
-            addr++;
-      }
+      if(is_inaddr_any(iface->if_dst))
+         addr = 0x00010203;      // fake address
       else
-         addr = inet_addr(iface->if_dst);   // is different due to argument constraints
+         addr = inet_addr(iface->if_dst);
+      if(iface_data->ifd_addr == addr) // must be different
+         addr++;
 
       // set up the destination address
       if(iface_setdstaddr(iface_data, addr))
          return(FALSE);
-      iface_data->ifd_dst = addr;
 
       // DialUp version does not need this nor can ad routes
       if(!dialup)
       {
          // Route "broadcasts" to the point-to-point destination
          syslog_AmiTCP(LOG_DEBUG, "iface_prepare_bootp: adding route for broadcast address on p-t-p link.");
-         if(route_add(FD, RTF_UP | RTF_GATEWAY|RTF_HOST, INADDR_BROADCAST, iface_data->ifd_dst, TRUE))
+         if(route_add(FD, RTF_UP | RTF_GATEWAY|RTF_HOST, INADDR_BROADCAST, addr, TRUE))
             return(FALSE);
       }
    }
@@ -415,7 +406,7 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
 
 ///
 /// iface_cleanup_bootp
-VOID iface_cleanup_bootp(struct Interface_Data *iface_data, struct Config *conf)
+VOID iface_cleanup_bootp(struct Interface_Data *iface_data)
 {
    if(iface_data->ifd_flags & IFF_POINTOPOINT)
    {
@@ -455,7 +446,7 @@ BOOL iface_offline(struct Interface_Data *iface_data)
 
 ///
 /// iface_config
-BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf)
+BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface)
 {
    // Delete the old configuration
    memset(&IFR.ifr_addr, 0, sizeof(IFR.ifr_addr));
@@ -483,7 +474,7 @@ BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, st
 
    // destination/broadcast address
    memset(&IFRA.ifra_broadaddr, 0, sizeof(IFRA.ifra_broadaddr));
-   if(inet_addr(iface->if_dst) != INADDR_ANY)
+   if(!is_inaddr_any(iface->if_dst))
    {
       IFRA.ifra_broadaddr.sa_family = AF_INET;
       IFRA.ifra_broadaddr.sa_len    = sizeof(IFRA.ifra_broadaddr);
@@ -492,7 +483,7 @@ BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, st
 
    // netmask
    memset(&IFRA.ifra_mask, 0, sizeof(IFRA.ifra_mask));
-   if(inet_addr(iface->if_netmask) != INADDR_ANY)
+   if(!is_inaddr_any(iface->if_netmask))
    {
       IFRA.ifra_mask.sa_family   = 0; // no family for masks
       IFRA.ifra_mask.sa_len      = sizeof(IFRA.ifra_mask);
@@ -506,8 +497,8 @@ BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, st
       return(FALSE);
    }
   
-   // Set the interface MTU if explicitly set
-   if(iface->if_MTU > 0 && iface->if_MTU != iface_data->ifd_MTU)
+   // Set the interface MTU
+   if(iface->if_MTU > 0)
       iface_setmtu(iface_data, iface->if_MTU);
 
    return(TRUE);

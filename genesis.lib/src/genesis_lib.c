@@ -680,7 +680,7 @@ VOID write_passwd(BPTR fh, struct NetInfoPasswd *passwd)
 #define PASSWD_SIZE 1024
 VOID copy_passwd_file(VOID)
 {
-   BOOL found_admin = FALSE, found_root = FALSE;
+   BOOL found_admin = FALSE;
    struct MsgPort *port;
 
    if(port = CreateMsgPort())
@@ -711,11 +711,10 @@ VOID copy_passwd_file(VOID)
 
                      while(!(DoIO((struct IORequest *)req)))
                      {
+                        if(!stricmp(passwd->pw_name, "root"))
+                           passwd->pw_uid = passwd->pw_gid = 0;
                         if((passwd->pw_uid == 0) && (passwd->pw_gid == 0))
                            found_admin = TRUE;
-                        if(!strcmp(passwd->pw_name, "root"))
-                           found_root = TRUE;
-
 
                         write_passwd(fh, passwd);
 
@@ -725,7 +724,7 @@ VOID copy_passwd_file(VOID)
                      }
                      if(!found_admin)   // add root user if not existent
                      {
-                        passwd->pw_name = (found_root ? "new_root" : "root");
+                        passwd->pw_name = "root";
                         passwd->pw_passwd = "";
                         passwd->pw_uid = 0;
                         passwd->pw_gid = 0;
@@ -1029,6 +1028,11 @@ BOOL load_userlist(VOID)
 
    clear_userlist();
 
+   // this is only to make user think we still use passwd file
+   // so he won't find out about utm.conf
+   if(fh = Open("AmiTCP:db/passwd", MODE_OLDFILE))
+      Close(fh);
+
    if(!(fh = Open("AmiTCP:db/utm.conf", MODE_OLDFILE)))
    {
       copy_passwd_file();
@@ -1061,6 +1065,8 @@ BOOL load_userlist(VOID)
             break;
          FRead(fh, &user->us_uid, sizeof(LONG), 1);   // uid
          FRead(fh, &user->us_gid, sizeof(LONG), 1);   // gid
+         if(!stricmp(user->us_name, "root"))
+            user->us_uid = user->us_gid = 0;
          if(!AllocFGetString(fh, &user->us_gecos))    // real name
             break;
          if(!AllocFGetString(fh, &user->us_dir))      // home dir
@@ -1174,25 +1180,25 @@ SAVEDS ASM BOOL ReloadUserList(VOID)
 // init & cleanup
 
 /// __UserLibInit
-SAVEDS ASM int __UserLibInit(register __a6 struct Library *base)
+SAVEDS ASM LONG __UserLibInit(register __a6 struct Library *base)
 {
    int failed = TRUE;
 
    SysBase = (*((struct ExecBase **) 4));
+   DOSBase = (struct DosLibrary *)OpenLibrary("dos.library", 37);
+   if(!DOSBase)
+      return(-1);
 
-   if(DOSBase = (struct DosLibrary *)OpenLibrary("dos.library", 0))
+   if(IntuitionBase = (struct IntuitionBase *)OpenLibrary("intuition.library"   , 37))
    {
-      if(IntuitionBase = (struct IntuitionBase *)OpenLibrary("intuition.library"   , 0))
-      {
-         InitSemaphore(&LibSemaphore);
-         ObtainSemaphore(&LibSemaphore);
-         global_user = NULL;
-         NewList((struct List *)&UserList);
-         load_userlist();
-         ReleaseSemaphore(&LibSemaphore);
+      InitSemaphore(&LibSemaphore);
+      ObtainSemaphore(&LibSemaphore);
+      global_user = NULL;
+      NewList((struct List *)&UserList);
+      load_userlist();
+      ReleaseSemaphore(&LibSemaphore);
 
-         failed = FALSE;
-      }
+      failed = FALSE;
    }
    return(failed);
 }
@@ -1201,13 +1207,9 @@ SAVEDS ASM int __UserLibInit(register __a6 struct Library *base)
 /// __UserLibCleanup
 SAVEDS ASM VOID __UserLibCleanup(register __a6 struct Library *base)
 {
-   ObtainSemaphore(&LibSemaphore);
    clear_userlist();
-   ReleaseSemaphore(&LibSemaphore);
-
    if(global_user)
       FreeUser(global_user);
-   global_user = NULL;
 
    if(IntuitionBase)    CloseLibrary((struct Library *)IntuitionBase);
    if(DOSBase)          CloseLibrary((struct Library *)DOSBase);
