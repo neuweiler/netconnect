@@ -30,34 +30,34 @@ CFLAGS   = MCCONS DATA=FAR ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetIncl
 LFLAGS   = SC NOICONS MAXHUNK 100000
 
 OBJS     = mui_MainWindow.o mui_Finished.o mui_LoginScript.o mui_ModemStrings.o mui_Online.o \
-           mui_Protocol.o mui_Request.o mui_Sana2.o mui_SanaConfig.o mui_SerialModem.o \
-           mui_SerialSana.o mui_UserInfo.o mui_Welcome.o mui_About.o main.o globals.o amiga.o \
-           bootpc.o serial.o iface.o sana.o images/logo.o images/setup_page0.o \
-           images/setup_page1.o images/setup_page2.o images/setup_page3.o images/setup_page4.o \
-           images/setup_page5.o images/setup_page6.o images/setup_page7.o
+		   mui_Protocol.o mui_Request.o mui_Sana2.o mui_SanaConfig.o mui_SerialModem.o \
+		   mui_SerialSana.o mui_UserInfo.o mui_Welcome.o mui_About.o main.o globals.o amiga.o \
+		   bootpc.o serial.o iface.o sana.o images/logo.o images/setup_page0.o \
+		   images/setup_page1.o images/setup_page2.o images/setup_page3.o images/setup_page4.o \
+		   images/setup_page5.o images/setup_page6.o images/setup_page7.o
 LIBS     = lib:amiga.lib lib:sc.lib
 
 all:   /includes_far.gst Strings.h GenesisWizard.ct GENESiSWizard
 
 /includes_far.gst:  /includes.h
-      GST >NIL: UNLOAD includes_far.gst
-      SC NOOBJNAME DATA=FAR INCLUDEDIR=netinclude: IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
-      GST $@
+	  GST >NIL: UNLOAD includes_far.gst
+	  SC NOOBJNAME DATA=FAR INCLUDEDIR=netinclude: IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
+	  GST $@
 
 Strings.h: GenesisWizard.cd
    cat2h GenesisWizard.cd Strings.h
 GenesisWizard.ct : GenesisWizard.cd
-   sc:c/FlexCat GenesisWizard.cd NEWCTFILE GenesisWizard.ct
+   -FlexCat GenesisWizard.cd NEWCTFILE GenesisWizard.ct
 
 GENESiSWizard:   $(OBJS)
    SLINK WITH T:GENESiSWizard.WITH <<!(T:GENESiSWizard.WITH)
-      FROM  lib:c.o $(OBJS)
-      TO    GENESiSWizard
-      LIB   $(LIBS)
-      MAP   GENESiSWizard.map H
-      $(LFLAGS)
+	  FROM  lib:c.o $(OBJS)
+	  TO    GENESiSWizard
+	  LIB   $(LIBS)
+	  MAP   GENESiSWizard.map H
+	  $(LFLAGS)
    <
-      slink from GENESiSWizard to AmiTCP:GENESiSWizard nodebug noicons
+	  slink from GENESiSWizard to AmiTCP:GENESiSWizard nodebug noicons
 
 mui_MainWindow.o: mui_MainWindow.c /includes.h rev.h Strings.h /Genesis.h mui.h\
  mui_MainWindow.h mui_Finished.h mui_Protocol.h\

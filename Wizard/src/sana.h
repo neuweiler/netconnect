@@ -1,5 +1,5 @@
 /*
- *      $Id: sana.h,v 1.3 1996/02/04 15:53:03 jraja Exp $
+ *      $Id: sana.h,v 1.1.1.1 1999/08/08 14:20:54 zapek Exp $
  *
  *      sana.h - 
  *

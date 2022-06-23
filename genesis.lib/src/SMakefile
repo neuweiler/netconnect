@@ -11,10 +11,10 @@ all: pragmas/genesis_lib.h genesis.library amitcp:libs/genesis.library test_gene
 OBJS     = genesis_lib.o
 LIBS     = lib:amiga.lib lib:sc.lib
 
-#CPU      = ANY
-CPU     = 68030
+CPU      = ANY
+#CPU     = 68030
 #DEMO    = DEF=DEMO
-#DEBUG   = DBG=LINE
+DEBUG   = DBG=LINE
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)

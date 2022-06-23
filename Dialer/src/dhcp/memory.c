@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: memory.c,v 1.1.1.1 1999/08/08 14:20:09 zapek Exp $
  *
  * dhcpcd - DHCP client daemon -
  * Copyright (C) 1996 - 1997 Yoichi Hariguchi <yoichi@fore.com>

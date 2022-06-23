@@ -1,4 +1,4 @@
-/* $Id: error-handler.c,v 0.2 1997/08/30 18:00:52 yoichi v0_70 $
+/* $Id: error-handler.c,v 1.1.1.1 1999/08/08 14:20:09 zapek Exp $
  *
  * dhcpcd - DHCP client daemon -
  * Copyright (C) 1996 - 1997 Yoichi Hariguchi <yoichi@fore.com>

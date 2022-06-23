@@ -675,7 +675,8 @@ ULONG Online_GoOnline(struct IClass *cl, Object *obj, struct MUIP_Online_GoOnlin
       NP_CloseInput , NULL,
       NP_CloseOutput, TRUE,
       NP_Input      , NULL,
-      NP_Output, Open("AmiTCP:log/GENESiS.log", MODE_NEWFILE),
+	  NP_Output		, NULL,
+//		NP_Output, Open("AmiTCP:log/GENESiS.log", MODE_NEWFILE),
 //NP_Output, Open("CON:/300/640/200/GENESiS Netconfig/AUTO/WAIT/CLOSE", MODE_NEWFILE),
       TAG_END))
    {

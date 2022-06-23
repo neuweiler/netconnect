@@ -8,7 +8,7 @@
 #include "Strings.h"
 #include "mui.h"
 #include "protos.h"
-#include "mui/grouppager_mcc.h"
+#include "grouppager_mcc.h"
 
 ///
 /// define images

@@ -869,6 +869,7 @@ struct User *get_user(char *name, char *password, char *title, LONG flags)
             DoMethod(LV_Usernames , MUIM_Notify, MUIA_Listview_DoubleClick  , MUIV_EveryTime, MUIV_Notify_Application, 5, MUIM_Application_PushMethod, app, 2, MUIM_Application_ReturnID, ID_OBJSTR);
          DoMethod(STR_Password, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, win, 3, MUIM_Set, MUIA_Window_ActiveObject, BT_Okay);
          DoMethod(BT_Okay     , MUIM_Notify, MUIA_Pressed           , FALSE, MUIV_Notify_Application, 5, MUIM_Application_PushMethod, app, 2, MUIM_Application_ReturnID, ID_OKAY);
+		 DoMethod(STR_Password, MUIM_Notify, MUIA_String_Acknowledge, MUIV_EveryTime, MUIV_Notify_Application, 5, MUIM_Application_PushMethod, app, 2, MUIM_Application_ReturnID, ID_OKAY);
          DoMethod(BT_Cancel   , MUIM_Notify, MUIA_Pressed           , FALSE, MUIV_Notify_Application, 5, MUIM_Application_PushMethod, app, 2, MUIM_Application_ReturnID, ID_CANCEL);
          set(BT_Okay  , MUIA_CycleChain, 1);
          set(BT_Cancel, MUIA_CycleChain, 1);

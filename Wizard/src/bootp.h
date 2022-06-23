@@ -26,7 +26,7 @@ SOFTWARE.
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1395.
  *
- * $Header: /home/jraja/amitcp/amitcp/src/util/bootpconfig/RCS/bootp.h,v 1.1 1994/11/29 08:18:03 jraja Exp $
+ * $Header: /home/cvs/cvsroot/vapor/genesis/Wizard/bootp.h,v 1.1.1.1 1999/08/08 14:20:54 zapek Exp $
  *
  *
  * This file specifies the "implementation-independent" BOOTP protocol

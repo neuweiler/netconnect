@@ -17,7 +17,7 @@
 #include "mui_PasswdReq.h"
 #include "mui_User.h"
 #include "protos.h"
-#include "mui/grouppager_mcc.h"
+#include "grouppager_mcc.h"
 #include "images/information.h"
 #include "images/database.h"
 #include "images/options.h"
@@ -772,10 +772,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                else if(!stricmp(pc_data.pc_argument, "Login"))
                   strncpy(iface->if_login, pc_data.pc_contents, sizeof(iface->if_login));
                else if(!stricmp(pc_data.pc_argument, "Password"))
-{
                   decrypt(pc_data.pc_contents, iface->if_password);
-MUI_Request(app, win, NULL, NULL, "Okay", iface->if_password);
-}
                else if(!stricmp(pc_data.pc_argument, "Phone"))
                   strncpy(iface->if_phonenumber, pc_data.pc_contents, sizeof(iface->if_phonenumber));
                else if(!stricmp(pc_data.pc_argument, script_commands[SL_Send]))

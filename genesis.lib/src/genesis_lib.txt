@@ -123,3 +123,8 @@ History of genesis.library
 * quits properly when beeing flushed => no longer causes
   "avail flush" to freeze.
 
+3.0.6 (16.09.99)
+----------------
+
+* CVS import
+* pressing return on the login password string closes the window (Zapek)

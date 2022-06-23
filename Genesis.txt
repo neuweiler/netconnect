@@ -56,3 +56,10 @@ History for GENESiS
 
 * corrected problem with genesiskey.library version
 
+
+1.0.6 (27.09.99)
+----------------
+
+* CVS import
+* no longer creates AmiTCP:log/GENESiS.log everytime (Zapek)
+

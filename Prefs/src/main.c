@@ -21,7 +21,7 @@
 #include "mui_User.h"
 #include "mui_UserWindow.h"
 #include "protos.h"
-#include "mui/grouppager_mcc.h"
+#include "grouppager_mcc.h"
 #include "images/logo.h"
 
 ///

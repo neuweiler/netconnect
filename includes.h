@@ -62,6 +62,6 @@
 #include <mui/NListview_mcc.h>
 #include <mui/NFloattext_mcc.h>
 #include <mui/Busy_mcc.h>
-#include <mui/Term_mcc.h>
+#include <mui/Term_mcc_private.h>
 #include <mui/textinput_mcc.h>
 

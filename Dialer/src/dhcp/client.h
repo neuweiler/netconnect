@@ -1,4 +1,4 @@
-/* $Id: client.h,v 0.2 1997/08/28 14:36:39 yoichi v0_70 $
+/* $Id: client.h,v 1.1.1.1 1999/08/08 14:20:09 zapek Exp $
  *
  * dhcpcd - DHCP client daemon -
  * Copyright (C) 1996 - 1997 Yoichi Hariguchi <yoichi@fore.com>

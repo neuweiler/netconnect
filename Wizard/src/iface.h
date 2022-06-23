@@ -1,5 +1,5 @@
 /*
- *      $Id: iface_data.h,v 1.6 1996/02/14 21:46:09 jraja Exp $
+ *      $Id: iface.h,v 1.1.1.1 1999/08/08 14:20:54 zapek Exp $
  *
  *      iface_data.h -
  *
