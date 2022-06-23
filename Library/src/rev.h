@@ -1,7 +1,7 @@
-#define VERSIONSTRING "2.0.7"
-#define VERSION 2
+#define VERSIONSTRING "3.0.3"
+#define VERSION 3
 #define REVISION 0
-#define COMPILEREV 7
-#define REVDATE "(08.07.98)"
-#define VERTAG "2.0.7 (8.7.98)"
-#define VERHEXID 0x20000
+#define COMPILEREV 3
+#define REVDATE "(03.10.98)"
+#define VERTAG "3.0.3 (3.10.98)"
+#define VERHEXID 0x30000

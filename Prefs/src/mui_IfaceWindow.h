@@ -44,6 +44,7 @@ struct IfaceWindow_Data
    Object *STR_Gateway;
    Object *CY_Gateway;
 
+   Object *CH_UseBOOTP;
    Object *SL_KeepAlive;
    Object *CH_AutoOnline;
 

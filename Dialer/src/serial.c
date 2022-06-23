@@ -197,20 +197,31 @@ BOOL serial_dsr(VOID)
 
 ///
 /// serial_hangup
-VOID serial_hangup(VOID)
+VOID serial_hangup(struct Library *SocketBase)
 {
-   if(serial_carrier())
+   serial_delete();
+   Delay(100);
+   if(serial_create(SocketBase))
    {
-      serial_send("+", 1);
-      Delay(10);
-      serial_send("+", 1);
-      Delay(10);
-      serial_send("+", 1);
-      Delay(10);
-      serial_send("ATH0\r", -1);
+      if(serial_carrier())
+      {
+         serial_send("+", 1);
+         Delay(10);
+         serial_send("+", 1);
+         Delay(10);
+         serial_send("+", 1);
+         Delay(100);
+         serial_send("ATH0\r", -1);
+         Delay(10);
+      }
+      else
+      {
+         serial_send("\r", 1);
+         Delay(10);
+      }
+
+      serial_delete();
    }
-   else
-      serial_send("\r", 1);
 }
 
 ///
@@ -262,7 +273,7 @@ VOID serial_delete(VOID)
 
 ///
 /// serial_create
-BOOL serial_create(VOID)
+BOOL serial_create(struct Library *SocketBase)
 {
    ULONG flags;
 
@@ -316,11 +327,11 @@ BOOL serial_create(VOID)
                return(TRUE);
             }
             else
-               syslog_AmiTCP(LOG_ERR, "serial_create: SETPARAMS failed.");
+               syslog_AmiTCP(SocketBase, LOG_ERR, "serial_create: SETPARAMS failed.");
          }
       }
    }
-   syslog_AmiTCP(LOG_CRIT, "serial_create: could not open serial device (%ls, unit %ld).", Config.cnf_serialdevice, Config.cnf_serialunit);
+   syslog_AmiTCP(SocketBase, LOG_CRIT, "serial_create: could not open serial device (%ls, unit %ld).", Config.cnf_serialdevice, Config.cnf_serialunit);
 
    serial_delete();
 

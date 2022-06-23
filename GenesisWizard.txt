@@ -103,3 +103,23 @@ History for GenesisWizard
   immediately.
 * does no longer timeout. it's enough if genesis does.
 
+2.2.1 (03.08.98)
+----------------
+
+* changed dial sequence so it should work with those modems which refused to
+  dial.
+* dropped BOOTP support. will be replaced with DHCP in next rel.
+
+2.3.0 (24.9.98) Italian amiga show
+---------------
+
+* bootp in again.
+* about window now says if program was compiled for NC
+* added support for genesis' own keyfile system.
+
+2.3.1 (30.9.98)
+---------------
+
+* if after CONNECT no CD is present => don't set "CD" or "cd yes" in
+  sana2 config files. => should now work with modems that don't support
+  CD.

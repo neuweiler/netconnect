@@ -24,11 +24,22 @@ extern Object *win, *app;
 ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 {
    struct About_Data tmp;
-#ifdef NETCONNECT
-   char info[512];
+   char info1[512], info2[512];
 
-   sprintf(info, "\n\033cRegistered to:\n\033i%ls\n(%ls)\n\n\033n\033cARexx port:\n\033i'%ls'\n", NCL_GetOwner(), NCL_GetSerial(), xget(app, MUIA_Application_Base));
+   strcpy(info1, "\033c\033b\033u\nGENESiS Preferences\033n\033c\n\n" \
+                 "\033cVersion " VERTAG);
+#ifdef NETCONNECT
+   strcat(info1, " - NetConnect");
 #endif
+   strcat(info1, "\n\n"\
+                 "\033n\033cCopyright © 1997-98 by\n" \
+                 "\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n"\
+                 "All Rights Reserved\n");
+
+   sprintf(info2, "\n\033cRegistered to:\n" \
+                  "\033i%ls\n(%ls)\n\n" \
+                  "\033n\033cARexx port:\n" \
+                  "\033i'%ls'\n", NCL_GetOwner(), NCL_GetSerial(), xget(app, MUIA_Application_Base));
 
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Window_Title       , "GENESiSPrefs · Copyright Information",
@@ -64,24 +75,23 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
             MUIA_Scrollgroup_Contents, VirtgroupObject,
                ReadListFrame,
                Child, TextObject,
-                  MUIA_Text_Contents, "\033c\033b\033u\nGENESiS Preferences\033n\033c\n\n" \
-                                      "\033cVersion " VERTAG "\n\n"\
-                                      "\033n\033cCopyright © 1997-98 by\n\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n"\
-                                      "All Rights Reserved\n",
+                  MUIA_Text_Contents, info1,
                End,
 #ifdef DEMO
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
+#ifdef BETA
+                  MUIA_Text_Contents, "\n\033b\033cBETA VERSION\n",
+#else
                   MUIA_Text_Contents, "\n\033b\033cDEMO VERSION\n",
+#endif
                   MUIA_Font         , MUIV_Font_Big,
                End,
 #endif
-#ifdef NETCONNECT
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
-                  MUIA_Text_Contents, info,
+                  MUIA_Text_Contents, info2,
                End,
-#endif
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
                   MUIA_Text_Contents, "\n\033cSupport site:\n\033ihttp://www.active-net.co.uk\n\n"\
@@ -89,13 +99,13 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
                End,
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
-                  MUIA_Text_Contents, "\n\033cGENESiS uses the MUI object library\n"\
-                                      "MUI is © 1992-97 by Stefan Stunz <stuntz@sasg.com>\n"\
-                                      "\n"\
-                                      "NList.mcc, NListview.mcc are © 1996-98 Gilles Masson\n"\
-                                      "\n"\
-                                      "AmiTCP is © by NSDI\n"\
-                                      "GENESiS uses code that was kindly provided by NSDI",
+                  MUIA_Text_Contents, "\n\033cGENESiS uses the MUI object library\n",
+//                                      "MUI is © 1992-97 by Stefan Stunz <stuntz@sasg.com>\n" \
+//                                      "\n" \
+//                                      "NList.mcc, NListview.mcc are © 1996-98 Gilles Masson\n" \
+//                                      "\n" \
+//                                      "AmiTCP is © by NSDI\n" \
+//                                      "GENESiS uses code that was kindly provided by NSDI",
                End,
             End,
          End,
@@ -109,14 +119,14 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
       struct About_Data *data = INST_DATA(cl,obj);
 
       *data = tmp;
-
+/*
       set(tmp.BT_Button, MUIA_CycleChain, 1);
       set(obj, MUIA_Window_ActiveObject, tmp.BT_Button);
 
       DoMethod(obj, MUIM_Notify, MUIA_Window_CloseRequest, TRUE ,
          MUIV_Notify_Application, 6, MUIM_Application_PushMethod,
          win, 3, MUIM_MainWindow_AboutFinish, obj);
-      DoMethod(data->BT_Button, MUIM_Notify, MUIA_Pressed, FALSE ,
+*/      DoMethod(data->BT_Button, MUIM_Notify, MUIA_Pressed, FALSE ,
          MUIV_Notify_Application, 6, MUIM_Application_PushMethod,
          win, 3, MUIM_MainWindow_AboutFinish, obj);
    }

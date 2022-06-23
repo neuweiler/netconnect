@@ -59,8 +59,6 @@ struct ProviderWindow_Data
    Object *CH_GetTime;
    Object *CH_SaveTime;
    Object *STR_TimeServer;
-   Object *CH_BOOTP;
-   Object *STR_BootpServer;
 
    Object *GR_Script;
    Object *LV_Script;

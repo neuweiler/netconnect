@@ -6,6 +6,7 @@ genesis.library/GetFileSize
 genesis.library/GetGlobalUser
 genesis.library/GetUser
 genesis.library/GetUserName
+genesis.library/IsOnline
 genesis.library/ParseConfig
 genesis.library/ParseEnd
 genesis.library/ParseNext
@@ -235,16 +236,23 @@ genesis.library/WriteFile
         IsOnline -- Check if at least one interface is online.
 
     SYNOPSIS
-        success = IsOnline( flags )
+        success = IsOnline( cmd )
         D0                  D0
 
         BOOL IsOnline( LONG );
 
     FUNCTION
         Check if Genesis is running and at least one interface is online.
+        If desired by the application, this call can throw up a requester
+        asking if Genesis should go online or it could also force Genesis
+        to go online. If necessary Genesis is launched automatically.
 
     INPUTS
-        flags = MUST be NULL for now !
+        cmd: NULL if only querying the current online state.
+             IOC_AskUser will open a requester when no iface is online
+             and ask the user if he wants to go online now (with 1° iface).
+             IOC_Force will put the primary iface online if no iface was
+             online.
 
     RESULT
         TRUE when at least one interface is online.

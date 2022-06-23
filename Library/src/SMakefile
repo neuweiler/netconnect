@@ -30,12 +30,12 @@ genesis.library : $(OBJS)
          TO genesis.library
          LIBFD pragmas/genesis_lib.fd
          LIB $(LIBS)
-         LIBVERSION 2 LIBREVISION 0
-         LIBID "genesis 2.0.7 (08.07.98)"
+         LIBVERSION 3 LIBREVISION 0
+         LIBID "genesis 3.0.3 (03.10.98)"
          MAP genesis.library.map
    <
       slink from genesis.library to AmiTCP:libs/genesis.library nodebug noicons
-      run <>nil: flushlib genesis.library
+      run <>nil: flushlib genesis.library remove
 
 test_genesislib : test_genesislib.o
       slink with T:test_genesislib.WITH <<!(t:test_genesislib.WITH)

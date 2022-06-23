@@ -40,9 +40,7 @@ extern BOOL dialup;
 extern const char AmiTCP_PortName[];
 extern struct Interface Iface;
 extern struct ISP ISP;
-#ifdef NETCONNECT
 extern struct Library *NetConnectBase;
-#endif
 
 ///
 
@@ -216,11 +214,7 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    if(data->abort)   goto abort;
 
    // open bsdsocket.library and ifconfig.library
-#ifdef NETCONNECT
    SocketBase = (struct Library *)NCL_OpenSocket();;
-#else
-   SocketBase = OpenLibrary("bsdsocket.library", 0);
-#endif
    if(!SocketBase)
    {
       DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Abort), GetStr(MSG_TX_ErrorBsdsocketLib));
@@ -271,9 +265,7 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_InitIface), NULL);
    if(data->abort)   goto abort;
 Printf("init iface\n");
-#ifdef NETCONNECT
    NCL_CallMeSometimes();
-#endif
    if(!(iface_init(iface_data, &Iface, &ISP, &Config)))
       goto abort;
 Printf("iface initialized\n");
@@ -298,46 +290,46 @@ Printf("iface initialized\n");
    if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_SendingBOOTP), NULL);
    if(data->abort)   goto abort;
-Printf("preparing bootp\n");
+Printf("preparing BOOTP\n");
 
    iface_prepare_bootp(iface_data, &Iface, &Config);
    if(bpc = bootpc_create())
    {
-Printf("do bootp\n");
+Printf("do BOOTP\n");
       if(bootpc_do(bpc, iface_data, &Iface, &ISP))
       {
          Printf("BOOTP failed to have an answer.\n");
          if(data->abort)   goto abort;
          DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_NoBOOTP), NULL);
-         ISP.isp_flags &= ~ISF_UseBootp;
+         Iface.if_flags &= ~IFL_BOOTP;
       }
       else
       {
          if(data->abort)   goto abort;
          DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_GotBOOTP), NULL);
-         ISP.isp_flags |= ISF_UseBootp;
+         Iface.if_flags |= IFL_BOOTP;
       }
-Printf("delete bootp\n");
+Printf("delete BOOTP\n");
 
       bootpc_delete(bpc);
    }
    else
-      Printf("WARNING: No memory for bootp request !\n");
-Printf("Cleanup bootp\n");
+      Printf("WARNING: No memory for BOOTP request !\n");
+Printf("Cleanup BOOTP\n");
    iface_cleanup_bootp(iface_data, &Config);
 
    if(data->abort)   goto abort;
 
    if(*Iface.if_addr && !addr_assign)
-      addr_assign = CNF_Assign_BootP;
+      addr_assign = CNF_Assign_BOOTP;
    if(*Iface.if_dst && !dst_assign)
-      dst_assign = CNF_Assign_BootP;
+      dst_assign = CNF_Assign_BOOTP;
    if(*Iface.if_gateway && !gw_assign)
-      gw_assign = CNF_Assign_BootP;
+      gw_assign = CNF_Assign_BOOTP;
    if((ISP.isp_nameservers.mlh_TailPred != (struct MinNode *)&ISP.isp_nameservers) && !dns_assign)
-      dns_assign = CNF_Assign_BootP;
+      dns_assign = CNF_Assign_BOOTP;
    if((ISP.isp_domainnames.mlh_TailPred != (struct MinNode *)&ISP.isp_domainnames) && !domainname_assign)
-      domainname_assign = CNF_Assign_BootP;
+      domainname_assign = CNF_Assign_BOOTP;
 
    if(data->abort)   goto abort;
 
@@ -366,9 +358,7 @@ Printf("check if config is complete\n");
    if(data->abort)   goto abort;
    DoMainMethod(data->TX_Info, MUIM_Set, (APTR)MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringAmiTCP), NULL);
    if(data->abort)   goto abort;
-#ifdef NETCONNECT
    NCL_CallMeSometimes();
-#endif
 Printf("configure interface\n");
 
    if(!(iface_config(iface_data, &Iface, &Config)))

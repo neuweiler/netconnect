@@ -23,7 +23,7 @@
 /* function prototypes
  */
 
-void	classIDsetup(char *id);
+void  classIDsetup(char *id);
 /* requests: 'id' pointing to the class identifier string
  * effects:  it sets the default class identifier to 'ClassId' if 'id' is NULL.
  *           Otherwise it sets the string described by 'id' to 'ClassId'.
@@ -31,7 +31,7 @@ void	classIDsetup(char *id);
  * returns:  nothing
  */
 
-void	clientIDsetup(char *id, char *ifname);
+BOOL  clientIDsetup(struct Library *SocketBase, char *id, struct Interface_Data *iface_data);
 /* requests: 'id' pointing to the class identifier string
  *           'ifname' pointing to the interface name like 'eth0'
  * effects:  it sets the default client identifier to 'ClientId'
@@ -41,7 +41,7 @@ void	clientIDsetup(char *id, char *ifname);
  * returns:  nothing
  */
 
-void	dhcpMsgInit(u_char *ifname);
+BOOL  dhcpMsgInit(struct Library *SocketBase, u_char *ifname);
 /* requests: 'ifname' pointing to the interface name
  * effects:  it opens two sockets 'Srecv' and 'Ssend' for sending/receiving
  *           DHCP messages. it also initializes 'ClassId[]', class identifier.
@@ -49,14 +49,14 @@ void	dhcpMsgInit(u_char *ifname);
  * returns:  nothing
  */
 
-void	dhcpClient();
+void  dhcpClient(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_data);
 /* requests: nothing
  * effects:  it runs the finite state machine of DHCP client.
  * modifies: Fsm[], CurrState, PrevState, 
  * returns:  nothing
  */
 
-int		initReboot();
+int      initReboot(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it handles 'INIT/REBOOT state as follows:
  *            1. try to get the previously used IP address from the cache file
@@ -67,14 +67,14 @@ int		initReboot();
  * returns:  nothing
  */
 
-int		init();
+int      init(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it makes and sends a DHCP discover message
  * modifies: ReqSentTime, DhcpMsgSend
  * returns:  SELECTING
  */
 
-int		rebooting();
+int      rebooting(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it waits for a DHCPACK or DHCPNAK msg. it also rexmit DHCPREQUEST
  *           msg if necessary.
@@ -83,7 +83,7 @@ int		rebooting();
  *           BOUND if it gets DHCPACK msg.
  */
 
-int		selecting();
+int      selecting(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it waits for a DHCPOFFER msg. it also rexmit DHCPREQUEST msg
  *           if necessary.
@@ -91,7 +91,7 @@ int		selecting();
  * returns:  REQUESTING
  */
 
-int		requesting();
+int      requesting(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it checks if the assigned IP address is already used. if not,
  *           it sends a DHCPREQUEST msg and waits for a DHCPACK or DHCPNAK msg.
@@ -103,7 +103,7 @@ int		requesting();
  *           INIT if it fails. 
  */
 
-int		bound();
+int      bound(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it closes the socket for receiving, sleeps for 'RenewTime' sec.
  *           , and moves to the RENEWING state.
@@ -111,7 +111,7 @@ int		bound();
  * returns:  RENEWING
  */
 
-int		renewing();
+int      renewing(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it opens a socket for receiving, sends a DHCPREQ msg, and waits
  *           for DHCPACK or DHCPNAK msg. it makes the interface down if it gets
@@ -123,7 +123,7 @@ int		renewing();
  *           INIT if it timeouts.
  */
 
-int		rebinding();
+int      rebinding(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_Data);
 /* requests: nothing
  * effects:  it sends a DHCPREQ msg, and waits for DHCPACK or DHCPNAK msg.
  *           it rexmit DHCPREQ msg if necessary. it makes the interface down
@@ -134,13 +134,13 @@ int		rebinding();
  *           INIT if it gets a DHCPACK msg.
  */
 
-void	mkDhcpDiscoverMsg(u_char *haddr, dhcpMessage *msg);
-void	mkDhcpRequestMsg(int flag, u_long serverInaddr, u_long leaseTime,
-						 u_long xid, u_long ciaddr, dhcpMessage *msg);
-void	mkDhcpDeclineMsg(int flag, u_long serverInaddr, u_long ciaddr,
-						 dhcpMessage *msg);
-void	sendDhcpDecline(int flag, u_long serverInaddr, u_long ciaddr);
-int		setDhcpInfo(u_char *optp[], dhcpMessage *msg);
-void	setupIfInfo(struct ifinfo *ifbuf, u_long yiaddr, u_char *optp[]);
-void	initHost(struct ifinfo *ifbuf, u_long yiaddr);
-long	getNextTimeout(int flag);
+void  mkDhcpDiscoverMsg(u_char *haddr, dhcpMessage *msg);
+void  mkDhcpRequestMsg(int flag, u_long serverInaddr, u_long leaseTime,
+                   u_long xid, u_long ciaddr, dhcpMessage *msg);
+void  mkDhcpDeclineMsg(int flag, u_long serverInaddr, u_long ciaddr,
+                   dhcpMessage *msg);
+BOOL  sendDhcpDecline(struct Library *SocketBase, int flag, u_long serverInaddr, u_long ciaddr);
+int      setDhcpInfo(u_char *optp[], dhcpMessage *msg);
+void  setupIfInfo(struct Interface_Data *iface_data, u_long yiaddr, u_char *optp[]);
+BOOL  initHost(struct Library *SocketBase, struct Interface_Data *iface_data, u_long yiaddr);
+long  getNextTimeout(int flag);

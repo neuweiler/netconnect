@@ -42,9 +42,7 @@ extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 
 extern struct Library *MUIMasterBase, *GenesisBase;
-#ifdef NETCONNECT
 extern struct Library *NetConnectBase;
-#endif
 extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_Welcome , *CL_SerialSana,
                               *CL_SerialModem, *CL_ModemStrings, *CL_UserInfo, *CL_Protocol,
                               *CL_LoginScript, *CL_Finished, *CL_Sana2, *CL_SanaConfig,
@@ -76,12 +74,9 @@ VOID exit_libs(VOID)
    if(cat)              CloseCatalog(cat);
    if(GenesisBase)      CloseLibrary(GenesisBase);
    if(MUIMasterBase)    CloseLibrary(MUIMasterBase);
-#ifdef NETCONNECT
-   if(NetConnectBase)
-      CloseLibrary(NetConnectBase);
-   NetConnectBase = NULL;
-#endif
+   if(NetConnectBase)   CloseLibrary(NetConnectBase);
 
+   NetConnectBase = NULL;
    cat            = NULL;
    MUIMasterBase  = GenesisBase = NULL;
 }
@@ -96,23 +91,21 @@ BOOL init_libs(VOID)
 #ifdef NETCONNECT
    if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
       Printf(GetStr(MSG_TX_ErrorOpenX), "netconnect.library\n");
+#else
+   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 5)))
+      Printf(GetStr(MSG_TX_ErrorOpenX), "AmiTCP:libs/genesiskey.library\n");
 #endif
    if(!(MUIMasterBase  = OpenLibrary("muimaster.library"   , 11)))
       Printf(GetStr(MSG_TX_ErrorOpenX), "muimaster.library.\n");
    if(!(GenesisBase    = OpenLibrary(GENESISNAME, 0)))
       Printf(GetStr(MSG_TX_ErrorOpenX), GENESISNAME ".\n");
 
-#ifdef NETCONNECT
    if(MUIMasterBase && GenesisBase && NetConnectBase)
    {
       if(NCL_GetOwner())
          return(TRUE);
-      Printf("NetConnect registration failed.\n");
+      Printf("registration failed.\n");
    }
-#else
-   if(MUIMasterBase && GenesisBase)
-      return(TRUE);
-#endif
 
    exit_libs();
    return(FALSE);
@@ -300,7 +293,11 @@ VOID Handler(VOID)
                MUIA_Application_Base         , "GENESiSWizard",
                MUIA_Application_Title        , "GENESiS Wizard",
 #ifdef DEMO
+#ifdef BETA
+               MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG" (BETA)",
+#else
                MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG" (DEMO)",
+#endif
 #else
                MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG,
 #endif

@@ -64,7 +64,7 @@ VOID sana2_delete(struct sana2 *s2)
 
 ///
 /// sana2_getaddresses
-BOOL sana2_getaddresses(struct sana2 *s2, struct Interface *iface)
+BOOL sana2_getaddresses(struct Library *SocketBase, struct sana2 *s2, struct Interface *iface)
 {
    ULONG tmp_addr;
 
@@ -85,7 +85,7 @@ BOOL sana2_getaddresses(struct sana2 *s2, struct Interface *iface)
    {
       memcpy(&tmp_addr, s2->s2_req->ios2_SrcAddr, sizeof(tmp_addr));
       strcpy(iface->if_addr, Inet_NtoA(tmp_addr));
-      syslog_AmiTCP(LOG_DEBUG, "sana2_getaddresses: using IP address %ls from Sana2 device configuration.", iface->if_addr);
+      syslog_AmiTCP(SocketBase, LOG_DEBUG, "sana2_getaddresses: using IP address %ls from Sana2 device configuration.", iface->if_addr);
    }
    if(s2->s2_hwtype == S2WireType_PPP)
    {
@@ -94,7 +94,7 @@ BOOL sana2_getaddresses(struct sana2 *s2, struct Interface *iface)
          // check the destination address
          memcpy(&tmp_addr, s2->s2_req->ios2_DstAddr, sizeof(tmp_addr));
          strcpy(iface->if_dst, Inet_NtoA(tmp_addr));
-         syslog_AmiTCP(LOG_DEBUG, "sana2_getaddresses: using destination IP address %s from Sana2 device configuration.", iface->if_dst);
+         syslog_AmiTCP(SocketBase, LOG_DEBUG, "sana2_getaddresses: using destination IP address %s from Sana2 device configuration.", iface->if_dst);
       }
    }
    return(TRUE);
@@ -102,7 +102,7 @@ BOOL sana2_getaddresses(struct sana2 *s2, struct Interface *iface)
 
 ///
 /// sana2_online
-BOOL sana2_online(struct sana2 *s2)
+BOOL sana2_online(struct Library *SocketBase, struct sana2 *s2)
 {
    s2->s2_req->ios2_Req.io_Command = S2_ONLINE;
    DoIO((struct IORequest *)s2->s2_req);
@@ -110,7 +110,7 @@ BOOL sana2_online(struct sana2 *s2)
    {
       if(s2->s2_req->ios2_Req.io_Error != S2ERR_BAD_STATE)
       {
-         syslog_AmiTCP(LOG_ERR, "sana2_online: could not put %ls, unit %ld online.", s2->s2_name, s2->s2_unit);
+         syslog_AmiTCP(SocketBase, LOG_ERR, "sana2_online: could not put %ls, unit %ld online.", s2->s2_name, s2->s2_unit);
          SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
          return(FALSE);
       }
@@ -120,7 +120,7 @@ BOOL sana2_online(struct sana2 *s2)
 
 ///
 /// sana2_offline
-BOOL sana2_offline(struct sana2 *s2)
+BOOL sana2_offline(struct Library *SocketBase, struct sana2 *s2)
 {
    s2->s2_req->ios2_Req.io_Command = S2_OFFLINE;
    DoIO((struct IORequest *)s2->s2_req);
@@ -128,7 +128,7 @@ BOOL sana2_offline(struct sana2 *s2)
    {
       if(s2->s2_req->ios2_Req.io_Error != S2ERR_BAD_STATE)
       {
-         syslog_AmiTCP(LOG_ERR, "sana2_offline: could not put %ls, unit %ld offline.", s2->s2_name, s2->s2_unit);
+         syslog_AmiTCP(SocketBase, LOG_ERR, "sana2_offline: could not put %ls, unit %ld offline.", s2->s2_name, s2->s2_unit);
          SetIoErr(s2->s2_req->ios2_Req.io_Error); // Set secondary error also
          return(FALSE);
       }

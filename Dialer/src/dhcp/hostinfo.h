@@ -20,7 +20,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-void	setupOptInfo(u_char *dest[], const u_char *src[]);
+void  setupOptInfo(u_char *dest[], const u_char *src[]);
 /*  requires: 'dest[]' to which contents described by 'src[]' are copied 
  *            'src[]' pointing to each option field of DHCP message
  *  effects:  it allocates memory for each content of 'src[i]', puts it into
@@ -30,7 +30,7 @@ void	setupOptInfo(u_char *dest[], const u_char *src[]);
  *  return:   Nothing
  */
 
-void	freeOptInfo(u_char *optp[]);
+void  freeOptInfo(u_char *optp[]);
 /*  requires: 'optp[]' pointing to each option field of DHCP message
  *  effects:  it frees all the memory which is allocated to 'optp[]'
  *            NULL is assigned to the freed elements
@@ -38,7 +38,7 @@ void	freeOptInfo(u_char *optp[]);
  *  return:   Nothing
  */
 
-void	saveHostInfo(const u_char *optp[]);
+void  saveHostInfo(struct Library *SocketBase, const u_char *optp[], struct Interface_Data *iface_data);
 /*  requires: 'optp[]' pointing to each option field of DHCP message
  *  effects:  it sets the system's hostname, NIS dommain name if the DHCP
  *            message includes these items. it also makes files 'resolv.conf'
@@ -47,16 +47,8 @@ void	saveHostInfo(const u_char *optp[]);
  *  return:   Nothing
  */
 
-int		setupHostInfoDir(const char *dir);
-/*  requires: 'dir' pointing to the directory name
- *  effects:  it makes the directory '*dir'. it also removes it if there is
- *            a normal file called '*dir'.
- *  modifies: Nothing
- *  return:   1 if successful, 0 if failed
- */
-
-void	addHostInfo(int fd, const int flag,
-					const char *name, const u_char *optp);
+void  addHostInfo(struct Library *SocketBase, int fd, const int flag,
+               const char *name, const u_char *optp);
 /*  requires: 'fd' containing file descripter of the hostinfo file
  *            'flag' must be OT_STRING if 'optp' points a string
  *            'flag' must be OT_ADDR if 'optp' points an address
@@ -68,7 +60,7 @@ void	addHostInfo(int fd, const int flag,
  *  return:   Nothing
  */
 
-void	mkNTPconf(const u_char *addr);
+void  mkNTPconf(struct Library *SocketBase, const u_char *addr);
 /*  requires: 'addr' pointing NTP servers option field of the DHCP message
  *  effects:  it makes the file ntp.conf in the directory HOST_INFO_DIR.
  *            it also saves NTP server address(es) into the file
@@ -77,7 +69,7 @@ void	mkNTPconf(const u_char *addr);
  *  return:   Nothing
  */
 
-void	mkResolvConf(const u_char *addr, const u_char *domName);
+void  mkResolvConf(struct Library *SocketBase, const u_char *addr, const u_char *domName);
 /*  requires: 'addr' pointing DNS servers option field of the DHCP message
  *            'domName' pointing domain name option field of the DHCP message
  *  effects:  it makes the file resolv.conf in the directory HOST_INFO_DIR.
@@ -87,4 +79,4 @@ void	mkResolvConf(const u_char *addr, const u_char *domName);
  *  return:   Nothing
  */
 
-void	execCommandFile();
+void  execCommandFile(VOID);

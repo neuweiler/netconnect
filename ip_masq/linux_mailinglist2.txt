@@ -1,0 +1,67 @@
+
+LinuxSA Mailing List: Re: "Connecting a LAN to the Internet using IP Masquerading"
+LinuxSA Mailing list archives
+Index:
+[thread]
+[date]
+[subject]
+[author]
+  From: Geoffrey D. Bennett <g@netcraft.com.au>
+  To  : Mark Smith <marks@senet.com.au>
+  Date: Mon, 23 Feb 1998 14:01:14 +1030 (CST)
+Re: "Connecting a LAN to the Internet using IP Masquerading"
+> Just a minor thing, and now that I have made a presentation about it I don't
+> have an excuse to ignore it, in Geoffreys examples, the subnet should be
+> 10.<0.1>.0 not 10.<0.0>.0 with a subnet mask of 255.255.255.0.
+I'm glad you brought this up :).
+> Remember that a subnet value of all binary zeros is classed as "this"
+> subnetwork, not a valid subnet. Remember 2^8 = 256 - 2 = 254, where subnet 0 and
+> subnet 255 are the invalid subnets (the minus 2 part).
+This has not been true since CIDR (Classless Inter Domain Routing)
+came in and the traditional uses of classes (ie. Class A, Class B,
+Class C) went out.
+> Technically, you are able to use subnet 0, as long as all the routers in
+> the internetwork understand subnet zero. I like to think of it as a pocket knife
+> subnet, the one you pull out when you have used up all your other subnets, and
+> desperately need one more.
+Using all definable subnets (that is, using subnet 0 and subnet -1)
+has been the current standards-based practice for almost three years
+now.
+RFC 1878 (December 1995) says "Many vendors only support subnetting
+based upon this [excluding all-zeros and all-ones subnets] premise.
+This practice is obsolete!  Modern software will be able to utilize
+all definable networks."  Note that "modern" in 1995 is old now :).
+Also, RFC 1812 (June 1995) says "Previous versions of this document
+also noted that subnet numbers must be neither 0 nor -1, and must be
+at least two bits in length.  In a CIDR world, the subnet number is
+clearly an extension of the network prefix and cannot be interpreted
+without the remainder of the prefix.  This restriction of subnet
+numbers is therefore meaningless in view of CIDR and may be safely
+ignored."
+> The problem is that you have to check that all devices doing any sort of
+> routing will support subnet zero, which could take some time, particularly if
+> you have a large number of routers, running different versions of the routing
+> software.
+Hmmm, I say that if you have routers that do not comply with the
+Internet Standards from mid-1995 then the routers probably have other
+problems besides not being able to use subnet 0 & -1, and they should
+be upgraded anyway.
+> BTW, the exam will be at the end of the next meeting. Pass mark is 80%, and you
+> will be expected to be able to subnet on a partial octet boundary. The exam
+> will last 1 hour.
+Sounds like fun :).
+(psst, if you need help subnetting on partial octet boundaries and
+want a cheat sheet then see RFC 1878: "Variable Length Subnet Table
+For IPv4")
+Regards,
+-- 
+Geoffrey D. Bennett (geoffrey@netcraft.com.au)
+Computer Systems Manager, NetCraft Australia
+http://www.netcraft.com.au/geoffrey/
+Red Hat Linux Resellers: http://www.netcraft.com.au/redhat/
+Index:
+[thread]
+[date]
+[subject]
+[author]
+Return to the LinuxSA Mailing List Information Page

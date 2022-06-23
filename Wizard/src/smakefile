@@ -17,6 +17,7 @@
 CPU      = ANY
 #CPU     = 68030
 DEMO     = DEF=DEMO
+BETA     = DEF=BETA
 NC       = DEF=NETCONNECT
 #DEBUG   = DBG=FULL
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
@@ -24,7 +25,7 @@ OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
 GST      = GSTIMM GST=/includes_far.gst
 
-CFLAGS   = MCCONS DATA=FAR ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetInclude: IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(DEBUG) $(NC)
+CFLAGS   = MCCONS DATA=FAR ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetInclude: IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG) $(NC)
 
 LFLAGS   = ND SC NOICONS MAXHUNK 100000
 #LFLAGS  = SC NOICONS MAXHUNK 100000
@@ -37,15 +38,17 @@ OBJS     = mui_MainWindow.o mui_Finished.o mui_LoginScript.o mui_ModemStrings.o 
            images/setup_page6.o images/setup_page7.o
 LIBS     = lib:amiga.lib lib:sc.lib
 
-all:   /includes_far.gst Strings.h GenesisWizard
+all:   /includes_far.gst Strings.h GenesisWizard.ct GenesisWizard
 
 /includes_far.gst:  /includes.h
       GST >NIL: UNLOAD includes_far.gst
       SC NOOBJNAME DATA=FAR INCLUDEDIR=netinclude: IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
       GST $@
 
-Strings.h: Strings.cd
-   cat2h Strings.cd Strings.h
+Strings.h: GenesisWizard.cd
+   cat2h GenesisWizard.cd Strings.h
+GenesisWizard.ct : GenesisWizard.cd
+   sc:c/FlexCat GenesisWizard.cd NEWCTFILE GenesisWizard.ct
 
 GenesisWizard:   $(OBJS)
    SLINK WITH T:GenesisWizard.WITH <<!(T:GenesisWizard.WITH)

@@ -116,9 +116,6 @@ ULONG ProviderWindow_Init(struct IClass *cl, Object *obj, struct MUIP_ProviderWi
    setcheckmark(data->CH_GetTime, data->isp->isp_flags & ISF_GetTime);
    setcheckmark(data->CH_SaveTime, data->isp->isp_flags & ISF_SaveTime);
    setstring(data->STR_TimeServer, data->isp->isp_timename);
-   setstring(data->STR_BootpServer, data->isp->isp_bootp);
-   setcheckmark(data->CH_BOOTP, data->isp->isp_flags & ISF_UseBootp);
-   set(data->STR_BootpServer, MUIA_Disabled, !(data->isp->isp_flags & ISF_UseBootp));
 
    if(data->isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&data->isp->isp_loginscript)
    {
@@ -256,11 +253,6 @@ ULONG ProviderWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
       else
          data->isp->isp_flags &= ~ISF_SaveTime;
       strncpy(data->isp->isp_timename , (STRPTR)xget(data->STR_TimeServer, MUIA_String_Contents) , sizeof(data->isp->isp_timename));
-      strncpy(data->isp->isp_bootp, (STRPTR)xget(data->STR_BootpServer, MUIA_String_Contents), sizeof(data->isp->isp_bootp));
-      if(xget(data->CH_BOOTP, MUIA_Selected))
-         data->isp->isp_flags |= ISF_UseBootp;
-      else
-         data->isp->isp_flags &= ~ISF_UseBootp;
 
       clear_list(&data->isp->isp_loginscript);
       pos = 0;
@@ -826,23 +818,6 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   Child, tmp.STR_TimeServer     = MakeKeyString(NULL, 64, MSG_CC_TimeServer),
                End,
                Child, HVSpace,
-               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Bootp)),
-               Child, ColGroup(2),
-                  Child, MakeKeyLabel2(MSG_LA_UseBootp, MSG_CC_UseBootp),
-                  Child, HGroup,
-                     Child, tmp.CH_BOOTP = MakeKeyCheckMark(FALSE, MSG_CC_UseBootp),
-                     Child, HVSpace,
-                  End,
-                  Child, MakeKeyLabel2(MSG_LA_BootpServer, MSG_CC_BootpServer),
-                  Child, tmp.STR_BootpServer    = TextinputObject,
-                     StringFrame,
-                     MUIA_ControlChar     , *GetStr(MSG_CC_BootpServer),
-                     MUIA_CycleChain      , 1,
-                     MUIA_String_Accept   , "0123456789.",
-                     MUIA_String_MaxLen   , 16,
-                  End,
-               End,
-               Child, HVSpace,
             End,
 
             Child, tmp.GR_Script = VGroup,
@@ -925,7 +900,6 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
       set(data->STR_String         , MUIA_String_AttachedList, data->LV_Script);
 
-      set(data->CH_BOOTP        , MUIA_CycleChain, 1);
       set(data->CY_Resolv       , MUIA_CycleChain, 1);
       set(data->CY_HostName     , MUIA_CycleChain, 1);
       set(data->CY_Command      , MUIA_CycleChain, 1);
@@ -952,8 +926,6 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->CH_GetTime          , MUIA_ShortHelp, GetStr(MSG_Help_SyncClock));
       set(data->CH_SaveTime         , MUIA_ShortHelp, GetStr(MSG_Help_SaveTime));
       set(data->STR_TimeServer      , MUIA_ShortHelp, GetStr(MSG_Help_TimeServer));
-      set(data->CH_BOOTP            , MUIA_ShortHelp, GetStr(MSG_Help_UseBootp));
-      set(data->STR_BootpServer     , MUIA_ShortHelp, GetStr(MSG_Help_BootpServer));
 
       set(data->LV_Script           , MUIA_ShortHelp, GetStr(MSG_Help_LoginScript));
       set(data->BT_Add              , MUIA_ShortHelp, GetStr(MSG_Help_New));
@@ -977,7 +949,6 @@ ULONG ProviderWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       DoMethod(data->CY_Resolv            , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , data->STR_DomainName    , 12, MUIM_MultiSet, MUIA_Disabled, MUIV_NotTriggerValue, data->LV_NameServers, data->BT_AddNameServer, data->BT_RemoveNameServer, data->STR_NameServer, data->LV_DomainNames, data->BT_AddDomainName, data->BT_RemoveDomainName, data->STR_DomainName, NULL);
       DoMethod(data->CY_HostName          , MUIM_Notify, MUIA_Cycle_Active    , MUIV_EveryTime  , data->STR_HostName      , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
       DoMethod(data->CH_GetTime           , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , data->STR_TimeServer    , 6, MUIM_MultiSet, MUIA_Disabled, MUIV_NotTriggerValue, data->CH_SaveTime, data->STR_TimeServer, NULL);
-      DoMethod(data->CH_BOOTP             , MUIM_Notify, MUIA_Selected        , MUIV_EveryTime  , data->STR_BootpServer   , 3, MUIM_Set, MUIA_Disabled, MUIV_NotTriggerValue);
 
       DoMethod(data->STR_Name             , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Comment);
       DoMethod(data->STR_Comment          , MUIM_Notify, MUIA_String_Acknowledge , MUIV_EveryTime, obj, 3, MUIM_Set, MUIA_Window_ActiveObject, data->STR_Login);

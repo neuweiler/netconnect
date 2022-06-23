@@ -147,7 +147,6 @@ ULONG Dialer_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->CY_Startup , MUIA_Weight, 0);
       set(data->CY_Shutdown, MUIA_Weight, 0);
 set(data->CH_ConfirmOffline, MUIA_Disabled, TRUE);
-set(data->CH_QuickReconnect, MUIA_Disabled, TRUE);
 
       set(data->CH_ShowOnlineTime   , MUIA_ShortHelp, GetStr(MSG_Help_ShowOnlineTime));
       set(data->CH_ShowConnect      , MUIA_ShortHelp, GetStr(MSG_Help_ShowSpeed));

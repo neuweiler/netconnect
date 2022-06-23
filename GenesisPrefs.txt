@@ -146,3 +146,45 @@ History for GenesisPrefs
 * demo version does no longer timeout. It's enough if Genesis does.
 * corrected error in iface config parameter database (ariadne)
 
+2.2.1 (03.08.98)
+----------------
+
+* removed provider's BOOTP options and replaced it with DHCP (per iface).
+
+2.2.2 (11.9.98)
+---------------
+
+* added functionality to load external modules. work exactly the same way as
+  MUI's .mcp except that GenesisPrefs passes a NULL pointer for
+  msg->configdata in MUIM_Settingsgroup_ConfigToGadgets and
+  MUIM_SettingsgroupGadgetsToConfig so the modules have to load and save
+  the config files themselfes upon invocation of these methods.
+  The filename will be used for the name in the lister.
+
+2.3.0 (24.9.98) Italian amiga show
+---------------
+
+* user prefs replaced by external module.
+* dhcp became bootp again..
+* rearranged interface/services page a bit
+* added support for genesis' own keyfile system
+* about window now says if program was compiled for NC
+
+2.3.1 (30.09.98)
+----------------
+
+* either global user has to be root or the user has to login at startup
+* with the mcp's MUIM_Settingsgroup_ConfigToGadgets and with
+  MUIM_Settingsgroup_GadgetsToConfig the argument is no longer NULL but
+  a pointer to the "struct User" that logged in => mcp can check if UID
+  and GID are 0 (=> root).
+
+2.3.2 (01.10.98)
+----------------
+
+* mcp's were loaded before user logged in => they received an invalid user
+  pointer.
+* added a neat tiny window to shorten the wait-for-main-window-appears-and-
+  prefs-get-loaded-time.
+* now also supports loginnames and passwords with '.' and ' ' with ppp.
+

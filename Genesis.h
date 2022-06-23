@@ -32,11 +32,11 @@
 #define CFL_Debug                (1 << 6)
 #define CFL_ConfirmOffline       (1 << 7)
 #define CFL_ShowLog              (1 << 8)    // default on
-#define CFL_ShowLamps            (1 << 9)    // default on
+#define CFL_ShowLeds             (1 << 9)    // default on
 #define CFL_ShowConnect          (1 << 10)   // default on
 #define CFL_ShowOnlineTime       (1 << 11)   // default on
 #define CFL_ShowButtons          (1 << 12)   // default on
-#define CFL_ShowNetwork          (1 << 13)   // default on
+#define CFL_ShowProvider         (1 << 13)   // default on
 #define CFL_ShowUser             (1 << 14)   // default on
 #define CFL_ShowStatusWin        (1 << 15)   // default on
 #define CFL_ShowSerialInput      (1 << 16)   // default on
@@ -68,7 +68,7 @@ struct Config
 };
 ///
 /// Interface
-#define IFL_IsOnline       (1)         /* is the iface currently online ? */
+#define IFL_IsOnline       (1 << 0)    /* is the iface currently online ? */
 #define IFL_PutOnline      (1 << 1)    /* shall the iface be put online in this pass ? */
 #define IFL_PutOffline     (1 << 2)    /* shall the iface be put online in this pass ? */
 #define IFL_AutoOnline     (1 << 3)    /* put iface online automatically ? */
@@ -79,6 +79,9 @@ struct Config
 #define IFL_NMDynamic      (1 << 7)    /* was netmask dynamic */
 #define IFL_PPP            (1 << 8)    /* is it default ppp */
 #define IFL_SLIP           (1 << 9)    /* is it default slip */
+#define IFL_BOOTP          (1 << 10)   /* use BOOTP for this iface */
+#define IFL_IsDefaultGW    (1 << 11)   /* is this iface used for default gateway atm ? */
+#define IFL_IsSerial       (1 << 12)   /* the iface operates over the serial line */
 
 enum { IFE_Online = 0, IFE_OnlineFail, IFE_OfflineActive, IFE_OfflinePassive };
 #ifdef USE_EVENT_COMMANDS
@@ -108,17 +111,18 @@ struct Interface
    int     if_keepalive;       /* ping interval in minutes */
 
    struct MinList if_events;
+   struct Process *if_dhcp_proc;  /* pointer to dhcp handler */
+   APTR if_loggerhandle;      /* handle for genesislogger.library */
    APTR    if_userdata;
 };
 
 ///
 /// ISP
-enum { CNF_Assign_Static = 1, CNF_Assign_IFace, CNF_Assign_BootP, CNF_Assign_Root, CNF_Assign_DNSQuery };
+enum { CNF_Assign_Static = 1, CNF_Assign_IFace, CNF_Assign_BOOTP, CNF_Assign_Root, CNF_Assign_DNSQuery };
 
-#define ISF_UseBootp          (1)         /* Use bootp */
-#define ISF_GetTime           (1 << 1)    /* Ask time at given server */
-#define ISF_SaveTime          (1 << 2)    /* Save time to batt clock */
-#define ISF_DontQueryHostname (1 << 3)    /* Don't query hostname => speedup */
+#define ISF_GetTime           (1)    /* Ask time at given server */
+#define ISF_SaveTime          (1 << 1)    /* Save time to batt clock */
+#define ISF_DontQueryHostname (1 << 2)    /* Don't query hostname => speedup */
 
 struct ISP
 {
@@ -130,7 +134,6 @@ struct ISP
    char   isp_phonenumber[101];
    char   isp_organisation[41];
 
-   char   isp_bootp[16];       /* bootp server IP address */
    char   isp_hostname[64];    /* space for fully qualified host name */
    char   isp_timename[64];
    UWORD  isp_flags;
@@ -154,6 +157,20 @@ struct PrefsPPPIface
    BOOL ppp_deflatecomp;
    BOOL ppp_eof;
 };
+///
+
+/// DHCP_Msg
+struct DHCP_Msg
+{
+   struct Message    dhcp_Msg;
+   struct Interface  *dhcp_iface;
+   struct Interface_Data *dhcp_iface_data;
+   BOOL              dhcp_abort;
+   BOOL              dhcp_success;
+};
+
+#define DHCP_PORTNAME "GenesisDHCP"
+
 ///
 
 /// Exec Types
@@ -293,17 +310,4 @@ struct Rpc
 };
 
 ///
-/*
-/// struct pc_Data
-struct pc_Data
-{
-   STRPTR Buffer;    /* buffer holding the file (internal use only) */
-   LONG Size;        /* variable holding the size of the buffer (internal use only) */
-   STRPTR Current;   /* pointer to the current position (internal use only) */
 
-   STRPTR Argument;  /* pointer to the argument name */
-   STRPTR Contents;  /* pointer to the argument's contents */
-};
-
-///
-*/

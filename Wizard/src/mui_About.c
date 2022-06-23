@@ -2,9 +2,7 @@
 #include "/includes.h"
 
 #include "/Genesis.h"
-#ifdef NETCONNECT
 #include "/genesis.lib/pragmas/nc_lib.h"
-#endif
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
@@ -14,9 +12,7 @@
 
 ///
 /// external variables
-#ifdef NETCONNECT
 extern struct Library *NetConnectBase;
-#endif
 extern Object *app, *win;
 
 ///
@@ -25,11 +21,17 @@ extern Object *app, *win;
 ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
 {
    struct About_Data tmp;
-#ifdef NETCONNECT
-   char info[512];
+   char info1[512], info2[512];
 
-   sprintf(info, "\n\033cRegistered to:\n\033i%ls\n(%ls)\n\n\033n\033cARexx port:\n\033i'%ls'\n", NCL_GetOwner(), NCL_GetSerial(), xget(app, MUIA_Application_Base));
+   strcpy(info1, "\n\033c\033b\033uGENESiS Wizard - Get easily connected\033n\n\n"\
+                 "\033cVersion " VERTAG);
+#ifdef NETCONNECT
+   strcat(info1, " - NetConnect");
 #endif
+   strcat(info1, "\n\n"\
+                 "\033n\033cCopyright © 1997-98 by\n\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n"\
+                 "All Rights Reserved\n");
+   sprintf(info2, "\n\033cRegistered to:\n\033i%ls\n(%ls)\n\n\033n\033cARexx port:\n\033i'%ls'\n", NCL_GetOwner(), NCL_GetSerial(), xget(app, MUIA_Application_Base));
 
    if(obj = (Object *)DoSuperNew(cl, obj,
       MUIA_Window_Title       , "GENESiS Wizard · Copyright Information",
@@ -47,24 +49,23 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
             MUIA_Scrollgroup_Contents, VirtgroupObject,
                ReadListFrame,
                Child, TextObject,
-                  MUIA_Text_Contents, "\n\033c\033b\033uGENESiS Wizard - Get easily connected\033n\n\n"\
-                                      "\033cVersion " VERTAG "\n\n"\
-                                      "\033n\033cCopyright © 1997-98 by\n\0338Michael Neuweiler & Active Technologies\0332\033n\033c\n"\
-                                      "All Rights Reserved\n",
+                  MUIA_Text_Contents, info1,
                End,
 #ifdef DEMO
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
+#ifdef BETA
+                  MUIA_Text_Contents, "\n\033b\033cBETA VERSION\n",
+#else
                   MUIA_Text_Contents, "\n\033b\033cDEMO VERSION\n",
+#endif
                   MUIA_Font         , MUIV_Font_Big,
                End,
 #endif
-#ifdef NETCONNECT
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
-                  MUIA_Text_Contents, info,
+                  MUIA_Text_Contents, info2,
                End,
-#endif
                Child, MUI_MakeObject(MUIO_HBar, 2),
                Child, TextObject,
                   MUIA_Text_Contents, "\n\033cSupport site:\n\033ihttp://www.active-net.co.uk\n\n"\

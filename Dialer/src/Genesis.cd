@@ -1,0 +1,330 @@
+#language english
+#version 1
+#lengthbytes 0
+;
+;
+; general stuff
+;
+;
+MSG_ReqBT_Okay (//)
+*_Okay
+;
+MSG_BT_Okay (//)
+_Okay
+;
+MSG_BT_Cancel (//)
+_Cancel
+;
+MSG_BT_Abort (//)
+_Abort
+;
+MSG_TX_CouldNotOpenX (//)
+Could not open %ls
+;
+;
+; amiga.c
+;
+;
+MSG_TX_LoadingAmiTCP (//)
+\n     Loading AmiTCP kernel     \n
+;
+MSG_TX_ConfiguringLoopback (//)
+\nConfiguring loopback device lo0
+;
+MSG_TX_MountingTCP (//)
+\nMounting TCP:
+;
+MSG_TX_LaunchingInetd (//)
+\nLaunching Inetd
+;
+MSG_TX_ExecutingStartup (//)
+\nExecuting startup command
+;
+;
+; globals.c
+;
+;
+MSG_MENU_PROJECT (//)
+Project
+;
+MSG_MENU_ABOUT (//)
+About...
+;
+MSG_CC_ABOUT (/1/1)
+?
+;
+MSG_MENU_REPORT (//)
+GENESiSReport
+;
+MSG_CC_REPORT (/1/1)
+R
+;
+MSG_MENU_NETSTATUS (//)
+Network status
+;
+MSG_CC_NETSTATUS (/1/1)
+N
+;
+MSG_MENU_ABOUTMUI (//)
+About MUI...
+;
+MSG_MENU_QUIT (//)
+Quit
+;
+MSG_CC_QUIT (/1/1)
+Q
+;
+MSG_MENU_SETTINGS (//)
+Settings
+;
+MSG_MENU_GENESIS (//)
+GENESiS...
+;
+MSG_CC_GENESIS (/1/1)
+G
+;
+MSG_MENU_MUI (//)
+MUI...
+;
+MSG_CC_MUI (/1/1)
+M
+;
+MSG_MENU_DISPLAY (//)
+Display
+;
+MSG_MENU_SHOW_TIMEONLINE (//)
+Show time online
+;
+MSG_CC_SHOW_TIMEONLINE (/1/1)
+1
+;
+MSG_MENU_SHOW_LEDS (//)
+Show leds
+;
+MSG_CC_SHOW_LEDS (/1/1)
+2
+;
+MSG_MENU_SHOW_CONNECT (//)
+Show connect string
+;
+MSG_CC_SHOW_CONNECT (//)
+3
+;
+MSG_MENU_SHOW_PROVIDER (//)
+Show provider list
+;
+MSG_CC_SHOW_PROVIDER (/1/1)
+4
+;
+MSG_MENU_SHOW_USER (//)
+Show user list
+;
+MSG_CC_SHOW_USER (/1/1)
+5
+;
+MSG_MENU_SHOW_LOG (//)
+Show log
+;
+MSG_CC_SHOW_LOG (/1/1)
+6
+;
+MSG_MENU_SHOW_BUTTONS (//)
+Show buttons
+;
+MSG_CC_SHOW_BUTTONS (/1/1)
+7
+;
+MSG_MENU_SHOW_STATUS (//)
+Show status windows
+;
+MSG_CC_SHOW_STATUS (/1/1)
+8
+;
+MSG_MENU_SHOW_SERIAL (//)
+Show serial output
+;
+MSG_CC_SHOW_SERIAL (/1/1)
+9
+;
+;
+;
+; iface.c
+;
+;
+MSG_TX_Dialing (//)
+Dialing '%ls'\n(attempt %ld/%ld )
+;
+MSG_TX_Waiting (//)
+...%ld sec
+;
+MSG_TX_ConnectedToProvider (//)
+Connected to provider.
+;
+MSG_TX_EstablishingNetworkConnection (//)
+Establishing network connection
+;
+MSG_TX_ConfiguringInterface (//)
+Configuring the interface
+;
+;
+; main.c
+;
+;
+MSG_AppDescription (//)
+GENESiS
+;
+MSG_TX_GenesisAlreadyRunning (//)
+GENESiS is already running
+;
+MSG_TX_CouldNotCreateMUIClasses (//)
+Could not create MUI classes.
+;
+MSG_TX_ErrorAmiTCPLaunch (//)
+Could not launch AmiTCP kernel.\nPossible causes:\n1) AmiTCP:kernel/AmiTCP does not exist.\n2) Another TCP stack is already running.\n
+;
+MSG_ReqBT_ReconnectCancel (//)
+*_Reconnect|_Cancel
+;
+MSG_TX_TerminatedAbnormallyReconnect (//)
+GENESiS exited abnormally the last time.\nWould you like to reestablish the connection(s)\nwith the previous settings ?\nNOTE: If you are using a modem it has still to\nbe online for this to work.
+;
+;
+; mui_IfaceReq.c
+;
+;
+MSG_TX_InterfaceRequester (//)
+Interface requester
+;
+MSG_TX_ChooseInterface (//)
+Please choose interface:
+;
+;
+; mui_MainWindow.c
+;
+;
+MSG_ReqBT_QuitCancel (//)
+_Quit|*_Cancel
+;
+MSG_ReqBT_StayOnline (//)
+*\033b_Stay online|_Go offline and change
+;
+MSG_TX_ChangeProviderIfaceOnline (//)
+At least one interface is still online. Shall all interfaces\nbe put offline and the new configuration be loaded or would you\nlike to stay online and ignore the new settings for now ?
+;
+MSG_TX_TimeOnline (//)
+Time Online:
+;
+MSG_TX_LogType (//)
+\033bType
+;
+MSG_TX_LogInformation (//)
+\033bInformation
+;
+MSG_TX_LogTime (//)
+\033bTime
+;
+MSG_BT_Connect (//)
+_Connect
+;
+MSG_BT_Disconnect (//)
+_Disconnect
+;
+MSG_TX_MainWindowTitle (//)
+GENESiS © 1997,98 by Michael Neuweiler & Active Technologies
+;
+MSG_TX_ReallyQuit (//)
+Do you really want to quit ?
+;
+MSG_TX_CouldNotOpenConfig (//)
+Could not open %ls.\nPlease use GENESiSWizard or GENESiSPrefs\nfirst to create a configuration.
+;
+MSG_HELP_Connect (//)
+Establish a connection.
+;
+MSG_HELP_Disconnect (//)
+Close a connection.
+;
+MSG_HELP_TimeOnline (//)
+Time passed since an\ninterface is online.
+;
+MSG_HELP_ConnectSpeed (//)
+Connect string returned\nby your modem.
+;
+MSG_HELP_Provider (//)
+Choose which provider\nconfiguration to use.
+;
+MSG_HELP_User (//)
+Login as a different user.
+;
+MSG_HELP_Log (//)
+GENESiS event log
+;
+;
+; mui_Online.c
+;
+;
+MSG_LA_PleaseWait (//)
+Please wait...
+;
+MSG_TX_InitDevice (//)
+initializing device...
+;
+MSG_TX_SendingBOOTP (//)
+sending BOOTP request...
+;
+MSG_TX_NoBOOTP (//)
+no answer to\nBOOTP request
+;
+MSG_TX_GotBOOTP (//)
+received BOOTP reply
+;
+MSG_TX_ConfiguringAmiTCP (//)
+configuring AmiTCP...
+;
+MSG_TX_GetDomain (//)
+obtaining host name\nand domain name...
+;
+MSG_TX_QueryTimeserver (//)
+querying time server...
+MSG_TX_Finished (//)
+finished
+;
+MSG_TX_ErrorBsdsocketLib (//)
+Could not open bsdsocket.library.\nPlease make sure the file AmiTCP can be found in AmiTCP:kernel/
+;
+MSG_TX_ErrorIfConfigLib (//)
+Could not open ifconfig.library.\nIt looks like GENESiS is not properly installed.\nPlease make sure ifconfig.library\ncan be found in AmiTCP:Libs/
+;
+MSG_TX_ErrorIfaceAlloc (//)
+Interface allocation failed.\nThis might be a result of memory shortage.
+;
+MSG_TX_ErrorNoIP (//)
+Could not obtain local IP address.\nPlease refer to the logfile in RAM:Genesis.log\nand contact your support site.
+;
+MSG_TX_ErrorConfigIface (//)
+Could not configure interface %ls.
+;
+MSG_TX_WarningNoDNS (//)
+Was unable to obtain DomainNameServer (DNS) IP-addresses.\nFalling back to root DNS servers but in order to\nget faster responses on queries you should enter the\ncorrect IP addresses of your provider manually in GENESiSPrefs\nafter importing the config file created by this program.
+;
+MSG_TX_ErrorSetDNS (//)
+Could not tell AmiTCP about the nameserver %ls.\nPlease contact your support site if this problem persits.
+;
+MSG_TX_WarningNoHostname (//)
+Could not obtain the hostname for this machine.\nGENESiS might still work without this information.
+;
+MSG_TX_WarningNoDomain (//)
+Was unable to obtain domain name.\nMake sure you set the correct value manually\nby using GENESiS Preferences !!
+;
+MSG_TX_WarningSetDomain (//)
+Could not tell AmiTCP about our domainname '%ls'.\nPlease make sure this is the correct value and modify\nin GENESiSPrefers accordingly.
+;
+MSG_TX_WarningSetHostname (//)
+Could not tell AmiTCP about our hostname '%ls'.\nHowever AmiTCP will work without this.
+;
+MSG_TX_ErrorLaunchSubtask (//)
+Was unable to launch sub task for\ngathering network information.\nUnable to finish setup.
+;
+MSG_TX_ErrorParseArgs (//)
+Error parsing arguments / tooltypes.
+;

@@ -1,6 +1,6 @@
 /// includes & defines
-#include <devices/netinfo.h>
 #include <intuition/intuitionbase.h>
+#include <devices/netinfo.h>
 #include "libraries/genesis.h"
 #include "/Genesis.h"
 #include "rev.h"
@@ -19,22 +19,200 @@ struct   ExecBase        *SysBase       = NULL;
 struct   IntuitionBase   *IntuitionBase = NULL;
 struct   Library         *UserGroupBase = NULL;
 struct   Library         *MUIMasterBase = NULL;
+struct   Library         *RexxSysBase   = NULL;
 
-struct   MsgPort         *netinfo_port  = NULL;
-struct   NetInfoReq      *netinfo_req   = NULL;
-struct   NetInfoPasswd   *passwd;
 struct   User            *global_user   = NULL;
 struct   SignalSemaphore LibSemaphore;
 struct   MinList         UserList;
-char     pw_buffer[1024];
-BOOL     is_online = 0;
 
 struct UserNode
 {
-   struct MinNode un_Node;
-
-   char un_Name[41];
+   struct MinNode un_node;
+   struct User *un_user;
 };
+
+///
+
+// internal stuff.. we don't need to export everything
+
+/// clear_list
+VOID clear_list(struct MinList *list)
+{
+   if(list->mlh_TailPred != (struct MinNode *)list)
+   {
+      struct MinNode *e1, *e2;
+
+      e1 = list->mlh_Head;
+      while(e2 = e1->mln_Succ)
+      {
+         Remove((struct Node *)e1);
+         FreeVec(e1);
+         e1 = e2;
+      }
+   }
+}
+///
+/// my_rand
+static LONG my_rand( ULONG *seed )
+{
+   LONG    ret, a;
+
+   a     = (LONG)*seed;    // MOVE.L  0040(A4),D0
+   ret   = a;              // MOVE.L  D0,D1
+   ret <<= 3;              // ASL.L   #3,D1
+   ret  -= a;              // SUB.L   D0,D1
+   ret <<= 3;              // ASL.L   #3,D1
+   ret  += a;              // ADD.L   D0,D1
+   ret  += ret;            // ADD.L   D1,D1
+   ret  += a;              // ADD.L   D0,D1
+   ret <<= 4;              // ASL.L   #4,D1
+   ret  -= a;              // SUB.L   D0,D1
+   ret  += ret;            // ADD.L   D1,D1
+   ret  -= a;              // SUB.L   D0,D1
+   ret  += 0x00000E60;     // ADDI.L  #00000e60,D1
+   ret  &= 0x7FFFFFFF;     // ANDI.L  #7fffffff,D1
+   a     = ret;            // MOVE.L  D1,D0
+   a    -= 1;              // SUBQ.L  #1,D0
+   *seed = (ULONG)a;       // MOVE.L  D0,0040(A4)
+
+   return(ret);            // MOVE.L  D1,D0
+}
+
+///
+/// my_crypt
+VOID my_crypt(UBYTE *From, UBYTE *To, ULONG len)
+{
+   ULONG i, seed;
+
+   seed = len;
+   for(i = 0; i < len; i++)
+      *To++ = *From++ ^ my_rand(&seed);
+}
+
+///
+/// AllocFGetString
+STRPTR AllocFGetString(BPTR fh, STRPTR *str)
+{
+   UWORD   len;
+
+   if(*str)
+      FreeVec(*str);
+   *str = NULL;
+
+   if(FRead(fh, &len, sizeof(UWORD), 1))
+   {
+      if(*str = AllocVec(len + 1, MEMF_ANY))
+      {
+         if(FRead(fh, *str, len, 1))
+         {
+            (*str)[len] = '\0';
+            my_crypt(*str, *str, len);
+         }
+         else
+         {
+            FreeVec(*str);
+            *str = NULL;
+         }
+      }
+   }
+   return(*str);
+}
+
+///
+/// FPutString
+static void FPutString(BPTR file, STRPTR str)
+{
+   UWORD len;
+   STRPTR buffer;
+
+   len = strlen(str);
+
+   if(buffer = AllocVec(len + 10, MEMF_ANY | MEMF_CLEAR))
+   {
+      FWrite(file, &len, sizeof(UWORD), 1);
+      my_crypt(str, buffer, len);
+      FWrite(file, buffer, len, 1);
+      FreeVec(buffer);
+   }
+}
+///
+/// run_async
+BOOL run_async(STRPTR file)
+{
+   BPTR ofh = NULL, ifh = NULL;
+   BOOL success = FALSE;
+
+   if(ofh = Open("NIL:", MODE_NEWFILE))
+   {
+      if(ifh = Open("NIL:", MODE_OLDFILE))
+      {
+         if(SystemTags(file,
+            SYS_Output     , ofh,
+            SYS_Input      , ifh,
+            SYS_Asynch     , TRUE,
+            NP_StackSize   , 8192,
+            TAG_DONE) != -1)
+               success = TRUE;
+
+         if(!success)
+            Close(ifh);
+      }
+      if(!success)
+         Close(ofh);
+   }
+   return(success);
+}
+
+///
+/// rexx_cmd
+LONG rexx_cmd(STRPTR port_name, const char *fmt, ...)
+{
+   STRPTR buf;
+   struct MsgPort *port, *dest_Port;
+   struct RexxMsg *rmsg;
+   LONG rc = -1;
+
+   if(buf = AllocVec(256, MEMF_ANY | MEMF_CLEAR))
+   {
+      vsprintf(buf, fmt, (STRPTR)(&fmt + 1));
+
+      if(RexxSysBase = OpenLibrary("rexxsyslib.library", 0))
+      {
+         if(port = CreateMsgPort())
+         {
+            port->mp_Node.ln_Name = "GENESIS.LIB";
+            if(rmsg = CreateRexxMsg(port, NULL, port_name))
+            {
+               rmsg->rm_Action = RXCOMM;
+               rmsg->rm_Args[0] = (STRPTR)buf;
+               if(FillRexxMsg(rmsg, 1, 0))
+               {
+                  Forbid();
+                  if(dest_Port = FindPort(port_name))
+                  {
+                     PutMsg(dest_Port, (struct Message *)rmsg);
+                     Permit();
+                     do
+                     {
+                        WaitPort(port);
+                     } while(GetMsg(port) != (struct Message *)rmsg);
+                     rc = rmsg->rm_Result1;
+                  }
+                  else
+                     Permit();
+
+                  ClearRexxMsg(rmsg, 1);
+               }
+               DeleteRexxMsg(rmsg);
+            }
+            DeleteMsgPort(port);
+         }
+         CloseLibrary(RexxSysBase);
+      }
+      FreeVec(buf);
+   }
+   return(rc);
+}
 
 ///
 
@@ -116,7 +294,7 @@ SAVEDS ASM BOOL ParseNext(register __a0 struct ParseConfig_Data *pc_data)
          if(pc_data->pc_contents = strchr(pc_data->pc_current, 34))              // is the content between ""'s ?
          {
             pc_data->pc_contents++;
-            if(ptr_tmp = strchr(pc_data->pc_contents, 34))  // find the ending '"'
+            if(ptr_tmp = strrchr(pc_data->pc_contents, 34))  // find the ending '"'
                *ptr_tmp = NULL;
 
             ptr_tmp = pc_data->pc_contents - 2;
@@ -229,6 +407,8 @@ SAVEDS ASM VOID FreeUser(register __a0 struct User *user)
       if(user->us_shell)
          FreeVec(user->us_shell);
 
+      clear_list(&user->us_restricted_times);
+
       FreeVec(user);
    }
 }
@@ -279,12 +459,85 @@ SAVEDS ASM BOOL WriteFile(register __a0 STRPTR file, register __a1 STRPTR buffer
 
 ///
 /// IsOnline
-SAVEDS ASM BOOL IsOnline(register __d0 LONG flags)
+SAVEDS ASM BOOL IsOnline(register __d0 LONG cmd)
 {
-   if(flags == 22)
-      is_online = TRUE;
-   if(flags == -22)
-      is_online = FALSE;
+   STRPTR genesis_name = "GENESIS", miami_name = "MIAMI.1";
+   BOOL is_online = FALSE, is_miami = FALSE;
+   LONG rc;
+
+   if(FindPort(genesis_name))
+   {
+      rc = rexx_cmd(genesis_name, "isonline any");
+      is_online = (rc > 0 ? TRUE : NULL);
+   }
+   else if(FindPort(miami_name)) // what a shame !!
+   {
+      is_miami = TRUE;
+      rc = rexx_cmd(miami_name, "ISONLINE");
+      is_online = (rc > 0 ? TRUE : NULL);
+   }
+   else  // if using another stack => set is_online = TRUE;
+   {
+      struct Library *tmp_lib;
+
+      if(tmp_lib = OpenLibrary("bsdsocket.library", NULL))
+      {
+         is_online = TRUE;
+         CloseLibrary(tmp_lib);
+      }
+   }
+
+   switch(cmd)
+   {
+      case IOC_AskUser:
+         if(!is_online)
+         {
+            if(MUIMasterBase = OpenLibrary("muimaster.library", 11))
+            {
+               if(!MUI_Request(NULL, NULL, NULL, "Network Request", "Go Online|Stay Offline", "An application wishes to exchange data over the\nnetwork but currently no connection is established.\nWould you like to establish a connection now ?"))
+                  return(FALSE);
+               CloseLibrary(MUIMasterBase);
+               MUIMasterBase = NULL;
+            }
+         }
+      case IOC_Force:
+         if(!is_online)
+         {
+            int i;
+
+            if(!is_miami)
+            {
+               if(!FindPort(genesis_name)) // if genesis is not running, launch it
+               {
+                  if(run_async("AmiTCP:GENESiS"))
+                  {
+                     i = 0;
+                     while(i++ < 20)
+                     {
+                        if(FindPort(genesis_name))
+                           break;
+                        Delay(25);
+                     }
+                  }
+               }
+            }
+            if(FindPort((is_miami ? miami_name : genesis_name)))
+            {
+               rexx_cmd((is_miami ? miami_name : genesis_name), (is_miami ? "online" : "connect"));
+
+               i = 0;
+               while(!is_online && i++ < 80)  // wait 80 sec until iface comes online
+               {
+                  Delay(50);
+                  rc = rexx_cmd((is_miami ? miami_name : genesis_name), (is_miami ? "ISONLINE" : "isonline any"));
+                  is_online = (rc > 0 ? TRUE : NULL);
+                  if(rc < 0)  // genesis is no longer running => shorten wait time
+                     break;
+               }
+            }
+         }
+         break;
+   }
    return(is_online);
 }
 
@@ -292,100 +545,38 @@ SAVEDS ASM BOOL IsOnline(register __d0 LONG flags)
 
 // internal functions, for your eyes only
 
-/// netinfo_delete
-VOID netinfo_delete(VOID)
+/// find_user
+struct User *find_user(char *name)
 {
-   if(netinfo_req)
-   {
-      CloseDevice((struct IORequest *)netinfo_req);
-      DeleteIORequest(netinfo_req);
-      netinfo_req = NULL;
-   }
-   if(netinfo_port)
-      DeleteMsgPort(netinfo_port);
-   netinfo_port = NULL;
-}
+   struct UserNode *user_node;
 
-///
-/// netinfo_create
-BOOL netinfo_create(VOID)
-{
-   if(netinfo_port = (struct MsgPort *)CreateMsgPort())
+   if(UserList.mlh_TailPred != (struct MinNode *)&UserList)
    {
-      if(netinfo_req = (struct NetInfoReq *)CreateIORequest(netinfo_port, sizeof(struct NetInfoReq)))
+      user_node = (struct UserNode *)UserList.mlh_Head;
+      while(user_node->un_node.mln_Succ)
       {
-         if(!(OpenDevice(NETINFONAME, NETINFO_PASSWD_UNIT, (struct IORequest *)netinfo_req, 0)))
-         {
-            return(TRUE);
-         }
+         if(!strcmp(name, user_node->un_user->us_name))
+            return(user_node->un_user);
+         user_node = (struct UserNode *)user_node->un_node.mln_Succ;
       }
-   }
-   netinfo_delete();
-   return(FALSE);
-}
-
-///
-/// create_usercopy
-struct User *create_usercopy(struct NetInfoPasswd *passwd)
-{
-   struct User *user;
-
-   if(user = AllocVec(sizeof(struct User), MEMF_ANY | MEMF_CLEAR))
-   {
-      ReallocCopy(&user->us_name    , passwd->pw_name);
-      ReallocCopy(&user->us_passwd  , passwd->pw_passwd);
-      ReallocCopy(&user->us_gecos   , passwd->pw_gecos);
-      ReallocCopy(&user->us_dir     , passwd->pw_dir);
-      ReallocCopy(&user->us_shell   , passwd->pw_shell);
-      user->us_uid = passwd->pw_uid;
-      user->us_gid = passwd->pw_gid;
-   }
-   return(user);
-}
-
-///
-/// passwd_by_name
-struct NetInfoPasswd *passwd_by_name(char *name)
-{
-   BOOL ok = FALSE;
-
-   if(netinfo_create())
-   {
-      passwd = (struct NetInfoPasswd *)pw_buffer;
-      passwd->pw_name = name;
-      netinfo_req->io_Data    = passwd;
-      netinfo_req->io_Length  = sizeof(pw_buffer);
-      netinfo_req->io_Command = NI_GETBYNAME;
-      if(!DoIO((struct IORequest *)netinfo_req))
-         ok = TRUE;
-
-      netinfo_delete();
-
-      if(ok)
-         return(passwd);
    }
    return(NULL);
 }
 
 ///
-/// check_user_password
-BOOL check_user_password(STRPTR name, STRPTR password)
+/// find_user_verify_password
+struct User *find_user_verify_password(STRPTR name, STRPTR password)
 {
-   BOOL ok = FALSE;
+   struct User *user = NULL;
 
    if(name)
    {
-      if(passwd_by_name(name))
+      if(user = find_user(name))
       {
-         if(!(*passwd->pw_passwd))
+         if(!user->us_passwd || !(*user->us_passwd))
          {
-            if(!password)
-               ok = TRUE;
-            else
-            {
-               if(!*password)
-                  ok = TRUE;
-            }
+            if(password && *password)
+               user = NULL;
          }
          else
          {
@@ -393,24 +584,175 @@ BOOL check_user_password(STRPTR name, STRPTR password)
             {
                STRPTR salt;
 
-               salt = passwd->pw_passwd;
+               salt = user->us_passwd;
 
                if(!UserGroupBase)
                   UserGroupBase = OpenLibrary(USERGROUPNAME, 0);
 
                if(UserGroupBase)
                {
-                  if(!strcmp(crypt(password, salt), passwd->pw_passwd))
-                     ok = TRUE;
+                  if(strcmp(crypt(password, salt), user->us_passwd))
+                     user = NULL;
 
                   CloseLibrary(UserGroupBase);
                   UserGroupBase = NULL;
                }
+               else
+                  user = NULL;
+            }
+            else
+               user = NULL;
+         }
+      }
+   }
+
+   return(user);
+}
+
+///
+/// create_usercopy
+struct User *create_usercopy(struct User *src)
+{
+   struct User *new = NULL;
+
+   if(src)
+   {
+      if(new = AllocVec(sizeof(struct User), MEMF_ANY | MEMF_CLEAR))
+      {
+         NewList((struct List *)&new->us_restricted_times);
+         ReallocCopy(&new->us_name  , src->us_name);
+         ReallocCopy(&new->us_passwd, src->us_passwd);
+         new->us_uid = src->us_uid;
+         new->us_gid = src->us_gid;
+         ReallocCopy(&new->us_gecos , src->us_gecos);
+         ReallocCopy(&new->us_dir   , src->us_dir);
+         ReallocCopy(&new->us_shell , src->us_shell);
+
+         new->us_flags     = src->us_flags;
+         new->us_max_time  = src->us_max_time;
+         ReallocCopy(&new->us_timeserver, src->us_timeserver);
+
+         if(src->us_restricted_times.mlh_TailPred != (struct MinNode *)&src->us_restricted_times)
+         {
+            struct RestrictedTime *restrict_src, *restrict_new;
+
+            restrict_src = (struct RestrictedTime *)src->us_restricted_times.mlh_Head;
+            while(restrict_src->rt_node.mln_Succ)
+            {
+               if(restrict_new = AllocVec(sizeof(struct RestrictedTime), MEMF_ANY | MEMF_CLEAR))
+               {
+                  memcpy(restrict_new, restrict_src, sizeof(struct RestrictedTime));
+                  AddTail((struct List *)&new->us_restricted_times, (struct Node *)restrict_new);
+               }
+               restrict_src = (struct RestrictedTime *)restrict_src->rt_node.mln_Succ;
             }
          }
       }
    }
-   return(ok);
+
+   return(new);
+}
+
+///
+/// write_passwd
+VOID write_passwd(BPTR fh, struct NetInfoPasswd *passwd)
+{
+   ULONG zero = NULL;
+   char empty[2];
+
+   *empty = NULL;
+
+   FPutString(fh, passwd->pw_name);                // login
+   FPutString(fh, passwd->pw_passwd);              // pwd
+   FWrite(fh, &passwd->pw_uid, sizeof(LONG), 1);   // uid
+   FWrite(fh, &passwd->pw_gid, sizeof(LONG), 1);   // gid
+   FPutString(fh, passwd->pw_gecos);               // real name
+   FPutString(fh, passwd->pw_dir);                 // home dir
+   FPutString(fh, passwd->pw_shell);               // shell
+   FWrite(fh, &zero, sizeof(ULONG), 1);            // # time restrictions
+   FWrite(fh, &zero, sizeof(ULONG), 1);            // user flags
+   FWrite(fh, &zero, sizeof(ULONG), 1);            // max time online
+   FPutString(fh, empty);                          // timeserver
+}
+
+///
+/// copy_passwd_file
+#define PASSWD_SIZE 1024
+VOID copy_passwd_file(VOID)
+{
+   BOOL found_admin = FALSE, found_root = FALSE;
+   struct MsgPort *port;
+
+   if(port = CreateMsgPort())
+   {
+      struct NetInfoReq  *req;
+
+      if(req = (struct NetInfoReq *)CreateIORequest(port, sizeof(struct NetInfoReq)))
+      {
+         if(!(OpenDevice(NETINFONAME, NETINFO_PASSWD_UNIT, (struct IORequest *)req, 0)))
+         {
+            req->io_Command = CMD_RESET;
+
+            if(!(DoIO((struct IORequest *)req)))
+            {
+               struct NetInfoPasswd   *passwd;
+               ULONG zero = 0;
+               BPTR fh;
+
+               if(passwd = (struct NetInfoPasswd *)AllocVec(PASSWD_SIZE, MEMF_ANY | MEMF_CLEAR))
+               {
+                  req->io_Data    = passwd;
+                  req->io_Length  = PASSWD_SIZE;
+                  req->io_Command = CMD_READ;
+
+                  if(fh = Open("AmiTCP:db/utm.conf", MODE_NEWFILE))
+                  {
+                     FWrite(fh, &zero, sizeof(ULONG), 1);                 // utm_version
+
+                     while(!(DoIO((struct IORequest *)req)))
+                     {
+                        if((passwd->pw_uid == 0) && (passwd->pw_gid == 0))
+                           found_admin = TRUE;
+                        if(!strcmp(passwd->pw_name, "root"))
+                           found_root = TRUE;
+
+
+                        write_passwd(fh, passwd);
+
+                        req->io_Data    = passwd;
+                        req->io_Length  = PASSWD_SIZE;
+                        req->io_Command = CMD_READ;
+                     }
+                     if(!found_admin)   // add root user if not existent
+                     {
+                        passwd->pw_name = (found_root ? "new_root" : "root");
+                        passwd->pw_passwd = "";
+                        passwd->pw_uid = 0;
+                        passwd->pw_gid = 0;
+                        passwd->pw_gecos = "System Administrator";
+                        passwd->pw_dir = "SYS:";
+                        passwd->pw_shell = "noshell";
+
+                        write_passwd(fh, passwd);
+
+                        req->io_Data    = passwd;
+                        req->io_Length  = PASSWD_SIZE;
+                        req->io_Command = CMD_WRITE;
+                        DoIO((struct IORequest *)req);
+                        req->io_Command = CMD_UPDATE;
+                        DoIO((struct IORequest *)req);
+                     }
+                     Close(fh);
+                  }
+                  FreeVec(passwd);
+               }
+            }
+            CloseDevice((struct IORequest * )req);
+         }
+         DeleteIORequest(req);
+      }
+      DeleteMsgPort(port);
+   }
 }
 
 ///
@@ -427,11 +769,11 @@ STRPTR get_username(LONG pos)
 
       i = 0;
       user_node = (struct UserNode *)UserList.mlh_Head;
-      while(user_node->un_Node.mln_Succ)
+      while(user_node->un_node.mln_Succ)
       {
          if(i == pos)
-            return(user_node->un_Name);
-         user_node = (struct UserNode *)user_node->un_Node.mln_Succ;
+            return(user_node->un_user->us_name);
+         user_node = (struct UserNode *)user_node->un_node.mln_Succ;
          i++;
       }
    }
@@ -450,14 +792,13 @@ struct User *get_user(char *name, char *password, char *title, LONG flags)
    struct User *user = NULL;
    int tries;
 
-   if(check_user_password(name, password))
-      return(create_usercopy(passwd));
+   if(user = find_user_verify_password(name, password))
+      return(create_usercopy(user));
 
    if(MUIMasterBase = OpenLibrary("muimaster.library", 11))
    {
       if(app = ApplicationObject,
          MUIA_Application_Title      , "Genesis User Request",
-//         MUIA_Application_Version    , "$VER: GenesisUserReq 1.0 (07.06.98)",
          MUIA_Application_Copyright  , "©1998, Michael Neuweiler",
          MUIA_Application_Author     , "Michael Neuweiler",
          MUIA_Application_Description, "Requester to login a user",
@@ -538,10 +879,10 @@ struct User *get_user(char *name, char *password, char *title, LONG flags)
             struct UserNode *user_node;
 
             user_node = (struct UserNode *)UserList.mlh_Head;
-            while(user_node->un_Node.mln_Succ)
+            while(user_node->un_node.mln_Succ)
             {
-               DoMethod(LV_Usernames, MUIM_List_InsertSingle, user_node->un_Name, MUIV_List_Insert_Bottom);
-               user_node = (struct UserNode *)user_node->un_Node.mln_Succ;
+               DoMethod(LV_Usernames, MUIM_List_InsertSingle, user_node->un_user->us_name, MUIV_List_Insert_Bottom);
+               user_node = (struct UserNode *)user_node->un_node.mln_Succ;
             }
          }
 
@@ -561,11 +902,8 @@ struct User *get_user(char *name, char *password, char *title, LONG flags)
                get(STR_Username, MUIA_String_Contents, &name);
                get(STR_Password, MUIA_String_Contents, &ptr);
 
-               if(check_user_password(name, ptr))
-               {
-                  user = create_usercopy(passwd);
+               if(user = find_user_verify_password(name, ptr))
                   break;
-               }
                else
                {
                   DisplayBeep(NULL);
@@ -601,7 +939,7 @@ struct User *get_user(char *name, char *password, char *title, LONG flags)
       MUIMasterBase = NULL;
    }
 
-   return(user);
+   return(create_usercopy(user));
 }
 
 ///
@@ -621,11 +959,11 @@ VOID set_globaluser(struct User *user)
 
       setreuid(-1, 0);  // clear usergroup user
 
-      if(user)
+      if(user && user->us_name)
       {
-         global_user = create_usercopy((struct NetInfoPasswd *)user);
+         global_user = create_usercopy(user);
 
-         if(homedir = Lock(user->us_dir, SHARED_LOCK))
+         if(user->us_dir && (homedir = Lock(user->us_dir, SHARED_LOCK)))
             WriteFile("ENV:HOME", user->us_dir, -1);
          else
          {
@@ -655,10 +993,7 @@ VOID set_globaluser(struct User *user)
 /// get_globaluser
 struct User *get_globaluser(VOID)
 {
-   if(global_user)
-      return(create_usercopy((struct NetInfoPasswd *)global_user));
-
-   return(NULL);
+   return(create_usercopy(global_user));
 }
 
 ///
@@ -670,9 +1005,10 @@ VOID clear_userlist(VOID)
       struct UserNode *un1, *un2;
 
       un1 = (struct UserNode *)UserList.mlh_Head;
-      while(un2 = (struct UserNode *)un1->un_Node.mln_Succ)
+      while(un2 = (struct UserNode *)un1->un_node.mln_Succ)
       {
          Remove((struct Node *)un1);
+         FreeUser(un1->un_user);
          FreeVec(un1);
          un1 = un2;
       }
@@ -683,37 +1019,75 @@ VOID clear_userlist(VOID)
 /// load_userlist
 BOOL load_userlist(VOID)
 {
-   struct UserNode *un = NULL;
+   struct UserNode *user_node = NULL;
+   struct User *user;
+   struct RestrictedTime *restrict;
    BOOL success = FALSE;
+   BPTR                    fh;
+   ULONG                   utm_version;
+   ULONG   i, num;
 
    clear_userlist();
 
-   if(netinfo_create())
+   if(!(fh = Open("AmiTCP:db/utm.conf", MODE_OLDFILE)))
    {
-      netinfo_req->io_Command = CMD_RESET;
-      if(!DoIO((struct IORequest *)netinfo_req))
-      {
-         passwd = (struct NetInfoPasswd *)pw_buffer;
-         netinfo_req->io_Data    = passwd;
-         netinfo_req->io_Length  = sizeof(pw_buffer);
-         netinfo_req->io_Command = CMD_READ;
-         while(!DoIO((struct IORequest *)netinfo_req))
-         {
-            if(!(passwd->pw_passwd[0] == '*' && passwd->pw_passwd[1] == NULL))
-            if(un = AllocVec(sizeof(struct UserNode), MEMF_ANY | MEMF_CLEAR))
-            {
-               strncpy(un->un_Name, passwd->pw_name, sizeof(un->un_Name));
-               AddTail((struct List *)&UserList, (struct Node *)un);
-            }
+      copy_passwd_file();
+      fh = Open("AmiTCP:db/utm.conf", MODE_OLDFILE);
+   }
 
-            netinfo_req->io_Data    = passwd;
-            netinfo_req->io_Length  = sizeof(pw_buffer);
-            netinfo_req->io_Command = CMD_READ;
+   if(fh)
+   {
+      FRead(fh, &utm_version, sizeof(ULONG), 1);
+      success = TRUE;
+
+      while(user = AllocVec(sizeof(struct User), MEMF_ANY | MEMF_CLEAR))
+      {
+         NewList((struct List *)&user->us_restricted_times);
+
+         if(user_node = AllocVec(sizeof(struct UserNode), MEMF_ANY))
+         {
+            user_node->un_user = user;
+            AddTail((struct List *)&UserList, (struct Node *)user_node);
+         }
+         else
+         {
+            FreeVec(user);
+            break;
          }
 
-         success = TRUE;
+         if(!AllocFGetString(fh, &user->us_name))     // login
+            break;
+         if(!AllocFGetString(fh, &user->us_passwd))   // pwd
+            break;
+         FRead(fh, &user->us_uid, sizeof(LONG), 1);   // uid
+         FRead(fh, &user->us_gid, sizeof(LONG), 1);   // gid
+         if(!AllocFGetString(fh, &user->us_gecos))    // real name
+            break;
+         if(!AllocFGetString(fh, &user->us_dir))      // home dir
+            break;
+         if(!AllocFGetString(fh, &user->us_shell))    // shell
+            break;
+         FRead(fh, &num, sizeof(num), 1);             // # time restrictions
+         for(i = 0; i < num; i++)
+         {
+            if(restrict = AllocVec(sizeof(struct RestrictedTime), MEMF_ANY | MEMF_CLEAR))
+               AddTail((struct List *)&user->us_restricted_times, (struct Node *)restrict);
+
+            restrict->rt_day = FGetC(fh);             // daynumber 0=sunday 1=monday, ...
+            FGetC(fh);                                // dummy
+            FRead(fh, &restrict->rt_start, sizeof(ULONG), 1);  // start time
+            FRead(fh, &restrict->rt_end, sizeof(ULONG), 1);    // end time
+            if(restrict->rt_end == 0)   // midnight is not 0 !
+               restrict->rt_end = 1439;
+            if(restrict->rt_end < restrict->rt_start) // make sure start is before end
+               restrict->rt_end = restrict->rt_start + 1;
+         }
+         FRead(fh, &user->us_flags, sizeof(ULONG), 1);         // user flags
+         FRead(fh, &user->us_max_time, sizeof(ULONG), 1);      // max time online
+         if(!AllocFGetString(fh, &user->us_timeserver))        // timeserver
+            break;
       }
-      netinfo_delete();
+      Close(fh);
    }
 
    return(success);

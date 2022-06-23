@@ -105,6 +105,10 @@ ULONG IfaceWindow_CopyData(struct IClass *cl, Object *obj, Msg msg)
          data->iface->if_configparams = NULL;
       }
 
+      if(xget(data->CH_UseBOOTP, MUIA_Selected))
+         data->iface->if_flags |= IFL_BOOTP;
+      else
+         data->iface->if_flags &= ~IFL_BOOTP;
       data->iface->if_keepalive = xget(data->SL_KeepAlive, MUIA_Numeric_Value);
       if(xget(data->CH_AutoOnline, MUIA_Selected))
          data->iface->if_flags |= IFL_AutoOnline;
@@ -225,6 +229,7 @@ ULONG IfaceWindow_Init(struct IClass *cl, Object *obj, struct MUIP_IfaceWindow_I
       setstring(data->STR_Sana2ConfigFile, data->iface->if_sana2config);
       setstring(data->TI_Sana2ConfigText , (data->iface->if_sana2configtext ? data->iface->if_sana2configtext : NULL));
 
+      setcheckmark(data->CH_UseBOOTP      , data->iface->if_flags & IFL_BOOTP);
       setslider(data->SL_KeepAlive       , data->iface->if_keepalive);
       setcheckmark(data->CH_AutoOnline   , data->iface->if_flags & IFL_AutoOnline);
 
@@ -625,20 +630,27 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
                   MUIA_Textinput_AutoExpand, TRUE,
                End,
             End,
-            Child, VGroup,
+            Child, VGroup, // Services
                Child, HVSpace,
-               Child, ColGroup(2),
-                  Child, Label(GetStr(MSG_LA_KeepAlive)),
-                  Child, HGroup,
-                     Child, Label(GetStr(MSG_TX_PingEvery)),
-                     Child, tmp.SL_KeepAlive = MUI_MakeObject(MUIO_NumericButton, NULL, 0, 60, "%2ld"),
-                     Child, Label(GetStr(MSG_TX_Minutes)),
-                  End,
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_Misc)),
+               Child, ColGroup(4),
+                  Child, HVSpace,
+                  Child, Label(GetStr(MSG_LA_UseBOOTP)),
+                  Child, tmp.CH_UseBOOTP = MakeKeyCheckMark(FALSE, MSG_CC_UseBOOTP),
+                  Child, HVSpace,
+                  Child, HVSpace,
                   Child, MakeKeyLabel2(MSG_LA_AutoOnline, MSG_CC_AutoOnline),
-                  Child, HGroup,
-                     Child, tmp.CH_AutoOnline = MakeKeyCheckMark(FALSE, MSG_CC_AutoOnline),
-                     Child, HVSpace,
-                  End,
+                  Child, tmp.CH_AutoOnline = MakeKeyCheckMark(FALSE, MSG_CC_AutoOnline),
+                  Child, HVSpace,
+               End,
+               Child, HVSpace,
+               Child, MUI_MakeObject(MUIO_BarTitle, GetStr(MSG_TX_KeepAlive)),
+               Child, HGroup,
+                  Child, HVSpace,
+                  Child, Label(GetStr(MSG_TX_PingEvery)),
+                  Child, tmp.SL_KeepAlive = MUI_MakeObject(MUIO_NumericButton, NULL, 0, 60, "%2ld"),
+                  Child, Label(GetStr(MSG_TX_Minutes)),
+                  Child, HVSpace,
                End,
                Child, HVSpace,
             End,
@@ -768,6 +780,7 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       data->iface = NULL;
 
       set(data->SL_ConnectTimeout, MUIA_ControlChar, GetStr(MSG_CC_Timeout));
+      setslider(data->SL_ConnectTimeout, 50);
 
       set(data->CY_Address, MUIA_Weight, 0);
       set(data->CY_Dest   , MUIA_Weight, 0);
@@ -817,6 +830,7 @@ ULONG IfaceWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->PA_Sana2ConfigFile     , MUIA_ShortHelp, GetStr(MSG_Help_Sana2ConfigFile));
       set(data->TI_Sana2ConfigText     , MUIA_ShortHelp, GetStr(MSG_Help_Sana2ConfigText));
 
+      set(data->CH_UseBOOTP            , MUIA_ShortHelp, GetStr(MSG_Help_UseBOOTP));
       set(data->SL_KeepAlive           , MUIA_ShortHelp, GetStr(MSG_Help_KeepAlive));
       set(data->CH_AutoOnline          , MUIA_ShortHelp, GetStr(MSG_Help_AutoOnline));
 

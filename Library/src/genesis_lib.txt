@@ -73,3 +73,36 @@ History of genesis.library
 * now opens user requester on frontmost screen.
 * finally the version string gets printed correctly now.
 
+3.0.0 (22.09.98)
+----------------
+
+* extended user data: flags, max_time, timeserver, restricted_time
+
+3.0.1 (28.09.98)
+----------------
+
+* extended IsOnline() functionality : added commands IOC_AskUser and
+  IOC_Force . now you can not only check if an iface is online but you
+  can also make the lib ask the user if he wants to go online or you
+  can force a connection to be established.
+  if no bsdsocket.lib can be found, AmiTCP:Genesis is launched
+  automatically.
+* now also supports miami (eeeekk ! :( ) . e.g. it checks if it's
+  online or not. But if it's not running, the lib will try to launch
+  Genesis only => miami must be running to be supported. (why ? just
+  look at the name of the lib !)
+
+3.0.2 (01.10.98)
+----------------
+
+* removed minor bug in ParseNext() which caused that encrypted passwords
+  with a '"' got cut too early. (had effect on genesis(prefs) passwd
+  parsing).
+
+
+3.0.3 (03.10.98)
+----------------
+
+* solved problem that userlist didn't get loaded in some cases.
+* reduced stack usage to prevent crashes from stack overflow.
+

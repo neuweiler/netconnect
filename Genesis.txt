@@ -176,9 +176,9 @@ History for Genesis
                   they will be put offline. you can pass more than one
                   iface name. 'all' will put all ifaces offline.
                   (case insensitive)
-   status       : IF=IFACENAME
+   isonline     : IF=IFACENAME
                   return online status of given iface. if no name is given,
-                  the status of the first iface is returned.
+                  the status of the first iface is returned (in rc).
                   TRUE = online, FALSE = offline, -1 = error
                   (case insensitive)
    window       : OPEN/S,CLOSE/S
@@ -249,7 +249,7 @@ History for Genesis
 
 * some of the new options (StartupTCP, ...) didn't get loaded correctly.
 
-2.2.0 (09.07.98)
+2.2.0 (09.07.98)  NetConnect II version
 ----------------
 
 * full version for NC2
@@ -260,4 +260,76 @@ History for Genesis
 * added 90 days demo timeout, incl. 10 additional days with warning.
 * at startup the about requester pops up in demo mode.
 * added help bubbles for iface led's to display iface name.
+
+2.2.1 (03.08.98)
+----------------
+
+* removed sending of ATZ again and increased time to wait for modem responses
+  to 3 secs. (didn't realize that some modems take that much time to respond
+  until I got a pace modem :)
+* added support to reconnect dialup ifaces after crash but unfortunately it
+  doesn't work with ppp.
+* added menu options to show/hide window gadgets (settings/display).
+
+2.2.2 (03.09.98)
+----------------
+
+* added support for genesislogger.library
+* many internal changes for dhcp
+* dhcp in alpha test - unstable !
+
+2.3.0 (24.09.98) Italian amiga show version
+----------------
+
+* removed dhcp stuff temporarely, put bootp in again
+* default route is always set to the first iface that is online.
+* GenesisREPORT can be launched from menu.
+* added support for time restriction: user cannot login at given
+  times/days or will be disconnected (after 10min, 5min and 1min warnings)
+* added support for online time limit: user can stay online a given
+  amount of time only and will be disconnected (after 10min, 5min and
+  1min warnings).
+* added support for genesis' own keyfile system.
+* about window now says if program was compiled for NC
+
+2.3.1 (28.09.98)
+----------------
+
+* external call of amitcp:bin/syncclock has been replaced by internal
+  functions.
+* now asks given time server to verify time and check user's time
+  restrictions. If no servername is specified, the isp's default is
+  used. If an error occurs, the check falls back to the internal clock.
+* corrected but in arexx iface: if the command "connect" or "disconnect"
+  was issued without any argument, genesis would block.
+* changed arg template to arexx function "isonline" : "IF=IFACENAME,ANY/S"
+  if "any" is specified then the number of ifaces that are online is
+  returned. the rest stays the same.
+
+2.3.2 (29.09.98)
+----------------
+
+* to hangup, genesis now checks if after DTR drop a CD is still present.
+  if so, it sends +++ ATH0.
+* to possible solve some problems with certain providers or configurations
+  now ifaces get configured first, the default route is set to the first
+  iface that is online and then nameservers are configured and the
+  hostname is queried and at last the domainnames are configured.
+  This happens every time you put an iface online.
+  If at nameserver-configuration no dns is set, genesis falls back to two
+  root nameservers.
+  So genesis no longer needs a primary interface. Only the order of the
+  ifaces in the list is important since the first iface that is online
+  is used to set the default gateway.
+* arexx: ISONLINE now returns 1 = iface online, 2 = iface is currently
+  connecting, 0 = iface is offline
+
+2.3.3 (01.10.98)
+----------------
+
+* finally found bug with multi phone numbers: after connecting, it tried
+  to dial next.
+* when iconified and config was changed while online, genesis just terminated
+  all connections without poping up a requester. now, it deiconifies which
+  has the result that the requester should appear.
 

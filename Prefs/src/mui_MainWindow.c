@@ -24,6 +24,7 @@
 #include "images/modem.h"
 #include "images/provider.h"
 #include "images/logo.h"
+#include "mcc.h"
 
 ///
 /// external variables
@@ -35,10 +36,16 @@ extern BOOL changed_passwd, changed_group, changed_hosts, changed_protocols,
             changed_services, changed_inetd, changed_networks, changed_rpc, changed_inetaccess;
 extern Object *win, *app;
 extern struct NewMenu MainWindowMenu[];
+extern struct MinList McpList;
+extern struct User *current_user;
 
-extern struct BitMapHeader information_header, provider_header, user_header, modem_header, dialer_header, databases_header, logo_header;
-extern ULONG information_colors[], provider_colors[], user_colors[], modem_colors[], dialer_colors[], databases_colors[], logo_colors[];
-extern UBYTE information_body[], provider_body[], user_body[], modem_body[], dialer_body[], databases_body[], logo_body[];
+extern struct BitMapHeader information_header, provider_header, user_header, modem_header, dialer_header, databases_header, logo_header, default_header;
+extern ULONG information_colors[], provider_colors[], user_colors[], modem_colors[], dialer_colors[], databases_colors[], logo_colors[], default_colors[];
+extern UBYTE information_body[], provider_body[], user_body[], modem_body[], dialer_body[], databases_body[], logo_body[], default_body[];
+
+///
+/// protos
+ULONG SAVEDS ASM MCC_Query (REG(d0) LONG which);
 
 ///
             
@@ -96,12 +103,16 @@ ULONG MainWindow_ClearConfig(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data              = INST_DATA(cl                      , obj);
    struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
-   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
    struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
    struct Dialer_Data      *dialer_data      = INST_DATA(CL_Dialer->mcc_Class    , data->GR_Dialer);
+#ifdef INTERNAL_USER
+   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
+#endif
 
    DoMethod(provider_data->LI_ISP, MUIM_List_Clear);
+#ifdef INTERNAL_USER
    DoMethod(user_data->LI_User, MUIM_List_Clear);
+#endif
 
    setstring(modem_data->STR_Modem, "Generic");
    setstring(modem_data->STR_InitString, "AT&F&D2");
@@ -149,10 +160,12 @@ ULONG MainWindow_LoadDatabases(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data              = INST_DATA(cl                      , obj);
 //   struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
-   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
    struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
 //   struct Dialer_Data      *dialer_data      = INST_DATA(CL_Dialer->mcc_Class    , data->GR_Dialer);
    struct Databases_Data   *db_data          = INST_DATA(CL_Databases->mcc_Class , data->GR_Databases);
+#ifdef INTERNAL_USER
+   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
+#endif
    struct ParseConfig_Data pc_data;
    char buffer[41];
    STRPTR ptr;
@@ -245,7 +258,7 @@ ULONG MainWindow_LoadDatabases(struct IClass *cl, Object *obj, Msg msg)
    }
    set(modem_data->LI_Devices, MUIA_List_Quiet, FALSE);
 
-
+#ifdef INTERNAL_USER
    /**** parse the passwd file ****/
 
    set(user_data->LI_User, MUIA_List_Quiet, TRUE);
@@ -300,6 +313,7 @@ ULONG MainWindow_LoadDatabases(struct IClass *cl, Object *obj, Msg msg)
       ParseEnd(&pc_data);
    }
    set(user_data->LI_User, MUIA_List_Quiet, FALSE);
+#endif
 
    /**** parse the group file ****/
 
@@ -637,6 +651,7 @@ ULONG MainWindow_LoadDatabases(struct IClass *cl, Object *obj, Msg msg)
 }
 
 ///
+
 /// MainWindow_LoadConfig
 ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWindow_LoadConfig *msg)
 {
@@ -783,16 +798,12 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                   else if(!stricmp(pc_data.pc_argument, "Phone"))
                      strncpy(isp->isp_phonenumber, pc_data.pc_contents, sizeof(isp->isp_phonenumber));
 
-                  else if(!stricmp(pc_data.pc_argument, "BOOTPServer"))
-                     strncpy(isp->isp_bootp, pc_data.pc_contents, sizeof(isp->isp_bootp));
                   else if(!stricmp(pc_data.pc_argument, "HostName"))
                      strncpy(isp->isp_hostname, pc_data.pc_contents, sizeof(isp->isp_hostname));
                   else if(!stricmp(pc_data.pc_argument, "TimeServer"))
                      strncpy(isp->isp_timename, pc_data.pc_contents, sizeof(isp->isp_timename));
                   else if(!stricmp(pc_data.pc_argument, "DontQueryHostname") && is_true(&pc_data))
                      isp->isp_flags |= ISF_DontQueryHostname;
-                  else if(!stricmp(pc_data.pc_argument, "UseBootP") && is_true(&pc_data))
-                     isp->isp_flags |= ISF_UseBootp;
                   else if(!stricmp(pc_data.pc_argument, "GetTime") && is_true(&pc_data))
                      isp->isp_flags |= ISF_GetTime;
                   else if(!stricmp(pc_data.pc_argument, "SaveTime") && is_true(&pc_data))
@@ -870,6 +881,8 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                   else if(!stricmp(pc_data.pc_argument, "Netmask"))
                      strncpy(iface->if_netmask, pc_data.pc_contents, sizeof(iface->if_netmask));
 
+                  else if(!stricmp(pc_data.pc_argument, "UseBOOTP") && is_true(&pc_data))
+                     iface->if_flags |= IFL_BOOTP;
                   else if((!stricmp(pc_data.pc_argument, "AutoOnline") || !stricmp(pc_data.pc_argument, "AlwaysOnline")) && is_true(&pc_data))
                      iface->if_flags |= IFL_AutoOnline;
                   else if(!stricmp(pc_data.pc_argument, "DefaultPPP") && is_true(&pc_data))
@@ -982,16 +995,32 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
 {
    struct MainWindow_Data *data              = INST_DATA(cl                      , obj);
    struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
-   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
    struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
    struct Dialer_Data      *dialer_data      = INST_DATA(CL_Dialer->mcc_Class    , data->GR_Dialer);
    struct Databases_Data   *db_data          = INST_DATA(CL_Databases->mcc_Class , data->GR_Databases);
+#ifdef INTERNAL_USER
+   struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
+#endif
 //   struct User *user = NULL;
    struct ISP *isp = NULL;
    BPTR fh;
    char buff[110];
    STRPTR ptr;
    LONG pos;
+
+   // tell external classes to save their config
+
+   if(McpList.mlh_TailPred != (struct MinNode *)&McpList)
+   {
+      struct McpNode *node;
+
+      node = (struct McpNode *)McpList.mlh_Head;
+      while(node->mcp_node.mln_Succ)
+      {
+         DoMethod(node->mcp_object, MUIM_Settingsgroup_GadgetsToConfig, current_user);
+         node = (struct McpNode *)node->mcp_node.mln_Succ;
+      }
+   }
 
    // save order is: services, passwd, group, genesis.conf (which initiates a RESET), inets.conf
 
@@ -1018,6 +1047,8 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       changed_services = FALSE;
    }
 
+#ifdef INTERNAL_USER
+
    if(changed_passwd)
    {
       if(fh = Open("AmiTCP:db/passwd", MODE_NEWFILE))
@@ -1034,9 +1065,10 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
          }
          Close(fh);
       }
-      ReloadUserList();
       changed_passwd = FALSE;
    }
+
+#endif
 
    if(changed_group)
    {
@@ -1143,15 +1175,11 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
             FPrintf(fh, "Organisation       %ls\n", isp->isp_organisation);
          if(*isp->isp_phonenumber)
             FPrintf(fh, "Phone              %ls\n", isp->isp_phonenumber);
-         if(*isp->isp_bootp)
-            FPrintf(fh, "BOOTPServer        %ls\n", isp->isp_bootp);
          if(*isp->isp_hostname)
             FPrintf(fh, "HostName           %ls\n", isp->isp_hostname);
          if(*isp->isp_timename)
             FPrintf(fh, "TimeServer         %ls\n", isp->isp_timename);
 
-         if(isp->isp_flags & ISF_UseBootp)
-            FPrintf(fh, "UseBOOTP           yes\n");
          if(isp->isp_flags & ISF_DontQueryHostname)
             FPrintf(fh, "DontQueryHostname  yes\n");
          if(isp->isp_flags & ISF_GetTime)
@@ -1201,14 +1229,14 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                FPrintf(fh, "Sana2Config        %ls\n", iface->if_sana2config);
                if(iface->if_flags & IFL_PPP)
                {
-                  FPrintf(fh, "Sana2ConfigText    sername %ls\\nserunit %ld\\nserbaud %ld\\nlocalipaddress %%a\\n",
+                  FPrintf(fh, "Sana2ConfigText    \"sername %ls\\nserunit %ld\\nserbaud %ld\\nlocalipaddress %%a\\n",
                      xget(modem_data->STR_SerialDevice, MUIA_String_Contents),
                      xget(modem_data->STR_SerialUnit, MUIA_String_Integer),
                      xget(modem_data->STR_BaudRate, MUIA_String_Integer));
                   if(*isp->isp_login)
-                     FPrintf(fh, "user %%u\\n");
+                     FPrintf(fh, "user \"%%u\"\\n");
                   if(*isp->isp_password)
-                     FPrintf(fh, "secret %%p\\n");
+                     FPrintf(fh, "secret \"%%p\"\\n");
                   if(xget(dialer_data->CH_Debug, MUIA_Selected))
                      FPrintf(fh, "debug = 1\\ndebug_window = 1\\nerror_requesters = 0\\nlog_file = t:appp.log\\n");
                   switch(xget(modem_data->CY_Handshake, MUIA_Cycle_Active))
@@ -1235,7 +1263,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                      FPrintf(fh, "deflatecomp    %ls\\n", yes_no(ppp_if->ppp_deflatecomp));
                      FPrintf(fh, "eof            %ls\\n", yes_no(ppp_if->ppp_eof));
                   }
-                  FPrintf(fh, "\n");
+                  FPrintf(fh, "\"\n");
                }
                else if(iface->if_flags & IFL_SLIP)
                {
@@ -1282,6 +1310,8 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                if(*iface->if_netmask)
                   FPrintf(fh, "Netmask            %ls\n", iface->if_netmask);
 
+               if(iface->if_flags & IFL_BOOTP)
+                  FPrintf(fh, "UseBOOTP\n");
                if(iface->if_flags & IFL_AutoOnline)
                   FPrintf(fh, "AutoOnline\n");
                if(iface->if_flags & IFL_PPP)
@@ -1486,6 +1516,8 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       changed_rpc = FALSE;
    }
 
+   ReloadUserList(); // tell the library to reload user database
+
    return(NULL);
 }
 
@@ -1496,15 +1528,17 @@ ULONG MainWindow_LoadOldConfig(struct IClass *cl, Object *obj, struct MUIP_MainW
    struct MainWindow_Data *data              = INST_DATA(cl                      , obj);
    struct Provider_Data    *provider_data    = INST_DATA(CL_Provider->mcc_Class  , data->GR_Provider);
    struct Modem_Data       *modem_data       = INST_DATA(CL_Modem->mcc_Class     , data->GR_Modem);
+#ifdef INTERNAL_USER
    struct User_Data        *user_data        = INST_DATA(CL_User->mcc_Class      , data->GR_User);
+   struct Prefs_User *p_user;
+   BOOL found;
+#endif
    struct ParseConfig_Data pc_data;
    struct ISP *isp = NULL;
    struct Interface *iface = NULL;
    struct PrefsPPPIface *ppp_if = NULL;
    char real_name[81];
-   struct Prefs_User *p_user;
    LONG pos;
-   BOOL found;
 
    *real_name = NULL;
    DoMethod(provider_data->LI_ISP, MUIM_List_InsertSingle, -1, MUIV_List_Insert_Bottom);
@@ -1517,7 +1551,7 @@ ULONG MainWindow_LoadOldConfig(struct IClass *cl, Object *obj, struct MUIP_MainW
          ppp_if = iface->if_userdata = AllocVec(sizeof(struct PrefsPPPIface), MEMF_ANY | MEMF_CLEAR);
          AddTail((struct List *)&isp->isp_ifaces, (struct Node *)iface);
 
-         strcpy(isp->isp_comment, "NetConnect 1 configuration");
+         strcpy(isp->isp_comment, "old configuration");
 
          if(!msg->file)
             msg->file = "ENV:NetConfig/Provider.conf";
@@ -1534,8 +1568,6 @@ ULONG MainWindow_LoadOldConfig(struct IClass *cl, Object *obj, struct MUIP_MainW
                   strncpy(isp->isp_hostname, pc_data.pc_contents, sizeof(isp->isp_hostname));
                else if(!stricmp(pc_data.pc_argument, "TimeServer"))
                   strncpy(isp->isp_timename, pc_data.pc_contents, sizeof(isp->isp_timename));
-               else if(!stricmp(pc_data.pc_argument, "UseBootP") && is_true(&pc_data))
-                  isp->isp_flags |= ISF_UseBootp;
                else if(!stricmp(pc_data.pc_argument, "NameServer"))
                {
                   struct ServerEntry *server;
@@ -1684,6 +1716,7 @@ ULONG MainWindow_LoadOldConfig(struct IClass *cl, Object *obj, struct MUIP_MainW
             MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), GetStr(MSG_TX_CouldNotOpenX), "ENV:NetConfig/LoginScript");
       }
       pos = 0;
+#ifdef INTERNAL_USER
       found = FALSE;
       while(!found)
       {
@@ -1719,6 +1752,7 @@ ULONG MainWindow_LoadOldConfig(struct IClass *cl, Object *obj, struct MUIP_MainW
             FreeVec(p_user);
          }
       }
+#endif
    }
 
    return(NULL);
@@ -1835,10 +1869,15 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data = INST_DATA(cl, obj);
    Object *bodychunk;
+   struct FileInfoBlock *fib;
+   BPTR lock;
    BOOL success = FALSE;
 
    data->GR_Provider       = data->GR_Dialer         = data->GR_Modem      =
-   data->GR_Databases      = data->GR_User           = NULL;
+   data->GR_Databases      = NULL;
+#ifdef INTERNAL_USER
+   data->GR_User           = NULL;
+#endif
 
    if(data->GR_Info)
    {
@@ -1847,42 +1886,90 @@ ULONG MainWindow_InitGroups(struct IClass *cl, Object *obj, Msg msg)
    }
    if(data->GR_Provider        = NewObject(CL_Provider->mcc_Class      , NULL, TAG_DONE))
    {
-//      struct Provider_Data *p_data = INST_DATA(CL_Provider->mcc_Class, data->GR_Provider);
-
       bodychunk = create_bodychunk((struct BitMapHeader *)&provider_header, (ULONG *)provider_colors , (UBYTE *)provider_body);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_TX_GroupNames2), data->GR_Provider, NULL, NULL, bodychunk);
    }
+#ifdef INTERNAL_USER
    if(data->GR_User            = NewObject(CL_User->mcc_Class      , NULL, TAG_DONE))
    {
-//      struct User_Data *u_data = INST_DATA(CL_User->mcc_Class, data->GR_User);
-
       bodychunk = create_bodychunk((struct BitMapHeader *)&user_header, (ULONG *)user_colors , (UBYTE *)user_body);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_TX_GroupNames3), data->GR_User, NULL, NULL, bodychunk);
    }
+#endif
    if(data->GR_Dialer       = NewObject(CL_Dialer->mcc_Class     , NULL, TAG_DONE))
    {
-//      struct Dialer_Data *d_data = INST_DATA(CL_Dialer->mcc_Class, data->GR_Dialer);
-
       bodychunk = create_bodychunk((struct BitMapHeader *)&dialer_header, (ULONG *)dialer_colors , (UBYTE *)dialer_body);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_TX_GroupNames4), data->GR_Dialer, NULL, NULL, bodychunk);
    }
    if(data->GR_Modem      = NewObject(CL_Modem->mcc_Class    , NULL, TAG_DONE))
    {
-//      struct Modem_Data *m_data = INST_DATA(CL_Modem->mcc_Class, data->GR_Modem);
-
       bodychunk = create_bodychunk((struct BitMapHeader *)&modem_header, (ULONG *)modem_colors , (UBYTE *)modem_body);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_TX_GroupNames5), data->GR_Modem, NULL, NULL, bodychunk);
    }
    if(data->GR_Databases   = NewObject(CL_Databases->mcc_Class , NULL, TAG_DONE))
    {
-//      struct Databases_Data *d_data = INST_DATA(CL_Databases->mcc_Class, data->GR_Databases);
-
       bodychunk = create_bodychunk((struct BitMapHeader *)&databases_header, (ULONG *)databases_colors , (UBYTE *)databases_body);
       DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, GetStr(MSG_TX_GroupNames6), data->GR_Databases, NULL, NULL, bodychunk);
    }
 
+#ifdef INTERNAL_USER
    if(data->GR_Provider && data->GR_Dialer && data->GR_Databases && data->GR_Modem && data->GR_User)
       success = TRUE;
+#else
+   if(data->GR_Provider && data->GR_Dialer && data->GR_Databases && data->GR_Modem)
+      success = TRUE;
+#endif
+
+   // load external prefs groups
+   if(lock = Lock("AmiTCP:MUI", ACCESS_READ))
+   {
+      if(fib = AllocDosObject(DOS_FIB, NULL))
+      {
+         if(Examine(lock, fib))
+         {
+            Object *ext_class;
+            struct Library *MCCBase;
+            char buf[MAXPATHLEN];
+            struct McpNode *node;
+
+            while(ExNext(lock, fib))
+            {
+               if(strstr(fib->fib_FileName, ".mcp") == (fib->fib_FileName + strlen(fib->fib_FileName) - 4))
+               {
+                  sprintf(buf, "AmiTCP:MUI/%ls", fib->fib_FileName);
+                  if(ext_class = MUI_NewObject(buf, TAG_DONE))
+                  {
+                     bodychunk  = NULL;
+                     if(MCCBase = OpenLibrary(buf, 0))
+                     {
+                        bodychunk = (Object *)MCC_Query(2);
+                        CloseLibrary(MCCBase);
+                     }
+
+                     sprintf(buf, "\0333%ls", fib->fib_FileName);
+                     buf[strlen(buf) - 4] = NULL;
+
+                     if(!bodychunk)
+                        bodychunk = create_bodychunk((struct BitMapHeader *)&default_header, (ULONG *)default_colors , (UBYTE *)default_body);
+                     if(bodychunk)
+                        DoMethod(data->GR_Pager, MUIM_Grouppager_InsertImageGroup, buf, ext_class, NULL, NULL, bodychunk);
+                     else
+                        DoMethod(data->GR_Pager, MUIM_Grouppager_InsertGroup, buf, ext_class, NULL, NULL);
+
+                     DoMethod(ext_class, MUIM_Settingsgroup_ConfigToGadgets, current_user);
+                     if(node = (struct McpNode *)AllocVec(sizeof(struct McpNode), MEMF_ANY | MEMF_CLEAR))
+                     {
+                        node->mcp_object = ext_class;
+                        AddTail((struct List *)&McpList, (struct Node *)node);
+                     }
+                  }
+               }
+            }
+         }
+         FreeDosObject(DOS_FIB, fib);
+      }
+      UnLock(lock);
+   }
 
    return(success);
 }
@@ -1950,7 +2037,11 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
          Child, HVSpace,
 #ifdef DEMO
          Child, TextObject,
+#ifdef BETA
+            MUIA_Text_Contents, "\033b\033cTHIS IS A BETA VERSION",
+#else
             MUIA_Text_Contents, "\033b\033cTHIS IS A DEMO VERSION",
+#endif
             MUIA_Font         , MUIV_Font_Big,
          End,
          Child, HVSpace,

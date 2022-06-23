@@ -37,10 +37,17 @@
 #define USE_PROVIDER_COLORS
 #include "images/provider.h"
 
+#define USE_DEFAULT_HEADER
+#define USE_DEFAULT_BODY
+#define USE_DEFAULT_COLORS
+#include "images/default.h"
+
+#ifdef INTERNAL_USER
 #define USE_USER_HEADER
 #define USE_USER_BODY
 #define USE_USER_COLORS
 #include "images/user.h"
+#endif
 
 #define USE_INFORMATION_HEADER
 #define USE_INFORMATION_BODY
@@ -53,9 +60,7 @@
 struct   Library      *MUIMasterBase = NULL;
 struct   Library      *GenesisBase   = NULL;
 struct   Library      *UserGroupBase = NULL;
-#ifdef NETCONNECT
-struct Library        *NetConnectBase= NULL;
-#endif
+struct   Library      *NetConnectBase= NULL;
 struct   Catalog      *cat           = NULL; /* pointer to our locale catalog */
 
 ///
@@ -65,17 +70,14 @@ struct Process *proc = NULL;
 struct StackSwapStruct StackSwapper;
 
 char config_file[MAXPATHLEN];
+#ifdef INTERNAL_USER
 BOOL changed_passwd;
-BOOL changed_group;
-BOOL changed_hosts;
-BOOL changed_protocols;
-BOOL changed_services;
-BOOL changed_inetaccess;
-BOOL changed_inetd;
-BOOL changed_networks;
-BOOL changed_rpc;
-
+#endif
+BOOL changed_group, changed_hosts, changed_protocols, changed_services, changed_inetaccess,
+     changed_inetd, changed_networks, changed_rpc;
 BOOL root_authenticated = FALSE;
+struct User *current_user = NULL;
+struct MinList McpList;
 
 ///
 
@@ -113,10 +115,12 @@ struct MUI_CustomClass  *CL_Dialer;
 struct MUI_CustomClass  *CL_MainWindow;
 struct MUI_CustomClass  *CL_Modem;
 struct MUI_CustomClass  *CL_PasswdReq;
+#ifdef INTERNAL_USER
 struct MUI_CustomClass  *CL_User;
+struct MUI_CustomClass  *CL_UserWindow;
+#endif
 struct MUI_CustomClass  *CL_Provider;
 struct MUI_CustomClass  *CL_ProviderWindow;
-struct MUI_CustomClass  *CL_UserWindow;
 struct MUI_CustomClass  *CL_IfaceWindow;
 
 ///

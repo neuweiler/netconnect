@@ -71,6 +71,7 @@ VOID serial_send(STRPTR cmd, LONG len)
       SerWriteReq->IOSer.io_Length  = len;
       SerWriteReq->IOSer.io_Command = CMD_WRITE;
       SerWriteReq->IOSer.io_Data    = cmd;
+
       DoIO((struct IORequest *)SerWriteReq);
    }
 }

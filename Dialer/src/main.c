@@ -7,6 +7,8 @@
 #include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
 #include "/genesis.lib/pragmas/nc_lib.h"
+#include "/genesis.lib/pragmas/genesislogger_lib.h"
+#include "/genesis.lib/proto/genesislogger.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
@@ -28,7 +30,8 @@ extern struct Process *proc;
 extern struct StackSwapStruct StackSwapper;
 extern struct ExecBase *SysBase;
 extern struct Catalog    *cat;
-extern struct Library    *MUIMasterBase, *LockSocketBase, *OwnDevUnitBase, *GenesisBase;
+extern struct Library    *MUIMasterBase, *LockSocketBase, *OwnDevUnitBase, *GenesisBase, *GenesisLoggerBase;
+extern struct Library *NetConnectBase;
 extern struct MUI_CustomClass *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led, *CL_About, *CL_NetInfo;
 extern struct MsgPort     *MainPort;
 extern struct timerequest *TimeReq;
@@ -36,6 +39,7 @@ extern struct MsgPort     *TimePort;
 extern ULONG  LogNotifySignal, ConfigNotifySignal;
 extern struct NotifyRequest log_nr, config_nr;
 extern struct NewMenu MainMenu[];
+extern struct User *current_user;
 extern Object *app, *win;
 extern struct Config Config;
 extern ULONG sigs;
@@ -45,13 +49,7 @@ extern BPTR OldCLI;
 extern struct MUI_Command arexx_list[];
 extern int waitstack;
 extern BOOL use_reconnect;
-
-#ifdef DEMO
 extern struct Library *BattClockBase;
-#endif
-#ifdef NETCONNECT
-extern struct Library *NetConnectBase;
-#endif
 
 ///
 
@@ -61,6 +59,10 @@ VOID exit_libs(VOID)
    if(cat)
       CloseCatalog(cat);
    cat = NULL;
+
+   if(GenesisLoggerBase)
+      CloseLibrary(GenesisLoggerBase);
+   GenesisLoggerBase = NULL;
 
    if(GenesisBase)
       CloseLibrary(GenesisBase);
@@ -74,11 +76,9 @@ VOID exit_libs(VOID)
       CloseLibrary(MUIMasterBase);
    MUIMasterBase = NULL;
 
-#ifdef NETCONNECT
    if(NetConnectBase)
       CloseLibrary(NetConnectBase);
    NetConnectBase = NULL;
-#endif
 }
 
 ///
@@ -90,24 +90,23 @@ BOOL init_libs(VOID)
 #ifdef NETCONNECT
    if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
       Printf(GetStr(MSG_TX_CouldNotOpenX), "netconnect.library\n");
+#else
+   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 5)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "AmiTCP:libs/genesiskey.library\n");
 #endif
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
       Printf(GetStr(MSG_TX_CouldNotOpenX), "muimaster.library\n");
    OwnDevUnitBase = OpenLibrary(ODU_NAME, 0);
-   if(!(GenesisBase = OpenLibrary(GENESISNAME, 2)))
-      Printf(GetStr(MSG_TX_CouldNotOpenX), "genesis.library (ver 2.0+)\n");
+   if(!(GenesisBase = OpenLibrary(GENESISNAME, 3)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "genesis.library (ver 3.0)\n");
+   GenesisLoggerBase = OpenLibrary("AmiTCP:libs/genesislogger.library", NULL);
 
-#ifdef NETCONNECT
    if(MUIMasterBase && GenesisBase && NetConnectBase)
    {
       if(NCL_GetOwner())
          return(TRUE);
-      Printf("NetConnect registration failed.\n");
+      Printf("registration failed.\n");
    }
-#else
-   if(MUIMasterBase && GenesisBase)
-      return(TRUE);
-#endif
 
    exit_libs();
    return(FALSE);
@@ -157,11 +156,13 @@ VOID exit_ports(VOID)
    if(TimeReq)
    {
 #ifdef DEMO
+#ifndef BETA
       if(!CheckIO((struct IORequest *)TimeReq))
       {
          AbortIO((struct IORequest *)TimeReq);
          WaitIO((struct IORequest *)TimeReq);
       }
+#endif
 #endif
 
       CloseDevice((struct IORequest *)TimeReq);
@@ -188,12 +189,14 @@ BOOL init_ports(VOID)
             {
                TimerBase = &TimeReq->tr_node.io_Device->dd_Library;
 #ifdef DEMO
+#ifndef BETA
                // add 1 hour timeout
                TimeReq->tr_node.io_Command   = TR_ADDREQUEST;
                TimeReq->tr_time.tv_secs      = 3600;
                TimeReq->tr_time.tv_micro     = NULL;
                SetSignal(0, 1L << TimePort->mp_SigBit);
                SendIO((struct IORequest *)TimeReq);
+#endif
 #endif
 
                return(TRUE);
@@ -210,60 +213,65 @@ BOOL init_ports(VOID)
 
 /// check_date
 #ifdef DEMO
-#include <resources/battclock.h>
-#include <clib/battclock_protos.h>
 ULONG check_date(VOID)
 {
-   struct FileInfoBlock *fib;
    ULONG days_running = 0;
-   BOOL set_comment = FALSE;
-   char file[50];
-   BPTR lock;
    ULONG clock = NULL;
-
-   strcpy(file, "libs:locale.library");
 
    if(BattClockBase = OpenResource("battclock.resource"))
    {
       clock = ReadBattClock();
 
-      if(fib = AllocDosObject(DOS_FIB, NULL))
+#ifdef BETA
+      days_running = (clock - 649593049)/86400;
+#else
+      if(clock)
       {
-         if(lock = Lock(file, ACCESS_READ))
+         struct FileInfoBlock *fib;
+         BOOL set_comment = FALSE;
+         char file[50];
+         BPTR lock;
+
+         strcpy(file, "libs:locale.library");
+
+         if(fib = AllocDosObject(DOS_FIB, NULL))
          {
-            Examine(lock, fib);
-            UnLock(lock);
-
-            if(strlen(fib->fib_Comment) > 4)
+            if(lock = Lock(file, ACCESS_READ))
             {
-               ULONG inst;
+               Examine(lock, fib);
+               UnLock(lock);
 
-               inst = atol((STRPTR)(fib->fib_Comment + 2));
-               if(inst > 8000000)   // did we put something in there once ?
+               if(strlen(fib->fib_Comment) > 4)
                {
-                  if((fib->fib_Comment[0] == '0') && (fib->fib_Comment[1] == '2'))
-                     days_running = (clock - inst)/86400;
+                  ULONG inst;
+
+                  inst = atol((STRPTR)(fib->fib_Comment + 2));
+                  if(inst > 8000000)   // did we put something in there once ?
+                  {
+                     if((fib->fib_Comment[0] == '0') && (fib->fib_Comment[1] == '2'))
+                        days_running = (clock - inst)/86400;
+                     else
+                        set_comment = TRUE;
+                  }
                   else
                      set_comment = TRUE;
                }
                else
                   set_comment = TRUE;
             }
-            else
-               set_comment = TRUE;
+            FreeDosObject(DOS_FIB, fib);
          }
-         FreeDosObject(DOS_FIB, fib);
-      }
 
-      if(set_comment)
-      {
-         char buffer[21];
+         if(set_comment)
+         {
+            char buffer[21];
 
-         sprintf(buffer, "02%ld", clock);
-         SetComment(file, buffer);
+            sprintf(buffer, "02%ld", clock);
+            SetComment(file, buffer);
+         }
       }
+#endif
    }
-
    return(days_running);
 }
 #endif
@@ -305,7 +313,8 @@ VOID HandleMainMethod(struct MsgPort *port)
       else if(message->MethodID == MUIM_Set ||
               message->MethodID == TCM_WRITE ||
               message->MethodID == MUIM_List_InsertSingle ||
-              message->MethodID == MUIM_List_GetEntry)
+              message->MethodID == MUIM_List_GetEntry ||
+              message->MethodID == MUIM_GetUData)
       {
          message->result = DoMethod(message->obj, message->MethodID, message->data1, message->data2);
       }
@@ -343,9 +352,17 @@ VOID Handler(VOID)
                MUIA_Application_Title        , "GENESiS",
                MUIA_Application_SingleTask   , TRUE,
 #ifdef DEMO
+#ifdef BETA
+               MUIA_Application_Version      , "$VER:GENESiS "VERTAG" (BETA)",
+#else
                MUIA_Application_Version      , "$VER:GENESiS "VERTAG" (DEMO)",
+#endif
+#else
+#ifdef NETCONNECT
+               MUIA_Application_Version      , "$VER:GENESiS "VERTAG" (NetConnect)",
 #else
                MUIA_Application_Version      , "$VER:GENESiS "VERTAG,
+#endif
 #endif
                MUIA_Application_Copyright    , "Michael Neuweiler & Active Technologies 1997,98",
                MUIA_Application_Description  , GetStr(MSG_AppDescription),
@@ -354,7 +371,6 @@ VOID Handler(VOID)
             End)
             {
                struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-               struct User *user;
 
                DoMethod(app, MUIM_Notify, MUIA_Application_DoubleStart, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_ReturnID, ID_DOUBLESTART);
 
@@ -400,19 +416,19 @@ VOID Handler(VOID)
                      if(Config.cnf_flags & CFL_StartupOpenWin)
                         set(win, MUIA_Window_Open, TRUE);
 
-                     if(!(user = GetGlobalUser()))
+                     if(!current_user)
+                        current_user = GetGlobalUser();
+                     if(!current_user)
                      {
                         char buf[41];
 
                         GetUserName(0, buf, 40);
-                        user = GetUser(buf, NULL, NULL, NULL);
+                        current_user = GetUser(buf, NULL, NULL, NULL);
                      }
-                     if(user)
+                     if(current_user)
                      {
-                        SetGlobalUser(user);
-                        set(data->TX_User, MUIA_Text_Contents, user->us_name);
-                        FreeUser(user);
-
+                        SetGlobalUser(current_user);
+                        set(data->TX_User, MUIA_Text_Contents, current_user->us_name);
 #ifdef DEMO
                         {
                            ULONG days_running;
@@ -432,9 +448,7 @@ VOID Handler(VOID)
                               if(load_reconnect())
                               {
                                  use_reconnect = TRUE;
-Printf("load_reconect finished\n");
                                  DoMethod(win, MUIM_MainWindow_PutOnline);
-Printf("put online finished\n");
                               }
                            }
                         }
@@ -454,9 +468,8 @@ Printf("put online finished\n");
 
                         while((id = DoMethod(app, MUIM_Application_NewInput, &sigs)) != MUIV_Application_ReturnID_Quit)
                         {
-#ifdef NETCONNECT
                            NCL_CallMeFrequently();
-#endif
+
                            if(id == ID_DOUBLESTART)
                            {
                               if(!xget(win, MUIA_Window_Open))
@@ -467,7 +480,9 @@ Printf("put online finished\n");
                            if(sigs)
                            {
 #ifdef DEMO
+#ifndef BETA
                               sigs |= (1L << TimePort->mp_SigBit);
+#endif
 #endif
                               sigs = Wait(sigs | SIGBREAKF_CTRL_C | 1L << MainPort->mp_SigBit | 1L << LogNotifySignal | 1L << ConfigNotifySignal );
 
@@ -484,6 +499,7 @@ Printf("put online finished\n");
                                  DoMethod(win, MUIM_MainWindow_ChangeProvider, xget(data->TX_Provider, MUIA_Text_Contents), TRUE);
                               }
 #ifdef DEMO
+#ifndef BETA
                               if(sigs & (1L << TimePort->mp_SigBit))
                               {
                                  if(CheckIO((struct IORequest *)TimeReq))
@@ -497,6 +513,7 @@ Printf("put online finished\n");
                                     break;
                                  }
                               }
+#endif
 #endif
                            }
                         }
@@ -518,6 +535,10 @@ Printf("put online finished\n");
                      LockSocketBase = NULL;
 
                      amirexx_do_command("KILL");
+
+                     if(current_user)
+                        FreeUser(current_user);
+                     current_user = NULL;
 
                      clear_config(&Config);
                      if(ConfigNotifySignal != -1)

@@ -30,12 +30,11 @@ extern Object *win, *app, *status_win;
 extern const char AmiTCP_PortName[];
 extern struct MsgPort *MainPort;
 extern struct Config Config;
+extern struct User *current_user;
 extern int waitstack;
 extern char default_provider[];
 extern struct CommandLineInterface *LocalCLI;
-#ifdef NETCONNECT
 extern struct Library *NetConnectBase;
-#endif
 
 ///
 
@@ -175,6 +174,30 @@ VOID EscapeString(STRPTR buffer, STRPTR str)
 }
 
 ///
+/// extract_arg
+STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep)
+{
+   STRPTR ptr1, ptr2;
+
+   strncpy(buffer, string, len);
+
+   ptr1 = strchr(buffer, (sep ? sep : ' '));
+   ptr2 = strchr(buffer, 9);
+
+   if(ptr2 && ((ptr2 < ptr1) || !ptr1))
+      ptr1 = ptr2;
+   if(ptr1)
+      *ptr1 = NULL;
+
+   string += strlen(buffer);
+
+   while(*string == ' ' || *string == 9 || (sep ? *string == sep : NULL))
+      string++;
+
+   return((*string ? string : NULL));
+}
+
+///
 
 /// get_programicon
 struct DiskObject *get_programicon(VOID)
@@ -288,13 +311,10 @@ BOOL parse_arguments(VOID)
                   strncpy(default_provider, ArgArray[ARG_PROVIDER], 80);
                if(ArgArray[ARG_USER])
                {
-                  struct User *user;
-
-                  if(user = GetUser(ArgArray[ARG_USER], ArgArray[ARG_PASSWORD], NULL, NULL))
-                  {
-                     SetGlobalUser(user);
-                     FreeUser(user);
-                  }
+                  if(current_user)
+                     FreeUser(current_user);
+                  if(current_user = GetUser(ArgArray[ARG_USER], ArgArray[ARG_PASSWORD], NULL, NULL))
+                     SetGlobalUser(current_user);
                   else
                      success = FALSE;
                }
@@ -325,15 +345,13 @@ BOOL parse_arguments(VOID)
                strncpy(default_provider, Type, 80);
             if(Type = FindToolType(Icon->do_ToolTypes, "USER"))
             {
-               struct User *user;
                STRPTR password;
 
                password = FindToolType(Icon->do_ToolTypes, "PASSWORD");
-               if(user = GetUser(Type, password, NULL, NULL))
-               {
-                  SetGlobalUser(user);
-                  FreeUser(user);
-               }
+               if(current_user)
+                  FreeUser(current_user);
+               if(current_user = GetUser(Type, password, NULL, NULL))
+                  SetGlobalUser(current_user);
                else
                   success = FALSE;
             }
@@ -417,6 +435,9 @@ Printf("contents: '%ls'\n", pc_data.pc_contents);
 /// clear_config
 VOID clear_config(struct Config *conf)
 {
+   struct MainWindow_Data *mw_data = INST_DATA(CL_MainWindow->mcc_Class, win);
+   APTR display_item;
+
    if(conf->cnf_startup)
       FreeVec(conf->cnf_startup);
    if(conf->cnf_shutdown)
@@ -430,10 +451,21 @@ VOID clear_config(struct Config *conf)
    conf->cnf_baudrate        = 38400;
    conf->cnf_redialattempts  = 10;
    conf->cnf_redialdelay     = 5;
-   conf->cnf_flags = CFL_7Wire | CFL_RadBoogie | CFL_ShowLog | CFL_ShowLamps | CFL_ShowConnect |
-      CFL_ShowOnlineTime | CFL_ShowButtons | CFL_ShowNetwork | CFL_ShowUser | CFL_ShowStatusWin |
+   conf->cnf_flags = CFL_7Wire | CFL_RadBoogie | CFL_ShowLog | CFL_ShowLeds | CFL_ShowConnect |
+      CFL_ShowOnlineTime | CFL_ShowButtons | CFL_ShowProvider | CFL_ShowUser | CFL_ShowStatusWin |
       CFL_ShowSerialInput | CFL_StartupOpenWin | CFL_StartupInetd | CFL_StartupLoopback |
       CFL_StartupTCP;
+
+   display_item = (APTR)DoMethod(mw_data->MN_Strip, MUIM_FindUData, MEN_DISPLAY);
+   DoMethod(display_item, MUIM_SetUData, MEN_TIMEONLINE  , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_LEDS        , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_CONNECT     , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_PROVIDER    , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_USER        , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_LOG         , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_BUTTONS     , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_STATUS      , MUIA_Menuitem_Checked, TRUE);
+   DoMethod(display_item, MUIM_SetUData, MEN_SERIAL      , MUIA_Menuitem_Checked, TRUE);
 }
 
 ///
@@ -746,6 +778,7 @@ VOID exec_event(struct MinList *list, int event)
 BOOL launch_amitcp(VOID)
 {
    Object *window = NULL, *TX_Info = NULL;
+   struct Library *SocketBase;
    int i;
    BOOL success = FALSE;
 
@@ -786,21 +819,16 @@ BOOL launch_amitcp(VOID)
 
    if(FindPort((STRPTR)AmiTCP_PortName))
    {
-      if(!SocketBase)
+      if(!LockSocketBase)
       {
-         if(!LockSocketBase)
-#ifdef NETCONNECT
-            LockSocketBase = NCL_OpenSocket();;
-#else
-            LockSocketBase = OpenLibrary("bsdsocket.library", 0);
-#endif
+         LockSocketBase = NCL_OpenSocket();;
          if(SocketBase = LockSocketBase)
          {
             if(Config.cnf_flags & CFL_StartupLoopback)
             {
                if(TX_Info)
                   set(TX_Info, MUIA_Text_Contents, GetStr(MSG_TX_ConfiguringLoopback));
-               config_lo0();
+               config_lo0(SocketBase);
             }
 
             if(Config.cnf_flags & CFL_StartupTCP)
@@ -854,7 +882,7 @@ BOOL launch_amitcp(VOID)
 
 ///
 /// syslog_AmiTCP
-VOID syslog_AmiTCP(ULONG level, const STRPTR format, ...)
+VOID syslog_AmiTCP(struct Library *SocketBase, ULONG level, const STRPTR format, ...)
 {
    va_list va;
 
@@ -906,6 +934,20 @@ LONG amirexx_do_command(const char *fmt, ...)
       DeleteMsgPort(port);
    }
    return(rc);
+}
+
+///
+/// safe_put_to_port
+BOOL safe_put_to_port(struct Message *message, STRPTR portname)
+{
+   struct MsgPort *port;
+
+   Forbid();
+   port = FindPort(portname);
+   if(port)
+      PutMsg(port, message);
+   Permit();
+   return((BOOL)(port ? TRUE : FALSE));
 }
 
 ///

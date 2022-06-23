@@ -66,7 +66,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
    else
    {
       strcpy(ip_info, GetStr(MSG_TX_Dynamic));
-      strcat(ip_info, (addr_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
+      strcat(ip_info, (addr_assign == CNF_Assign_BOOTP ? " (BOOTP)" : " (ICPC)"));
    }
 
    if(dst_assign == CNF_Assign_Static)
@@ -74,7 +74,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
    else
    {
       strcpy(dest_info, GetStr(MSG_TX_Dynamic));
-      strcat(dest_info, (dst_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
+      strcat(dest_info, (dst_assign == CNF_Assign_BOOTP ? " (BOOTP)" : " (ICPC)"));
    }
 
    if(gw_assign == CNF_Assign_Static)
@@ -82,7 +82,7 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
    else
    {
       strcpy(gw_info, GetStr(MSG_TX_Dynamic));
-      strcat(gw_info, (gw_assign == CNF_Assign_BootP ? " (BOOTP)" : " (ICPC)"));
+      strcat(gw_info, (gw_assign == CNF_Assign_BOOTP ? " (BOOTP)" : " (ICPC)"));
    }
 
    *dns1_info = *dns2_info = NULL;
@@ -94,12 +94,12 @@ ULONG Finished_ShowConfig(struct IClass *cl, Object *obj, Msg msg)
       if(server->se_node.mln_Pred)
       {
          strcpy(dns1_info, server->se_name);
-         strcat(dns1_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
+         strcat(dns1_info, (dns_assign == CNF_Assign_BOOTP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
          server = (struct ServerEntry *)server->se_node.mln_Pred;
          if(server->se_node.mln_Pred)
          {
             strcpy(dns2_info, server->se_name);
-            strcat(dns2_info, (dns_assign == CNF_Assign_BootP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
+            strcat(dns2_info, (dns_assign == CNF_Assign_BOOTP ? " (BOOTP)" : (dns_assign == CNF_Assign_Root ? " (ROOT)" : " (MSDNS)")));
          }
       }
    }

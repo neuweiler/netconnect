@@ -7,6 +7,8 @@
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/pragmas/genesislogger_lib.h"
+#include "/genesis.lib/proto/genesislogger.h"
 #include "rev.h"
 #include "Strings.h"
 #include "mui.h"
@@ -26,9 +28,10 @@ extern Object *app, *win, *status_win, *netinfo_win;
 extern struct MUI_CustomClass  *CL_MainWindow, *CL_Online, *CL_IfaceReq, *CL_Led, *CL_About, *CL_NetInfo;
 extern struct NewMenu MainMenu[];
 extern struct Hook des_hook, txtobj_hook, objtxt_hook;
+extern struct User *current_user;
 extern char connectspeed[];
 extern char config_file[];
-extern struct Library *SocketBase, *LockSocketBase, *GenesisBase;
+extern struct Library *LockSocketBase, *GenesisBase, *GenesisLoggerBase;
 
 ///
 
@@ -156,8 +159,10 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, Msg msg)
    struct ParseConfig_Data pc_data;
    BOOL success = FALSE;
    LONG pos;
+   APTR display_item;
    char buffer[81];
 
+   display_item = (APTR)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_DISPLAY);
    clear_config(&Config);
    DoMethod(data->LI_Providers, MUIM_List_Clear);
    DoMethod(data->LI_Users, MUIM_List_Clear);
@@ -205,23 +210,50 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, Msg msg)
          else if(!stricmp(pc_data.pc_argument, "ConfirmOffline") && is_true(&pc_data))
             Config.cnf_flags |= CFL_ConfirmOffline;
          else if(!stricmp(pc_data.pc_argument, "ShowLog") && is_false(&pc_data))
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_LOG, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowLog;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowLamps") && is_false(&pc_data))
-            Config.cnf_flags &= ~CFL_ShowLamps;
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_LEDS, MUIA_Menuitem_Checked, FALSE);
+            Config.cnf_flags &= ~CFL_ShowLeds;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowConnect") && is_false(&pc_data))
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_CONNECT, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowConnect;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowOnlineTime") && is_false(&pc_data))
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_TIMEONLINE, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowOnlineTime;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowButtons") && is_false(&pc_data))
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_BUTTONS, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowButtons;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowNetwork") && is_false(&pc_data))
-            Config.cnf_flags &= ~CFL_ShowNetwork;
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_PROVIDER, MUIA_Menuitem_Checked, FALSE);
+            Config.cnf_flags &= ~CFL_ShowProvider;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowUser") && is_false(&pc_data))
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_USER, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowUser;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowStatusWin") && is_false(&pc_data))
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_STATUS, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowStatusWin;
+         }
          else if(!stricmp(pc_data.pc_argument, "ShowSerialInput") && is_false(&pc_data))
+         {
+            DoMethod(display_item, MUIM_SetUData, MEN_SERIAL, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowSerialInput;
+         }
          else if(!stricmp(pc_data.pc_argument, "StartupOpenWin") && is_false(&pc_data))
             Config.cnf_flags &= ~CFL_StartupOpenWin;
          else if(!stricmp(pc_data.pc_argument, "StartupIconify") && is_true(&pc_data))
@@ -259,29 +291,7 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, Msg msg)
       while(GetUserName(pos++, buffer, 80))
          DoMethod(data->LI_Users, MUIM_List_InsertSingle, buffer, MUIV_List_Insert_Bottom);
 
-      if((Config.cnf_flags & CFL_ShowOnlineTime) || (Config.cnf_flags & CFL_ShowLamps))
-      {
-         set(data->GR_TimeLamps   , MUIA_ShowMe, TRUE);
-         set(data->GR_Lamps       , MUIA_ShowMe, Config.cnf_flags & CFL_ShowLamps);
-         set(data->GR_Online      , MUIA_ShowMe, Config.cnf_flags & CFL_ShowOnlineTime);
-      }
-      else
-         set(data->GR_TimeLamps   , MUIA_ShowMe, FALSE);
-
-      set(data->GR_Speed       , MUIA_ShowMe, Config.cnf_flags & CFL_ShowConnect);
-
-      if((Config.cnf_flags & CFL_ShowNetwork) || (Config.cnf_flags & CFL_ShowUser))
-      {
-         set(data->GR_Config      , MUIA_ShowMe, TRUE);
-         set(data->PO_Provider    , MUIA_ShowMe, Config.cnf_flags & CFL_ShowNetwork);
-         set(data->PO_User        , MUIA_ShowMe, Config.cnf_flags & CFL_ShowUser);
-         set(data->BO_ProviderUser, MUIA_ShowMe, ((Config.cnf_flags & CFL_ShowNetwork) && (Config.cnf_flags & CFL_ShowUser)));
-      }
-      else
-         set(data->GR_Config      , MUIA_ShowMe, FALSE);
-
-      set(data->GR_Log         , MUIA_ShowMe, Config.cnf_flags & CFL_ShowLog);
-      set(data->GR_Buttons     , MUIA_ShowMe, Config.cnf_flags & CFL_ShowButtons);
+      DoMethod(obj, MUIM_MainWindow_SetShowMe);
 
       success = TRUE;
    }
@@ -301,9 +311,9 @@ ULONG MainWindow_ChangeProvider(struct IClass *cl, Object *obj, struct MUIP_Main
    BOOL isp_ok = FALSE;
    BPTR fh;
 
-Printf("changing provider\n");
    if(is_one_online(&data->isp.isp_ifaces))
    {
+      set(app, MUIA_Application_Iconified, FALSE);
       set(win, MUIA_Window_Open, TRUE);
       Delay(20);
       if(!MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_StayOnline), GetStr(MSG_TX_ChangeProviderIfaceOnline)))
@@ -337,7 +347,7 @@ Printf("changing provider\n");
          {
             if(iface = AllocVec(sizeof(struct Interface), MEMF_ANY | MEMF_CLEAR))
             {
-               strcpy(iface->if_netmask, "255.255.255.0");
+               strcpy(iface->if_netmask, "0.0.0.0");
                iface->if_MTU             = 1500;
                NewList((struct List *)&iface->if_events);
 
@@ -374,10 +384,6 @@ Printf("changing provider\n");
                   add_server(&data->isp.isp_nameservers, pc_data.pc_contents);
                else if(!stricmp(pc_data.pc_argument, "DomainName"))
                   add_server(&data->isp.isp_domainnames, pc_data.pc_contents);
-               else if(!stricmp(pc_data.pc_argument, "BOOTPServer"))
-                  strncpy(data->isp.isp_bootp, pc_data.pc_contents, sizeof(data->isp.isp_bootp));
-               else if(!stricmp(pc_data.pc_argument, "UseBootP"))
-                  data->isp.isp_flags |= ISF_UseBootp;
                else if(!stricmp(pc_data.pc_argument, "HostName"))
                   strncpy(data->isp.isp_hostname, pc_data.pc_contents, sizeof(data->isp.isp_hostname));
                else if(!stricmp(pc_data.pc_argument, "DontQueryHostname") && is_true(&pc_data))
@@ -444,6 +450,8 @@ Printf("changing provider\n");
                      strncpy(iface->if_netmask, pc_data.pc_contents, sizeof(iface->if_netmask));
                   else if(!stricmp(pc_data.pc_argument, "KeepAlive"))
                      iface->if_keepalive = atol(pc_data.pc_contents);
+                  else if(!stricmp(pc_data.pc_argument, "UseBOOTP") && is_true(&pc_data))
+                     iface->if_flags |= IFL_BOOTP;
                   else if((!stricmp(pc_data.pc_argument, "AlwaysOnline") || !stricmp(pc_data.pc_argument, "AutoOnline")) && is_true(&pc_data))
                      iface->if_flags |= IFL_AutoOnline;
                   else
@@ -600,8 +608,6 @@ Printf("changing provider\n");
       iterate_ifacelist(&data->isp.isp_ifaces, 1);
       DoMethod(win, MUIM_MainWindow_PutOnline);
    }
-Printf("changing provider finished\n");
-
 
    return(NULL);
 }
@@ -622,10 +628,13 @@ ULONG MainWindow_ChangeUser(struct IClass *cl, Object *obj, struct MUIP_MainWind
 
    if(user = GetUser(name, msg->password, NULL, NULL))
    {
-      SetGlobalUser(user);
-      set(data->TX_User, MUIA_Text_Contents, user->us_name);
-      FreeUser(user);
+      if(current_user)
+         FreeUser(current_user);
+      current_user = user;
+      SetGlobalUser(current_user);
    }
+
+   nnset(data->TX_User, MUIA_Text_Contents, current_user->us_name);
 
    return(NULL);
 }
@@ -695,6 +704,33 @@ ULONG MainWindow_OnOffline(struct IClass *cl, Object *obj, struct MUIP_MainWindo
 {
    struct MainWindow_Data *data = INST_DATA(cl, obj);
    Object *window;
+
+   if(msg->online && current_user)   // check if we're in a time restriction first
+   {
+      struct DateStamp ds;
+
+      DateStamp(&ds);
+      if(current_user->us_restricted_times.mlh_TailPred != (struct MinNode *)&current_user->us_restricted_times)
+      {
+         struct RestrictedTime *restrict;
+
+         restrict = (struct RestrictedTime *)current_user->us_restricted_times.mlh_Head;
+         while(restrict->rt_node.mln_Succ)
+         {
+            if(restrict->rt_day == (ds.ds_Days % 7))   // is it the correct weekday ?
+            {
+               if((restrict->rt_start <= ds.ds_Minute) && (restrict->rt_end >= ds.ds_Minute))
+               {
+                  iterate_ifacelist(&data->isp.isp_ifaces, 0);
+                  DoMethod(win, MUIM_MainWindow_PutOffline);
+                  MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_Okay), "\033b\033cTime restriction !\033n\nThe current user is not allowed to\nuse the network at the present time.");
+                  return(NULL);
+               }
+            }
+            restrict = (struct RestrictedTime *)restrict->rt_node.mln_Succ;
+         }
+      }
+   }
 
    if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
    {
@@ -772,6 +808,7 @@ ULONG MainWindow_PutOnline(struct IClass *cl, Object *obj, Msg msg)
          DoMethod(status_win, MUIM_Online_GoOnline);
       }
    }
+
    return(NULL);
 }
 
@@ -780,13 +817,13 @@ ULONG MainWindow_PutOnline(struct IClass *cl, Object *obj, Msg msg)
 ULONG MainWindow_PutOffline(struct IClass *cl, Object *obj, Msg msg)
 {
    struct MainWindow_Data *data = INST_DATA(cl, obj);
+   struct Interface *iface;
 
    set(app, MUIA_Application_Sleep, TRUE);
 
    if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
    {
       struct sana2 *s2;
-      struct Interface *iface;
 
       iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
       while(iface->if_node.mln_Succ)
@@ -795,36 +832,63 @@ ULONG MainWindow_PutOffline(struct IClass *cl, Object *obj, Msg msg)
          {
             iface->if_flags &= ~IFL_PutOffline;
 
+            if(iface->if_dhcp_proc) // terminate dhcp
+            {
+               int i = 20;
+
+               do
+               {
+                  Signal(iface->if_dhcp_proc, SIGBREAKF_CTRL_C);
+                  Delay(25);
+               }  while(iface->if_dhcp_proc && i--);
+            }
+
             if(s2 = sana2_create(iface->if_sana2device, iface->if_sana2unit))
             {
-               if(sana2_offline(s2))
+               if(sana2_offline(LockSocketBase, s2))
                   exec_event(&iface->if_events, IFE_OfflineActive);
                else
-               {
-                  SocketBase = LockSocketBase;
-                  syslog_AmiTCP(LOG_CRIT, "offline: could not put %ls unit %ld offline.", iface->if_sana2device, iface->if_sana2unit);
-                  SocketBase = NULL;
-               }
+                  syslog_AmiTCP(LockSocketBase, LOG_CRIT, "offline: could not put %ls unit %ld offline.", iface->if_sana2device, iface->if_sana2unit);
 
                sana2_delete(s2);
             }
             else
-            {
-               SocketBase = LockSocketBase;
-               syslog_AmiTCP(LOG_CRIT, "offline: could not open %ls unit %ld.", iface->if_sana2device, iface->if_sana2unit);
-               SocketBase = NULL;
-            }
+               syslog_AmiTCP(LockSocketBase, LOG_CRIT, "offline: could not open %ls unit %ld.", iface->if_sana2device, iface->if_sana2unit);
+
+            if(iface->if_flags & IFL_IsSerial)
+               serial_hangup(LockSocketBase);
+
             iface->if_flags &= ~IFL_IsOnline;
             set(data->GR_Led[(ULONG)iface->if_userdata], MUIA_Group_ActivePage, MUIV_Led_Black);
             if(netinfo_win)
                DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
+            if(iface->if_loggerhandle && GenesisLoggerBase)
+               GL_StopLogger(iface->if_loggerhandle);
+            iface->if_loggerhandle = NULL;
          }
          iface = (struct Interface *)iface->if_node.mln_Succ;
       }
    }
 
+   if(LockSocketBase)   // find top online iface and adjust def gw if necessary
+   {
+      if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
+      {
+         iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+         while(iface->if_node.mln_Succ)
+         {
+            if(iface->if_flags & IFL_IsOnline)
+            {
+               if(!(iface->if_flags & IFL_IsDefaultGW))
+                  adjust_default_gateway(LockSocketBase, &data->isp.isp_ifaces, iface);
+               break;
+            }
+            iface = (struct Interface *)iface->if_node.mln_Succ;
+         }
+      }
+   }
+
    DoMethod(obj, MUIM_MainWindow_SetStates);
-   IsOnline((is_one_online(&data->isp.isp_ifaces) ? 22 : -22));
 
    set(app, MUIA_Application_Sleep, FALSE);
    return(NULL);
@@ -845,6 +909,127 @@ ULONG MainWindow_TimeTrigger(struct IClass *cl, Object *obj)
    m = m % 60;
    sprintf(data->time_str, "%ls %02ld:%02ld:%02ld", GetStr(MSG_TX_TimeOnline), h, m, s);
    set(data->TX_Online, MUIA_Text_Contents, data->time_str);
+
+   if(s == 0)  // check online time limit every full "online minute"
+   {
+      if(current_user->us_max_time > 0)
+      {
+         if(current_user->us_max_time <= m)
+         {
+            DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cOnline time limit exceeded !\033n\033l\n\nAll network connections\nhave been terminated.");
+
+            iterate_ifacelist(&data->isp.isp_ifaces, 0);
+            DoMethod(win, MUIM_MainWindow_PutOffline);
+         }
+         else if((current_user->us_max_time - 10 == m) && (current_user->us_flags & USRF_WARNUSER))  // in 10 minutes ?
+         {
+            DisplayBeep(NULL);
+            DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cWARNING\033n\033l\n\nOnline time limit will be\nreached in 10 minutes !");
+         }
+         else if((current_user->us_max_time - 5 == m) && (current_user->us_flags & USRF_WARNUSER))  // in 5 minutes ?
+         {
+            DisplayBeep(NULL);
+            DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cWARNING\033n\033l\n\nApproaching online time limit !\nAll network connections will\nbe terminated in 5 minutes !!");
+         }
+         else if((current_user->us_max_time -1 == m) && (current_user->us_flags & USRF_WARNUSER))  // in 1 minute ?
+         {
+            DisplayBeep(NULL);
+            DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cFINAL WARNING\033n\033l\n\nOnline time limit will be\nreached in \033b1 MINUTE\033n !!");
+            DisplayBeep(NULL);
+         }
+      }
+   }
+
+   if((data->time.tv_secs % 60) == 0) // check time restrictions every full minute
+   {
+      struct DateStamp ds;
+
+      if(current_user && is_one_online(&data->isp.isp_ifaces)) // do we have a user and an open connection ?
+      {
+         if(current_user->us_restricted_times.mlh_TailPred != (struct MinNode *)&current_user->us_restricted_times)
+         {
+            struct RestrictedTime *restrict;
+
+            bzero(&ds, sizeof(struct DateStamp));
+            if(current_user->us_flags & USRF_TIMESERVER)
+            {
+               STRPTR server, ptr;
+               char buf[MAXPATHLEN];
+               STRPTR days="SunMonTueWedThuFriSat";
+               char week_day[10], time[20];
+
+               // format: 'Sat Sep 26 10:56:55 1998\r\n'
+
+               if(current_user->us_timeserver && *current_user->us_timeserver)
+                  server = current_user->us_timeserver;
+               else
+                  server = data->isp.isp_timename;
+
+               if(get_daytime(LockSocketBase, server, buf))
+               {
+                  ptr = buf;
+                  if(ptr = extract_arg(ptr, week_day, sizeof(week_day), NULL))
+                  {
+                     if(ptr = extract_arg(ptr, time, sizeof(time), NULL))     // skip month
+                     {
+                        if(ptr = extract_arg(ptr, time, sizeof(time), NULL))  // skip day
+                        {
+                           if(ptr = extract_arg(ptr, time, sizeof(time), NULL))
+                           {
+                              ds.ds_Days = 70 + (strstr(days, week_day) - days) / 3;   // +70 so it's != 0, see test below. but %7 is still 0
+                              if(ptr = strchr(time, ':'))
+                              {
+                                 *ptr = NULL;
+                                 ds.ds_Minute = atol(time) * 60;
+                                 if(ptr = strchr(++ptr, ':'))
+                                 {
+                                    *ptr = NULL;
+                                    ds.ds_Minute += atol(ptr - 2);
+                                 }
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+            if(!ds.ds_Days || !ds.ds_Minute)
+               DateStamp(&ds);
+
+            restrict = (struct RestrictedTime *)current_user->us_restricted_times.mlh_Head;
+            while(restrict->rt_node.mln_Succ)
+            {
+               if(restrict->rt_day == (ds.ds_Days % 7))   // is it the correct weekday ?
+               {
+                  if((restrict->rt_start <= ds.ds_Minute) && (restrict->rt_end >= ds.ds_Minute))
+                  {
+                     DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cTime restriction !\033n\033l\n\nThe current user is not allowed to\nuse the network at the present time.");
+
+                     iterate_ifacelist(&data->isp.isp_ifaces, 0);
+                     DoMethod(win, MUIM_MainWindow_PutOffline);
+                  }
+                  else if((restrict->rt_start - 10 == ds.ds_Minute) && (current_user->us_flags & USRF_WARNUSER))  // in 10 minutes ?
+                  {
+                     DisplayBeep(NULL);
+                     DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cWARNING\033n\033l\n\nTime restriction will come\nin effect in 10 minutes !");
+                  }
+                  else if((restrict->rt_start - 5 == ds.ds_Minute) && (current_user->us_flags & USRF_WARNUSER))  // in 5 minutes ?
+                  {
+                     DisplayBeep(NULL);
+                     DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cWARNING\033n\033l\n\nTime restriction will come\nin effect in 5 minutes !\nAll network connections will\nbe terminated !");
+                  }
+                  else if((restrict->rt_start - 1 == ds.ds_Minute) && (current_user->us_flags & USRF_WARNUSER))  // in 1 minute ?
+                  {
+                     DisplayBeep(NULL);
+                     DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_ReqBT_Okay), "\033b\033cWARNING\033n\033l\n\nTime restriction will come\nin effect in \033b1 MINUTE\033n !");
+                     DisplayBeep(NULL);
+                  }
+               }
+               restrict = (struct RestrictedTime *)restrict->rt_node.mln_Succ;
+            }
+         }
+      }
+   }
 
    return(TRUE);
 }
@@ -979,8 +1164,14 @@ ULONG MainWindow_UpdateLog(struct IClass *cl, Object *obj, Msg msg)
                         {
                            iface->if_flags &= ~IFL_IsOnline;
                            set(data->GR_Led[(ULONG)iface->if_userdata], MUIA_Group_ActivePage, MUIV_Led_Red);
+
                            if(netinfo_win)
                               DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
+
+                           if(iface->if_loggerhandle)
+                              GL_StopLogger(iface->if_loggerhandle);
+                           iface->if_loggerhandle = NULL;
+
                            exec_event(&iface->if_events, IFE_OfflinePassive);
                         }
                      }
@@ -1007,6 +1198,25 @@ ULONG MainWindow_UpdateLog(struct IClass *cl, Object *obj, Msg msg)
    return(NULL);
 }
 ///
+/// MainWindow_GenesisReport
+ULONG MainWindow_GenesisReport(struct IClass *cl, Object *obj, Msg msg)
+{
+   STRPTR try[] = { "AMITCP:GENESiSReport", "AmiTCP:bin/GENESiSReport", "GENESiSReport", NULL };
+   STRPTR *ptr;
+
+   ptr = &try[0];
+   while(*ptr)
+   {
+      if(GetFileSize(*ptr) >= 0) // the file might be a link => size might be zero
+      {
+         run_async(*ptr);
+         break;
+      }
+      ptr++;
+   }
+   return(NULL);
+}
+///
 /// MainWindow_GenesisPrefs
 ULONG MainWindow_GenesisPrefs(struct IClass *cl, Object *obj, Msg msg)
 {
@@ -1025,6 +1235,113 @@ ULONG MainWindow_GenesisPrefs(struct IClass *cl, Object *obj, Msg msg)
    }
    return(NULL);
 }
+///
+/// MainWindow_Menu
+ULONG MainWindow_Menu(struct IClass *cl, Object *obj, struct MUIP_MainWindow_Menu *msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+   LONG x;
+
+   if((msg->what >= MEN_TIMEONLINE) && (msg->what <= MEN_SERIAL))
+      DoMethod(data->MN_Strip, MUIM_GetUData, msg->what, MUIA_Menuitem_Checked, &x);
+
+   switch(msg->what)
+   {
+      case MEN_TIMEONLINE:
+         if(x)
+            Config.cnf_flags |= CFL_ShowOnlineTime;
+         else
+            Config.cnf_flags &= ~CFL_ShowOnlineTime;
+         break;
+      case MEN_LEDS:
+         if(x)
+            Config.cnf_flags |= CFL_ShowLeds;
+         else
+            Config.cnf_flags &= ~CFL_ShowLeds;
+         break;
+      case MEN_CONNECT:
+         if(x)
+            Config.cnf_flags |= CFL_ShowConnect;
+         else
+            Config.cnf_flags &= ~CFL_ShowConnect;
+         break;
+      case MEN_PROVIDER:
+         if(x)
+            Config.cnf_flags |= CFL_ShowProvider;
+         else
+            Config.cnf_flags &= ~CFL_ShowProvider;
+         break;
+      case MEN_USER:
+         if(x)
+            Config.cnf_flags |= CFL_ShowUser;
+         else
+            Config.cnf_flags &= ~CFL_ShowUser;
+         break;
+      case MEN_LOG:
+         if(x)
+            Config.cnf_flags |= CFL_ShowLog;
+         else
+            Config.cnf_flags &= ~CFL_ShowLog;
+         break;
+      case MEN_BUTTONS:
+         if(x)
+            Config.cnf_flags |= CFL_ShowButtons;
+         else
+            Config.cnf_flags &= ~CFL_ShowButtons;
+         break;
+      case MEN_STATUS:
+         if(x)
+            Config.cnf_flags |= CFL_ShowStatusWin;
+         else
+            Config.cnf_flags &= ~CFL_ShowStatusWin;
+         break;
+      case MEN_SERIAL:
+         if(x)
+            Config.cnf_flags |= CFL_ShowSerialInput;
+         else
+            Config.cnf_flags &= ~CFL_ShowSerialInput;
+         break;
+   }
+
+   if((msg->what >= MEN_TIMEONLINE) && (msg->what <= MEN_SERIAL))
+      DoMethod(obj, MUIM_MainWindow_SetShowMe);
+
+   return(NULL);
+}
+
+///
+/// MainWindow_SetShowMe
+ULONG MainWindow_SetShowMe(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct MainWindow_Data *data = INST_DATA(cl, obj);
+
+   if((Config.cnf_flags & CFL_ShowOnlineTime) || (Config.cnf_flags & CFL_ShowLeds))
+   {
+      set(data->GR_TimeLamps   , MUIA_ShowMe, TRUE);
+      set(data->GR_Lamps       , MUIA_ShowMe, Config.cnf_flags & CFL_ShowLeds);
+      set(data->GR_Online      , MUIA_ShowMe, Config.cnf_flags & CFL_ShowOnlineTime);
+   }
+   else
+      set(data->GR_TimeLamps   , MUIA_ShowMe, FALSE);
+
+   set(data->GR_Speed       , MUIA_ShowMe, Config.cnf_flags & CFL_ShowConnect);
+
+   if((Config.cnf_flags & CFL_ShowProvider) || (Config.cnf_flags & CFL_ShowUser))
+   {
+      set(data->GR_Config      , MUIA_ShowMe, TRUE);
+      set(data->PO_Provider    , MUIA_ShowMe, Config.cnf_flags & CFL_ShowProvider);
+      set(data->PO_User        , MUIA_ShowMe, Config.cnf_flags & CFL_ShowUser);
+      set(data->BO_ProviderUser, MUIA_ShowMe, ((Config.cnf_flags & CFL_ShowProvider) && (Config.cnf_flags & CFL_ShowUser)));
+   }
+   else
+      set(data->GR_Config      , MUIA_ShowMe, FALSE);
+
+   set(data->GR_Log         , MUIA_ShowMe, Config.cnf_flags & CFL_ShowLog);
+   set(data->GR_Buttons     , MUIA_ShowMe, Config.cnf_flags & CFL_ShowButtons);
+
+   return(NULL);
+}
+
 ///
 
 /// Log_ConstructFunc
@@ -1198,11 +1515,22 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       DoMethod(data->TX_Provider , MUIM_Notify, MUIA_Text_Contents       , MUIV_EveryTime , MUIV_Notify_Application, 6, MUIM_Application_PushMethod, obj, 3, MUIM_MainWindow_ChangeProvider, NULL, TRUE);
 
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT)    , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_About);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_REPORT)   , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_GenesisReport);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_NETINFO)  , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_NetInfo);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_ABOUT_MUI), MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_AboutMUI, win);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_QUIT)     , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_Quit);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_GENESIS)  , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 1, MUIM_MainWindow_GenesisPrefs);
       DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_MUI)      , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, MUIV_Notify_Application, 2, MUIM_Application_OpenConfigWindow, 0);
+
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_TIMEONLINE), MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_TIMEONLINE);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_LEDS)      , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_LEDS);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_CONNECT)   , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_CONNECT);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_PROVIDER)  , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_PROVIDER);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_USER)      , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_USER);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_LOG)       , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_LOG);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_BUTTONS)   , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_BUTTONS);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_STATUS)    , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_STATUS);
+      DoMethod((Object *)DoMethod(data->MN_Strip, MUIM_FindUData, MEN_SERIAL)    , MUIM_Notify, MUIA_Menuitem_Trigger, MUIV_EveryTime, obj, 2, MUIM_MainWindow_Menu, MEN_SERIAL);
    }
    return((ULONG)obj);
 }
@@ -1230,6 +1558,9 @@ SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register
       case MUIM_MainWindow_ChangeProvider : return(MainWindow_ChangeProvider     (cl, obj, (APTR)msg));
       case MUIM_MainWindow_ChangeUser     : return(MainWindow_ChangeUser         (cl, obj, (APTR)msg));
       case MUIM_MainWindow_GenesisPrefs   : return(MainWindow_GenesisPrefs       (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_GenesisReport  : return(MainWindow_GenesisReport      (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_SetShowMe      : return(MainWindow_SetShowMe          (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_Menu           : return(MainWindow_Menu               (cl, obj, (APTR)msg));
    }
 
    return(DoSuperMethodA(cl, obj, msg));

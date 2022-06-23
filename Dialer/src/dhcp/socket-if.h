@@ -20,7 +20,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-void	setSockAddrIn(u_short port, u_long inaddr, struct sockaddr_in *saddr);
+void  setSockAddrIn(u_short port, u_long inaddr, struct sockaddr_in *saddr);
 /*  requires: 'port' containing port number (network byte order)
  *            'inaddr' containing IP address (network byte order)
  *            'saddr' pointing to the structure to be configured.
@@ -29,7 +29,7 @@ void	setSockAddrIn(u_short port, u_long inaddr, struct sockaddr_in *saddr);
  *  return:   Nothing
  */
 
-void	openSendSocket(struct sockaddr_in *addr, int *s);
+BOOL  openSendSocket(struct Library *SocketBase, struct sockaddr_in *addr, int *s);
 /*  requires: 'addr' points sender's IP address.
  *            's' points the file descripter used by caller.
  *  effects:  it opens a socket '*s' for sending DHCP messages, and bind
@@ -39,7 +39,7 @@ void	openSendSocket(struct sockaddr_in *addr, int *s);
  *  return:   Nothing
  */
 
-void	openRecvSocket(struct sockaddr_in *addr, int *s);
+BOOL  openRecvSocket(struct Library *SocketBase, struct sockaddr_in *addr, int *s);
 /*  requires: 'addr' points sender's IP address.
  *            's' points the file descripter used by caller.
  *  effects:  it opens a socket '*s' for sending DHCP messages, and bind
@@ -49,7 +49,7 @@ void	openRecvSocket(struct sockaddr_in *addr, int *s);
  *  return:   Nothing
  */
 
-void	openRawSocket(int *s, u_short type);
+BOOL  openRawSocket(struct Library *SocketBase, int *s, u_short type);
 /*  requires: 's' points the file descripter used by caller.
  *            'type' containing ethernet frame type (ETH_P_XXXX)
  *  effects:  it opens a socket '*s' for sending raw datalink layer frame
@@ -58,8 +58,8 @@ void	openRawSocket(int *s, u_short type);
  *  return:   Nothing
  */
 
-int		rcvAndCheckDhcpMsg(int s, dhcpMessage *msg, u_long waitMsgType,
-						   u_char *optp[], long timeout);
+int      rcvAndCheckDhcpMsg(struct Library *SocketBase, int s, dhcpMessage *msg, u_long waitMsgType,
+                     u_char *optp[], long timeout);
 /*  requires: 's' containing the socket descpipter to receive a DHCP packet
  *            'msg' pointing the structure for received DHCP packet
  *            'waitMsgType' containing the DHCP message types for which you
@@ -76,9 +76,9 @@ int		rcvAndCheckDhcpMsg(int s, dhcpMessage *msg, u_long waitMsgType,
  *            0 if timeout.
  */
 
-int		waitChkReXmitMsg(int sRecv, dhcpMessage *pMsgRecv, 
-						 int sSend, dhcpMessage *pMsgSend,
-						 struct sockaddr_in *addr, u_long waitMsgType,
-						 u_char *optp[], int nretry);
+int      waitChkReXmitMsg(struct Library *SocketBase, int sRecv, dhcpMessage *pMsgRecv,
+                   int sSend, dhcpMessage *pMsgSend,
+                   struct sockaddr_in *addr, u_long waitMsgType,
+                   u_char *optp[], int nretry);
 
-void	setWaitMsgType(int type, u_int *ptype);
+void  setWaitMsgType(int type, u_int *ptype);

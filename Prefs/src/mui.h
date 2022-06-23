@@ -10,6 +10,11 @@ enum { MEN_ABOUT = 1, MEN_ABOUT_MUI, MEN_ICONIFY, MEN_QUIT, MEN_LOAD, MEN_IMPORT
 
 struct MUIP_Genesis_Finish              { ULONG MethodID; Object *obj; LONG status; };
 
+struct McpNode
+{
+   struct MinNode mcp_node;
+   Object *mcp_object;
+};
 
 /*
 Genesis        : 1000

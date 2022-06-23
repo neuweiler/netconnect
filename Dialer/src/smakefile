@@ -18,30 +18,36 @@ CPU      = ANY
 #CPU     = 68030
 DEMO     = DEF=DEMO
 NC       = DEF=NETCONNECT
+BETA     = DEF=BETA
 #DEBUG   = DBG=FULL
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
 GST      = GSTIMM GST=/includes.gst
 
-CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetInclude: IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(DEBUG) $(NC)
+CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IDIR=NetInclude: IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG) $(NC)
 
 LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
 #LFLAGS  = SC SD NOICONS MAXHUNK 100000
 
 OBJS     = mui_MainWindow.o mui_Online.o mui_IfaceReq.o mui_Led.o mui_Arexx.o mui_About.o \
-           mui_NetInfo.o main.o globals.o amiga.o sana.o bootpc.o iface.o serial.o fixpath.o
+           mui_NetInfo.o main.o globals.o amiga.o sana.o iface.o serial.o fixpath.o \
+           bootp/bootpc.o
+#           dhcp/arp.o dhcp/client.o dhcp/dhcp.o dhcp/hostinfo.o \
+#           dhcp/if.o dhcp/options.o dhcp/socket-if.o
 LIBS     = lib:amiga.lib lib:sc.lib
 
-all:   /includes.gst Strings.h Genesis
+all:   /includes.gst Strings.h Genesis.ct Genesis
 
 /includes.gst:  /includes.h
       GST >NIL: UNLOAD includes.gst
       SC NOOBJNAME INCLUDEDIR=netinclude: IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
       GST $@
 
-Strings.h: Strings.cd
-   cat2h Strings.cd Strings.h
+Strings.h: Genesis.cd
+   cat2h Genesis.cd Strings.h
+Genesis.ct : Genesis.cd
+   sc:c/FlexCat Genesis.cd NEWCTFILE Genesis.ct
 
 Genesis:   $(OBJS)
    SLINK WITH T:Genesis.WITH <<!(T:Genesis.WITH)
@@ -67,7 +73,7 @@ mui_Online.o: mui_Online.c /includes.h /Genesis.h\
  /genesis.lib/libraries/genesis.h /genesis.lib/pragmas/genesis_lib.h\
  /genesis.lib/proto/genesis.h /genesis.lib/pragmas/nc_lib.h Strings.h mui.h\
  mui_Online.h mui_MainWindow.h mui_Led.h mui_NetInfo.h protos.h\
- bootpc.h iface.h bootp.h bptypes.h
+ iface.h
 
 iface.o: iface.c /includes.h /Genesis.h Strings.h protos.h mui.h\
  mui_MainWindow.h mui_Online.h mui_Led.h iface.h sana.h
@@ -82,9 +88,6 @@ globals.o: globals.c /includes.h Strings.h /Genesis.h mui.h protos.h
 serial.o: serial.c /includes.h /Genesis.h Strings.h mui.h mui_Online.h protos.h
 
 mui_Arexx.o: mui_Arexx.c /Genesis.h Strings.h mui.h mui_MainWindow.h protos.h
-
-bootpc.o: bootpc.c /includes.h /Genesis.h bootpc.h iface.h protos.h bootp.h\
- bptypes.h
 
 mui_IfaceReq.o: mui_IfaceReq.c /includes.h /Genesis.h Strings.h mui.h\
  mui_MainWindow.h mui_IfaceReq.h protos.h
@@ -102,4 +105,33 @@ mui_About.o: mui_About.c /includes.h /Genesis.h /genesis.lib/pragmas/nc_lib.h\
  rev.h Strings.h mui.h mui_About.h mui_MainWindow.h protos.h
 
 FixPath.o: FixPath.c
+
+bootp/bootpc.o: bootp/bootpc.c /includes.h /Genesis.h bootp/bootpc.h iface.h protos.h \
+ bootp/bootp.h bootp/bptypes.h
+
+dhcp/arp.o: dhcp/arp.c dhcp/dhcp.h dhcp/if.h dhcp/arp.h dhcp/socket-if.h dhcp/error-handler.h
+
+dhcp/client.o: dhcp/client.c dhcp/if.h dhcp/dhcp.h dhcp/dhcp-options.h dhcp/socket-if.h dhcp/arp.h dhcp/error-handler.h\
+ dhcp/hostinfo.h dhcp/client.h
+
+dhcp/daemon.o: dhcp/daemon.c dhcp/error-handler.h dhcp/daemon.h
+
+dhcp/error-handler.o: dhcp/error-handler.c dhcp/error-handler.h
+
+dhcp/hostinfo.o: dhcp/hostinfo.c dhcp/dhcp.h dhcp/dhcp-options.h dhcp/error-handler.h dhcp/signal-handler.h\
+ dhcp/hostinfo.h dhcp/if.h dhcp/memory.h
+
+dhcp/if.o: dhcp/if.c dhcp/if.h dhcp/dhcp.h dhcp/error-handler.h
+
+dhcp/dhcp.o: dhcp/dhcp.c dhcp/if.h dhcp/dhcp.h dhcp/signal-handler.h dhcp/error-handler.h dhcp/daemon.h dhcp/client.h\
+ dhcp/memory.h
+
+dhcp/memory.o: dhcp/memory.c dhcp/error-handler.h
+
+dhcp/options.o: dhcp/options.c dhcp/dhcp.h dhcp/dhcp-options.h dhcp/error-handler.h
+
+dhcp/signal-handler.o: dhcp/signal-handler.c dhcp/dhcp.h dhcp/if.h dhcp/signal-handler.h dhcp/error-handler.h\
+ dhcp/client.h
+
+dhcp/socket-if.o: dhcp/socket-if.c dhcp/dhcp.h dhcp/dhcp-options.h dhcp/error-handler.h dhcp/if.h dhcp/client.h
 

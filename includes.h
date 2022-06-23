@@ -29,6 +29,7 @@
 
 #include <clib/macros.h>
 #include <clib/alib_protos.h>
+#include <clib/battclock_protos.h>
 
 #include <libraries/iffparse.h>
 #include <libraries/gadtools.h>
@@ -48,6 +49,7 @@
 #include <datatypes/soundclass.h>
 
 #include <workbench/workbench.h>
+#include <resources/battclock.h>
 
 #include <prefs/locale.h>
 #include <prefs/prefhdr.h>

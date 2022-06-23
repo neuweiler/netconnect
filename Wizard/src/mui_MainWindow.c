@@ -120,7 +120,7 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(Iface.if_sana2device, "DEVS:Networks/aslip.device");
             Iface.if_sana2unit = 0;
             strcpy(Iface.if_sana2config, "ENV:Sana2/aslip0.config");
-            sprintf(sana2configtext, "%ls %ld %ld Shared %%a CD 7Wire MTU=%ld ", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate, Iface.if_MTU);
+            sprintf(sana2configtext, "%ls %ld %ld Shared %%a 7Wire MTU=%ld ", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate, Iface.if_MTU);
             Iface.if_sana2configtext = sana2configtext;
             strcpy(Iface.if_name, "slip");
             Iface.if_flags |= IFL_SLIP;
@@ -130,7 +130,7 @@ ULONG MainWindow_GetPageData(struct IClass *cl, Object *obj, Msg msg)
             strcpy(Iface.if_sana2device, "DEVS:Networks/appp.device");
             Iface.if_sana2unit = 0;
             strcpy(Iface.if_sana2config, "ENV:Sana2/appp0.config");
-            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %%a\ncd yes\nuser %%u\nsecret %%p\ncd yes\nmppcomp no\nvjcomp no\nbsdcomp no\ndeflatecomp no\neof no\ndebug = 1\ndebug_window = 1\nlog_file = AmiTCP:log/appp.log\ncon_window = NIL:\n", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate);
+            sprintf(sana2configtext, "sername %ls\nserunit %ld\nserbaud %ld\nlocalipaddress %%a\ncd no\nuser %%u\nsecret %%p\ncd yes\nmppcomp no\nvjcomp no\nbsdcomp no\ndeflatecomp no\neof no\ndebug = 1\ndebug_window = 1\nlog_file = AmiTCP:log/appp.log\ncon_window = NIL:\n", Config.cnf_serialdevice, Config.cnf_serialunit, Config.cnf_baudrate);
             Iface.if_sana2configtext = sana2configtext;
             strcpy(Iface.if_name, "ppp");
             Iface.if_flags |= IFL_PPP;
@@ -202,13 +202,19 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
          {
             if(!serial_dsr())
             {
-               if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_IgnoreCancel), GetStr(MSG_TX_NoDSR)))
+               Delay(50);
+               if(!serial_dsr())
                {
-                  Config.cnf_flags |= CFL_IgnoreDSR;
-                  data->Page = PAGE_ModemStrings;
+                  if(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_IgnoreCancel), GetStr(MSG_TX_NoDSR)))
+                  {
+                     Config.cnf_flags |= CFL_IgnoreDSR;
+                     data->Page = PAGE_ModemStrings;
+                  }
+                  else
+                     serial_delete();
                }
                else
-                  serial_delete();
+                  data->Page = PAGE_ModemStrings;
             }
             else
                data->Page = PAGE_ModemStrings;
@@ -231,7 +237,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
             serial_send("\r", -1);
             Delay(10);
             serial_send("AAT\r", -1);
-            if(serial_waitfor("OK", NULL, NULL, 2))
+            if(serial_waitfor("OK", NULL, NULL, 3))
             {
                char buffer[MAXPATHLEN];
 
@@ -239,7 +245,7 @@ ULONG MainWindow_NextPage(struct IClass *cl, Object *obj, Msg msg)
                EscapeString(buffer, Config.cnf_initstring);
                strcat(buffer, "\r");
                serial_send(buffer, -1);
-               if(serial_waitfor("OK", NULL, NULL, 2))
+               if(serial_waitfor("OK", NULL, NULL, 3))
                   data->Page = PAGE_UserInfo;
                else
                {

@@ -1,36 +1,11 @@
-/* $Id: main.c,v 0.10 1997/08/28 14:42:26 yoichi v0_70 $
- *
- * dhcpcd - DHCP client daemon -
- * Copyright (C) 1996 - 1997 Yoichi Hariguchi <yoichi@fore.com>
- *
- * dhcpcd is an RFC2131 and RFC1541 compliant DHCP client daemon.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syslog.h>
-#include <time.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <net/if.h>
-#include <arpa/inet.h>
+/// includes & defines
+#include "//Genesis.h"
+#include "/protos.h"
+#include "/Strings.h"
+#include "/mui.h"
+#include "/mui_MainWindow.h"
+#include "//genesis.lib/pragmas/nc_lib.h"
+#include "/iface.h"
 #include "if.h"
 #include "dhcp.h"
 #include "signal-handler.h"
@@ -39,127 +14,137 @@
 #include "client.h"
 #include "memory.h"
 
-#define DEFAULT_IF	"eth0"
+#define DEFAULT_IF   "eth0"
 
-char *CommandFile = NULL;		/* invoked command file name when dhcpcd
-								 * succeeds in getting an IP address
-								 */
-int	  BeRFC1541 = 0;			/* default is InternetDraft mode */
-char *Hostname = NULL;			/* hostname in the DHCP msg for xmit */
+///
+/// variables
+int     BeRFC1541 = 0;        /* default is InternetDraft mode */
+char *Hostname = NULL;        /* hostname in the DHCP msg for xmit */
 
-static char VersionStr[] = "dhcpcd 0.70\n";
+extern Object *app, *win;
+extern BOOL dialup;
+#ifdef NETCONNECT
+extern struct Library *NetConnectBase;
+#endif
 
-void	usage();
+///
 
-
-void
-main(argc, argv)
-int argc;
-char *argv[];
+/// send_dhcp_msg
+struct Interface *send_dhcp_msg(BOOL abort, BOOL success, struct Interface_Data **iface_data)
 {
-	char  ifname[10];			/* interface name */
-	char  pidfile[128];			/* file name in which pid is stored */
-	char *clientId = NULL;		/* ptr to client identifier user specified */
-	int   killFlag = 0;			/* if 1: kill the running proc and exit */
+   struct Interface *iface = NULL;
+   struct MsgPort *reply_port;
+   struct DHCP_Msg *msg;
+   ULONG sig;
 
-	DebugFlag = 0;				/* default is NON debug mode */
-	srand((u_int)time(NULL));
-	signalSetup();
-	umask(0);					/* clear umask */
-	classIDsetup(NULL);			/* setup default class identifier */
-	/* option handling
-	 */
-	while ( *++argv ) {
-		if ( **argv == '-' ) {
-			switch ( argv[0][1] ) {
-			  case 'c':
-				if ( *++argv == NULL ) {
-					usage();
-				}
-				if ( (CommandFile = malloc(strlen(*argv)+1)) == NULL ) {
-					usage();
-				}
-				strcpy(CommandFile, *argv);
-				break;
-			  case 'd':
-				DebugFlag = 1;
-				break;
-			  case 'h':
-				if ( *++argv == NULL ) {
-					usage();
-				}
-				Hostname = smalloc(strlen(*argv)+1);
-				strcpy(Hostname, *argv);
-				break;
-			  case 'i':
-				if ( *++argv == NULL ) {
-					usage();
-				}
-				classIDsetup(*argv); /* overwrite class identifier */
-				break;
-			  case 'I':
-				if ( *++argv == NULL ) {
-					usage();
-				}
-				clientId = *argv;
-				break;
-			  case 'k':
-				killFlag = 1;	/* kill running process and exit */
-				break;
-			  case 'l':
-				++argv;
-				if ( *argv == NULL || **argv == '-' ) {
-					usage();
-				}
-				SuggestLeaseTime = atol(*argv);
-				break;
-			  case 'r':
-				BeRFC1541 = 1;	/* Be RFC1541 compliant */
-				break;
-			  case 'v':
-				fflush(stdout);
-				fputs(VersionStr, stderr);
-				fflush(NULL);
-				exit(0);
-			  default:
-				usage();
-			}
-		} else {
-			break;
-		}
-	}
+   if(FindPort(DHCP_PORTNAME))
+   {
+      if(reply_port = CreatePort(NULL, 0))
+      {
+         if(msg = (struct DHCP_Msg *)AllocVec(sizeof(struct DHCP_Msg), MEMF_ANY | MEMF_CLEAR))
+         {
+            msg->dhcp_Msg.mn_Node.ln_Type = NT_MESSAGE;
+            msg->dhcp_Msg.mn_Length       = sizeof(struct DHCP_Msg);
+            msg->dhcp_Msg.mn_ReplyPort    = reply_port;
+            msg->dhcp_abort               = abort;
+            msg->dhcp_success             = success;
 
-	if ( getuid() != 0 && geteuid() != 0 ) {
-		errQuit("Must be root");
-	}
+            if(safe_put_to_port((struct Message *)msg, DHCP_PORTNAME))
+            {
+               sig = Wait((1 << reply_port->mp_SigBit) | SIGBREAKF_CTRL_C);
 
-	if ( *argv ) {
-		strncpy(ifname, *argv, sizeof(ifname));
-	} else {
-		strncpy(ifname, DEFAULT_IF, sizeof(ifname));
-	}
-	if ( killFlag ) {
-		sprintf(pidfile, PIDFILE, ifname);
-		killCurProc(pidfile);
-	}
-	if ( !DebugFlag ) {
-		sprintf(pidfile, PIDFILE, ifname);
-		daemonInit(pidfile);
-	}
-	logOpen("dhcpcd", LOG_PID, LOG_LOCAL0);
-	ifReset(ifname);			/* reset interface, 'Ifbuf' */
-	clientIDsetup(clientId, ifname);
-	dhcpMsgInit(ifname);
-	dhcpClient();
+               if(sig & (1 << reply_port->mp_SigBit))
+               {
+                  if(GetMsg(reply_port))
+                  {
+                     iface = msg->dhcp_iface;
+                     if(iface_data)
+                        *iface_data = msg->dhcp_iface_data;
+                  }
+               }
+            }
+            FreeVec(msg);
+         }
+         DeletePort(reply_port);
+      }
+   }
+   return(iface);
 }
 
-void
-usage()
+///
+/// DHCPHandler
+SAVEDS ASM VOID DHCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len)
 {
-	fflush(stdout);
-	fputs("Usage: dhcpcd [-c filename] [-d] [-i classIdentifier] [-I clientIdentifier] [-k] [-l leasetime] [ifname]\n",
-		  stderr);
-	fflush(NULL);
-	exit(1);
+   char *clientId = NULL;     /* ptr to client identifier user specified */
+   struct Interface *iface;
+   struct Interface_Data *iface_data, *src;
+   struct Library *SocketBase;
+
+   if(iface = send_dhcp_msg(FALSE, FALSE, &src))
+   {
+#ifdef NETCONNECT
+      SocketBase = NCL_OpenSocket();
+#else
+      SocketBase = OpenLibrary("bsdsocket.library", 0);
+#endif
+      if(SocketBase)
+      {
+         if(iface_data = AllocVec(sizeof(struct Interface_Data), MEMF_ANY))
+         {
+            bcopy(src, iface_data, sizeof(struct Interface_Data));
+            iface_data->ifd_fd = NULL;
+            iface_data->ifd_s2 = NULL;
+
+            srand((u_int)time(NULL));
+            classIDsetup(NULL);        /* setup default class identifier */
+
+            ifReset(SocketBase, iface, iface_data);        /* reset interface, 'Ifbuf' */
+
+            if((iface_data->ifd_flags & IFF_POINTOPOINT) && !dialup)
+            {
+               if((iface_data->ifd_fd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
+               {
+                  // Route "broadcasts" to the point-to-point destination
+                  syslog_AmiTCP(SocketBase, LOG_DEBUG, "dhcp: adding route for broadcast address on p-t-p link.");
+                  route_add(SocketBase, iface_data->ifd_fd, RTF_UP | RTF_GATEWAY|RTF_HOST, INADDR_BROADCAST, iface_data->ifd_dst, TRUE);
+
+                  CloseSocket(iface_data->ifd_fd);
+                  iface_data->ifd_fd = -1;
+               }
+               else
+                  syslog_AmiTCP(SocketBase, LOG_ERR, "socket (DHCPHandler)");
+            }
+
+            if(clientIDsetup(SocketBase, clientId, iface_data))
+            {
+               dhcpMsgInit(SocketBase, iface->if_name);
+               dhcpClient(SocketBase, iface, iface_data);
+            }
+
+            if((iface_data->ifd_flags & IFF_POINTOPOINT) && !dialup)
+            {
+               if((iface_data->ifd_fd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
+               {
+                  // delete the added "broadcasts" route
+                  syslog_AmiTCP(SocketBase, LOG_DEBUG, "dhcp: deleting route for broadcast address on p-t-p link");
+                  route_delete(SocketBase, iface_data->ifd_fd, INADDR_BROADCAST);
+
+                  CloseSocket(iface_data->ifd_fd);
+                  iface_data->ifd_fd = -1;
+               }
+               else
+                  syslog_AmiTCP(SocketBase, LOG_ERR, "socket (DHCPHandler)");
+            }
+
+            FreeVec(iface_data);
+         }
+      }
+      else
+         DoMethod(app, MUIM_Application_PushMethod, win, 3, MUIM_MainWindow_MUIRequest, GetStr(MSG_BT_Abort), GetStr(MSG_TX_ErrorBsdsocketLib));
+
+      iface->if_dhcp_proc = NULL;
+   }
+   send_dhcp_msg(TRUE, FALSE, NULL);
 }
 
+///

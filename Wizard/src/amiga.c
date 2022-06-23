@@ -23,8 +23,8 @@ extern struct MsgPort          *MainPort;
 extern struct IOExtSer         *WriteSER;
 extern struct IOExtSer         *ReadSER;
 extern char serial_in[];
-extern BOOL ReadQueued, use_modem;
-extern Object *win;
+extern BOOL ReadQueued, use_modem, no_carrier;
+extern Object *app, *win;
 extern struct Config Config;
 extern int addr_assign, dst_assign, dns_assign, domainname_assign, gw_assign;
 extern const char AmiTCP_PortName[];
@@ -471,10 +471,6 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
       if(*isp->isp_organisation)
          FPrintf(fh, "Organisation    %ls\n", isp->isp_organisation);
 
-      if(*isp->isp_bootp)
-         FPrintf(fh, "BOOTPServer     %ls\n", isp->isp_bootp);
-      if(isp->isp_flags & ISF_UseBootp)
-         FPrintf(fh, "UseBOOTP           yes\n");
       if(isp->isp_flags & ISF_DontQueryHostname)
          FPrintf(fh, "DontQueryHostname  yes\n");
 
@@ -513,12 +509,12 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
 
       if(iface->if_flags & IFL_PPP)
       {
-         FPrintf(fh, "Sana2ConfigText    sername %ls\\nserunit %ld\\nserbaud 38400\\nlocalipaddress %%a\\ncd yes\\n", config->cnf_serialdevice, config->cnf_serialunit);
+         FPrintf(fh, "Sana2ConfigText    sername %ls\\nserunit %ld\\nserbaud 38400\\nlocalipaddress %%a\\ncd %ls\\n", config->cnf_serialdevice, config->cnf_serialunit, yes_no(!no_carrier));
          if(*isp->isp_login)
             FPrintf(fh, "user %%u\\n");
          if(*isp->isp_password)
             FPrintf(fh, "secret %%p\\n");
-         FPrintf(fh, "cd             yes\\n");
+         FPrintf(fh, "cd             %ls\\n", yes_no(!no_carrier));
          FPrintf(fh, "mppcomp        no\\n");
          FPrintf(fh, "vjcomp         no\\n");
          FPrintf(fh, "bsdcomp        no\\n");
@@ -526,7 +522,7 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
          FPrintf(fh, "eof            no\\n");
          FPrintf(fh, "\n");
          FPrintf(fh, "DefaultPPP\n");
-         FPrintf(fh, "CarrierDetect      yes\n");
+         FPrintf(fh, "CarrierDetect      %ls\n", yes_no(!no_carrier));
          FPrintf(fh, "MPPCompression     no\n");
          FPrintf(fh, "VJCompression      no\n");
          FPrintf(fh, "BSDCompression     no\n");
@@ -535,8 +531,10 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
       }
       else if(iface->if_flags & IFL_SLIP)
       {
-         FPrintf(fh, "Sana2ConfigText    %ls %ld %ld Shared %%a MTU=%ld CD",
+         FPrintf(fh, "Sana2ConfigText    %ls %ld %ld Shared %%a MTU=%ld",
             config->cnf_serialdevice, config->cnf_serialunit, iface->if_MTU);
+         if(!no_carrier)
+            FPrintf(fh, " CD");
          if(config->cnf_flags & CFL_7Wire)
             FPrintf(fh, " 7Wire");
          FPrintf(fh, "\n");
@@ -561,7 +559,7 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
       if(iface->if_configparams && *iface->if_configparams)
          FPrintf(fh, "IfConfigParams  %ls\n", iface->if_configparams);
       FPrintf(fh, "MTU             %ld\n", iface->if_MTU);
-      FPrintf(fh, "CarrierDetect   yes\n");
+      FPrintf(fh, "CarrierDetect   %ls\n", yes_no(!no_carrier));
       if(*iface->if_addr && addr_assign == CNF_Assign_Static)
          FPrintf(fh, "IPAddr          %ls\n", iface->if_addr);
       if(*iface->if_dst && dst_assign == CNF_Assign_Static)
@@ -570,6 +568,8 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
          FPrintf(fh, "Gateway         %ls\n", iface->if_gateway);
       if(*iface->if_netmask)
          FPrintf(fh, "Netmask         %ls\n", iface->if_netmask);
+      if(iface->if_flags & IFL_BOOTP)
+         FPrintf(fh, "UseBOOTP\n");
 
       if(isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript)
       {
@@ -596,6 +596,7 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
    {
       struct   MsgPort         *netinfo_port  = NULL;
       struct   NetInfoReq      *netinfo_req   = NULL;
+      Object *tmp_win, *tmp_obj;
 
       if(netinfo_port = (struct MsgPort *)CreateMsgPort())
       {
@@ -658,6 +659,21 @@ BOOL save_config(STRPTR file, struct ISP *isp, struct Interface *iface, struct C
                      CloseLibrary(UserGroupBase);
                      UserGroupBase = NULL;
                   }
+
+                  // a trick to update amitcp:db/utm.conf
+                  if(tmp_win = WindowObject,
+                     WindowContents, VGroup,
+                        Child, tmp_obj = MUI_NewObject("AmiTCP:MUI/User.mcp", TAG_DONE),
+                     End,
+                  End)
+                  {
+                     DoMethod(app, OM_ADDMEMBER, tmp_win);
+                     DoMethod(tmp_obj, MUIM_Settingsgroup_ConfigToGadgets, NULL);
+                     DoMethod(tmp_obj, MUIM_Settingsgroup_GadgetsToConfig, NULL);
+                     DoMethod(app, OM_REMMEMBER, tmp_win);
+                     MUI_DisposeObject(tmp_win);
+                  }
+
                   ReloadUserList();
                }
 
@@ -697,11 +713,11 @@ VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Conf
    if(addr_assign == CNF_Assign_Static)
       FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_IPAddr), iface->if_addr);
    else
-      FPrintf(fh, "%-15ls %ls (%ls %ls)\n", GetStr(MSG_LA_IPAddr), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (addr_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
+      FPrintf(fh, "%-15ls %ls (%ls %ls)\n", GetStr(MSG_LA_IPAddr), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (addr_assign == CNF_Assign_BOOTP ? "BOOTP" : "ICPC"));
    if(dst_assign == CNF_Assign_Static)
       FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_Destination), iface->if_dst);
    else
-      FPrintf(fh, "15%ls %ls (%ls %ls)\n", GetStr(MSG_LA_Destination), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (dst_assign == CNF_Assign_BootP ? "BOOTP" : "ICPC"));
+      FPrintf(fh, "15%ls %ls (%ls %ls)\n", GetStr(MSG_LA_Destination), GetStr(MSG_TX_Dynamic), GetStr(MSG_TX_ObtainedBy), (dst_assign == CNF_Assign_BOOTP ? "BOOTP" : "ICPC"));
    if(gw_assign == CNF_Assign_Static && *iface->if_gateway)
       FPrintf(fh, "%-15ls %ls\n", GetStr(MSG_LA_Gateway), iface->if_gateway);
    FPrintf(fh, "%-15ls %ls\n\n", GetStr(MSG_LA_Netmask), iface->if_netmask);
@@ -713,7 +729,7 @@ VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Conf
       server = (struct ServerEntry *)isp->isp_domainnames.mlh_Head;
       while(server->se_node.mln_Succ)
       {
-         FPrintf(fh, "%-15ls %ls (%ls %ls)\n\n", GetStr(MSG_LA_DomainName), server->se_name, GetStr(MSG_TX_ObtainedBy), (domainname_assign == CNF_Assign_BootP ? "BOOTP" : "DNSQuery"));
+         FPrintf(fh, "%-15ls %ls (%ls %ls)\n\n", GetStr(MSG_LA_DomainName), server->se_name, GetStr(MSG_TX_ObtainedBy), (domainname_assign == CNF_Assign_BOOTP ? "BOOTP" : "DNSQuery"));
          server = (struct ServerEntry *)server->se_node.mln_Succ;
       }
    }
@@ -728,7 +744,7 @@ VOID print_config(BPTR fh, struct ISP *isp, struct Interface *iface, struct Conf
          if(dns_assign == CNF_Assign_Root)
             FPrintf(fh, "%-15ls %ls (Root DNS)\n", GetStr(MSG_LA_DNSIPAddr), server->se_name);
          else
-            FPrintf(fh, "%-15ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNSIPAddr), server->se_name, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BootP ? "BOOTP" : "MSDNS"));
+            FPrintf(fh, "%-15ls %ls (%ls %ls)\n", GetStr(MSG_LA_DNSIPAddr), server->se_name, GetStr(MSG_TX_ObtainedBy), (dns_assign == CNF_Assign_BOOTP ? "BOOTP" : "MSDNS"));
          server = (struct ServerEntry *)server->se_node.mln_Succ;
       }
    }

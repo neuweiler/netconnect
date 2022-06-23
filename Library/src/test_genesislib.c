@@ -12,6 +12,12 @@ void main()
       struct User *user;
       char buffer[81];
 
+      Printf("IsOnline(0) : %ld\n", IsOnline(NULL));
+      Delay(50);
+      Printf("IsOnline(IOC_AskUser) : %ld\n", IsOnline(IOC_AskUser));
+      Delay(50);
+      Printf("IsOnline(IOC_Force) : %ld\n", IsOnline(IOC_Force));
+
       Printf("\nbrowsing username list:\n");
       while(GetUserName(pos++, buffer, 80))
          Printf("user: %ls\n", buffer);
@@ -79,8 +85,6 @@ void main()
       }
       else
          Printf("GetUser(\"root\" was NOT successful.\n");
-
-      Printf("is any interface online ?  %ls\n", (IsOnline(NULL) ? "yes" : "no"));
 
       CloseLibrary((struct Library *) GenesisBase);
    }

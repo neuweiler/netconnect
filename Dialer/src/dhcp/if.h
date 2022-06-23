@@ -24,27 +24,13 @@
 #  include <netinet/in.h>
 #endif
 
-#define isClassA(_addr)	(!(_addr & htonl(0x80000000)))
-#define isClassB(_addr)	((_addr & htonl(0xc0000000)) == htonl(0x80000000))
-#define isClassC(_addr)	((_addr & htonl(0xe0000000)) == htonl(0xc0000000))
-
-struct ifinfo {
-	char ifname[IFNAMSIZ];
-	u_long	addr;				/* network byte order */
-	u_long	mask;				/* network byte order */
-	u_long	bcast;				/* network byte order */
-	u_char	haddr[6];
-	short	flags;
-};
-
-/* global variables in if.c
- */
-extern struct ifinfo Ifbuf;
-
+#define isClassA(_addr) (!(_addr & htonl(0x80000000)))
+#define isClassB(_addr) ((_addr & htonl(0xc0000000)) == htonl(0x80000000))
+#define isClassC(_addr) ((_addr & htonl(0xe0000000)) == htonl(0xc0000000))
 
 /* function prototypes
  */
-void	ifReset(char *ifname);
+void  ifReset(struct Library *SocketBase, struct Interface *iface, struct Interface_Data *iface_data);
 /*  requires: 'ifname' points interface name which is going to be reset
  *  effects:  it resets the specified interface as follows:
  *             ifaddr: 0.0.0.0, netmask: 0.0.0.0, bcast: 255.255.255.255,
@@ -53,7 +39,7 @@ void	ifReset(char *ifname);
  *  return:   Nothing
  */
 
-void	ifConfig(struct ifinfo *ifbuf);
+BOOL  ifConfig(struct Library *SocketBase, struct Interface_Data *iface_data);
 /*  requires: 'ifbuf' pointing the structure containing interface information
  *            to be set.
  *  effects:  it sets interface's IP addr, netmask, bcast addr, flags
@@ -63,7 +49,7 @@ void	ifConfig(struct ifinfo *ifbuf);
  *  return:   Nothing
  */
 
-void	ifDown(struct ifinfo *ifbuf);
+void  ifDown(struct Library *SocketBase, struct Interface_Data *iface_data);
 /*  requires: 'ifbuf' pointing the structure containing interface information
  *            to be down.
  *  effects:  it makes the specified interface dwon.
@@ -71,39 +57,32 @@ void	ifDown(struct ifinfo *ifbuf);
  *  return:   Nothing
  */
 
-u_long	getNaturalMask(u_long inaddr);
+u_long   getNaturalMask(struct Library *SocketBase, u_long inaddr);
 /*  requires: 'inaddr' containing IP address (network byte order).
  *  effects:  it returns natural netmask of 'inaddr'.
  *  modifies: Nothing
  *  return:   Nothing
  */
 
-u_long	getNaturalBcast(u_long inaddr);
+u_long   getNaturalBcast(u_long inaddr);
 /*  requires: 'inaddr' containing IP address (network byte order).
  *  effects:  it returns natural broadcast address of 'inaddr'.
  *  modifies: Nothing
  *  return:   Nothing
  */
 
-void	saveIfInfo(struct ifinfo *ifbuf);
+void  saveIfInfo(struct Library *SocketBase, struct Interface_Data *iface_data);
 /*  requires: 'ifbuf' pointing to the structure containing interface info.
  *  effects:  it saves '*ifbuf' onto the file DHCP_CACHE_FILE
  *  modifies: Nothing
  *  return:   Nothing
  */
 
-void	getIfInfo(struct ifinfo *ifbuf);
-/*  requires: 'ifbuf' pointing to the structure where interface info. is saved
- *  effects:  it saves interface information to '*ifbuf'
- *  modifies: Nothing
- *  return:   Nothing
- */
-
-void	setDefRoute(const char *routers, struct ifinfo *ifinfo);
+void  setDefRoute(struct Library *SocketBase, const char *routers, struct Interface_Data *iface_datao);
 /*  requires: 'routers' pointing to the length field of the router option in
  *            a DHCP message. So the addresses are stored in the network byte
  *            order.
- *            'ifinfo' containing the interface name, at least.
+ *            'iface_data' containing the interface name, at least.
  *  effects:  it sets the default route. 
  *  modifies: Nothing
  *  return:   Nothing

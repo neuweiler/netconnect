@@ -15,10 +15,7 @@ struct   Library   *MUIMasterBase = NULL;
 struct   Library   *GenesisBase   = NULL;
 struct   Library   *SocketBase    = NULL;
 struct   Library   *UserGroupBase = NULL;
-
-#ifdef NETCONNECT
 struct   Library   *NetConnectBase= NULL;
-#endif
 
 ///
 /// Other data
@@ -51,7 +48,7 @@ char serial_buffer_old1[81];
 char serial_buffer_old2[81];
 WORD ser_buf_pos, key_buf_pos;
 BOOL keyboard_input = FALSE;
-BOOL use_loginscript, use_modem, no_picture, dialup = FALSE;
+BOOL use_loginscript, use_modem, no_picture, dialup = FALSE, no_carrier = FALSE;
 
 ULONG *colors[NUM_PAGES];
 UBYTE *bodies[NUM_PAGES];

@@ -6,7 +6,7 @@
 #include "protos.h"
 
 ///
-/// external variable
+/// external variables
 extern Object *win;
 extern struct MUI_CustomClass  *CL_MainWindow;
 
@@ -62,7 +62,10 @@ SAVEDS ASM APTR connect_rxfunc(register __a0 struct Hook *hook, register __a2 Ob
          }
       }
       else
+      {
          DoMethod(win, MUIM_MainWindow_OnOffline, TRUE);
+         return(RETURN_OK);
+      }
    }
 
    DoMethod(win, MUIM_MainWindow_PutOnline);
@@ -102,7 +105,10 @@ SAVEDS ASM APTR disconnect_rxfunc(register __a0 struct Hook *hook, register __a2
          }
       }
       else
+      {
          DoMethod(win, MUIM_MainWindow_OnOffline, FALSE);
+         return(RETURN_OK);
+      }
    }
 
    DoMethod(win, MUIM_MainWindow_PutOffline);
@@ -112,24 +118,40 @@ SAVEDS ASM APTR disconnect_rxfunc(register __a0 struct Hook *hook, register __a2
 
 ///
 
-/// status_rxfunc
-SAVEDS ASM APTR status_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
+/// isonline_rxfunc
+SAVEDS ASM APTR isonline_rxfunc(register __a0 struct Hook *hook, register __a2 Object *appl, register __a1 ULONG *arg)
 {
    struct MainWindow_Data *data = INST_DATA(CL_MainWindow->mcc_Class, win);
-   int online = -1;
+   int online = 0;  // 0 = offline, 1 = online, 2 = connecting
 
    if(data->isp.isp_ifaces.mlh_TailPred != (struct MinNode *)&data->isp.isp_ifaces)
    {
       struct Interface *iface;
 
-      if(arg[0])
+      if(arg[1])  // is any iface online ?
+      {
+         iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
+         while(iface->if_node.mln_Succ && !online)
+         {
+            if(iface->if_flags & IFL_IsOnline)
+               online = 1;
+            else if(iface->if_flags & IFL_PutOnline)
+               online = 2;
+
+            iface = (struct Interface *)iface->if_node.mln_Succ;
+         }
+      }
+      else if(arg[0])
       {
          iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
          while(iface->if_node.mln_Succ)
          {
             if(!stricmp(iface->if_name, (char *)arg[0]))
             {
-               online = (iface->if_flags & IFL_IsOnline);
+               if(iface->if_flags & IFL_IsOnline)
+                  online = 1;
+               else if(iface->if_flags & IFL_PutOnline)
+                  online = 2;
                break;
             }
             iface = (struct Interface *)iface->if_node.mln_Succ;
@@ -139,7 +161,12 @@ SAVEDS ASM APTR status_rxfunc(register __a0 struct Hook *hook, register __a2 Obj
       {
          iface = (struct Interface *)data->isp.isp_ifaces.mlh_Head;
          if(iface->if_node.mln_Succ)
-            online = (iface->if_flags & IFL_IsOnline);
+         {
+            if(iface->if_flags & IFL_IsOnline)
+               online = 1;
+            else if(iface->if_flags & IFL_PutOnline)
+               online = 2;
+         }
       }
    }
 

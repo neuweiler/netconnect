@@ -24,6 +24,7 @@ extern WORD ser_buf_pos, key_buf_pos;
 extern struct   MsgPort        *SerReadPort;
 extern struct   IOExtSer       *SerReadReq, *SerWriteReq;
 extern struct ISP ISP;
+extern BOOL no_carrier;
 
 ///
 
@@ -138,6 +139,7 @@ ULONG LoginScript_SerialInput(struct IClass *cl, Object *obj, Msg msg)
                      if(data->ihnode_added)
                      {
                         DoMethod(app, MUIM_Application_RemInputHandler, &data->ihnode);
+                        serial_stopread();
                         data->ihnode_added = FALSE;
                      }
                      DoMethod(obj, MUIM_LoginScript_GoOnline);
@@ -289,15 +291,30 @@ ULONG LoginScript_Dial(struct IClass *cl, Object *obj, struct MUIP_LoginScript_D
    sprintf(buffer1, GetStr(MSG_TX_Dialing), buffer2, dialing_try);
    DoMethod(data->TR_Terminal, TCM_WRITE, buffer1, strlen(buffer1));
 
-   serial_send("AAT\r", -1);
+   if(data->ihnode_added)  // remove ihnode so we can do serial_waitfor()
+   {
+      DoMethod(app, MUIM_Application_RemInputHandler, &data->ihnode);
+      serial_stopread();
+      data->ihnode_added = FALSE;
+   }
+
+   serial_send("\r", -1);
    Delay(10);
-   serial_send("ATZ\r", -1);
-   Delay(20);
+   serial_send("AAT\r", -1);
+   serial_waitfor("OK", NULL, NULL, 1);
+   DoMethod(data->TR_Terminal, TCM_WRITE, serial_buffer, strlen(serial_buffer));
+   Delay(10);
 
    EscapeString(buffer1, Config.cnf_initstring);
    strcat(buffer1, "\r");
    serial_send(buffer1, -1);
+   serial_waitfor("OK", NULL, NULL, 3);
+   DoMethod(data->TR_Terminal, TCM_WRITE, serial_buffer, strlen(serial_buffer));
    Delay(10);
+
+   serial_startread(serial_in, 1);
+   DoMethod(app, MUIM_Application_AddInputHandler, &data->ihnode);
+   data->ihnode_added = TRUE;
 
    EscapeString(buffer1, Config.cnf_dialprefix);
    strcat(buffer1, buffer2);
@@ -317,6 +334,7 @@ ULONG LoginScript_GoOnline(struct IClass *cl, Object *obj, Msg msg)
    {
       if(!(MUI_Request(app, win, NULL, NULL, GetStr(MSG_ReqBT_ContinueAbort), GetStr(MSG_TX_WarningNoCarrierOnline))))
          return(NULL);
+      no_carrier = TRUE;
    }
 
    if(data->ihnode_added)

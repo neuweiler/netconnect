@@ -1,0 +1,7 @@
+##base _GenesisLoggerBase
+##bias 30
+##public
+GL_StartLogger(number)(a0)
+GL_StopLogger(handle)(a0)
+##end
+

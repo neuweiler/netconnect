@@ -4,6 +4,8 @@
 #include "/Genesis.h"
 #include "Strings.h"
 #include "protos.h"
+#include "/genesis.lib/pragmas/genesislogger_lib.h"
+#include "/genesis.lib/proto/genesislogger.h"
 #include "mui.h"
 #include "mui_MainWindow.h"
 #include "mui_Online.h"
@@ -22,6 +24,7 @@
 /// external variables
 extern int errno;
 extern Object *status_win;
+extern struct Library *GenesisLoggerBase;
 extern struct MUI_CustomClass *CL_Online;
 extern struct MUI_CustomClass *CL_MainWindow;
 extern struct IOExtSer *SerWriteReq;
@@ -32,7 +35,7 @@ extern BOOL dialup, use_reconnect;
 ///
 
 /// route_add
-int route_add(int fd, short flags, u_long from, u_long to, BOOL force)
+int route_add(struct Library *SocketBase, int fd, short flags, u_long from, u_long to, BOOL force)
 {
    struct ortentry rte;
 
@@ -55,14 +58,14 @@ again:
          force = 0; /* try only once again */
          if(ioctl(fd, SIOCDELRT, (char *)&rte) < 0)
          {
-            syslog_AmiTCP(LOG_ERR, "route_add: SIOCDELRT: %m");
+            syslog_AmiTCP(SocketBase, LOG_ERR, "route_add: SIOCDELRT: %m");
             return(errno);
          }
          goto again;
       }
       else
       {
-         syslog_AmiTCP(LOG_ERR, "route_add: SIOCADDRT: %m");
+         syslog_AmiTCP(SocketBase, LOG_ERR, "route_add: SIOCADDRT: %m");
          return(errno);
       }
    }
@@ -71,7 +74,7 @@ again:
 
 ///
 /// route_delete
-int route_delete(int fd, u_long from)
+int route_delete(struct Library *SocketBase, int fd, u_long from)
 {
    struct ortentry rte = { 0 };
 
@@ -87,7 +90,7 @@ int route_delete(int fd, u_long from)
    {
       if(errno != ESRCH) /* requested route not found */
       {
-         syslog_AmiTCP(LOG_ERR, "route_delete: SIOCDELRT: %m");
+         syslog_AmiTCP(SocketBase, LOG_ERR, "route_delete: SIOCDELRT: %m");
       }
       return(errno);
    }
@@ -97,7 +100,7 @@ int route_delete(int fd, u_long from)
 ///
 
 /// iface_alloc
-struct Interface_Data *iface_alloc(VOID)
+struct Interface_Data *iface_alloc(struct Library *SocketBase)
 {
    struct Interface_Data *iface_data;
  
@@ -106,8 +109,8 @@ struct Interface_Data *iface_alloc(VOID)
       iface_data->ifd_fd = socket(AF_INET, SOCK_DGRAM, 0);
       if(iface_data->ifd_fd < 0)
       {
-         syslog_AmiTCP(LOG_ERR, "iface_alloc: socket(): %m");
-         iface_free(iface_data);
+         syslog_AmiTCP(SocketBase, LOG_ERR, "iface_alloc: socket(): %m");
+         iface_free(SocketBase, iface_data);
          return(NULL);
       }
    }
@@ -116,7 +119,7 @@ struct Interface_Data *iface_alloc(VOID)
 
 ///
 /// iface_free
-VOID iface_free(struct Interface_Data *iface_data)
+VOID iface_free(struct Library *SocketBase, struct Interface_Data *iface_data)
 {
    if(iface_data->ifd_fd >= 0)
       CloseSocket(iface_data->ifd_fd);
@@ -179,8 +182,15 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
 
                serial_send("\r", -1);
                Delay(10);
-               serial_send("AAT\r", -1);
-               serial_waitfor("OK", 1);
+               serial_send("AT\r", -1);
+               if(!serial_waitfor("OK", 1))
+               {
+                  if(data->abort)
+                     return(FALSE);
+                  Delay(10);
+                  serial_send("AT\r", -1);
+                  serial_waitfor("OK", 1);
+               }
                Delay(10);
                if(data->abort)
                   return(FALSE);
@@ -198,7 +208,12 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
 
                sprintf(buf, "%ls%ls%ls\r", conf->cnf_dialprefix, number_ptr, conf->cnf_dialsuffix);
                serial_send(buf, -1);
-               ok = serial_waitfor("CONNECT", 90);
+               if(ok = serial_waitfor("CONNECT", 90))
+               {
+                  if(GenesisLoggerBase)
+                     iface->if_loggerhandle = GL_StartLogger(number_ptr);
+                  break;
+               }
                Delay(10);
                if(data->abort)
                   return(FALSE);
@@ -262,6 +277,7 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
       }
       else if(script_line->sl_command == SL_Pause)
          Delay(atol(script_line->sl_contents) * 50);
+
       script_line = (struct ScriptLine *)script_line->sl_node.mln_Succ;
    }
    return(success);
@@ -269,7 +285,7 @@ BOOL iface_runscript(struct Interface_Data *iface_data, struct Interface *iface,
 
 ///
 /// iface_init
-BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp, struct Config *conf)
+BOOL iface_init(struct Library *SocketBase, struct Interface_Data *iface_data, struct Interface *iface, struct ISP *isp, struct Config *conf)
 {
    struct Online_Data *data = INST_DATA(CL_Online->mcc_Class, status_win);
 
@@ -278,13 +294,13 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
       // check the name & copy it
       if(strlen(iface->if_name) >= IFNAMSIZ)
       {
-         syslog_AmiTCP(LOG_ERR, "iface_init: interface name too long, max is 15 characters");
+         syslog_AmiTCP(SocketBase, LOG_ERR, "iface_init: interface name too long, max is 15 characters");
          return(FALSE);
       }
    }
    else
    {
-      syslog_AmiTCP(LOG_ERR, "iface_init: no infterface name given");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_init: no infterface name given");
       return(FALSE);
    }
 
@@ -357,21 +373,21 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
             Close(fh);
          }
          else
-            syslog_AmiTCP(LOG_CRIT, "iface_init: could not open %ls for writing!", iface->if_sana2config);
+            syslog_AmiTCP(SocketBase, LOG_CRIT, "iface_init: could not open %ls for writing!", iface->if_sana2config);
       }
 
       if(data->abort)   goto fail;
 
       if(!(iface_data->ifd_s2 = sana2_create(iface->if_sana2device, iface->if_sana2unit)))
       {
-         syslog_AmiTCP(LOG_CRIT, "iface_init: could not open %ls unit %ld.", iface->if_sana2device, iface->if_sana2unit);
+         syslog_AmiTCP(SocketBase, LOG_CRIT, "iface_init: could not open %ls unit %ld.", iface->if_sana2device, iface->if_sana2unit);
          return(FALSE);
       }
       
       // query device information
       if(sana2_devicequery(iface_data->ifd_s2) == FALSE)
       {
-         syslog_AmiTCP(LOG_ERR, "iface_init: could not get device information of %ls (unit %ld).", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
+         syslog_AmiTCP(SocketBase, LOG_ERR, "iface_init: could not get device information of %ls (unit %ld).", iface_data->ifd_s2->s2_name, iface_data->ifd_s2->s2_unit);
          goto fail;
       }
       // Get Sana-II hardware type
@@ -384,23 +400,25 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
          iface_data->ifd_s2->s2_hwtype == S2WireType_SLIP ||
          iface_data->ifd_s2->s2_hwtype == S2WireType_CSLIP)
       {
+         iface->if_flags |= IFL_IsSerial;
+
          if(!use_reconnect && (isp->isp_loginscript.mlh_TailPred != (struct MinNode *)&isp->isp_loginscript))
          {
             // dial with given dialscript
 
-            if(!iface_offline(iface_data))
+            if(!iface_offline(SocketBase, iface_data))
                goto fail;
 
             if(data->abort)   goto fail;
 
-            if(!serial_create())
+            if(!serial_create(SocketBase))
                goto fail;
 
             if(!conf->cnf_flags & CFL_IgnoreDSR)
             {
                if(!serial_dsr())
                {
-                  syslog_AmiTCP(LOG_ERR, "iface_init: no DSR signal present.");
+                  syslog_AmiTCP(SocketBase, LOG_ERR, "iface_init: no DSR signal present.");
                   goto fail;
                }
             }
@@ -412,17 +430,17 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
          }
          if(data->abort)   goto fail;
 
-         if(!iface_online(iface_data))
+         if(!iface_online(SocketBase, iface_data))
             goto fail;
 
          if(data->abort)   goto fail;
 
          // Query the hardware addresses of the Sana-II device
-         if(!sana2_getaddresses(iface_data->ifd_s2, iface))
-            syslog_AmiTCP(LOG_WARNING, "iface_init: sana2_getaddresses() failed");
+         if(!sana2_getaddresses(SocketBase, iface_data->ifd_s2, iface))
+            syslog_AmiTCP(SocketBase, LOG_WARNING, "iface_init: sana2_getaddresses() failed");
       }
       else
-         iface_online(iface_data);
+         iface_online(SocketBase, iface_data);
 
        // The Sana2 device needs to be closed here (before AmiTCP gets to know
        // about the device) because of the bugs of the original CBM slip-driver
@@ -436,21 +454,21 @@ BOOL iface_init(struct Interface_Data *iface_data, struct Interface *iface, stru
    if(data->abort)   goto fail;
 
    // get the interface address
-   if(iface_getaddr(iface_data, &iface_data->ifd_addr))
+   if(iface_getaddr(SocketBase, iface_data, &iface_data->ifd_addr))
       goto fail;
    // Fetch the interface flags
-   if(iface_getflags(iface_data, &iface_data->ifd_flags))
+   if(iface_getflags(SocketBase, iface_data, &iface_data->ifd_flags))
       goto fail;
    // get interface dst/broadcast address
-   if(iface_getdstaddr(iface_data, &iface_data->ifd_dst))
+   if(iface_getdstaddr(SocketBase, iface_data, &iface_data->ifd_dst))
       goto fail;
    // get interface netmask
-   if(iface_getnetmask(iface_data, &iface_data->ifd_netmask))
+   if(iface_getnetmask(SocketBase, iface_data, &iface_data->ifd_netmask))
       goto fail;
    // get interface mtu
-   if(iface_getmtu(iface_data, (int *)&iface_data->ifd_MTU))
+   if(iface_getmtu(SocketBase, iface_data, (int *)&iface_data->ifd_MTU))
       goto fail;
-   if(iface_getlinkinfo(iface_data))
+   if(iface_getlinkinfo(SocketBase, iface_data))
       goto fail;
 
    return(TRUE);
@@ -481,7 +499,7 @@ VOID iface_close_sana2(struct Interface_Data *iface_data)
 
 ///
 /// iface_prepare_bootp
-BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf)
+BOOL iface_prepare_bootp(struct Library *SocketBase, struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf)
 {
    LONG on = 1;
 
@@ -503,24 +521,24 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
    // p-to-p interfaces.
    //
 
-   if(iface_setaddr(iface_data, inet_addr(iface->if_addr)))
+   if(iface_setaddr(SocketBase, iface_data, inet_addr(iface->if_addr)))
       return(FALSE);
    iface_data->ifd_addr = inet_addr(iface->if_addr);
-   iface_getdstaddr(iface_data, &iface_data->ifd_dst);      // These may also have changed,
-   iface_getnetmask(iface_data, &iface_data->ifd_netmask);  //   when the address is changed
+   iface_getdstaddr(SocketBase, iface_data, &iface_data->ifd_dst);      // These may also have changed,
+   iface_getnetmask(SocketBase, iface_data, &iface_data->ifd_netmask);  //   when the address is changed
 
    // Mark the socket to allow broadcasting. Note that this is now done for point-to-point interfaces as well.
    if(setsockopt(iface_data->ifd_fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0)
-      syslog_AmiTCP(LOG_ERR, "iface_prepare_bootp: setsockopt(SO_BROADCAST): %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_prepare_bootp: setsockopt(SO_BROADCAST): %m");
    else
-      syslog_AmiTCP(LOG_DEBUG, "iface_prepare_bootp: set socket to allow broadcasts.");
+      syslog_AmiTCP(SocketBase, LOG_DEBUG, "iface_prepare_bootp: set socket to allow broadcasts.");
 
    if(iface_data->ifd_flags & IFF_BROADCAST)
    {
       if(!*iface->if_addr || *iface->if_netmask)
       {
          // Set up the netmask if IP is 0.0.0.0 or mask is explicitly given.
-         if(iface_setnetmask(iface_data, inet_addr(iface->if_netmask)))
+         if(iface_setnetmask(SocketBase, iface_data, inet_addr(iface->if_netmask)))
          return(FALSE);
       }
 
@@ -534,7 +552,7 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
          else
             addr = inet_addr(iface->if_dst);
       
-         if(iface_setdstaddr(iface_data, addr))
+         if(iface_setdstaddr(SocketBase, iface_data, addr))
             return FALSE;
       }
    }
@@ -557,7 +575,7 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
          addr = inet_addr(iface->if_dst);   // is different due to argument constraints
 
       // set up the destination address
-      if(iface_setdstaddr(iface_data, addr))
+      if(iface_setdstaddr(SocketBase, iface_data, addr))
          return(FALSE);
       iface_data->ifd_dst = addr;
 
@@ -565,8 +583,8 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
       if(!dialup)
       {
          // Route "broadcasts" to the point-to-point destination
-         syslog_AmiTCP(LOG_DEBUG, "iface_prepare_bootp: adding route for broadcast address on p-t-p link.");
-         if(route_add(FD, RTF_UP | RTF_GATEWAY|RTF_HOST, INADDR_BROADCAST, iface_data->ifd_dst, TRUE))
+         syslog_AmiTCP(SocketBase, LOG_DEBUG, "iface_prepare_bootp: adding route for broadcast address on p-t-p link.");
+         if(route_add(SocketBase, FD, RTF_UP | RTF_GATEWAY|RTF_HOST, INADDR_BROADCAST, iface_data->ifd_dst, TRUE))
             return(FALSE);
       }
    }
@@ -589,7 +607,7 @@ BOOL iface_prepare_bootp(struct Interface_Data *iface_data, struct Interface *if
 
 ///
 /// iface_cleanup_bootp
-VOID iface_cleanup_bootp(struct Interface_Data *iface_data, struct Config *conf)
+VOID iface_cleanup_bootp(struct Library *SocketBase, struct Interface_Data *iface_data, struct Config *conf)
 {
    if(iface_data->ifd_flags & IFF_POINTOPOINT)
    {
@@ -597,17 +615,17 @@ VOID iface_cleanup_bootp(struct Interface_Data *iface_data, struct Config *conf)
       if(!dialup)
       {
          // delete the added "broadcasts" route
-         syslog_AmiTCP(LOG_DEBUG, "iface_cleanup_bootp: deleting route for broadcast address on p-t-p link");
-         route_delete(iface_data->ifd_fd, INADDR_BROADCAST);
+         syslog_AmiTCP(SocketBase, LOG_DEBUG, "iface_cleanup_bootp: deleting route for broadcast address on p-t-p link");
+         route_delete(SocketBase, iface_data->ifd_fd, INADDR_BROADCAST);
       }
    }
 }
 
 ///
 /// iface_online
-BOOL iface_online(struct Interface_Data *iface_data)
+BOOL iface_online(struct Library *SocketBase, struct Interface_Data *iface_data)
 {
-   if(sana2_online(iface_data->ifd_s2) == FALSE)
+   if(sana2_online(SocketBase, iface_data->ifd_s2) == FALSE)
       return(FALSE);
 
    return(TRUE);
@@ -615,9 +633,9 @@ BOOL iface_online(struct Interface_Data *iface_data)
 
 ///
 /// iface_offline
-BOOL iface_offline(struct Interface_Data *iface_data)
+BOOL iface_offline(struct Library *SocketBase, struct Interface_Data *iface_data)
 {
-   if(sana2_offline(iface_data->ifd_s2) == FALSE)
+   if(sana2_offline(SocketBase, iface_data->ifd_s2) == FALSE)
       return(FALSE);
 
    return(TRUE);
@@ -625,7 +643,7 @@ BOOL iface_offline(struct Interface_Data *iface_data)
 
 ///
 /// iface_config
-BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf)
+BOOL iface_config(struct Library *SocketBase, struct Interface_Data *iface_data, struct Interface *iface, struct Config *conf)
 {
    // Delete the old configuration
    memset(&IFR.ifr_addr, 0, sizeof(IFR.ifr_addr));
@@ -639,7 +657,7 @@ BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, st
       if(errno != EADDRNOTAVAIL)
       {
          // no previous address ?
-         syslog_AmiTCP(LOG_ERR, "iface_config: SIOCDIFADDR: %m");
+         syslog_AmiTCP(SocketBase, LOG_ERR, "iface_config: SIOCDIFADDR: %m");
          return(FALSE);
       }
    }
@@ -672,13 +690,13 @@ BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, st
    // add IF alias
    if(ioctl(FD, SIOCAIFADDR, (char *)&IFRA) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_config: SIOCAIFADDR: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_config: SIOCAIFADDR: %m");
       return(FALSE);
    }
   
    // Set the interface MTU if explicitly set
    if(iface->if_MTU > 0 && iface->if_MTU != iface_data->ifd_MTU)
-      iface_setmtu(iface_data, iface->if_MTU);
+      iface_setmtu(SocketBase, iface_data, iface->if_MTU);
 
    return(TRUE);
 }
@@ -686,13 +704,13 @@ BOOL iface_config(struct Interface_Data *iface_data, struct Interface *iface, st
 ///
 
 /// iface_getaddr
-int iface_getaddr(struct Interface_Data *iface_data, u_long *addr)
+int iface_getaddr(struct Library *SocketBase, struct Interface_Data *iface_data, u_long *addr)
 {
    if(ioctl(FD, SIOCGIFADDR, (char *)&IFR) < 0)
    {
       if (errno != EADDRNOTAVAIL)
       {
-         syslog_AmiTCP(LOG_ERR, "iface_getaddr: SIOCGIFADDR: %m");
+         syslog_AmiTCP(SocketBase, LOG_ERR, "iface_getaddr: SIOCGIFADDR: %m");
          return(errno);
       }
       *addr = INADDR_ANY;
@@ -704,7 +722,7 @@ int iface_getaddr(struct Interface_Data *iface_data, u_long *addr)
 
 ///
 /// iface_setaddr
-int iface_setaddr(struct Interface_Data *iface_data, u_long addr)
+int iface_setaddr(struct Library *SocketBase, struct Interface_Data *iface_data, u_long addr)
 {
    memset(&IFR.ifr_addr, 0, sizeof(IFR.ifr_addr));
    IFR.ifr_addr.sa_family  = AF_INET;
@@ -713,7 +731,7 @@ int iface_setaddr(struct Interface_Data *iface_data, u_long addr)
 
    if(ioctl(FD, SIOCSIFADDR, (char *)&IFR) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_setaddr: SIOCSIFADDR: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_setaddr: SIOCSIFADDR: %m");
       return(errno);
    }
    return(0);
@@ -721,7 +739,7 @@ int iface_setaddr(struct Interface_Data *iface_data, u_long addr)
 
 ///
 /// iface_getdstaddr
-int iface_getdstaddr(struct Interface_Data *iface_data, u_long *addr)
+int iface_getdstaddr(struct Library *SocketBase, struct Interface_Data *iface_data, u_long *addr)
 {
    // get interface dst/broadcast address
    u_long request;
@@ -741,7 +759,7 @@ int iface_getdstaddr(struct Interface_Data *iface_data, u_long *addr)
    {
       if(errno != EADDRNOTAVAIL)
       {
-         syslog_AmiTCP(LOG_ERR, "iface_getdstaddr: SIOCGIF(DST/BRD)ADDR: %m");
+         syslog_AmiTCP(SocketBase, LOG_ERR, "iface_getdstaddr: SIOCGIF(DST/BRD)ADDR: %m");
          return(errno);
       }
       *addr = INADDR_ANY;
@@ -753,7 +771,7 @@ int iface_getdstaddr(struct Interface_Data *iface_data, u_long *addr)
 
 ///
 /// iface_setdstaddr
-int iface_setdstaddr(struct Interface_Data *iface_data, u_long addr)
+int iface_setdstaddr(struct Library *SocketBase, struct Interface_Data *iface_data, u_long addr)
 {
    u_long request;
 
@@ -771,7 +789,7 @@ int iface_setdstaddr(struct Interface_Data *iface_data, u_long addr)
 
    if(ioctl(FD, request, (char *)&IFR) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_setdstaddr: SIOCGIF(DST/BRD)ADDR: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_setdstaddr: SIOCGIF(DST/BRD)ADDR: %m");
       return(errno);
    }
    return(0);
@@ -779,7 +797,7 @@ int iface_setdstaddr(struct Interface_Data *iface_data, u_long addr)
 
 ///
 /// iface_getnetmask
-int iface_getnetmask(struct Interface_Data *iface_data, u_long *addr)
+int iface_getnetmask(struct Library *SocketBase, struct Interface_Data *iface_data, u_long *addr)
 {
    if(!((*(BYTE *)((struct Library *)SocketBase + 1)) & 0x02))
       return(187);
@@ -788,7 +806,7 @@ int iface_getnetmask(struct Interface_Data *iface_data, u_long *addr)
    {
       if(errno != EADDRNOTAVAIL)
       {
-         syslog_AmiTCP(LOG_ERR, "iface_getnetmask: SIOCGIFNETMASK: %m");
+         syslog_AmiTCP(SocketBase, LOG_ERR, "iface_getnetmask: SIOCGIFNETMASK: %m");
          return(errno);
       }
       *addr = INADDR_ANY;
@@ -800,7 +818,7 @@ int iface_getnetmask(struct Interface_Data *iface_data, u_long *addr)
 
 ///
 /// iface_setnetmask
-int iface_setnetmask(struct Interface_Data *iface_data, u_long addr)
+int iface_setnetmask(struct Library *SocketBase, struct Interface_Data *iface_data, u_long addr)
 {
    memset(&IFR.ifr_addr, 0, sizeof(IFR.ifr_addr));
    IFR.ifr_addr.sa_family  = AF_INET;
@@ -809,7 +827,7 @@ int iface_setnetmask(struct Interface_Data *iface_data, u_long addr)
 
    if(ioctl(FD, SIOCSIFNETMASK, (char *)&IFR) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_setnetmask: SIOCSIFNETMASK: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_setnetmask: SIOCSIFNETMASK: %m");
       return(errno);
    }
    return(0);
@@ -817,11 +835,11 @@ int iface_setnetmask(struct Interface_Data *iface_data, u_long addr)
 
 ///
 /// iface_getflags
-int iface_getflags(struct Interface_Data *iface_data, short *flags)
+int iface_getflags(struct Library *SocketBase, struct Interface_Data *iface_data, short *flags)
 {
    if(ioctl(FD, SIOCGIFFLAGS, (char *)&IFR) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_getflags: SIOCGIFFLAGS: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_getflags: SIOCGIFFLAGS: %m");
       return(errno);
    }
    *flags = IFR.ifr_flags;
@@ -830,13 +848,13 @@ int iface_getflags(struct Interface_Data *iface_data, short *flags)
 
 ///
 /// iface_setflags
-int iface_setflags(struct Interface_Data *iface_data, short flags)
+int iface_setflags(struct Library *SocketBase, struct Interface_Data *iface_data, short flags)
 {
    IFR.ifr_flags = flags;
 
    if(ioctl(FD, SIOCSIFFLAGS, (char *)&IFR) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_setflags: SIOCSIFFLAGS: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_setflags: SIOCSIFFLAGS: %m");
       return errno;
    }
    return(0);
@@ -844,11 +862,11 @@ int iface_setflags(struct Interface_Data *iface_data, short flags)
 
 ///
 /// iface_getmtu
-int iface_getmtu(struct Interface_Data *iface_data, int *mtu)
+int iface_getmtu(struct Library *SocketBase, struct Interface_Data *iface_data, int *mtu)
 {
    if(ioctl(FD, SIOCGIFMTU, (char *)&IFR) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_getmtu: SIOCGIFMTU: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_getmtu: SIOCGIFMTU: %m");
       return(errno);
    }
 
@@ -858,13 +876,13 @@ int iface_getmtu(struct Interface_Data *iface_data, int *mtu)
 
 ///
 /// iface_setmtu
-int iface_setmtu(struct Interface_Data *iface_data, int mtu)
+int iface_setmtu(struct Library *SocketBase, struct Interface_Data *iface_data, int mtu)
 {
    IFR.ifr_mtu = mtu;
 
    if(ioctl(FD, SIOCSIFMTU, (char *)&IFR) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_setmtu: SIOCSIFMTU: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_setmtu: SIOCSIFMTU: %m");
       return(errno);
    }
    return(0);
@@ -872,7 +890,7 @@ int iface_setmtu(struct Interface_Data *iface_data, int mtu)
 
 ///
 /// iface_getlinkinfo
-int iface_getlinkinfo(struct Interface_Data *iface_data)
+int iface_getlinkinfo(struct Library *SocketBase, struct Interface_Data *iface_data)
 {
    register int n;
    struct ifreq ibuf[16];
@@ -884,13 +902,13 @@ int iface_getlinkinfo(struct Interface_Data *iface_data)
    ifc.ifc_buf = (caddr_t) ibuf;
    if(ioctl(FD, SIOCGIFCONF, (char *) &ifc) < 0)
    {
-      syslog_AmiTCP(LOG_ERR, "iface_getlinkinfo: SIOCGIFCONF: %m");
+      syslog_AmiTCP(SocketBase, LOG_ERR, "iface_getlinkinfo: SIOCGIFCONF: %m");
       return(errno);
    }
 
    if(ifc.ifc_len < sizeof(struct ifreq))
    {
-      syslog_AmiTCP(LOG_WARNING, "iface_getlinkinfo: link level information not available!");
+      syslog_AmiTCP(SocketBase, LOG_WARNING, "iface_getlinkinfo: link level information not available!");
       return(ENOENT);
    }
 

@@ -31,139 +31,137 @@
 
 int DebugFlag;
 
-static void	errorPrint(int flag, const char *fmt, va_list ap);
-static void	sendLog(int flag, int priority, const char *fmt, va_list ap);
+static void errorPrint(int flag, const char *fmt, va_list ap);
+static void sendLog(int flag, int priority, const char *fmt, va_list ap);
 
 
 static void
 errorPrint(int flag, const char *fmt, va_list ap)
 {
-	int		errnoOrg;
-	char	buf[MAXLINE];
+   int      errnoOrg;
+   char  buf[MAXLINE];
 
-	errnoOrg = errno;
-	vsprintf(buf, fmt, ap);
-	if ( flag ) {
-		sprintf(buf+strlen(buf), ": %s", strerror(errnoOrg));
-	}
-	strcat(buf, "\n");
-	fflush(stdout);			/* in case stdout and stderr are the same */
-	fputs(buf, stderr);
-	fflush(NULL);			/* flushes all stdio output streams */
+   errnoOrg = errno;
+   vsprintf(buf, fmt, ap);
+   if ( flag ) {
+      sprintf(buf+strlen(buf), ": %s", strerror(errnoOrg));
+   }
+   strcat(buf, "\n");
+   fflush(stdout);         /* in case stdout and stderr are the same */
+   fputs(buf, stderr);
+   fflush(NULL);        /* flushes all stdio output streams */
 }
 
 void
 errSysExit(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	errorPrint(1, fmt, ap);
-	va_end(ap);
-	exit(1);
+   va_start(ap, fmt);
+   errorPrint(1, fmt, ap);
+   va_end(ap);
+   exit(1);
 }
 
 void
 errSysRet(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	errorPrint(1, fmt, ap);
-	va_end(ap);
+   va_start(ap, fmt);
+   errorPrint(1, fmt, ap);
+   va_end(ap);
 }
 
 void
 errQuit(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	errorPrint(0, fmt, ap);
-	va_end(ap);
-	exit(1);
+   va_start(ap, fmt);
+   errorPrint(0, fmt, ap);
+   va_end(ap);
+   exit(1);
 }
 
 
 void
 errMsg(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	errorPrint(0, fmt, ap);
-	va_end(ap);
+   va_start(ap, fmt);
+   errorPrint(0, fmt, ap);
+   va_end(ap);
 }
 
 static void
 sendLog(int flag, int priority, const char *fmt, va_list ap)
 {
-	int  errnoOrg;
-	char buf[MAXLINE];
+   int  errnoOrg;
+   char buf[MAXLINE];
 
-	errnoOrg = errno;
-	vsprintf(buf, fmt, ap);
-	if ( flag ) {
-		sprintf(buf+strlen(buf), ": %s", strerror(errnoOrg));
-	}
-	strcat(buf, "\n");
-	if ( DebugFlag ) {
-		fflush(stdout);
-		fputs(buf, stderr);
-		fflush(NULL);
-	} else {
-		syslog(priority, buf);
-	}
+   errnoOrg = errno;
+   vsprintf(buf, fmt, ap);
+   if ( flag ) {
+      sprintf(buf+strlen(buf), ": %s", strerror(errnoOrg));
+   }
+   strcat(buf, "\n");
+   if ( DebugFlag ) {
+      fflush(stdout);
+      fputs(buf, stderr);
+      fflush(NULL);
+   } else {
+      syslog(priority, buf);
+   }
 }
 
 void
 logOpen(const char *ident, int option, int facility)
 {
-	if ( !DebugFlag ) {
-		openlog(ident, option, facility);
-	}
+//   if ( !DebugFlag ) {
+//      openlog(ident, option, facility);
+//   }
 }
 
 void
 logSysExit(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	sendLog(1, LOG_ERR, fmt, ap);
-	va_end(ap);
-	closelog();
-	exit(2);
+   va_start(ap, fmt);
+   sendLog(1, LOG_ERR, fmt, ap);
+   va_end(ap);
+   exit(2);
 }
 
 void
 logSysRet(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	sendLog(1, LOG_ERR, fmt, ap);
-	va_end(ap);
+   va_start(ap, fmt);
+   sendLog(1, LOG_ERR, fmt, ap);
+   va_end(ap);
 }
 
 void
 logQuit(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	sendLog(0, LOG_ERR, fmt, ap);
-	va_end(ap);
-	closelog();
-	exit(2);
+   va_start(ap, fmt);
+   sendLog(0, LOG_ERR, fmt, ap);
+   va_end(ap);
+   exit(2);
 }
 
 void
 logRet(const char *fmt, ...)
 {
-	va_list ap;
+   va_list ap;
 
-	va_start(ap, fmt);
-	sendLog(0, LOG_ERR, fmt, ap);
-	va_end(ap);
+   va_start(ap, fmt);
+   sendLog(0, LOG_ERR, fmt, ap);
+   va_end(ap);
 }

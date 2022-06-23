@@ -33,9 +33,9 @@ struct sana2 {
 struct sana2 * sana2_create(STRPTR device, LONG unit);
 void sana2_delete(struct sana2 *s2);
 void sana2_print(struct sana2 *s2);
-BOOL    sana2_getaddresses(struct sana2 *s2, struct Interface *iface);
-BOOL    sana2_online(struct sana2 *s2);
-BOOL    sana2_offline(struct sana2 *s2);
+BOOL    sana2_getaddresses(struct Library *SocketBase, struct sana2 *s2, struct Interface *iface);
+BOOL    sana2_online(struct Library *SocketBase, struct sana2 *s2);
+BOOL    sana2_offline(struct Library *SocketBase, struct sana2 *s2);
 BOOL    sana2_devicequery(struct sana2 *s2);
 
 #endif /* !SANA_H */
