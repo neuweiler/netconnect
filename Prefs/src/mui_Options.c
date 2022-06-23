@@ -77,6 +77,13 @@ ULONG Options_New(struct IClass *cl, Object *obj, struct opSet *msg)
             Child, tmp.CH_ShowSerialInput = MakeKeyCheckMark(TRUE, MSG_CC_ShowSerialInput),
             Child, KeyLLabel1(GetStr(MSG_LA_ShowSerialInput), *GetStr(MSG_CC_ShowSerialInput)),
             Child, HVSpace,
+            Child, HVSpace,
+            Child, tmp.CH_StartupNetInfo     = MakeKeyCheckMark(TRUE, MSG_CC_StartupNetInfo),
+            Child, KeyLLabel1(GetStr(MSG_LA_StartupNetInfo), *GetStr(MSG_CC_StartupNetInfo)),
+            Child, HVSpace,
+            Child, VVSpace,
+            Child, HVSpace,
+            Child, HVSpace,
          End,
          Child, HVSpace,
       End,
@@ -242,6 +249,7 @@ set(data->CH_DebugICMP     , MUIA_Disabled, TRUE);
       set(data->CY_MainWindow       , MUIA_ShortHelp, GetStr(MSG_Help_MainWindow));
       set(data->CH_ShowStatusWin    , MUIA_ShortHelp, GetStr(MSG_Help_StatusWindows));
       set(data->CH_ShowSerialInput  , MUIA_ShortHelp, GetStr(MSG_Help_ShowSerialInput));
+      set(data->CH_StartupNetInfo   , MUIA_ShortHelp, GetStr(MSG_Help_StartupNetInfo));
       set(data->CH_ConfirmOffline   , MUIA_ShortHelp, GetStr(MSG_Help_ConfirmOffline));
       set(data->CH_Debug            , MUIA_ShortHelp, GetStr(MSG_Help_Debug));
       set(data->CH_FlushUserOnExit  , MUIA_ShortHelp, GetStr(MSG_Help_FlushUserOnExit));

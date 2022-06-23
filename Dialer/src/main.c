@@ -42,7 +42,7 @@ extern struct timerequest *TimeReq;
 extern struct MsgPort     *TimePort;
 extern ULONG  LogNotifySignal, ConfigNotifySignal;
 extern struct NotifyRequest log_nr, config_nr;
-extern struct NewMenu MainMenu[];
+extern struct NewMenu MainMenu[], NetInfoMenu[];
 extern struct User *current_user;
 extern Object *app, *win;
 extern struct Config Config;
@@ -100,17 +100,22 @@ BOOL init_libs(VOID)
    if(LocaleBase)
       cat = OpenCatalog(NULL, "Genesis.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
 #ifdef NETCONNECT
-   if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
-      Printf(GetStr(MSG_TX_CouldNotOpenX), "netconnect.library\n");
+   if(!(NetConnectBase = OpenLibrary("netconnect.library", 6)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "netconnect.library (ver 6)\n");
 #else
-   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 6)))
-      Printf(GetStr(MSG_TX_CouldNotOpenX), "AmiTCP:libs/genesiskey.library (ver 6.0)\n");
+#ifdef VT
+   if(!(NetConnectBase = OpenLibrary("genesiskey.library", 6)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "genesiskey.library (ver 6)\n");
+#else
+   if(!(NetConnectBase = OpenLibrary("genesiskey.library", 7)))
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "genesiskey.library (ver 7)\n");
+#endif
 #endif
    if(!(MUIMasterBase = OpenLibrary("muimaster.library", 11)))
-      Printf(GetStr(MSG_TX_CouldNotOpenX), "muimaster.library\n");
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "muimaster.library (ver 11)\n");
    OwnDevUnitBase = OpenLibrary(ODU_NAME, 0);
    if(!(GenesisBase = OpenLibrary(GENESISNAME, 3)))
-      Printf(GetStr(MSG_TX_CouldNotOpenX), "genesis.library (ver 3.0)\n");
+      Printf(GetStr(MSG_TX_CouldNotOpenX), "genesis.library (ver 3)\n");
    GenesisLoggerBase = OpenLibrary("AmiTCP:libs/genesislogger.library", NULL);
 
    if(MUIMasterBase && GenesisBase && NetConnectBase)
@@ -291,10 +296,10 @@ ULONG check_date(VOID)
 #ifdef NETCONNECT
 
 #include "md5.c" // ugly, but who cares :)
-#define NCLIBSIZE 21136
+#define NCLIBSIZE 21216
 
 static unsigned char realmd5[16] = {
-   0x30,0xc3,0x99,0xda,0xf0,0xb,0x56,0xce,0x18,0xcc,0x4d,0x5b,0x8c,0xa6,0xb0,0x88
+   0xfa,0xe7,0x64,0xdc,0xb1,0x3f,0x31,0xda,0x01,0xd9,0xac,0xb1,0x65,0xe8,0x07,0x38
 };
 
 int nclib_check(VOID)
@@ -317,6 +322,16 @@ int nclib_check(VOID)
    MD5Init(&ctx);
    MD5Update(&ctx, buffer, NCLIBSIZE);
    MD5Final(buffer, &ctx);
+
+/*
+// code to extract a new code
+result = 0;
+while(result < 16)
+{
+   Printf("%ld: %lx\n", result, (SHORT)buffer[result]);
+   result++;
+}
+*/
 
    result = memcmp(buffer, realmd5, 16);
    FreeMem(buffer, NCLIBSIZE);
@@ -349,7 +364,7 @@ VOID HandleMainMethod(struct MsgPort *port)
       if(message->MethodID == TCM_INIT ||
          message->MethodID == MUIM_MainWindow_SetStates ||
          message->MethodID == MUIM_List_Clear ||
-         message->MethodID == MUIM_NetInfo_Redraw)
+         message->MethodID == MUIM_NetInfo_SetStates)
       {
          message->result = DoMethod(message->obj, message->MethodID);
       }
@@ -393,6 +408,7 @@ VOID Handler(VOID)
          if(init_ports())
          {
             LocalizeNewMenu(MainMenu);
+            LocalizeNewMenu(NetInfoMenu);
 
             if(app = ApplicationObject,
                MUIA_Application_Author       , "Michael Neuweiler",
@@ -478,6 +494,8 @@ VOID Handler(VOID)
                         set(app, MUIA_Application_Iconified, TRUE);
                      if(Config.cnf_flags & CFL_StartupOpenWin)
                         set(win, MUIA_Window_Open, TRUE);
+                     if(Config.cnf_flags & CFL_StartupNetInfo)
+                        DoMethod(win, MUIM_MainWindow_NetInfo);
 
                      if(!current_user)
                         current_user = GetGlobalUser();
@@ -491,7 +509,9 @@ VOID Handler(VOID)
 #ifndef DEMO
 #ifndef BETA
 #ifdef NETCONNECT
-                     if(nclib_check())
+                     if(!nclib_check())
+                        Printf("invalid netconnect.library\n");
+                     else
 #endif
 #endif
 #endif
@@ -511,9 +531,6 @@ VOID Handler(VOID)
                         {
                            DoMethod(win, MUIM_MainWindow_About);
 #endif
-                        if(Config.cnf_startup)
-                           exec_command(Config.cnf_startup, Config.cnf_startuptype);
-
 #ifdef VT
                         if(!(FindConfigDev(NULL, 2167, 202)))
                            MUI_Request(app, win, 0, 0, GetStr(MSG_ReqBT_Okay), "Sorry, this special version of GENESiS will\nonly work with VillageTronic's Adriadne\nboard installed !");

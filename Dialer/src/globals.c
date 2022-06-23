@@ -89,6 +89,25 @@ struct NewMenu MainMenu[] =
    { NM_END    , NULL                    , 0                     , 0, 0, (APTR)0               },
 };
 ///
+/// InetInfoMenu
+struct NewMenu NetInfoMenu[] =
+{
+   { NM_TITLE  , MSG_MENU_PROJECT   , 0               , 0, 0, (APTR)0               },
+   { NM_ITEM   , MSG_MENU_REPORT    , MSG_CC_REPORT   , 0, 0, (APTR)MEN_REPORT      },
+   { NM_ITEM   , MSG_MENU_MAINWINDOW, MSG_CC_MAINWINDOW, 0, 0, (APTR)MEN_MAINWINDOW },
+   { NM_ITEM   , NM_BARLABEL        , 0               , 0, 0, 0                     },
+   { NM_ITEM   , MSG_MENU_ABOUT     , MSG_CC_ABOUT    , 0, 0, (APTR)MEN_ABOUT       },
+   { NM_ITEM   , MSG_MENU_ABOUTMUI  , 0               , 0, 0, (APTR)MEN_ABOUT_MUI   },
+   { NM_ITEM   , NM_BARLABEL        , 0               , 0, 0, 0                     },
+   { NM_ITEM   , MSG_MENU_QUIT      , MSG_CC_QUIT     , 0, 0, (APTR)MEN_QUIT        },
+
+   { NM_TITLE  , MSG_MENU_SETTINGS  , 0               , 0, 0, (APTR)0               },
+   { NM_ITEM   , MSG_MENU_GENESIS   , MSG_CC_GENESIS  , 0, 0, (APTR)MEN_GENESIS     },
+   { NM_ITEM   , MSG_MENU_MUI       , MSG_CC_MUI      , 0, 0, (APTR)MEN_MUI         },
+
+   { NM_END    , NULL                    , 0                     , 0, 0, (APTR)0               },
+};
+///
 /// AREXX stuff
 
 struct Hook user_rxhook       = { {NULL, NULL}, (VOID *)user_rxfunc        , NULL, NULL};

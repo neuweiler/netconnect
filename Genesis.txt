@@ -27,3 +27,32 @@ History for GENESiS
   can be passed as cli/wb arguments (ONLINE). e.g. "genesis ppp0 magplip0"
 * "confirm disconnect" now works.
 
+
+1.0.2 (31.12.98)
+----------------
+
+* now loads genesiskey.library from libs: drawer (no longer amitcp:libs)
+* added "connect" and "disconnect" buttons to network status window =>
+  you can leave the main window closed and only open this window.
+* added menu to network status window
+* ifaces can be put on/offline by double-clicking on them (net status win).
+
+
+1.0.3 (27.01.99)
+----------------
+
+* netconnect version
+
+
+1.0.4 (06.02.99)
+----------------
+
+* no longer executes startup-command twice
+* added workaround to get bootp working with badly configured isp's
+
+
+1.0.5 (17.03.99)
+----------------
+
+* corrected problem with genesiskey.library version
+

@@ -14,3 +14,28 @@ History for GENESiSWizard
 * destination IP address obtained by bootp is now beeing used.
 * cleaned up handling of IP addresses.
 
+
+1.0.2 (31.12.98)
+----------------
+
+* now loads genesiskey.library from libs: drawer (no longer amitcp:libs)
+
+
+1.0.3 (27.01.99)
+----------------
+
+* Netconnect version
+
+
+1.0.4 (06.02.99)
+----------------
+
+* messed up a flag => config for ppp/slip wasn't saved correctly
+* added workaround to get bootp working with badly configured isp's
+
+
+1.0.5 (17.03.99)
+----------------
+
+* corrected problem with genesiskey.library version
+

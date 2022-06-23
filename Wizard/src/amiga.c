@@ -584,6 +584,7 @@ BOOL save_config(STRPTR file)
       FPrintf(fh, "Sana2Device         %ls\n", Iface.if_sana2device);
       FPrintf(fh, "Sana2Unit           %ld\n", Iface.if_sana2unit);
       FPrintf(fh, "Sana2Config         %ls\n", Iface.if_sana2config);
+
       if(Iface.if_flags & IFL_PPP)
       {
          FPrintf(fh, "Sana2ConfigText    \"sername %ls\\nserunit %ld\\nserbaud %ld\\nlocalipaddress %%a\\n",
@@ -746,34 +747,26 @@ BOOL save_config(STRPTR file)
                      netinfo_req->io_Command = NI_GETBYID;
                   }  while(!(DoIO((struct IORequest *)netinfo_req)) && uid < 200);
 
-                  if(!UserGroupBase)
-                     UserGroupBase = OpenLibrary(USERGROUPNAME, 0);
-                  if(UserGroupBase)
-                  {
-                     if(fh = CreateDir("AmiTCP:home"))
-                        UnLock(fh);
-                     sprintf(dir_buf, "AmiTCP:home/%ls", Iface.if_login);
-                     if(fh = CreateDir(dir_buf))
-                        UnLock(fh);
+                  if(fh = CreateDir("AmiTCP:home"))
+                     UnLock(fh);
+                  sprintf(dir_buf, "AmiTCP:home/%ls", Iface.if_login);
+                  if(fh = CreateDir(dir_buf))
+                     UnLock(fh);
 
-                     passwd = (struct NetInfoPasswd *)pw_buffer;
-                     passwd->pw_name   = Iface.if_login;
-                     passwd->pw_passwd = crypt(Iface.if_password, Iface.if_login);
-                     passwd->pw_uid    = uid;
-                     passwd->pw_gid    = 100;
-                     passwd->pw_gecos  = "GENESiS Wizard";
-                     passwd->pw_dir    = dir_buf;
-                     passwd->pw_shell  = "noshell";
+                  passwd = (struct NetInfoPasswd *)pw_buffer;
+                  passwd->pw_name   = Iface.if_login;
+                  passwd->pw_passwd = "";
+                  passwd->pw_uid    = uid;
+                  passwd->pw_gid    = 100;
+                  passwd->pw_gecos  = "GENESiS Wizard";
+                  passwd->pw_dir    = dir_buf;
+                  passwd->pw_shell  = "noshell";
 
-                     netinfo_req->io_Data    = passwd;
-                     netinfo_req->io_Command = CMD_WRITE;
-                     DoIO((struct IORequest *)netinfo_req);
-                     netinfo_req->io_Command = CMD_UPDATE;
-                     DoIO((struct IORequest *)netinfo_req);
-
-                     CloseLibrary(UserGroupBase);
-                     UserGroupBase = NULL;
-                  }
+                  netinfo_req->io_Data    = passwd;
+                  netinfo_req->io_Command = CMD_WRITE;
+                  DoIO((struct IORequest *)netinfo_req);
+                  netinfo_req->io_Command = CMD_UPDATE;
+                  DoIO((struct IORequest *)netinfo_req);
 
                   // a trick to update amitcp:db/utm.conf
                   DeleteFile("AmiTCP:db/utm.conf");

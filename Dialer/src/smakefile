@@ -14,13 +14,13 @@
 .asm.o:
    ASM -D $*.asm
 
-CPU      = ANY
-#CPU     = 68030
-DEMO     = DEF=DEMO
-#NC       = DEF=NETCONNECT
+#CPU      = ANY
+CPU     = 68030
+#DEMO     = DEF=DEMO
+NC       = DEF=NETCONNECT
 #VT       = DEF=VT
-BETA     = DEF=BETA
-DEBUG    = DBG=LINE
+#BETA     = DEF=BETA
+#DEBUG    = DBG=LINE
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)

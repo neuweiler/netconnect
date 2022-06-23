@@ -87,14 +87,19 @@ BOOL init_libs(VOID)
       cat = OpenCatalog(NULL, "GenesisWizard.catalog", OC_BuiltInLanguage, "english", TAG_DONE);
 
 #ifdef NETCONNECT
-   if(!(NetConnectBase = OpenLibrary("netconnect.library", 5)))
-      Printf(GetStr(MSG_TX_ErrorOpenX), "netconnect.library\n");
+   if(!(NetConnectBase = OpenLibrary("netconnect.library", 6)))
+      Printf(GetStr(MSG_TX_ErrorOpenX), "netconnect.library (ver 6)\n");
 #else
-   if(!(NetConnectBase = OpenLibrary("AmiTCP:libs/genesiskey.library", 6)))
-      Printf(GetStr(MSG_TX_ErrorOpenX), "AmiTCP:libs/genesiskey.library (ver 6.0)\n");
+#ifdef VT
+   if(!(NetConnectBase = OpenLibrary("netconnect.library", 6)))
+      Printf(GetStr(MSG_TX_ErrorOpenX), "netconnect.library (ver 6)\n");
+#else
+   if(!(NetConnectBase = OpenLibrary("genesiskey.library", 7)))
+      Printf(GetStr(MSG_TX_ErrorOpenX), "genesiskey.library (ver 7)\n");
+#endif
 #endif
    if(!(MUIMasterBase  = OpenLibrary("muimaster.library"   , 11)))
-      Printf(GetStr(MSG_TX_ErrorOpenX), "muimaster.library.\n");
+      Printf(GetStr(MSG_TX_ErrorOpenX), "muimaster.library (ver 11)\n");
    if(!(GenesisBase    = OpenLibrary(GENESISNAME, 0)))
       Printf(GetStr(MSG_TX_ErrorOpenX), GENESISNAME ".\n");
 
@@ -295,7 +300,15 @@ VOID Handler(VOID)
                MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG" (DEMO)",
 #endif
 #else
+#ifdef NETCONNECT
+               MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG" (NetConnect)",
+#else
+#ifdef VT
+               MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG" (VillageTronic)",
+#else
                MUIA_Application_Version      , "$VER:GENESiSWizard "VERTAG,
+#endif
+#endif
 #endif
                MUIA_Application_Copyright    , "Michael Neuweiler & Active Technologies 1997-99",
                MUIA_Application_Description  , GetStr(MSG_AppDescription),

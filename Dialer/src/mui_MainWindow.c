@@ -7,6 +7,7 @@
 #include "/genesis.lib/libraries/genesis.h"
 #include "/genesis.lib/pragmas/genesis_lib.h"
 #include "/genesis.lib/proto/genesis.h"
+#include "/genesis.lib/pragmas/nc_lib.h"
 #include "/genesis.lib/pragmas/genesislogger_lib.h"
 #include "/genesis.lib/proto/genesislogger.h"
 #include "vupdate.h"
@@ -31,7 +32,7 @@ extern struct Hook des_hook, txtobj_hook, objtxt_hook;
 extern struct User *current_user;
 extern char connectspeed[];
 extern char config_file[];
-extern struct Library *LockSocketBase, *GenesisBase, *GenesisLoggerBase;
+extern struct Library *LockSocketBase, *GenesisBase, *GenesisLoggerBase, *NetConnectBase;
 extern struct Library *VUPBase;
 extern APTR vuphandle;
 
@@ -262,6 +263,8 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
             DoMethod(display_item, MUIM_SetUData, MEN_SERIAL, MUIA_Menuitem_Checked, FALSE);
             Config.cnf_flags &= ~CFL_ShowSerialInput;
          }
+         else if(!stricmp(pc_data.pc_argument, "StartupNetInfo") && is_true(&pc_data))
+            Config.cnf_flags |= CFL_StartupNetInfo;
 
          else if(!stricmp(pc_data.pc_argument, "ConfirmOffline") && is_true(&pc_data))
             Config.cnf_flags |= CFL_ConfirmOffline;
@@ -653,6 +656,18 @@ ULONG MainWindow_NetInfo(struct IClass *cl, Object *obj, Msg msg)
 }
 
 ///
+/// MainWindow_Close
+ULONG MainWindow_Close(struct IClass *cl, Object *obj, Msg msg)
+{
+   if(netinfo_win)
+      set(obj, MUIA_Window_Open, FALSE);
+   else
+      DoMethod(obj, MUIM_MainWindow_Quit);
+
+   return(NULL);
+}
+
+///
 /// MainWindow_Quit
 ULONG MainWindow_Quit(struct IClass *cl, Object *obj, Msg msg)
 {
@@ -669,7 +684,24 @@ ULONG MainWindow_OnOffline(struct IClass *cl, Object *obj, struct MUIP_MainWindo
    struct MainWindow_Data *data = INST_DATA(cl, obj);
    struct Interface *iface;
 
-   if(msg->online && current_user)   // check if we're in a time restriction first
+   DoMethod(data->LI_Interfaces, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &iface);
+   if(iface)
+   {
+      iface->if_flags |= (msg->online ? IFL_PutOnline : IFL_PutOffline);
+      DoMethod(obj, (msg->online ? MUIM_MainWindow_PutOnline : MUIM_MainWindow_PutOffline), FALSE);
+   }
+
+   return(NULL);
+}
+
+///
+/// MainWindow_PutOnline
+ULONG MainWindow_PutOnline(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct Interface *iface;
+   BOOL put_one_online = FALSE;
+
+   if(current_user)   // check if we're in a time restriction first
    {
       struct DateStamp ds;
 
@@ -696,22 +728,6 @@ ULONG MainWindow_OnOffline(struct IClass *cl, Object *obj, struct MUIP_MainWindo
       }
    }
 
-   DoMethod(data->LI_Interfaces, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &iface);
-   if(iface)
-   {
-      iface->if_flags |= (msg->online ? IFL_PutOnline : IFL_PutOffline);
-      DoMethod(obj, (msg->online ? MUIM_MainWindow_PutOnline : MUIM_MainWindow_PutOffline), FALSE);
-   }
-
-   return(NULL);
-}
-
-///
-/// MainWindow_PutOnline
-ULONG MainWindow_PutOnline(struct IClass *cl, Object *obj, Msg msg)
-{
-   struct Interface *iface;
-   BOOL put_one_online = FALSE;
 
    if(Config.cnf_ifaces.mlh_TailPred != (struct MinNode *)&Config.cnf_ifaces)
    {
@@ -798,7 +814,7 @@ ULONG MainWindow_PutOffline(struct IClass *cl, Object *obj, struct MUIP_MainWind
                iface->if_flags &= ~IFL_IsOnline;
                set(data->GR_Led[(ULONG)iface->if_userdata], MUIA_Group_ActivePage, MUIV_Led_Black);
                if(netinfo_win)
-                  DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
+                  DoMethod(netinfo_win, MUIM_NetInfo_SetStates);
                if(iface->if_loggerhandle && GenesisLoggerBase)
                   GL_StopLogger(iface->if_loggerhandle);
                iface->if_loggerhandle = NULL;
@@ -840,6 +856,8 @@ ULONG MainWindow_TimeTrigger(struct IClass *cl, Object *obj)
    m = m % 60;
    sprintf(data->time_str, "%ls %02ld:%02ld:%02ld", GetStr(MSG_TX_TimeOnline), h, m, s);
    set(data->TX_Online, MUIA_Text_Contents, data->time_str);
+
+   NCL_CallMeSometimes();
 
    if(s == 0)  // check online time limit every full "online minute"
    {
@@ -1086,7 +1104,7 @@ ULONG MainWindow_UpdateLog(struct IClass *cl, Object *obj, Msg msg)
                            set(data->GR_Led[(ULONG)iface->if_userdata], MUIA_Group_ActivePage, MUIV_Led_Red);
 
                            if(netinfo_win)
-                              DoMethod(netinfo_win, MUIM_NetInfo_Redraw);
+                              DoMethod(netinfo_win, MUIM_NetInfo_SetStates);
 
                            if(iface->if_loggerhandle)
                               GL_StopLogger(iface->if_loggerhandle);
@@ -1475,7 +1493,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
       set(data->TX_User       , MUIA_ShortHelp, GetStr(MSG_HELP_User));
       set(data->LV_Log        , MUIA_ShortHelp, GetStr(MSG_HELP_Log));
 
-      DoMethod(obj               , MUIM_Notify, MUIA_Window_CloseRequest , TRUE , obj, 1, MUIM_MainWindow_Quit);
+      DoMethod(obj               , MUIM_Notify, MUIA_Window_CloseRequest , TRUE , obj, 1, MUIM_MainWindow_Close);
       DoMethod(data->LV_Interfaces, MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime , data->PO_Interface, 2, MUIM_Popstring_Close, TRUE);
       DoMethod(data->LV_Users    , MUIM_Notify, MUIA_Listview_DoubleClick, MUIV_EveryTime , obj, 3, MUIM_MainWindow_ChangeUser, NULL, NULL);
       DoMethod(data->BT_Online   , MUIM_Notify, MUIA_Pressed             , FALSE, obj, 2, MUIM_MainWindow_OnOffline, TRUE);
@@ -1529,6 +1547,7 @@ SAVEDS ASM ULONG MainWindow_Dispatcher(register __a0 struct IClass *cl, register
       case MUIM_MainWindow_GenesisReport  : return(MainWindow_GenesisReport      (cl, obj, (APTR)msg));
       case MUIM_MainWindow_SetShowMe      : return(MainWindow_SetShowMe          (cl, obj, (APTR)msg));
       case MUIM_MainWindow_Menu           : return(MainWindow_Menu               (cl, obj, (APTR)msg));
+      case MUIM_MainWindow_Close          : return(MainWindow_Close              (cl, obj, (APTR)msg));
    }
 
    return(DoSuperMethodA(cl, obj, msg));

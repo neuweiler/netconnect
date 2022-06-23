@@ -169,7 +169,7 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
    strcpy(Iface.if_netmask, "255.255.255.255");
    Iface.if_MTU = 1500;
    *Iface.if_hostname = NULL;
-   Iface.if_flags = IFL_UseHostName | IFL_UseDomainName;
+   Iface.if_flags |= (IFL_UseHostName | IFL_UseDomainName);
    clear_list(&Iface.if_nameservers);
    clear_list(&Iface.if_domainnames);
    addr_assign = dst_assign = dns_assign = domainname_assign = gw_assign = NULL;

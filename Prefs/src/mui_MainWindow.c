@@ -119,6 +119,7 @@ ULONG MainWindow_ClearConfig(struct IClass *cl, Object *obj, Msg msg)
    setcycle(options_data->CY_MainWindow         , 0);
    setcheckmark(options_data->CH_ShowStatusWin  , TRUE);
    setcheckmark(options_data->CH_ShowSerialInput, TRUE);
+   setcheckmark(options_data->CH_StartupNetInfo , FALSE);
    setcheckmark(options_data->CH_ConfirmOffline , FALSE);
    setcheckmark(options_data->CH_Debug          , FALSE);
    setcheckmark(options_data->CH_FlushUserOnExit, FALSE);
@@ -640,6 +641,8 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
             setcheckmark(options_data->CH_ShowStatusWin, FALSE);
          else if(!stricmp(pc_data.pc_argument, "ShowSerialInput") && is_false(&pc_data))
             setcheckmark(options_data->CH_ShowSerialInput, FALSE);
+         else if(!stricmp(pc_data.pc_argument, "StartupNetInfo") && is_true(&pc_data))
+            setcheckmark(options_data->CH_StartupNetInfo, TRUE);
 
          else if(!stricmp(pc_data.pc_argument, "ConfirmOffline") && is_true(&pc_data))
             setcheckmark(options_data->CH_ConfirmOffline, TRUE);
@@ -769,7 +772,10 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                else if(!stricmp(pc_data.pc_argument, "Login"))
                   strncpy(iface->if_login, pc_data.pc_contents, sizeof(iface->if_login));
                else if(!stricmp(pc_data.pc_argument, "Password"))
+{
                   decrypt(pc_data.pc_contents, iface->if_password);
+MUI_Request(app, win, NULL, NULL, "Okay", iface->if_password);
+}
                else if(!stricmp(pc_data.pc_argument, "Phone"))
                   strncpy(iface->if_phonenumber, pc_data.pc_contents, sizeof(iface->if_phonenumber));
                else if(!stricmp(pc_data.pc_argument, script_commands[SL_Send]))
@@ -787,11 +793,11 @@ ULONG MainWindow_LoadConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
                else if(!stricmp(pc_data.pc_argument, script_commands[SL_SendBreak]))
                   add_script_line(&iface->if_loginscript, SL_SendBreak, NULL, NULL);
                else if(!stricmp(pc_data.pc_argument, script_commands[SL_Exec]))
-                  add_script_line(&iface->if_loginscript, SL_Exec, NULL, NULL);
+                  add_script_line(&iface->if_loginscript, SL_Exec, pc_data.pc_contents, NULL);
                else if(!stricmp(pc_data.pc_argument, script_commands[SL_Pause]))
-                  add_script_line(&iface->if_loginscript, SL_Pause, NULL, NULL);
+                  add_script_line(&iface->if_loginscript, SL_Pause, pc_data.pc_contents, NULL);
                else if(!stricmp(pc_data.pc_argument, script_commands[SL_ParseIP]))
-                  add_script_line(&iface->if_loginscript, SL_ParseIP, NULL, NULL);
+                  add_script_line(&iface->if_loginscript, SL_ParseIP, pc_data.pc_contents, NULL);
 
                else if(!stricmp(pc_data.pc_argument, event_commands[IFE_Online]) && (strlen(pc_data.pc_contents) > 2))
                   add_script_line(&iface->if_events, IFE_Online, &pc_data.pc_contents[2], *pc_data.pc_contents - 48);
@@ -1124,6 +1130,7 @@ ULONG MainWindow_SaveConfig(struct IClass *cl, Object *obj, struct MUIP_MainWind
       }
       FPrintf(fh, "ShowStatusWin       %ls\n", yes_no(xget(options_data->CH_ShowStatusWin  , MUIA_Selected)));
       FPrintf(fh, "ShowSerialInput     %ls\n", yes_no(xget(options_data->CH_ShowSerialInput, MUIA_Selected)));
+      FPrintf(fh, "StartupNetInfo      %ls\n", yes_no(xget(options_data->CH_StartupNetInfo , MUIA_Selected)));
       FPrintf(fh, "ConfirmOffline      %ls\n", yes_no(xget(options_data->CH_ConfirmOffline , MUIA_Selected)));
       FPrintf(fh, "Debug               %ls\n", yes_no(xget(options_data->CH_Debug          , MUIA_Selected)));
       FPrintf(fh, "FlushUserOnExit     %ls\n", yes_no(xget(options_data->CH_FlushUserOnExit, MUIA_Selected)));

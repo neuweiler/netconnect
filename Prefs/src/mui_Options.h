@@ -31,6 +31,7 @@ struct Options_Data
    Object *CH_ShowButtons;
    Object *CH_ShowStatusWin;
    Object *CH_ShowSerialInput;
+   Object *CH_StartupNetInfo;
 
    Object *SL_KernelPriority;
    Object *PA_LogFile;

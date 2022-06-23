@@ -119,6 +119,8 @@ int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct
             {
                memcpy(&tmp_addr, opt_ptr, 4);
                strncpy(iface->if_netmask, Inet_NtoA(tmp_addr), sizeof(iface->if_netmask));
+               if(is_inaddr_any(iface->if_netmask) || !strcmp(iface->if_netmask, "1.1.1.1"))
+                  *iface->if_netmask = NULL;
             }
          }
          else if(option == TAG_GATEWAY)    // using only first gateway
@@ -127,6 +129,8 @@ int bootpc_examine(struct bootpc *bpc, struct Interface_Data *iface_data, struct
             {
                memcpy(&tmp_addr, opt_ptr, 4);
                strncpy(iface->if_gateway, Inet_NtoA(tmp_addr), sizeof(iface->if_netmask));
+               if(is_inaddr_any(iface->if_gateway) || !strcmp(iface->if_gateway, "1.1.1.1"))
+                  *iface->if_gateway = NULL;
             }
          }
          else if(option == TAG_DOMAIN_SERVER)

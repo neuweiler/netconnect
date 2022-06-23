@@ -42,6 +42,7 @@ enum { ASSIGN_Static = 1, ASSIGN_IFace, ASSIGN_BOOTP, ASSIGN_Root, ASSIGN_DNSQue
 #define CFL_StartupTCP           (1 << 16)   // default on
 #define CFL_FlushUserOnExit      (1 << 17)
 #define CFL_NoAutoTraffic        (1 << 18)
+#define CFL_StartupNetInfo       (1 << 19)
 
 struct Config
 {

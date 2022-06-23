@@ -79,6 +79,14 @@ MSG_CC_NETSTATUS
 
 ;N
 ;
+MSG_MENU_MAINWINDOW
+
+;Main window
+;
+MSG_CC_MAINWINDOW
+
+;N
+;
 MSG_MENU_ABOUTMUI
 
 ;About MUI...
@@ -397,6 +405,10 @@ MSG_TX_Online
 
 ;online
 ;
+MSG_TX_Connecting
+
+;connecting
+;
 MSG_TX_Offline
 
 ;offline
@@ -423,7 +435,7 @@ MSG_TX_Gateway
 ;
 MSG_TX_NetinfoWindowTitle
 
-;GENESiS · Network status
+;GENESiS · Network status © 1997-99 by Michael Neuweiler & Active Technologies
 ;
 ;
 ;

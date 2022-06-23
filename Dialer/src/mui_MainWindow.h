@@ -15,6 +15,7 @@
 #define MUIM_MainWindow_SetShowMe              (TAGBASE_GENESIS | 0x1050)
 #define MUIM_MainWindow_Menu                   (TAGBASE_GENESIS | 0x1051)
 #define MUIM_MainWindow_GenesisReport          (TAGBASE_GENESIS | 0x1052)
+#define MUIM_MainWindow_Close                  (TAGBASE_GENESIS | 0x1053)
 
 struct MUIP_MainWindow_DisposeWindow      { ULONG MethodID; Object *window; };
 struct MUIP_MainWindow_MUIRequest         { ULONG MethodID; STRPTR buttons; STRPTR message; };

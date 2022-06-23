@@ -363,6 +363,9 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
 
    if(data->abort)   goto abort;
 
+   if(netinfo_win)   // to display the "connecting" message
+      DoMainMethod(netinfo_win, MUIM_NetInfo_SetStates, NULL, NULL, NULL);
+
    if(Config.cnf_ifaces.mlh_TailPred != (struct MinNode *)&Config.cnf_ifaces)
    {
       struct bootpc *bpc;
@@ -477,7 +480,7 @@ SAVEDS ASM VOID TCPHandler(register __a0 STRPTR args, register __d0 LONG arg_len
 
                DoMainMethod(mw_data->GR_Led[(int)iface->if_userdata], MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Green, NULL);
                if(netinfo_win)
-                  DoMainMethod(netinfo_win, MUIM_NetInfo_Redraw, NULL, NULL, NULL);
+                  DoMainMethod(netinfo_win, MUIM_NetInfo_SetStates, NULL, NULL, NULL);
                syslog_AmiTCP(SocketBase, LOG_NOTICE, GetStr(MSG_SYSLOG_IfaceOnline), iface->if_name);
                exec_event(&iface->if_events, IFE_Online);
                if(data->abort)   goto abort;
@@ -633,8 +636,6 @@ abort:
       {
          exec_event(&iface->if_events, IFE_OnlineFail);
          DoMethod(app, MUIM_Application_PushMethod, mw_data->GR_Led[(int)iface->if_userdata], 3, MUIM_Set, (APTR)MUIA_Group_ActivePage, (APTR)MUIV_Led_Red);
-         if(netinfo_win)
-            DoMethod(app, MUIM_Application_PushMethod, netinfo_win, 1, MUIM_NetInfo_Redraw);
       }
    }
 
@@ -645,6 +646,9 @@ abort:
       iface->if_loggerhandle = NULL;
       iface->if_flags &= ~IFL_PutOnline;
    }
+
+   if(netinfo_win)
+      DoMethod(app, MUIM_Application_PushMethod, netinfo_win, 1, MUIM_NetInfo_SetStates);
 
    if(SocketBase)
       CloseLibrary(SocketBase);

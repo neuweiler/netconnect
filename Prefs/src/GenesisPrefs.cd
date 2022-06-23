@@ -1261,6 +1261,12 @@ Show serial input
 MSG_CC_ShowSerialInput (/1/1)
 i
 ;
+MSG_LA_StartupNetInfo (//)
+Open network status window
+;
+MSG_CC_StartupNetInfo (/1/1)
+n
+;
 MSG_TX_ControlTitle (//)
 Control
 ;
@@ -1452,6 +1458,9 @@ Would you like status windows to be opened\n(at startup and while connecting) ?
 ;
 MSG_Help_ShowSerialInput (//)
 Would you like to see the serial input while\na connection is beeing established ?
+;
+MSG_Help_StartupNetInfo (//)
+Would you like the network status\nwindow to be opened at startup ?
 ;
 MSG_Help_ConfirmOffline (//)
 Would you like to confirm\nany disconnection ?

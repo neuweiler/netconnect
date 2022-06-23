@@ -15,3 +15,28 @@ History for GENESiSPrefs
 * database/inetd/CliName now gets saved.
 * added to options/misc: NoAutoTraffic and FlushGlobalUserOnExit
 
+
+1.0.2 (31.12.98)
+----------------
+
+* now loads genesiskey.library from libs: drawer (no longer amitcp:libs)
+* added switch to options/display: Open network status window at startup
+
+
+1.0.3 (27.01.99)
+----------------
+
+* netconnect version
+
+
+1.0.4 (06.02.99)
+----------------
+
+* fixed bug in loginscript: certain values were not loaded correctly.
+
+
+1.0.5 (17.03.99)
+----------------
+
+* corrected problem with genesiskey.library version
+

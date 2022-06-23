@@ -1667,6 +1667,14 @@ MSG_CC_ShowSerialInput
 
 ;i
 ;
+MSG_LA_StartupNetInfo
+
+;Open network status window
+;
+MSG_CC_StartupNetInfo
+
+;n
+;
 MSG_TX_ControlTitle
 
 ;Control
@@ -1922,6 +1930,10 @@ MSG_Help_StatusWindows
 MSG_Help_ShowSerialInput
 
 ;Would you like to see the serial input while\na connection is beeing established ?
+;
+MSG_Help_StartupNetInfo
+
+;Would you like the network status\nwindow to be opened at startup ?
 ;
 MSG_Help_ConfirmOffline
 
