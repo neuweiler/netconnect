@@ -7,8 +7,8 @@
 #include <libraries/commodities.h>
 #include <libraries/mui.h>
 
-#include "../../NetConnect.h"
-#include "../../locale/Strings.h"
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
 #include "mui.h"
 //#include "protos.h"
 
@@ -16,7 +16,7 @@
 #define USE_DEFAULT_ICON_HEADER
 #define USE_DEFAULT_ICON_BODY
 #define USE_DEFAULT_ICON_COLORS
-#include "../../images/default_icon.h"
+#include "images/default_icon.h"
 
 ///
 

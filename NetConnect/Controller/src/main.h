@@ -10,9 +10,9 @@
 
 #include "includes.h"
 
-#include "../../NetConnect.h"
-#include "../../locale/Strings.h"
-#include "../../../genesis.lib/src/pragmas/nc_lib.h"
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
+//#include "../../../genesis.lib/src/pragmas/nc_lib.h"
 #include "mui.h"
 #include "mui_About.h"
 #include "mui_Button.h"
@@ -21,7 +21,7 @@
 #include "protos.h"
 #include "rev.h"
 //#include <workbench/WBStart.h>
-#include "../../../WBStart.h"
+#include "WBStart.h"
 
 #define NEWSTACK_SIZE 16384
 

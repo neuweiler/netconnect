@@ -7,10 +7,14 @@ extern struct MsgPort *appmenu_port;
 ///
 
 /// ProgramList_ConstructFunc
+#ifdef __SASC
+SAVEDS ASM struct Program *ProgramList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Program *src) {
+#else /* gcc */
 struct Program *ProgramList_ConstructFunc()
 {
    register APTR pool __asm("a2");
    register struct Program *src __asm("a1");
+#endif
 
    struct Program *new;
 
@@ -21,10 +25,14 @@ struct Program *ProgramList_ConstructFunc()
 
 ///
 /// ProgramList_DestructFunc
+#ifdef __SASC
+SAVEDS ASM VOID ProgramList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Program *program) {
+#else /* gcc */
 VOID ProgramList_DestructFunc()
 {
    register APTR pool __asm("a2");
    register struct Program *program __asm("a1");
+#endif
 
    if(program)
    {
@@ -43,10 +51,14 @@ VOID ProgramList_DestructFunc()
 
 ///
 /// MenuList_ConstructFunc
+#ifdef __SASC
+SAVEDS ASM struct MenuEntry *MenuList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *src) {
+#else /* gcc */
 struct MenuEntry *MenuList_ConstructFunc()
 {
    register APTR pool __asm("a2");
    register struct MenuEntry *src __asm("a1");
+#endif
 
    static const struct Hook ProgramList_ConstructHook = { { 0,0 }, (VOID *)ProgramList_ConstructFunc  , NULL, NULL };
    static const struct Hook ProgramList_DestructHook  = { { 0,0 }, (VOID *)ProgramList_DestructFunc   , NULL, NULL };
@@ -75,10 +87,14 @@ struct MenuEntry *MenuList_ConstructFunc()
 
 ///
 /// MenuList_DestructFunc
+#ifdef __SASC
+SAVEDS ASM VOID MenuList_DestructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *menu) {
+#else /* gcc */
 VOID MenuList_DestructFunc()
 {
    register APTR pool __asm("a2");
    register struct MenuEntry *menu __asm("a1");
+#endif
 
    if(menu)
    {
@@ -139,11 +155,15 @@ ULONG MenuList_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// MenuList_Dispatcher
+#ifdef __SASC
+SAVEDS ASM ULONG MenuList_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg) {
+#else /* gcc */
 ULONG MenuList_Dispatcher()
 {
    register struct IClass *cl __asm("a0");
    register Object *obj __asm("a2");
    register Msg msg __asm("a1");
+#endif
 
    switch (msg->MethodID)
    {

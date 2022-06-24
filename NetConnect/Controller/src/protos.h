@@ -4,11 +4,6 @@ LONG xget(Object *obj, ULONG attribute);
 //int BrokerFunc();
 STRPTR GetStr(STRPTR idstr);
 VOID play_sound(STRPTR file, LONG volume);
-//ULONG BuildCommandLine(char *buf, struct Program *program, BPTR curdir, struct AppMessage *msg);
-//BOOL StartCLIProgram(struct Program *program, struct AppMessage *msg);
-//BOOL StartWBProgram(struct Program *program, struct AppMessage *msg);
-//VOID StartProgram(struct Program *program, struct AppMessage *msg);
-//VOID init_icon(struct Icon *icon);
 STRPTR update_string(STRPTR old, STRPTR source);
 BOOL load_config(VOID);
 
@@ -18,10 +13,17 @@ ULONG check_date(VOID);
 
 ///
 /// mui.c
+#ifdef __SASC
+SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG Button_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG Dock_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+SAVEDS ASM ULONG MenuList_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg);
+#else /* gcc */
 ULONG About_Dispatcher();
 ULONG Button_Dispatcher();
 ULONG Dock_Dispatcher();
 ULONG MenuList_Dispatcher();
+#endif
 
 ///
 /// fixpath.c

@@ -44,5 +44,11 @@
 
 #include <workbench/workbench.h>
 
+#ifdef __SASC
+#include <proto/muimaster.h>
+#else
+#include <clib/muimaster_protos.h>
+#endif
+
 #endif
 

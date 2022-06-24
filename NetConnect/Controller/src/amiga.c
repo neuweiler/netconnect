@@ -1,16 +1,11 @@
-/// includes
 #include "includes.h"
 
-#include "../../locale/Strings.h"
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
 #include "protos.h"
-#include "../../images/default_icon.h"
-#include "../../../WBStart.h"
+#include "images/default_icon.h"
+#include "WBStart.h"
 #include "mui_Dock.h"
-
-//#include <proto/muimaster.h>
-#include <clib/muimaster_protos.h>
-
-//#include <libraries/mui.h>
 
 ///
 /// external variables
@@ -848,8 +843,12 @@ BOOL load_config(VOID)
 }
 
 /// BrokerFunc
+#ifdef __SASC
+SAVEDS ASM int BrokerFunc(REG(a1) CxMsg *msg) {
+#else /* gcc */
 int BrokerFunc() {
    register CxMsg *msg __asm("a1");
+#endif
 
    if(CxMsgType(msg) == CXM_IEVENT)
       DoMethod((Object *)CxMsgID(msg), MUIM_Hotkey_Trigger);

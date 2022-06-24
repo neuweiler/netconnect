@@ -29,10 +29,14 @@ VOID action_button(struct Icon *icon, struct AppMessage *msg)
 
 ///
 /// Button_AppMsgFunc
+#ifdef __SASC
+SAVEDS ASM LONG Button_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
 LONG Button_AppMsgFunc()
 {
    register APTR obj __asm("a2");
    register struct AppMEssage **x __asm("a1");
+#endif
 
    struct Button_Data *data = INST_DATA(CL_Button->mcc_Class, obj);
 
@@ -161,12 +165,16 @@ if(data->icon.disk_object)
 
 ///
 /// Button_Dispatcher
+#ifdef __SASC
+SAVEDS ASM ULONG Button_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg) {
+#else /* gcc */
 ULONG Button_Dispatcher()
 {
    register struct IClass *cl __asm("a0");
    register Object *obj __asm("a2");
    register Msg msg __asm("a1");
-
+#endif
+   
    switch (msg->MethodID)
    {
       case OM_NEW             : return(Button_New              (cl, obj, (APTR)msg));

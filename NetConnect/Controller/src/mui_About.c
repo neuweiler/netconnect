@@ -75,11 +75,15 @@ ULONG About_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
 ///
 /// About_Dispatcher
+#ifdef __SASC
+SAVEDS __asm ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg) {
+#else /* gcc */
 ULONG About_Dispatcher()
 {
    register struct IClass *cl __asm("a0");
    register Object *obj __asm("a2");
    register Msg msg __asm("a1");
+#endif
 
    switch (msg->MethodID)
    {

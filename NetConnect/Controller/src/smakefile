@@ -22,9 +22,9 @@ DEMO     = DEF=DEMO
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
 
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
-GST      = GSTIMM GST=/includes.gst
+GST      = GSTIMM GST=includes.gst
 
-CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG)
+CFLAGS   = IDIR=//shared MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG)
 
 LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
 #LFLAGS  = SC SD NOICONS MAXHUNK 100000
@@ -32,20 +32,20 @@ LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
 OBJS     = main.o globals.o mui_About.o mui_Button.o mui_Dock.o mui_MenuList.o amiga.o fixpath.o
 LIBS     = lib:amiga.lib lib:sc.lib
 
-all:   /includes.gst /locale/Strings.h /locale/empty.ct /images/default_icon.h NetConnect
+all:   includes.gst //shared/locale/NetConnect.h //shared/locale/NetConnect.ct //shared/images/default_icon.h NetConnect
 
-/includes.gst:  /includes.h
+includes.gst:  includes.h
       GST >NIL: UNLOAD $@
-      SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
+      SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ includes.h
       GST $@
 
-/locale/Strings.h: /locale/Strings.cd
-   cat2h /locale/Strings.cd /locale/Strings.h
-/locale/empty.ct : /locale/Strings.cd
-   sc:c/FlexCat /locale/Strings.cd NEWCTFILE /locale/empty.ct
+//shared/locale/NetConnect.h: //shared/locale/NetConnect.cd
+   cat2h //shared/locale/NetConnect.cd //shared/locale/NetConnect.h
+//shared/locale/empty.ct : //shared/locale/NetConnect.cd
+   sc:c/FlexCat //shared/locale/NetConnect.cd NEWCTFILE //shared/locale/NetConnect.ct
 
-/images/default_icon.h: /images/default_icon.iff
-   brush2c /images/default_icon.iff >/images/default_icon.h
+//shared/images/default_icon.h: //shared/images/default_icon.iff
+   brush2c //shared/images/default_icon.iff >//shared/images/default_icon.h
 
 NetConnect: $(OBJS)
    SLINK WITH T:NetConnect.WITH <<!(T:NetConnect.WITH)
@@ -56,27 +56,26 @@ NetConnect: $(OBJS)
       $(LFLAGS)
    <
 
-main.o: main.c /includes.h /NetConnect.h /locale/Strings.h\
- //genesis/genesis.lib/pragmas/nc_lib.h mui.h mui_About.h mui_Button.h mui_Dock.h mui_MenuList.h protos.h\
+main.o: main.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h\
+ ///genesis.lib/src/pragmas/nc_lib.h mui.h mui_About.h mui_Button.h mui_Dock.h mui_MenuList.h protos.h\
  rev.h
 
 FixPath.o: FixPath.c
 
-globals.o: globals.c /includes.h /NetConnect.h /locale/Strings.h mui.h protos.h\
- /images/default_icon.h
+globals.o: globals.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h protos.h\
+ //shared/images/default_icon.h
 
-amiga.o: amiga.c /includes.h /NetConnect.h /locale/Strings.h mui.h mui_Dock.h\
- protos.h /images/default_icon.h
+amiga.o: amiga.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h mui_Dock.h\
+ protos.h //shared/images/default_icon.h
 
-mui_About.o: mui_About.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+mui_About.o: mui_About.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
  mui_About.h protos.h rev.h
 
-mui_Dock.o: mui_Dock.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+mui_Dock.o: mui_Dock.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
  mui_Dock.h protos.h
 
-mui_Button.o: mui_Button.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+mui_Button.o: mui_Button.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
  mui_Button.h protos.h
 
-mui_MenuList.o: mui_MenuList.c /includes.h /NetConnect.h /locale/Strings.h mui.h\
+mui_MenuList.o: mui_MenuList.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
  mui_MenuList.h protos.h
-
