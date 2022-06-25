@@ -7,7 +7,6 @@
 # Precompiled files
 *.gst
 *.gst.info
-*Strings.h
 *.bh
 
 # Compiled libraries
