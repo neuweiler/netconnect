@@ -1,39 +1,39 @@
-/// includes
-#include "/includes.h"
+#include "includes.h"
 
-#include "/Genesis.h"
-#include "/genesis.lib/libraries/genesis.h"
-#include "/genesis.lib/proto/genesis.h"
-#include "/genesis.lib/pragmas/genesis_lib.h"
-#include "Strings.h"
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
 #include "mui.h"
+#include "mui_DockPrefs.h"
 #include "protos.h"
+#include "images/default_icon.h"
 
 ///
 /// external variables
-extern Object *app;
-extern Object *win;
-extern struct Library *GenesisLibrary;
-extern struct MUI_CustomClass  *CL_MainWindow;
-extern struct MUI_CustomClass  *CL_ProviderWindow;
-extern struct MUI_CustomClass  *CL_Provider;
-extern struct MUI_CustomClass  *CL_Dialer;
-extern struct MUI_CustomClass  *CL_Users;
-extern struct MUI_CustomClass  *CL_Databases;
-extern struct MUI_CustomClass  *CL_Modem;
-extern struct MUI_CustomClass  *CL_About;
-extern struct MUI_CustomClass  *CL_PasswdReq;
+extern ULONG default_icon_colors[];
+extern UBYTE default_icon_body[];
+extern Object *app, *win, *SoundObject;
+extern LONG left, top, width, height;
 
 ///
 
-/// DoSuperNew
-ULONG DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...)
+ULONG __stdargs DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...)
 {
    return(DoSuperMethod(cl, obj, OM_NEW, &tag1, NULL));
 }
 
-///
-/// xget
+#ifdef __SASC
+SAVEDS ASM VOID DestructFunc(REG(a2) APTR pool, REG(a1) APTR ptr) {
+#else /* gcc */
+VOID DestructFunc()
+{
+   register APTR pool __asm("a2");
+   register APTR ptr __asm("a1");
+#endif
+
+   if(ptr)
+      FreeVec(ptr);
+}
+
 LONG xget(Object *obj, ULONG attribute)
 {
    LONG x;
@@ -41,80 +41,16 @@ LONG xget(Object *obj, ULONG attribute)
    return(x);
 }
 
-///
-/// sortfunc
-SAVEDS ASM LONG sortfunc(register __a1 STRPTR str1, register __a2 STRPTR str2)
-{
-   return(stricmp(str1, str2));
-}
-
-///
-/// des_func
-SAVEDS ASM VOID des_func(register __a2 APTR pool, register __a1 APTR ptr)
-{
-   if(ptr)
-      FreeVec(ptr);
-}
-
-///
-/// strobjfunc
-SAVEDS ASM LONG strobjfunc(register __a2 Object *list, register __a1 Object *str)
-{
-   char *x, *s;
-   int i;
-
-   get(str, MUIA_String_Contents, &s);
-
-   i = 0;
-   FOREVER
-   {
-      DoMethod(list, MUIM_List_GetEntry, i, &x);
-      if(!x)
-      {
-         set(list, MUIA_List_Active, MUIV_List_Active_Off);
-         break;
-      }
-      else
-      {
-         if(!stricmp(x, s))
-         {
-            set(list, MUIA_List_Active, i);
-            break;
-         }
-      }
-
-      i++;
-   }
-   return(TRUE);
-}
-
-///
-/// objstrfunc
-SAVEDS ASM VOID objstrfunc(register __a2 Object *list,register __a1 Object *str)
-{
-   char *x;
-
-   DoMethod(list, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
-   if(x)
-      set(str, MUIA_String_Contents, x);
-}
-
-///
-/// MakeKeyLabel1
-Object *MakeKeyLabel1(STRPTR label, STRPTR control_char)
-{
-   return(KeyLabel1(GetStr(label), *GetStr(control_char)));
-}
-
-///
-/// MakeKeyLabel2
 Object *MakeKeyLabel2(STRPTR label, STRPTR control_char)
 {
    return(KeyLabel2(GetStr(label), *GetStr(control_char)));
 }
 
-///
-/// MakeButton
+Object *MakeKeyLLabel2(STRPTR label, STRPTR control_char)
+{
+   return(KeyLabel2(GetStr(label), *GetStr(control_char)));
+}
+
 Object *MakeButton(STRPTR string)
 {
    Object *obj = SimpleButton(GetStr(string));
@@ -123,34 +59,14 @@ Object *MakeButton(STRPTR string)
    return(obj);
 }
 
-///
-/// MakeKeyString
-Object *MakeKeyString(LONG len, STRPTR c)
+Object *MakeKeyString(STRPTR string, LONG len, STRPTR control_char)
 {
-   return(TextinputObject,
-      StringFrame,
-      MUIA_CycleChain         , 1,
-      MUIA_Textinput_Multiline, FALSE,
-      MUIA_Textinput_MaxLen   , len,
-      MUIA_ControlChar        , *GetStr(c),
-      End);
+   Object *obj = KeyString(string, len, *(GetStr(control_char)));
+   if(obj)
+      set(obj, MUIA_CycleChain, 1);
+   return(obj);
 }
 
-///
-/// MakeKeyInteger
-Object *MakeKeyInteger(LONG len, STRPTR c)
-{
-   return(TextinputObject,
-      StringFrame,
-      MUIA_ControlChar     , *GetStr(c),
-      MUIA_CycleChain      , 1,
-      MUIA_String_MaxLen   , len,
-      MUIA_String_Accept   , "-0123456789",
-      End);
-}
-
-///
-/// MakeKeyCycle
 Object *MakeKeyCycle(STRPTR *array, STRPTR control_char)
 {
    Object *obj = KeyCycle(array, *(GetStr(control_char)));
@@ -159,8 +75,6 @@ Object *MakeKeyCycle(STRPTR *array, STRPTR control_char)
    return(obj);
 }
 
-///
-/// MakeKeySlider
 Object *MakeKeySlider(LONG min, LONG max, LONG level, STRPTR control_char)
 {
    Object *obj = KeySlider(min, max, level, *(GetStr(control_char)));
@@ -169,18 +83,14 @@ Object *MakeKeySlider(LONG min, LONG max, LONG level, STRPTR control_char)
    return(obj);
 }
 
-///
-/// MakeKeyCheckmark
-Object *MakeKeyCheckMark(BOOL state, STRPTR control_char)
+Object *MakeKeyCheckMark(BOOL selected, STRPTR control_char)
 {
-   Object *obj = KeyCheckMark(state, *(GetStr(control_char)));
+   Object *obj = KeyCheckMark(selected, *(GetStr(control_char)));
    if(obj)
       set(obj, MUIA_CycleChain, 1);
    return(obj);
 }
 
-///
-/// MakePopAsl
 Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only)
 {
    Object *obj = PopaslObject,
@@ -190,52 +100,532 @@ Object *MakePopAsl(Object *string, STRPTR title, BOOL drawers_only)
       ASLFR_TitleText      , GetStr(title),
       ASLFR_DrawersOnly    , drawers_only,
    End;
-//   if(obj)
-//      set(obj, MUIA_CycleChain, 1);
    return(obj);
 }
 
-///
-/// extract_arg
-STRPTR extract_arg(STRPTR string, STRPTR buffer, LONG len, char sep)
+/*
+ * loads bitmap image of an icon.
+ * cols, bmhd and body
+ * are beeing allocated
+ */
+
+UBYTE *load_image(STRPTR file, struct BitMapHeader **bmhd, ULONG **cols)
 {
-   STRPTR ptr1, ptr2;
+   struct IFFHandle *Handle;
+   struct ContextNode *cn;
+   struct StoredProperty *sp;
+   UBYTE *body = NULL;
 
-   strncpy(buffer, string, len);
+   if(!file || !cols || !bmhd)
+      return(NULL);
 
-   ptr1 = strchr(buffer, (sep ? sep : ' '));
-   ptr2 = strchr(buffer, 9);
+   if(Handle = AllocIFF())
+   {
+      if(Handle->iff_Stream = Open(file, MODE_OLDFILE))
+      {
+         InitIFFasDOS(Handle);
+         if(!OpenIFF(Handle, IFFF_READ))
+         {
+            if(!ParseIFF(Handle, IFFPARSE_STEP))
+            {
+               if((cn = CurrentChunk(Handle)) && (cn->cn_ID == ID_FORM))
+               {
+                  if(cn->cn_Type == ID_ILBM)
+                  {
+                     if(!PropChunk(Handle, ID_ILBM, ID_BMHD) &&
+                        !PropChunk(Handle, ID_ILBM, ID_CMAP) &&
+                        !StopChunk(Handle, ID_ILBM, ID_BODY) &&
+                        !StopOnExit(Handle, ID_ILBM, ID_FORM) &&
+                        !ParseIFF(Handle, IFFPARSE_SCAN))
+                     {
+                        if(sp = FindProp(Handle, ID_ILBM, ID_CMAP))
+                        {
+                           UBYTE *src;
+                           int i;
 
-   if(ptr2 && ((ptr2 < ptr1) || !ptr1))
-      ptr1 = ptr2;
-   if(ptr1)
-      *ptr1 = NULL;
+                           src = sp->sp_Data;
+                           if(*cols = AllocVec(sizeof(ULONG) * sp->sp_Size, MEMF_ANY))
+                           {
+                              for (i = 0; i < sp->sp_Size; i++)
+                                 (*cols)[i] = to32(src[i]);
+                           }
+                        }
 
-   string += strlen(buffer);
+                        if(sp = FindProp(Handle, ID_ILBM, ID_BMHD))
+                        {
+                           LONG size = CurrentChunk(Handle)->cn_Size;
 
-   while(*string == ' ' || *string == 9 || (sep ? *string == sep : NULL))
-      string++;
+                           if(*bmhd = AllocVec(sizeof(struct BitMapHeader), MEMF_ANY))
+                           {
+                              memcpy(*bmhd, sp->sp_Data, sizeof(struct BitMapHeader));
 
-   return((*string ? string : NULL));
+                              if(body = AllocVec(size, MEMF_ANY))
+                                 ReadChunkBytes(Handle, body, size);
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+            CloseIFF(Handle);
+         }
+         Close(Handle->iff_Stream);
+      }
+      FreeIFF(Handle);
+   }
+
+   if(!body)
+   {
+      if(*cols)
+         FreeVec(*cols);
+      *cols = NULL;
+      if(*bmhd)
+         FreeVec(*bmhd);
+      *bmhd = NULL;
+   }
+
+   return(body);
 }
 
-///
-/// IntuiMsgFunc
-SAVEDS ASM VOID IntuiMsgFunc(register __a1 struct IntuiMessage *imsg,register __a2 struct FileRequester *req)
+/*
+ * calls load_image() and generates
+ * a BodychunkObject.
+ * nothing is changed in icon by
+ * this routine (but load_image does !)
+ */
+
+VOID init_icon(struct Icon *icon)
 {
+   if(!icon)
+      return;
+
+   icon->body        = NULL;
+   icon->cols        = NULL;
+   icon->bodychunk   = NULL;
+   icon->list        = NULL;
+   icon->edit_window = NULL;
+   icon->disk_object = NULL;
+
+   if(icon->ImageFile)
+   {
+      struct BitMapHeader *bmhd = NULL;
+
+      if(icon->body = load_image(icon->ImageFile, &bmhd, &(icon->cols)))
+      {
+         icon->bodychunk = BodychunkObject,
+            MUIA_Background            , MUII_ButtonBack,
+            MUIA_Frame                 , (icon->Flags & IFL_DrawFrame ? MUIV_Frame_Button : MUIV_Frame_None),
+            MUIA_Bitmap_SourceColors   , icon->cols,
+            MUIA_Bitmap_Width          , bmhd->bmh_Width,
+            MUIA_Bitmap_Height         , bmhd->bmh_Height,
+            MUIA_FixWidth              , bmhd->bmh_Width,
+            MUIA_FixHeight             , bmhd->bmh_Height,
+            MUIA_Bodychunk_Depth       , bmhd->bmh_Depth,
+            MUIA_Bodychunk_Body        , icon->body,
+            MUIA_Bodychunk_Compression , bmhd->bmh_Compression,
+            MUIA_Bodychunk_Masking     , bmhd->bmh_Masking,
+            MUIA_Bitmap_Transparent    , 0,
+            End;
+      }
+      if(bmhd)
+         FreeVec(bmhd);
+
+      if(!icon->bodychunk)
+      {
+         char file[MAXPATHLEN];
+
+         strncpy(file, icon->ImageFile, MAXPATHLEN);
+         if(!strcmp(&file[strlen(file) - 5], ".info"))
+            file[strlen(file) - 5] = NULL;
+         if(icon->disk_object = GetDiskObject(file))
+         {
+            if(!(icon->bodychunk = ImageObject,
+               MUIA_Background      , MUII_ButtonBack,
+               MUIA_Frame           , (icon->Flags & IFL_DrawFrame ? MUIV_Frame_Button : MUIV_Frame_None),
+               MUIA_Image_OldImage  , icon->disk_object->do_Gadget.GadgetRender,
+            End))
+            {
+               FreeDiskObject(icon->disk_object);
+               icon->disk_object = NULL;
+            }
+         }
+      }
+   }
+   if(!icon->bodychunk)
+   {
+      icon->body = NULL;
+      icon->cols = NULL;
+      icon->disk_object = NULL;
+      icon->bodychunk = BodychunkObject,
+         MUIA_Background            , MUII_ButtonBack,
+         MUIA_Frame                 , (icon->Flags & IFL_DrawFrame ? MUIV_Frame_Button : MUIV_Frame_None),
+         MUIA_Bitmap_SourceColors   , (ULONG *)default_icon_colors,
+         MUIA_Bitmap_Width          , DEFAULT_ICON_WIDTH ,
+         MUIA_Bitmap_Height         , DEFAULT_ICON_HEIGHT,
+         MUIA_FixWidth              , DEFAULT_ICON_WIDTH ,
+         MUIA_FixHeight             , DEFAULT_ICON_HEIGHT,
+         MUIA_Bodychunk_Depth       , DEFAULT_ICON_DEPTH ,
+         MUIA_Bodychunk_Body        , (UBYTE *)default_icon_body,
+         MUIA_Bodychunk_Compression , DEFAULT_ICON_COMPRESSION,
+         MUIA_Bodychunk_Masking     , DEFAULT_ICON_MASKING,
+         MUIA_Bitmap_Transparent    , 0,
+      End;
+   }
+}
+
+BOOL find_list(struct DockPrefs_Data *data, Object **list, struct Icon **icon)
+{
+   struct Icon *tmp_icon;
+
+   DoMethod(data->LI_ActiveIcons, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &tmp_icon);
+   if(tmp_icon)
+   {
+      *icon = tmp_icon;
+      *list = data->LI_ActiveIcons;
+      return(TRUE);
+   }
+   else
+   {
+      DoMethod(data->LI_InactiveIcons, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &tmp_icon);
+      if(tmp_icon)
+      {
+         *icon = tmp_icon;
+         *list = data->LI_InactiveIcons;
+         return(TRUE);
+      }
+   }
+   return(FALSE);
+}
+
+LONG get_file_size(STRPTR file)
+{
+   struct FileInfoBlock *fib;
+   BPTR lock;
+   LONG size = -1;
+
+   if(lock = Lock(file, ACCESS_READ))
+   {
+      if(fib = AllocDosObject(DOS_FIB, NULL))
+      {
+         if(Examine(lock, fib))
+            size = (fib->fib_DirEntryType > 0 ? -2 : fib->fib_Size);
+
+         FreeDosObject(DOS_FIB, fib);
+      }
+      UnLock(lock);
+   }
+   return(size);
+}
+
+STRPTR LoadFile(STRPTR file)
+{
+   LONG size;
+   STRPTR buf = NULL;
+   BPTR fh;
+   BOOL success = FALSE;
+
+   if((size = get_file_size(file)) > -1)
+   {
+      if(buf = AllocVec(size + 1, MEMF_ANY))
+      {
+         if(fh = Open(file, MODE_OLDFILE))
+         {
+            if(Read(fh, buf, size) == size)
+               success = TRUE;
+            Close(fh);
+         }
+         buf[size] = NULL;    // We need buffers that are terminated by a zero
+      }
+   }
+
+   if(!success && buf)
+   {
+      FreeVec(buf);
+      buf = NULL;
+   }
+
+   return(buf);
+}
+
+int find_max(STRPTR file)
+{
+   struct BitMapHeader *bmhd;
+   struct IFFHandle *Handle1, *Handle2;
+   struct ContextNode *cn1, *cn2;
+   struct StoredProperty *sp;
+   struct DiskObject *disk_object;
+   int max_height = DEFAULT_ICON_HEIGHT;
+   char buffer[MAXPATHLEN];
+
+   if(Handle1 = AllocIFF())
+   {
+      if(Handle1->iff_Stream = Open(file, MODE_OLDFILE))
+      {
+         InitIFFasDOS(Handle1);
+         if(!(OpenIFF(Handle1, IFFF_READ)))
+         {
+            if(!(StopChunk(Handle1, ID_NTCN, ID_ICOI)))
+            {
+               while(!ParseIFF(Handle1, IFFPARSE_SCAN))
+               {
+                  cn1 = CurrentChunk(Handle1);
+                  if(cn1->cn_ID == ID_ICOI)
+                  {
+                     if(ReadChunkBytes(Handle1, buffer, MIN(MAXPATHLEN, cn1->cn_Size)) == MIN(MAXPATHLEN, cn1->cn_Size))
+                     {
+                        bmhd = NULL;         // this will indicate if the file was a valid iff brush
+                        if(Handle2=AllocIFF())
+                        {
+                           if(Handle2->iff_Stream = Open(buffer, MODE_OLDFILE))
+                           {
+                              InitIFFasDOS(Handle2);
+                              if(!OpenIFF(Handle2, IFFF_READ))
+                              {
+                                 if(!ParseIFF(Handle2, IFFPARSE_STEP))
+                                 {
+                                    if((cn2 = CurrentChunk(Handle2)) && (cn2->cn_ID == ID_FORM))
+                                    {
+                                       if(cn2->cn_Type == ID_ILBM)
+                                       {
+                                          if(!PropChunk(Handle2, ID_ILBM, ID_BMHD) &&
+                                             !PropChunk(Handle2, ID_ILBM, ID_CMAP) &&
+                                             !StopChunk(Handle2, ID_ILBM, ID_BODY) &&
+                                             !StopOnExit(Handle2, ID_ILBM, ID_FORM) &&
+                                             !ParseIFF(Handle2, IFFPARSE_SCAN))
+                                          {
+                                             if(sp = FindProp(Handle2, ID_ILBM, ID_BMHD))
+                                             {
+                                                bmhd = (struct BitMapHeader *)sp->sp_Data;
+                                                max_height = MAX(max_height, bmhd->bmh_Height);
+                                             }
+                                          }
+                                       }
+                                    }
+                                 }
+                                 CloseIFF(Handle2);
+                              }
+                              Close(Handle2->iff_Stream);
+                           }
+                           FreeIFF(Handle2);
+                        }
+                        if(!bmhd)         // wasn't a iff brush, might be an icon
+                        {
+                           if(!strcmp(&buffer[strlen(buffer) - 5], ".info"))
+                              buffer[strlen(buffer) - 5] = NULL;
+                           if(disk_object = GetDiskObjectNew(buffer))
+                           {
+                              max_height = MAX(max_height, ((struct Image *)(disk_object->do_Gadget.GadgetRender))->Height);
+                              FreeDiskObject(disk_object);
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+            CloseIFF(Handle1);
+         }
+         Close(Handle1->iff_Stream);
+      }
+      FreeIFF(Handle1);
+   }
+
+   return(max_height);
+}
+
+#ifdef __SASC
+SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
+LONG AppMsgFunc()
+{
+   register APTR obj __asm("a2");
+   register struct AppMessage **x __asm("a1");
+#endif
+   struct WBArg *ap;
+   struct AppMessage *amsg = *x;
+   STRPTR buf;
+
+   ap = amsg->am_ArgList;
+   if(amsg->am_NumArgs)
+   {
+      if(buf = AllocVec(MAXPATHLEN + 1, MEMF_ANY))
+      {
+         NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
+         AddPart(buf, ap->wa_Name, MAXPATHLEN);
+         setstring(obj, buf);
+         FreeVec(buf);
+      }
+   }
+   return(NULL);
+}
+
+#ifdef __SASC
+SAVEDS ASM LONG Editor_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
+LONG Editor_AppMsgFunc()
+{
+   register APTR obj __asm("a2");
+   register struct AppMessage **x __asm("a1");
+#endif
+
+   struct WBArg *ap;
+   struct AppMessage *amsg = *x;
+   STRPTR buf;
+   int i;
+
+   if(amsg->am_NumArgs)
+   {
+      if(buf = AllocVec(MAXPATHLEN + 1, MEMF_ANY))
+      {
+         for(ap = amsg->am_ArgList, i = 0; i < amsg->am_NumArgs; i++, ap++)
+         {
+            NameFromLock(ap->wa_Lock, buf, MAXPATHLEN);
+            AddPart(buf, ap->wa_Name, MAXPATHLEN);
+            DoMethod(obj, MUIM_List_InsertSingle, buf, MUIV_List_Insert_Active);
+         }
+         set(obj, MUIA_UserData, 1);   // contents have been changed
+         FreeVec(buf);
+      }
+   }
+   return(NULL);
+}
+
+BOOL editor_load(STRPTR file, Object *editor)
+{
+   STRPTR buf, ptr1, ptr2;
+   LONG size;
+   BOOL success = FALSE;
+
+   if(file && *file)
+   {
+      set(editor, MUIA_List_Quiet, TRUE);
+      DoMethod(editor, MUIM_List_Clear);
+
+      size = get_file_size(file);
+      if(buf = LoadFile(file))
+      {
+         ptr1 = buf;
+         while(ptr1 && ptr1 < buf + size)
+         {
+            if(ptr2 = strchr(ptr1, '\n'))
+            {
+               *ptr2 = NULL;
+               DoMethod(editor, MUIM_List_InsertSingle, ptr1, MUIV_List_Insert_Bottom);
+               ptr1 = ptr2 + 1;
+            }
+            else
+               ptr1 = NULL;
+         }
+         FreeVec(buf);
+         success = TRUE;
+      }
+      set(editor, MUIA_List_Quiet, FALSE);
+      set(editor, MUIA_List_Active, MUIV_List_Active_Top);
+   }
+   return(success);
+}
+
+BOOL editor_save(STRPTR file, Object *editor)
+{
+   BPTR fh;
+   STRPTR ptr;
+   int i;
+
+   if(file && *file)
+   {
+      if(fh = Open(file, MODE_NEWFILE))
+      {
+         i = 0;
+         FOREVER
+         {
+            DoMethod(editor, MUIM_List_GetEntry, i++, &ptr);
+            if(!ptr)
+               break;
+            FPrintf(fh, "%ls\n", ptr);
+         }
+
+         Close(fh);
+         set(editor, MUIA_UserData, NULL);
+         return(TRUE);
+      }
+   }
+   return(FALSE);
+}
+
+BOOL editor_checksave(STRPTR file, Object *editor)
+{
+   if(xget(editor, MUIA_UserData))
+   {
+      if(MUI_Request(app, (Object *)xget(editor, MUIA_WindowObject), 0, 0, GetStr(MSG_BT_SaveDiscardChanges), GetStr(MSG_LA_ScriptModified)))
+         return(editor_save(file, editor));
+   }
+   return(FALSE);
+}
+
+VOID play_sound(STRPTR file, LONG volume)
+{
+   if(file && *file && DataTypesBase)
+   {
+      if(SoundObject)
+         DisposeDTObject(SoundObject);
+
+      if(SoundObject = NewDTObject(file,
+         DTA_SourceType , DTST_FILE,
+         DTA_GroupID    , GID_SOUND,
+         SDTA_Volume    , volume,
+         SDTA_Cycles    , 1,
+      TAG_DONE))
+      {
+         DoMethod(SoundObject, DTM_TRIGGER, NULL, STM_PLAY, NULL);
+      }
+   }
+}
+
+BOOL CopyFile(STRPTR infile, STRPTR outfile)
+{
+   BPTR in, out;
+   char buf[100];
+   LONG i;
+   BOOL success = FALSE;
+
+   if(in = Open(infile, MODE_OLDFILE))
+   {
+      if(out = Open(outfile, MODE_NEWFILE))
+      {
+         success = TRUE;
+         while(i = Read(in, buf, 100))
+         {
+            if(Write(out, buf, i) != i)
+            {
+               success = FALSE;
+               break;
+            }
+         }
+         Close(out);
+      }
+      Close(in);
+   }
+   return(success);
+}
+
+#ifdef __SASC
+SAVEDS ASM VOID IntuiMsgFunc(REG(a1) struct IntuiMessage *imsg,REG(a2) struct FileRequester *req) {
+#else /* gcc */
+VOID IntuiMsgFunc()
+{
+   register struct FileRequester *req __asm("a2");
+   register struct IntuiMessage *imsg __asm("a1");
+#endif
+
    if(imsg->Class == IDCMP_REFRESHWINDOW)
       DoMethod(req->fr_UserData, MUIM_Application_CheckRefresh);
 }
 
-///
-/// getfilename
 char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
 {
    static char buf[512];
    struct FileRequester *req;
    struct Window *w;
-   static LONG left=-1,top=-1,width=-1,height=-1;
-   STRPTR res = NULL, ptr = NULL;
+   char *res = NULL;
    static const struct Hook IntuiMsgHook = { { 0,0 }, (VOID *)IntuiMsgFunc, NULL, NULL };
 
    get(win, MUIA_Window_Window, &w);
@@ -247,10 +637,6 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
       height   = w->Height-w->BorderTop-w->BorderBottom - 4;
    }
 
-   strcpy(buf, file);
-   if(ptr = PathPart(buf))
-      *ptr++ = NULL;
-
    if(req = MUI_AllocAslRequestTags(ASL_FileRequest,
       ASLFR_Window         , w,
       ASLFR_TitleText      , title,
@@ -258,8 +644,7 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
       ASLFR_InitialTopEdge , top,
       ASLFR_InitialWidth   , width,
       ASLFR_InitialHeight  , height,
-      ASLFR_InitialDrawer  , buf,
-      ASLFR_InitialFile    , (ptr ? ptr : file),
+      ASLFR_InitialFile    , (file ? file : (STRPTR)""),
       ASLFR_DoSaveMode     , save,
       ASLFR_RejectIcons    , TRUE,
       ASLFR_UserData       , app,
@@ -283,218 +668,35 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
       MUI_FreeAslRequest(req);
       set(app, MUIA_Application_Sleep, FALSE);
    }
-
-   return((char *)res);
+   return(res);
 }
 
-///
-
-/// clear_list
-VOID clear_list(struct MinList *list)
+STRPTR update_string(STRPTR old, STRPTR source)
 {
-   if(list->mlh_TailPred != (struct MinNode *)list)
+   if(source && *source)
    {
-      struct MinNode *e1, *e2;
+      STRPTR new = NULL;
 
-      e1 = list->mlh_Head;
-      while(e2 = e1->mln_Succ)
+      if(old)
       {
-         Remove((struct Node *)e1);
-         FreeVec(e1);
-         e1 = e2;
+         if(strlen(old) >= strlen(source))
+            new = old;
+         else
+            FreeVec(old);
+      }
+      if(!new)
+         new = AllocVec(strlen(source) + 1, MEMF_ANY);
+
+      if(new)
+      {
+         strcpy(new, source);
+         return(new);
       }
    }
-}
-
-///
-/// add_server
-struct ServerEntry *add_server(struct MinList *list, STRPTR name)
-{
-   struct ServerEntry *server;
-
-   if(!name || !*name || !strcmp(name, "0.0.0.0"))
-      return(NULL);
-
-   if(server = AllocVec(sizeof(struct ServerEntry), MEMF_ANY))
+   else
    {
-      strncpy(server->se_name, name, sizeof(server->se_name) - 1);
-      AddTail((struct List *)list, (struct Node *)server);
+      if(old)
+         FreeVec(old);
    }
-   return(server);
+   return(NULL);
 }
-
-///
-/// add_script_line
-struct ScriptLine *add_script_line(struct MinList *list, int command, STRPTR contents, int userdata)
-{
-   struct ScriptLine *script_line;
-
-   if(list)
-   {
-      if(script_line = AllocVec(sizeof(struct ScriptLine), MEMF_ANY | MEMF_CLEAR))
-      {
-         script_line->sl_command = command;
-         script_line->sl_userdata = userdata;
-         if(contents)
-            strncpy(script_line->sl_contents, contents, sizeof(script_line->sl_contents));
-
-         AddTail((struct List *)list, (struct Node *)script_line);
-      }
-   }
-   return(script_line);
-}
-///
-/// uniquify_modem_id
-VOID uniquify_modem_id(Object *list, struct Modem *modem)
-{
-   ULONG pos;
-   struct Modem *tmp_modem;
-
-   if(modem && list)
-   {
-      pos = 0;
-      FOREVER
-      {
-         DoMethod(list, MUIM_List_GetEntry, pos++, &tmp_modem);
-         if(!tmp_modem)
-            break;
-         if((tmp_modem != modem) && (tmp_modem->mo_id == modem->mo_id))
-         {
-            modem->mo_id++;
-            pos = 0;
-         }
-      }
-   }
-}
-
-///
-/// uniquify_iface_name
-VOID uniquify_iface_name(Object *list, struct Interface *iface)
-{
-   ULONG pos;
-   struct Interface *tmp_iface;
-   char buf[21];
-   SHORT i;
-
-   if(iface && list)
-   {
-      strncpy(buf, iface->if_name, sizeof(buf));
-
-      pos = 0;
-      i = 0;
-      while(i < 100)
-      {
-         DoMethod(list, MUIM_List_GetEntry, pos++, &tmp_iface);
-         if(!tmp_iface)
-            break;
-         if((tmp_iface != iface) && (!strcmp(tmp_iface->if_name, buf)))
-         {
-            i++;
-            iface->if_name[sizeof(iface->if_name) - 3] = NULL; // cut down to right size (max-2)
-            sprintf(buf, "%ls%ld", iface->if_name, i);
-            pos = 0;
-         }
-      }
-
-      strncpy(iface->if_name, buf, sizeof(iface->if_name));
-   }
-}
-
-///
-/// get_modem_by_id
-struct Modem *get_modem_by_id(Object *list, int id)
-{
-   struct Modem *modem = NULL;
-   ULONG pos;
-
-   if(list)
-   {
-      pos = 0;
-      FOREVER
-      {
-         DoMethod(list, MUIM_List_GetEntry, pos++, &modem);
-         if(!modem)
-            break;
-         if(modem->mo_id == id)
-            break;
-      }
-   }
-   return(modem);
-}
-
-///
-
-#define ENCODE(c) (c ? (c & 0x3F) + 0x20 : 0x60)
-#define DECODE(c) ((c - 0x20) & 0x3F)
-
-/// encrypt
-VOID encrypt(STRPTR in, STRPTR out)
-{
-   LONG n, i;
-   UBYTE c;
-   STRPTR s, t;
-
-   n = strlen(in);
-   if (n > 0)
-   {
-      s = out;
-      *s++ = ENCODE(n);
-
-      for (i = 0; i < n; i += 3)
-      {
-         t = &in[i];
-
-         c = t[0] >> 2;
-         *s++ = ENCODE(c);
-         c = (t[0] << 4) & 0x30 | (t[1] >> 4) & 0x0F;
-         *s++ = ENCODE(c);
-         c = (t[1] << 2) & 0x3C | (t[2] >> 6) & 0x03;
-         *s++ = ENCODE(c);
-         c = t[2] & 0x3F;
-         *s++ = ENCODE(c);
-      }
-      *s = NULL;
-   }
-}
-
-///
-/// decrypt
-VOID decrypt(STRPTR in, STRPTR out)
-{
-   STRPTR s, t;
-   LONG l, c;
-
-   s = in;
-   t = out;
-   c = *s++;
-   l = DECODE(c);
-   if (c != '\n' && l > 0)
-   {
-      while (l >= 4)
-      {
-         c = DECODE(s[0]) << 2 | DECODE(s[1]) >> 4;
-         *t++ = c;
-         c = DECODE(s[1]) << 4 | DECODE(s[2]) >> 2;
-         *t++ = c;
-         c = DECODE(s[2]) << 6 | DECODE(s[3]);
-         *t++ = c;
-
-         s += 4;
-         l -= 3;
-      }
-      c = DECODE(s[0]) << 2 | DECODE(s[1]) >> 4;
-      if (l >= 1)
-         *t++ = c;
-      c = DECODE(s[1]) << 4 | DECODE(s[2]) >> 2;
-      if (l >= 2)
-         *t++ = c;
-      c = DECODE(s[2]) << 6 | DECODE(s[3]);
-      if (l >= 3)
-         *t++ = c;
-      s += 4;
-   }
-   *t = NULL;
-}
-
-///
-

@@ -1,137 +1,170 @@
 /// includes
-#include "/includes.h"
+#include "includes.h"
 
-#define USE_SCRIPT_COMMANDS
-#define USE_EVENT_COMMANDS
-#define USE_EXEC_TYPES
-#include "/Genesis.h"
-#include "Strings.h"
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
 #include "mui.h"
 #include "protos.h"
-#include "grouppager_mcc.h"
 
-///
-/// define images
+#define USE_DEFAULT_ICON_HEADER
+#define USE_DEFAULT_ICON_BODY
+#define USE_DEFAULT_ICON_COLORS
+#include "images/default_icon.h"
+
 #define USE_LOGO_HEADER
 #define USE_LOGO_BODY
 #define USE_LOGO_COLORS
 #include "images/logo.h"
-
-#define USE_DATABASE_HEADER
-#define USE_DATABASE_BODY
-#define USE_DATABASE_COLORS
-#include "images/database.h"
-
-#define USE_OPTIONS_HEADER
-#define USE_OPTIONS_BODY
-#define USE_OPTIONS_COLORS
-#include "images/options.h"
-
-#define USE_MODEMS_HEADER
-#define USE_MODEMS_BODY
-#define USE_MODEMS_COLORS
-#include "images/modems.h"
-
-#define USE_INTERFACES_HEADER
-#define USE_INTERFACES_BODY
-#define USE_INTERFACES_COLORS
-#include "images/interfaces.h"
-
-#define USE_DEFAULT_HEADER
-#define USE_DEFAULT_BODY
-#define USE_DEFAULT_COLORS
-#include "images/default.h"
-
-#ifdef INTERNAL_USER
-#define USE_USER_HEADER
-#define USE_USER_BODY
-#define USE_USER_COLORS
-#include "images/user.h"
-#endif
 
 #define USE_INFORMATION_HEADER
 #define USE_INFORMATION_BODY
 #define USE_INFORMATION_COLORS
 #include "images/information.h"
 
+#define USE_MENUS_HEADER
+#define USE_MENUS_BODY
+#define USE_MENUS_COLORS
+#include "images/menus.h"
+
+#define USE_DOCK_HEADER
+#define USE_DOCK_BODY
+#define USE_DOCK_COLORS
+#include "images/dock.h"
 ///
 
 /// Libraries
-struct   Library      *MUIMasterBase = NULL;
-struct   Library      *GenesisBase   = NULL;
-struct   Library      *UserGroupBase = NULL;
-struct   Library      *NetConnectBase= NULL;
-struct   Catalog      *cat           = NULL; /* pointer to our locale catalog */
+struct   Library     *MUIMasterBase = NULL;
+//struct   UtilityBase *UtilityBase   = NULL;
+struct   Library     *IFFParseBase  = NULL;
+struct   Library     *DataTypesBase = NULL;
+struct   Library     *IconBase      = NULL;
 
 ///
 
 /// other data
-struct Process *proc = NULL;
+struct   Catalog     *cat           = NULL;
 struct StackSwapStruct StackSwapper;
+struct Process       *proc;
+Object *SoundObject  = NULL;
+BOOL is_test = FALSE;
+LONG left=-1, top=-1, width=-1, height=-1;
 
-char config_file[MAXPATHLEN];
-#ifdef INTERNAL_USER
-BOOL changed_passwd;
-#endif
-BOOL changed_group, changed_hosts, changed_protocols, changed_services, changed_inetaccess,
-     changed_inetd, changed_networks, changed_rpc;
-BOOL root_authenticated = FALSE;
-struct User *current_user = NULL;
-struct MinList McpList;
+///
+/// default programs
+STRPTR default_names[] = {
+   "Genesis",
+   "Voyager",
+   "Microdot-II",
+   "AmFTP",
+   "AmIRC",
+   "AmTelnet",
+   "AmTerm",
+   "AmTalk",
+   "NetInfo",
+   "X-Arc",
+   "CManager",
+   "Docs",
+   "Misc",
+   NULL };
+STRPTR default_imagefiles[] = {
+   IMAGE_PATH"Start",
+   IMAGE_PATH"WWW2",
+   IMAGE_PATH"Mail",
+   IMAGE_PATH"FTP",
+   IMAGE_PATH"IRC",
+   IMAGE_PATH"Telnet",
+   IMAGE_PATH"Colour/Comms",
+   IMAGE_PATH"Talk",
+   IMAGE_PATH"Colour/Search",
+   IMAGE_PATH"Packers/Lha",
+   IMAGE_PATH"General/Clipboard",
+   IMAGE_PATH"Docs",
+   IMAGE_PATH"Misc",
+   NULL };
+STRPTR default_programfiles[] = {
+   "AmiTCP:Genesis",
+   PROGRAM_PATH"Voyager/V",
+   PROGRAM_PATH"Microdot-II/Microdot",
+   PROGRAM_PATH"AmFTP/AmFTP",
+   PROGRAM_PATH"AmIrc/AmIRC",
+   PROGRAM_PATH"AmTelnet/AmTelnet",
+   PROGRAM_PATH"AmTerm/AmTerm",
+   PROGRAM_PATH"AmTalk/AmTalk",
+   PROGRAM_PATH"NetInfo/NetInfo",
+   PROGRAM_PATH"X-Arc/X-Arc",
+   PROGRAM_PATH"CManager/CManager",
+   "NetConnect2:Docs/Documentation",
+   PROGRAM_PATH"misc",
+   NULL };
+
+STRPTR default_menus[] = {
+   "MultiView",
+   "LZX extract",
+   "Play Sound",
+   "NewShell",
+   NULL };
+STRPTR default_menu_programs[]= {
+   "SYS:Utilities/MultiView",
+   "lzx x [] ram: <>CON:0/0/640/200/LZXoutput/AUTO/CLOSE/WAIT",
+   "PlaySound",
+   "NewShell",
+   NULL };
 
 ///
 
-/// Menu
+/// MainWindowMenu
 struct NewMenu MainWindowMenu[] =
 {
-   { NM_TITLE, (STRPTR)MSG_MENU_PROJECT   , 0               , 0, 0, (APTR)0            },
-   { NM_ITEM , (STRPTR)MSG_MENU_ABOUT     , MSG_CC_ABOUT    , 0, 0, (APTR)MEN_ABOUT    },
-   { NM_ITEM , (STRPTR)MSG_MENU_ABOUTMUI  , 0               , 0, 0, (APTR)MEN_ABOUT_MUI},
-   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },
-   { NM_ITEM , (STRPTR)MSG_MENU_ICONIFY   , MSG_CC_ICONIFY  , 0, 0, (APTR)MEN_ICONIFY  },
-   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },
-   { NM_ITEM , (STRPTR)MSG_MENU_QUIT      , MSG_CC_QUIT     , 0, 0, (APTR)MEN_QUIT     },
+   { NM_TITLE, (STRPTR)MSG_MENU_PROJECT         , 0 , 0, 0, (APTR)0           },
+   { NM_ITEM , (STRPTR)MSG_MENU_ABOUT           ,"?", 0, 0, (APTR)MEN_ABOUT   },
+   { NM_ITEM , (STRPTR)MSG_MENU_HELP            ,"H", 0, 0, (APTR)MEN_HELP},
+   { NM_ITEM , (STRPTR)NM_BARLABEL              , 0 , 0, 0, (APTR)0           },
+   { NM_ITEM , (STRPTR)MSG_MENU_QUIT            ,"Q", 0, 0, (APTR)MEN_QUIT    },
 
-   { NM_TITLE, (STRPTR)MSG_MENU_SETTINGS  , 0               , 0, 0, (APTR)0            },
-   { NM_ITEM , (STRPTR)MSG_MENU_LOAD      , MSG_CC_LOAD     , 0, 0, (APTR)MEN_LOAD     },
-   { NM_ITEM , (STRPTR)MSG_MENU_IMPORT    , MSG_CC_IMPORT   , 0, 0, (APTR)MEN_IMPORT   },
-   { NM_ITEM , (STRPTR)MSG_MENU_SAVE      , MSG_CC_SAVE     , 0, 0, (APTR)MEN_SAVE     },
-   { NM_ITEM , (STRPTR)MSG_MENU_SAVEAS    , MSG_CC_SAVEAS   , 0, 0, (APTR)MEN_SAVEAS   },
-   { NM_ITEM , (STRPTR)NM_BARLABEL        , 0               , 0, 0, (APTR)0            },
-   { NM_ITEM , (STRPTR)MSG_MENU_MUI       , MSG_CC_MUI      , 0, 0, (APTR)MEN_MUI      },
+   { NM_TITLE, (STRPTR)MSG_MENU_SETTINGS        , 0 , 0, 0, (APTR)0           },
+   { NM_ITEM , (STRPTR)MSG_MENU_LOAD            ,"L", 0, 0, (APTR)MEN_LOAD    },
+   { NM_ITEM , (STRPTR)MSG_MENU_SAVE_AS         ,"S", 0, 0, (APTR)MEN_SAVE_AS },
+   { NM_ITEM , (STRPTR)MSG_MENU_RESET_DEFAULT   ,"D", 0, 0, (APTR)MEN_RESET   },
+   { NM_ITEM , (STRPTR)NM_BARLABEL              , 0 , 0, 0, (APTR)0           },
+   { NM_ITEM , (STRPTR)MSG_MENU_MUI             ,"M", 0, 0, (APTR)MEN_MUI     },
 
-   { NM_END  , NULL                       , 0               , 0, 0, (APTR)0            },
+   { NM_END  , NULL                             , 0 , 0, 0, (APTR)0           }
 
 };
 
 ///
 
-/// MUI Class pointers
-
-struct MUI_CustomClass *CL_MainWindow;
-struct MUI_CustomClass *CL_About;
-struct MUI_CustomClass *CL_Interfaces;
-struct MUI_CustomClass *CL_IfaceWindow;
-struct MUI_CustomClass *CL_Options;
-struct MUI_CustomClass *CL_Modems;
-struct MUI_CustomClass *CL_ModemWindow;
-struct MUI_CustomClass *CL_Database;
-struct MUI_CustomClass *CL_LogLevel;
-#ifdef INTERNAL_USER
-struct MUI_CustomClass *CL_User;
-struct MUI_CustomClass *CL_UserWindow;
+/// hooks
+#ifdef __SASC
+extern SAVEDS ASM VOID DestructFunc(REG(a2) APTR pool, REG(a1) APTR ptr);
+extern SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x);
+extern SAVEDS ASM LONG Editor_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x);
+#else
+extern VOID DestructFunc();
+extern LONG AppMsgFunc();
+extern LONG Editor_AppMsgFunc();
 #endif
+struct Hook DestructHook  = { { 0,0 }, (VOID *)DestructFunc   , NULL, NULL };
+struct Hook AppMsgHook = { {NULL, NULL}, (VOID *)AppMsgFunc, NULL, NULL };
+struct Hook Editor_AppMsgHook = { {NULL, NULL}, (VOID *)Editor_AppMsgFunc, NULL, NULL };
+///
+
+/// MUI Custom Classes
+struct MUI_CustomClass  *CL_MainWindow    = NULL;
+struct MUI_CustomClass  *CL_DockPrefs     = NULL;
+struct MUI_CustomClass  *CL_Editor        = NULL;
+struct MUI_CustomClass  *CL_EditIcon      = NULL;
+struct MUI_CustomClass  *CL_IconList      = NULL;
+struct MUI_CustomClass  *CL_About         = NULL;
+struct MUI_CustomClass  *CL_MenuPrefs     = NULL;
+struct MUI_CustomClass  *CL_ProgramList   = NULL;
+struct MUI_CustomClass  *CL_PagerList  = NULL;
 
 ///
 /// MUI stuff
-Object *app                = NULL;  /* our MUI application                 */
-Object *win                = NULL;  /* a global pointer to our main window */
-Object *group              = NULL;
-
-struct Hook sorthook   = { {NULL, NULL}, (VOID *)sortfunc  , NULL, NULL};
-struct Hook des_hook   = { {NULL, NULL}, (VOID *)des_func  , NULL, NULL};
-struct Hook strobjhook = { {NULL, NULL}, (VOID *)strobjfunc, NULL, NULL};
-struct Hook objstrhook = { {NULL, NULL}, (VOID *)objstrfunc, NULL, NULL};
+Object *app = NULL;
+Object *win = NULL;
+Object *group  = NULL;
 
 ///
 

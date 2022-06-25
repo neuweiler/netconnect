@@ -2,9 +2,9 @@
 #
 #  SMakefile
 #
-#  Makefile for the `SMake' utility required to build 'GENESiSPrefs'
+#  Makefile for the `SMake' utility required to build `NetConnectPrefs'
 #
-#  1998 by Michael Neuweiler
+#  1996-98 by Michael Neuweiler
 #
 ###############################################################################
 
@@ -17,126 +17,96 @@
 CPU      = ANY
 #CPU     = 68030
 #DEMO     = DEF=DEMO
-#BETA     = DEF=BETA
-#NC       = DEF=NETCONNECT
-VT       = DEF=VT
-DEBUG    = DBG=LINE
+#BETA    = DEF=BETA
+#DEBUG      = DBG=FULL
 OPTIMIZE = OPT OPTTIME NOOPTINLOCAL
-#USER    = DEF=INTERNAL_USER
 
 OPTIONS  = CPU=$(CPU) $(OPTIMIZE)
-GST      = GSTIMM GST=/includes.gst
+GST      = GSTIMM GST=includes.gst
 
-CFLAGS   = MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG) $(NC) $(USER) $(VT)
-LFLAGS   = SC SD NOICONS MAXHUNK 100000
+CFLAGS   = IDIR=//shared MCCONS ERRREXX STRMERGE NOSTKCHK IDLEN=65 NOVER IGN=105 IGN=147 NOMINC CNEST STREQ NOICONS DEF=_M$(CPU) $(DEMO) $(BETA) $(DEBUG)
 
-#USER_OBJS= mui_PasswdReq.o mui_User.o mui_UserWindow.o
-OBJS     = mui_MainWindow.o mui_About.o mui_Interfaces.o mui_IfaceWindow.o \
-		   mui_Options.o mui_Modems.o mui_ModemWindow.o mui_DataBase.o \
-		   main.o globals.o amiga.o $(USER_OBJS)
+LFLAGS   = ND SC SD NOICONS MAXHUNK 100000
+#LFLAGS  = SC SD NOICONS MAXHUNK 100000
+
+OBJS     = mui_About.o mui_DockPrefs.o mui_EditIcon.o mui_Editor.o amiga.o mui_IconList.o \
+           main.o globals.o mui_MainWindow.o mui_MenuPrefs.o mui_PagerList.o \
+           mui_ProgramList.o
 LIBS     = lib:amiga.lib lib:sc.lib
 
-all:   /includes.gst Strings.h GenesisPrefs.ct images/database.h images/default.h \
-	   images/information.h images/interfaces.h images/logo.h images/modems.h \
-	   images/options.h images/user.h GENESiSPrefs
+all:   includes.gst //shared/locale/NetConnect.h //shared/locale/NetConnect.ct //shared/images/default_icon.h //shared/images/logo.h //shared/images/information.h //shared/images/menus.h //shared/images/dock.h NetConnectPrefs
 
-/includes.gst:  /includes.h
-	  GST >NIL: UNLOAD includes.gst
-	  SC NOOBJNAME INCLUDEDIR=netinclude: IDLEN=65 NOVERSION MAKEGST=$@ /includes.h
-	  GST $@
+includes.gst:  includes.h
+      GST >NIL: UNLOAD $@
+      SC NOOBJNAME IDLEN=65 NOVERSION MAKEGST=$@ includes.h
+      GST $@
 
-Strings.h: GenesisPrefs.cd
-   cat2h GenesisPrefs.cd Strings.h
-GenesisPrefs.ct : GenesisPrefs.cd
-   -FlexCat GenesisPrefs.cd NEWCTFILE GenesisPrefs.ct
-images/database.h: images/database.iff
-   brush2c images/database.iff >images/database.h
-images/default.h: images/default.iff
-   brush2c images/default.iff >images/default.h
-images/information.h: images/information.iff
-   brush2c images/information.iff >images/information.h
-images/interfaces.h: images/interfaces.iff
-   brush2c images/interfaces.iff >images/interfaces.h
-images/logo.h: images/logo.iff
-   brush2c images/logo.iff >images/logo.h
-images/modems.h: images/modems.iff
-   brush2c images/modems.iff >images/modems.h
-images/options.h: images/options.iff
-   brush2c images/options.iff >images/options.h
-images/user.h: images/user.iff
-   brush2c images/user.iff >images/user.h
+//shared/locale/NetConnect.h: //shared/locale/NetConnect.cd
+   cat2h //shared/locale/NetConnect.cd //shared/locale/NetConnect.h
+//shared/locale/NetConnect.ct : //shared/locale/NetConnect.cd
+   sc:c/FlexCat //shared/locale/NetConnect.cd NEWCTFILE //shared/locale/NetConnect.ct
+#locale:catalogs/deutsch/AmiTCPPrefs.catalog : //shared/locale/deutsch.ct
+#  sc:c/FlexCat //shared/locale/NetConnect.cd //shared/locale/deutsch.ct CATALOG locale:catalogs/deutsch/NetConnect.catalog
 
-GENESiSPrefs:   $(OBJS)
-   SLINK WITH T:GENESiSPrefs.WITH <<!(T:GENESiSPrefs.WITH)
-	  FROM  lib:c.o $(OBJS)
-	  TO    GENESiSPrefs
-	  LIB   $(LIBS)
-	  MAP   GENESiSPrefs.map H
-	  $(LFLAGS)
+//shared/images/logo.h: //shared/images/logo.iff
+   brush2c //shared/images/logo.iff >//shared/images/logo.h
+//shared/images/default_icon.h: //shared/images/default_icon.iff
+   brush2c //shared/images/default_icon.iff >//shared/images/default_icon.h
+//shared/images/information.h: //shared/images/information.iff
+   brush2c //shared/images/information.iff >//shared/images/information.h
+//shared/images/menus.h: //shared/images/menus.iff
+   brush2c //shared/images/menus.iff >//shared/images/menus.h
+//shared/images/dock.h: //shared/images/dock.iff
+   brush2c //shared/images/dock.iff >//shared/images/dock.h
+
+NetConnectPrefs:  $(OBJS)
+   SLINK WITH T:NetConnectPrefs.WITH <<!(T:NetConnectPrefs.WITH)
+      FROM  lib:c.o $(OBJS)
+      TO    NetConnectPrefs
+      LIB   $(LIBS)
+      MAP NetConnectPrefs.map H
+      $(LFLAGS)
    <
-	  slink from GENESiSPrefs to AmiTCP:GENESiSPrefs nodebug noicons
 
-main.o: main.c /includes.h /Genesis.h /genesis.lib/libraries/genesis.h\
- /genesis.lib/proto/genesis.h /genesis.lib/pragmas/genesis_lib.h /genesis.lib/pragmas/nc_lib.h\
- rev.h Strings.h mui.h mui_About.h mui_DataBase.h mui_IfaceWindow.h\
- mui_Interfaces.h mui_MainWindow.h mui_Modems.h mui_ModemWindow.h mui_Options.h\
- mui_PasswdReq.h mui_User.h mui_UserWindow.h protos.h\
- grouppager_mcc.h images/logo.h
+amiga.o: amiga.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
+ mui_DockPrefs.h protos.h //shared/images/default_icon.h
 
-mui_MainWindow.o: mui_MainWindow.c /includes.h /Genesis.h\
- /genesis.lib/libraries/genesis.h /genesis.lib/proto/genesis.h\
- /genesis.lib/pragmas/genesis_lib.h rev.h Strings.h mui.h mui_About.h\
- mui_DataBase.h mui_Interfaces.h mui_MainWindow.h\
- mui_Modems.h mui_Options.h mui_PasswdReq.h mui_User.h\
- protos.h grouppager_mcc.h\
- images/information.h images/database.h images/options.h\
- images/modems.h images/interfaces.h images/logo.h mcc.h
+main.o: main.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h mui_About.h\
+ mui_DockPrefs.h mui_EditIcon.h mui_Editor.h mui_IconList.h mui_MainWindow.h\
+ mui_MenuPrefs.h mui_PagerList.h mui_ProgramList.h protos.h rev.h
 
-globals.o: globals.c /includes.h /Genesis.h Strings.h mui.h protos.h\
- grouppager_mcc.h images/logo.h images/database.h images/options.h\
- images/modems.h images/interfaces.h images/default.h\
- images/user.h images/information.h
+globals.o: globals.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h protos.h\
+ //shared/images/default_icon.h //shared/images/logo.h //shared/images/information.h //shared/images/menus.h\
+ //shared/images/dock.h
 
-mui_IfaceWindow.o: mui_IfaceWindow.c /includes.h /Genesis.h\
- /genesis.lib/libraries/genesis.h /genesis.lib/proto/genesis.h\
- /genesis.lib/pragmas/genesis_lib.h Strings.h mui.h mui_IfaceWindow.h\
- mui_Interfaces.h protos.h
+mui_Editor.o: mui_Editor.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
+ mui_Editor.h protos.h
 
-mui_Options.o: mui_Options.c /includes.h /Genesis.h Strings.h mui.h\
- mui_Options.h protos.h
+mui_EditIcon.o: mui_EditIcon.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
+ mui_EditIcon.h mui_DockPrefs.h protos.h
 
-mui_User.o: mui_User.c /includes.h /Genesis.h Strings.h mui.h mui_User.h\
- mui_UserWindow.h protos.h
+mui_About.o: mui_About.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
+ mui_About.h mui_MainWindow.h protos.h rev.h //shared/images/logo.h
 
-mui_UserWindow.o: mui_UserWindow.c /includes.h /Genesis.h\
- /genesis.lib/libraries/genesis.h /genesis.lib/proto/genesis.h\
- /genesis.lib/pragmas/genesis_lib.h Strings.h mui.h mui_UserWindow.h mui_User.h\
- mui_PasswdReq.h protos.h
+mui_ProgramList.o: mui_ProgramList.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h\
+ mui.h mui_ProgramList.h mui_MenuPrefs.h protos.h
 
-mui_Interfaces.o: mui_Interfaces.c /includes.h /Genesis.h\
- /genesis.lib/libraries/genesis.h /genesis.lib/proto/genesis.h\
- /genesis.lib/pragmas/genesis_lib.h Strings.h mui.h mui_Interfaces.h\
- mui_IfaceWindow.h protos.h
+mui_MenuPrefs.o: mui_MenuPrefs.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h\
+ mui.h mui_MenuPrefs.h mui_MainWindow.h\
+ mui_ProgramList.h protos.h
 
-amiga.o: amiga.c /includes.h /Genesis.h /genesis.lib/libraries/genesis.h\
- /genesis.lib/proto/genesis.h /genesis.lib/pragmas/genesis_lib.h Strings.h mui.h protos.h
+mui_PagerList.o: mui_PagerList.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h\
+ mui.h mui_PagerList.h protos.h //shared/images/information.h\
+ //shared/images/menus.h //shared/images/dock.h
 
-mui_About.o: mui_About.c /includes.h /Genesis.h /genesis.lib/pragmas/nc_lib.h\
- rev.h Strings.h mui.h mui_About.h mui_MainWindow.h protos.h\
- images/logo.h
+mui_MainWindow.o: mui_MainWindow.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h\
+ mui.h mui_MainWindow.h mui_DockPrefs.h\
+ mui_MenuPrefs.h mui_IconList.h protos.h rev.h //shared/images/logo.h
 
-mui_DataBase.o: mui_DataBase.c /includes.h /Genesis.h Strings.h mui.h\
- mui_DataBase.h protos.h
+mui_DockPrefs.o: mui_DockPrefs.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h\
+ mui.h mui_DockPrefs.h mui_IconList.h mui_EditIcon.h\
+ mui_MainWindow.h protos.h
 
-mui_Modems.o: mui_Modems.c /includes.h /Genesis.h Strings.h mui.h mui_Modems.h\
- mui_ModemWindow.h protos.h
-
-mui_PasswdReq.o: mui_PasswdReq.c /includes.h /Genesis.h Strings.h mui.h\
- mui_PasswdReq.h protos.h
-
-mui_ModemWindow.o: mui_ModemWindow.c /includes.h /Genesis.h\
- /genesis.lib/libraries/genesis.h /genesis.lib/proto/genesis.h\
- /genesis.lib/pragmas/genesis_lib.h Strings.h mui.h mui_Modems.h\
- mui_ModemWindow.h protos.h
-
+mui_IconList.o: mui_IconList.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h mui.h\
+ mui_IconList.h mui_MainWindow.h mui_DockPrefs.h protos.h
 

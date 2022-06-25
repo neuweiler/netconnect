@@ -14,9 +14,8 @@
 *.library
 
 # Executables
-NetConnect/Controller/src/NetConnect
-NetConnect/Prefs/src/NetConnectPrefs
-Prefs/src/AmiTCPConfig
+Controller/src/NetConnect
+Prefs/src/NetConnectPrefs
 
 # Other
 *.uaem
