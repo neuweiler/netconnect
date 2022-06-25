@@ -1,3 +1,14 @@
+#ifndef EDITICON_H_
+#define EDITICON_H_
+
+#include "includes.h"
+
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
+#include "mui.h"
+#include "mui_DockPrefs.h"
+#include "protos.h"
+
 #define MUIM_EditIcon_Editor_Active    (TAGBASE_NETCONNECTPREFS | 0x1040)
 #define MUIM_EditIcon_ChangeLine       (TAGBASE_NETCONNECTPREFS | 0x1041)
 #define MUIM_EditIcon_Type_Active      (TAGBASE_NETCONNECTPREFS | 0x1042)
@@ -40,3 +51,4 @@ struct EditIcon_Data
    Object *BT_Cancel;
 };
 
+#endif

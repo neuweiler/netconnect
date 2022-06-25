@@ -1,24 +1,20 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_PagerList.h"
-#include "protos.h"
-#include "/images/information.h"
-#include "/images/menus.h"
-#include "/images/dock.h"
 
-///
-/// external variables
 extern ULONG information_colors[], menus_colors[], dock_colors[];
 extern UBYTE information_body[], menus_body[], dock_body[];
 
 ///
 
-SAVEDS ASM LONG PagerList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **array, REG(a1) STRPTR string)
+#ifdef __SASC
+SAVEDS ASM LONG PagerList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **array, REG(a1) STRPTR string) {
+#else /* gcc */
+LONG PagerList_DisplayFunc()
 {
+   register struct Hook *hook __asm("a0");
+   register char **array __asm("a2");
+   register STRPTR string __asm("a1");
+#endif
+
    struct PagerList_Data *data = (APTR)hook->h_Data;
 
    if(string)
@@ -144,8 +140,16 @@ ULONG PagerList_New(struct IClass *cl,Object *obj,struct opSet *msg)
    return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG PagerList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg)
+#ifdef __SASC
+SAVEDS ASM ULONG PagerList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg) {
+#else /* gcc */
+ULONG PagerList_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch(msg->MethodID)
    {
       case OM_NEW       : return(PagerList_New     (cl, obj, (APTR)msg));

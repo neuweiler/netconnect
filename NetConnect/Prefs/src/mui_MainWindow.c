@@ -1,19 +1,5 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_MainWindow.h"
-#include "mui_DockPrefs.h"
-#include "mui_MenuPrefs.h"
-#include "mui_IconList.h"
-#include "protos.h"
-#include "rev.h"
-#include "/images/logo.h"
 
-///
-/// external veriables
 extern struct MUI_CustomClass *CL_MenuPrefs, *CL_DockPrefs, *CL_MainWindow,
                               *CL_About, *CL_PagerList;
 extern BOOL is_test;
@@ -868,7 +854,7 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
    ARR_Pages[2] = NULL;
 
    if(obj = (Object *)DoSuperNew(cl, obj,
-      MUIA_Window_Title    , "NetConnectPrefs © 1997-98 by Michael Neuweiler, Active Technologies",
+      MUIA_Window_Title    , "NetConnectPrefs 1997-98 by Michael Neuweiler, Active Technologies",
       MUIA_Window_ID       , MAKE_ID('M','A','I','N'),
       MUIA_Window_AppWindow, TRUE,
       MUIA_Window_Menustrip, tmp.MN_Strip = MUI_MakeObject(MUIO_MenustripNM, MainWindowMenu,0),
@@ -980,8 +966,16 @@ ULONG MainWindow_New(struct IClass *cl, Object *obj, struct opSet *msg)
    return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG MainWindow_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+#ifdef __SASC
+SAVEDS ASM ULONG MainWindow_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg) {
+#else /* gcc */
+ULONG MainWindow_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch (msg->MethodID)
    {
       case OM_NEW                         : return(MainWindow_New          (cl, obj, (APTR)msg));

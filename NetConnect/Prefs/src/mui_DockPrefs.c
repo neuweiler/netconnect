@@ -1,22 +1,8 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_DockPrefs.h"
-#include "mui_IconList.h"
-#include "mui_EditIcon.h"
-#include "mui_MainWindow.h"
-#include "protos.h"
 
-///
-/// external variables
 extern Object *app, *win;
 extern struct MUI_CustomClass *CL_MainWindow, *CL_DockPrefs, *CL_EditIcon, *CL_IconList;
 extern struct Hook IconList_DestructHook, IconList_ConstructHook;
-
-///
 
 ULONG DockPrefs_GetDock(struct IClass *cl, Object *obj, Msg msg)
 {
@@ -28,13 +14,13 @@ ULONG DockPrefs_GetDock(struct IClass *cl, Object *obj, Msg msg)
       data->dock->Hotkey   = update_string(data->dock->Hotkey  , (STRPTR)xget(data->STR_Hotkey, MUIA_String_Contents));
       data->dock->Font     = update_string(data->dock->Font    , (STRPTR)xget(data->PA_Font, MUIA_String_Contents));
       data->dock->Rows     = xget(data->SL_Rows       , MUIA_Numeric_Value);
-      data->dock->Flags    = NULL;
-      data->dock->Flags    |= (xget(data->CH_Activate    , MUIA_Selected) ? DFL_Activate  : NULL);
-      data->dock->Flags    |= (xget(data->CH_PopUp       , MUIA_Selected) ? DFL_PopUp     : NULL);
-      data->dock->Flags    |= (xget(data->CH_Backdrop    , MUIA_Selected) ? DFL_Backdrop  : NULL);
-      data->dock->Flags    |= (xget(data->CH_Frontmost   , MUIA_Selected) ? DFL_Frontmost : NULL);
-      data->dock->Flags    |= (xget(data->CH_DragBar     , MUIA_Selected) ? DFL_DragBar   : NULL);
-      data->dock->Flags    |= (xget(data->CH_Borderless  , MUIA_Selected) ? DFL_Borderless: NULL);
+      data->dock->Flags    = 0;
+      data->dock->Flags    |= (xget(data->CH_Activate    , MUIA_Selected) ? DFL_Activate  : 0);
+      data->dock->Flags    |= (xget(data->CH_PopUp       , MUIA_Selected) ? DFL_PopUp     : 0);
+      data->dock->Flags    |= (xget(data->CH_Backdrop    , MUIA_Selected) ? DFL_Backdrop  : 0);
+      data->dock->Flags    |= (xget(data->CH_Frontmost   , MUIA_Selected) ? DFL_Frontmost : 0);
+      data->dock->Flags    |= (xget(data->CH_DragBar     , MUIA_Selected) ? DFL_DragBar   : 0);
+      data->dock->Flags    |= (xget(data->CH_Borderless  , MUIA_Selected) ? DFL_Borderless: 0);
       switch(xget(data->CY_ButtonType, MUIA_Cycle_Active))
       {
          case 1:
@@ -146,8 +132,15 @@ ULONG DockPrefs_NewIcon(struct IClass *cl, Object *obj, Msg msg)
    return(NULL);
 }
 
-SAVEDS ASM LONG IconList_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
+#ifdef __SASC
+SAVEDS ASM LONG IconList_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
+LONG IconList_AppMsgFunc()
 {
+   register APTR obj __asm("a2");
+   register struct AppMessage **x __asm("a1");
+#endif
+
    struct MainWindow_Data *main_data = INST_DATA(CL_MainWindow->mcc_Class, win);
    struct DockPrefs_Data *data = INST_DATA(CL_DockPrefs->mcc_Class, main_data->GR_Dock);
    struct WBArg *ap;
@@ -325,7 +318,7 @@ ULONG DockPrefs_EditIcon_Finish(struct IClass *cl, Object *obj, struct MUIP_Dock
 
       icon->Program.Stack     = xget(data->STR_Stack  , MUIA_String_Integer);
       icon->Program.Priority  = xget(data->SL_Priority, MUIA_Numeric_Value);
-      icon->Program.Flags     = (xget(data->CH_WBArgs, MUIA_Selected) ? PRG_Arguments : NULL) | (xget(data->CH_ToFront, MUIA_Selected) ? PRG_ToFront : NULL);
+      icon->Program.Flags     = (xget(data->CH_WBArgs, MUIA_Selected) ? PRG_Arguments : 0) | (xget(data->CH_ToFront, MUIA_Selected) ? PRG_ToFront : 0);
       icon->Volume            = xget(data->SL_Volume  , MUIA_Numeric_Value);
       switch(xget(data->CY_Type, MUIA_Cycle_Active))
       {
@@ -432,8 +425,15 @@ ULONG DockPrefs_Type_Active(struct IClass *cl, Object *obj, Msg msg)
    return(NULL);
 }
 
-SAVEDS ASM struct Dock *DockList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Dock *src)
+#ifdef __SASC
+SAVEDS ASM struct Dock *DockList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Dock *src) {
+#else /* gcc */
+struct Dock *DockList_ConstructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Dock *src __asm("a1");
+#endif
+
    struct Dock *new;
 
    if(new = (struct Dock *)AllocVec(sizeof(struct Dock), MEMF_ANY | MEMF_CLEAR))
@@ -450,8 +450,15 @@ SAVEDS ASM struct Dock *DockList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct
 }
 struct Hook DockList_ConstructHook = { { 0,0 }, (VOID *)DockList_ConstructFunc  , NULL, NULL };
 
-SAVEDS ASM VOID DockList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Dock *dock)
+#ifdef __SASC
+SAVEDS ASM VOID DockList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Dock *dock) {
+#else /* gcc */
+VOID DockList_DestructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Dock *dock __asm("a1");
+#endif
+
    if(dock)
    {
       if(dock->Name)
@@ -621,8 +628,17 @@ ULONG DockPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
    return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG DockPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+
+#ifdef __SASC
+SAVEDS ASM ULONG DockPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg) {
+#else /* gcc */
+ULONG DockPrefs_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch (msg->MethodID)
    {
       case OM_NEW                         : return(DockPrefs_New              (cl, obj, (APTR)msg));

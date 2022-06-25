@@ -1,12 +1,11 @@
-/// includes
-#include "/includes.h"
+#include "includes.h"
 
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
 #include "mui.h"
 #include "mui_DockPrefs.h"
 #include "protos.h"
-#include "/images/default_icon.h"
+#include "images/default_icon.h"
 
 ///
 /// external variables
@@ -22,8 +21,15 @@ ULONG __stdargs DoSuperNew(struct IClass *cl, Object *obj, ULONG tag1, ...)
    return(DoSuperMethod(cl, obj, OM_NEW, &tag1, NULL));
 }
 
-SAVEDS ASM VOID DestructFunc(REG(a2) APTR pool, REG(a1) APTR ptr)
+#ifdef __SASC
+SAVEDS ASM VOID DestructFunc(REG(a2) APTR pool, REG(a1) APTR ptr) {
+#else /* gcc */
+VOID DestructFunc()
 {
+   register APTR pool __asm("a2");
+   register APTR ptr __asm("a1");
+#endif
+
    if(ptr)
       FreeVec(ptr);
 }
@@ -229,7 +235,7 @@ VOID init_icon(struct Icon *icon)
          char file[MAXPATHLEN];
 
          strncpy(file, icon->ImageFile, MAXPATHLEN);
-         if(!stricmp(&file[strlen(file) - 5], ".info"))
+         if(!strcmp(&file[strlen(file) - 5], ".info"))
             file[strlen(file) - 5] = NULL;
          if(icon->disk_object = GetDiskObject(file))
          {
@@ -404,7 +410,7 @@ int find_max(STRPTR file)
                         }
                         if(!bmhd)         // wasn't a iff brush, might be an icon
                         {
-                           if(!stricmp(&buffer[strlen(buffer) - 5], ".info"))
+                           if(!strcmp(&buffer[strlen(buffer) - 5], ".info"))
                               buffer[strlen(buffer) - 5] = NULL;
                            if(disk_object = GetDiskObjectNew(buffer))
                            {
@@ -426,8 +432,14 @@ int find_max(STRPTR file)
    return(max_height);
 }
 
-SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
+#ifdef __SASC
+SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
+LONG AppMsgFunc()
 {
+   register APTR obj __asm("a2");
+   register struct AppMessage **x __asm("a1");
+#endif
    struct WBArg *ap;
    struct AppMessage *amsg = *x;
    STRPTR buf;
@@ -446,8 +458,15 @@ SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
    return(NULL);
 }
 
-SAVEDS ASM LONG Editor_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
+#ifdef __SASC
+SAVEDS ASM LONG Editor_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
+LONG Editor_AppMsgFunc()
 {
+   register APTR obj __asm("a2");
+   register struct AppMessage **x __asm("a1");
+#endif
+
    struct WBArg *ap;
    struct AppMessage *amsg = *x;
    STRPTR buf;
@@ -588,8 +607,15 @@ BOOL CopyFile(STRPTR infile, STRPTR outfile)
    return(success);
 }
 
-SAVEDS ASM VOID IntuiMsgFunc(REG(a1) struct IntuiMessage *imsg,REG(a2) struct FileRequester *req)
+#ifdef __SASC
+SAVEDS ASM VOID IntuiMsgFunc(REG(a1) struct IntuiMessage *imsg,REG(a2) struct FileRequester *req) {
+#else /* gcc */
+VOID IntuiMsgFunc()
 {
+   register struct FileRequester *req __asm("a2");
+   register struct IntuiMessage *imsg __asm("a1");
+#endif
+
    if(imsg->Class == IDCMP_REFRESHWINDOW)
       DoMethod(req->fr_UserData, MUIM_Application_CheckRefresh);
 }
@@ -631,7 +657,7 @@ char *getfilename(Object *win, STRPTR title, STRPTR file, BOOL save)
          if(*req->fr_File)
          {
             res = buf;
-            stccpy(buf, req->fr_Drawer, sizeof(buf));
+            strncpy(buf, req->fr_Drawer, sizeof(buf));
             AddPart(buf, req->fr_File, sizeof(buf));
          }
          left     = req->fr_LeftEdge;

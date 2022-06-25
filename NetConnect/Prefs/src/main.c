@@ -1,36 +1,4 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
-#include "mui_About.h"
-#include "mui_DockPrefs.h"
-#include "mui_EditIcon.h"
-#include "mui_Editor.h"
-#include "mui_IconList.h"
-#include "mui_MainWindow.h"
-#include "mui_MenuPrefs.h"
-#include "mui_PagerList.h"
-#include "mui_ProgramList.h"
-#include "protos.h"
-#include "rev.h"
-
-///
-/// defines
-#define NEWSTACK_SIZE 16384
-
-///
-/// external variables
-extern struct Catalog *cat;
-extern Object *SoundObject, *app, *group, *win;
-extern struct MUI_CustomClass *CL_MainWindow, *CL_PagerList, *CL_ProgramList, *CL_MenuPrefs,
-                              *CL_IconList, *CL_DockPrefs, *CL_EditIcon, *CL_Editor, *CL_About;
-extern struct StackSwapStruct StackSwapper;
-extern struct Process *proc;
-extern struct NewMenu MainWindowMenu[];
-
-///
+#include "main.h"
 
 /*
  * close the libraries
@@ -102,15 +70,15 @@ VOID exit_classes(VOID)
 
 BOOL init_classes(VOID)
 {
-   CL_About       = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)         , About_Dispatcher);
-   CL_Editor      = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct Editor_Data)        , Editor_Dispatcher);
-   CL_EditIcon    = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct EditIcon_Data)      , EditIcon_Dispatcher);
-   CL_IconList    = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct IconList_Data)      , IconList_Dispatcher);
-   CL_DockPrefs   = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct DockPrefs_Data)     , DockPrefs_Dispatcher);
-   CL_MenuPrefs   = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct MenuPrefs_Data)     , MenuPrefs_Dispatcher);
-   CL_ProgramList = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct ProgramList_Data)   , ProgramList_Dispatcher);
-   CL_PagerList   = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct PagerList_Data)     , PagerList_Dispatcher);
-   CL_MainWindow  = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct MainWindow_Data)    , MainWindow_Dispatcher);
+   CL_About       = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct About_Data)         , About_Dispatcher);
+   CL_Editor      = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct Editor_Data)        , Editor_Dispatcher);
+   CL_EditIcon    = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct EditIcon_Data)      , EditIcon_Dispatcher);
+   CL_IconList    = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct IconList_Data)      , IconList_Dispatcher);
+   CL_DockPrefs   = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct DockPrefs_Data)     , DockPrefs_Dispatcher);
+   CL_MenuPrefs   = MUI_CreateCustomClass(NULL, MUIC_Group  , NULL, sizeof(struct MenuPrefs_Data)     , MenuPrefs_Dispatcher);
+   CL_ProgramList = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct ProgramList_Data)   , ProgramList_Dispatcher);
+   CL_PagerList   = MUI_CreateCustomClass(NULL, MUIC_List   , NULL, sizeof(struct PagerList_Data)     , PagerList_Dispatcher);
+   CL_MainWindow  = MUI_CreateCustomClass(NULL, MUIC_Window , NULL, sizeof(struct MainWindow_Data)    , MainWindow_Dispatcher);
 
    if(CL_About && CL_DockPrefs && CL_IconList && CL_EditIcon && CL_Editor && CL_MenuPrefs &&
       CL_ProgramList && CL_PagerList && CL_MainWindow)

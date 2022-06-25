@@ -1,13 +1,4 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_Editor.h"
-#include "protos.h"
-
-///
 
 ULONG Editor_DragQuery(struct IClass *cl, Object *obj, struct MUIP_DragDrop *msg)
 {
@@ -38,8 +29,16 @@ ULONG Editor_New(struct IClass *cl,Object *obj,struct opSet *msg)
    return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG Editor_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg)
+#ifdef __SASC
+SAVEDS ASM ULONG Editor_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg) {
+#else /* gcc */
+ULONG Editor_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch(msg->MethodID)
    {
       case OM_NEW          : return(Editor_New        (cl, obj, (APTR)msg));

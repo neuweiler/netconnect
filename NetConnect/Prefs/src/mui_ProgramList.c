@@ -1,17 +1,14 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_ProgramList.h"
-#include "mui_MenuPrefs.h"
-#include "protos.h"
 
-///
-
-SAVEDS ASM struct Program *ProgramList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Program *src)
+#ifdef __SASC
+SAVEDS ASM struct Program *ProgramList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Program *src) {
+#else /* gcc */
+struct Program *ProgramList_ConstructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Program *src __asm("a1");
+#endif
+
    struct Program *new;
 
    if(new = (struct Program *)AllocVec(sizeof(struct Program), MEMF_ANY | MEMF_CLEAR))
@@ -25,8 +22,15 @@ SAVEDS ASM struct Program *ProgramList_ConstructFunc(REG(a2) APTR pool, REG(a1) 
 }
 struct Hook ProgramList_ConstructHook = { { 0,0 }, (VOID *)ProgramList_ConstructFunc  , NULL, NULL };
 
-SAVEDS ASM VOID ProgramList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Program *program)
+#ifdef __SASC
+SAVEDS ASM VOID ProgramList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Program *program) {
+#else /* gcc */
+VOID ProgramList_DestructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Program *program __asm("a1");
+#endif
+
    if(program)
    {
       if(program->File)
@@ -43,8 +47,16 @@ SAVEDS ASM VOID ProgramList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Progr
 }
 struct Hook ProgramList_DestructHook  = { { 0,0 }, (VOID *)ProgramList_DestructFunc   , NULL, NULL };
 
-SAVEDS ASM LONG ProgramList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **array, REG(a1) struct Program *program)
+#ifdef __SASC
+SAVEDS ASM LONG ProgramList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **array, REG(a1) struct Program *program) {
+#else /* gcc */
+LONG ProgramList_DisplayFunc()
 {
+   register struct Hook *hook __asm("a0");
+   register char **array __asm("a2");
+   register struct Program *program __asm("a1");
+#endif
+
    if(program)
    {
       *array   = (program->File ? program->File : (STRPTR)"");
@@ -93,8 +105,16 @@ ULONG ProgramList_New(struct IClass *cl,Object *obj,struct opSet *msg)
    return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG ProgramList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg)
+#ifdef __SASC
+SAVEDS ASM ULONG ProgramList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg) {
+#else /* gcc */
+ULONG ProgramList_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch(msg->MethodID)
    {
       case OM_NEW          : return(ProgramList_New         (cl, obj, (APTR)msg));

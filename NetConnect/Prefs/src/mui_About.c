@@ -1,17 +1,5 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_About.h"
-#include "mui_MainWindow.h"
-#include "protos.h"
-#include "rev.h"
-#include "/images/logo.h"
 
-///
-/// extern variables
 extern ULONG logo_colors[];
 extern UBYTE logo_body[];
 extern Object *win;
@@ -93,14 +81,19 @@ ULONG About_New(struct IClass *cl, Object *obj, Msg msg)
    return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+#ifdef __SASC
+SAVEDS ASM ULONG About_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg) {
+#else /* gcc */
+ULONG About_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch (msg->MethodID)
    {
       case OM_NEW : return(About_New(cl, obj, (APTR)msg));
    }
    return(DoSuperMethodA(cl, obj, msg));
 }
-
-
-

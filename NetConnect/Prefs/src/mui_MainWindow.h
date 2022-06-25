@@ -1,3 +1,18 @@
+#ifndef MAINWINDOW_H_
+#define MAINWINDOW_H_
+
+#include "includes.h"
+
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
+#include "mui.h"
+#include "mui_DockPrefs.h"
+#include "mui_MenuPrefs.h"
+#include "mui_IconList.h"
+#include "protos.h"
+#include "rev.h"
+#include "images/logo.h"
+
 #define MUIM_MainWindow_LoadPrefs      (TAGBASE_NETCONNECTPREFS | 0x1010)
 #define MUIM_MainWindow_Finish         (TAGBASE_NETCONNECTPREFS | 0x1011)
 #define MUIM_MainWindow_Test           (TAGBASE_NETCONNECTPREFS | 0x1012)
@@ -38,4 +53,4 @@ struct MainWindow_Data
    Object *GR_Dock;
 };
 
-
+#endif

@@ -1,3 +1,16 @@
+#ifndef DOCKPREFS_H_
+#define DOCKPREFS_H_
+
+#include "includes.h"
+
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
+#include "mui.h"
+#include "mui_IconList.h"
+#include "mui_EditIcon.h"
+#include "mui_MainWindow.h"
+#include "protos.h"
+
 #define MUIA_DockPrefs_MinLineHeight   (TAGBASE_NETCONNECTPREFS | 0x1020)
 #define MUIM_DockPrefs_GetDock         (TAGBASE_NETCONNECTPREFS | 0x1021)
 #define MUIM_DockPrefs_SetDock         (TAGBASE_NETCONNECTPREFS | 0x1022)
@@ -39,3 +52,4 @@ struct DockPrefs_Data
    struct Dock *dock;   // pointer to dock that is currently selected
 };
 
+#endif

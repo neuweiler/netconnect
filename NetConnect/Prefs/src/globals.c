@@ -1,40 +1,40 @@
 /// includes
-#include "/includes.h"
+#include "includes.h"
 
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
 #include "mui.h"
 #include "protos.h"
 
 #define USE_DEFAULT_ICON_HEADER
 #define USE_DEFAULT_ICON_BODY
 #define USE_DEFAULT_ICON_COLORS
-#include "/images/default_icon.h"
+#include "images/default_icon.h"
 
 #define USE_LOGO_HEADER
 #define USE_LOGO_BODY
 #define USE_LOGO_COLORS
-#include "/images/logo.h"
+#include "images/logo.h"
 
 #define USE_INFORMATION_HEADER
 #define USE_INFORMATION_BODY
 #define USE_INFORMATION_COLORS
-#include "/images/information.h"
+#include "images/information.h"
 
 #define USE_MENUS_HEADER
 #define USE_MENUS_BODY
 #define USE_MENUS_COLORS
-#include "/images/menus.h"
+#include "images/menus.h"
 
 #define USE_DOCK_HEADER
 #define USE_DOCK_BODY
 #define USE_DOCK_COLORS
-#include "/images/dock.h"
+#include "images/dock.h"
 ///
 
 /// Libraries
 struct   Library     *MUIMasterBase = NULL;
-struct   Library     *UtilityBase   = NULL;
+//struct   UtilityBase *UtilityBase   = NULL;
 struct   Library     *IFFParseBase  = NULL;
 struct   Library     *DataTypesBase = NULL;
 struct   Library     *IconBase      = NULL;
@@ -135,13 +135,17 @@ struct NewMenu MainWindowMenu[] =
 ///
 
 /// hooks
+#ifdef __SASC
 extern SAVEDS ASM VOID DestructFunc(REG(a2) APTR pool, REG(a1) APTR ptr);
-struct Hook DestructHook  = { { 0,0 }, (VOID *)DestructFunc   , NULL, NULL };
-
 extern SAVEDS ASM LONG AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x);
-struct Hook AppMsgHook = { {NULL, NULL}, (VOID *)AppMsgFunc, NULL, NULL };
-
 extern SAVEDS ASM LONG Editor_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x);
+#else
+extern VOID DestructFunc();
+extern LONG AppMsgFunc();
+extern LONG Editor_AppMsgFunc();
+#endif
+struct Hook DestructHook  = { { 0,0 }, (VOID *)DestructFunc   , NULL, NULL };
+struct Hook AppMsgHook = { {NULL, NULL}, (VOID *)AppMsgFunc, NULL, NULL };
 struct Hook Editor_AppMsgHook = { {NULL, NULL}, (VOID *)Editor_AppMsgFunc, NULL, NULL };
 ///
 

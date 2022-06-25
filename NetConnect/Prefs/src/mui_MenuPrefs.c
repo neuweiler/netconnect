@@ -1,24 +1,20 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_MenuPrefs.h"
-#include "mui_MainWindow.h"
-#include "mui_ProgramList.h"
-#include "protos.h"
 
-///
-/// external variables
 extern struct Hook ProgramList_ConstructHook, ProgramList_DestructHook;
 extern Object *app, *win;
 extern struct MUI_CustomClass *CL_MainWindow, *CL_MenuPrefs, *CL_ProgramList;
 
 ///
 
-SAVEDS ASM struct MenuEntry *MenuList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *src)
+#ifdef __SASC
+SAVEDS ASM struct MenuEntry *MenuList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *src) {
+#else /* gcc */
+struct MenuEntry *MenuList_ConstructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct MenuEntry *src __asm("a1");
+#endif
+
    struct MenuEntry *new;
 
    if(new = (struct MenuEntry *)AllocVec(sizeof(struct MenuEntry), MEMF_ANY | MEMF_CLEAR))
@@ -39,8 +35,15 @@ SAVEDS ASM struct MenuEntry *MenuList_ConstructFunc(REG(a2) APTR pool, REG(a1) s
 }
 struct Hook MenuList_ConstructHook = { { 0,0 }, (VOID *)MenuList_ConstructFunc  , NULL, NULL };
 
-SAVEDS ASM VOID MenuList_DestructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *menu)
+#ifdef __SASC
+SAVEDS ASM VOID MenuList_DestructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntry *menu) {
+#else /* gcc */
+VOID MenuList_DestructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct MenuEntry *menu __asm("a1");
+#endif
+
    if(menu)
    {
       if(menu->Name)
@@ -52,8 +55,16 @@ SAVEDS ASM VOID MenuList_DestructFunc(REG(a2) APTR pool, REG(a1) struct MenuEntr
 }
 struct Hook MenuList_DestructHook  = { { 0,0 }, (VOID *)MenuList_DestructFunc   , NULL, NULL };
 
-SAVEDS ASM LONG MenuList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **array, REG(a1) struct MenuEntry *menu)
+#ifdef __SASC
+SAVEDS ASM LONG MenuList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **array, REG(a1) struct MenuEntry *menu) {
+#else /* gcc */
+LONG MenuList_DisplayFunc()
 {
+   register struct Hook *hook __asm("a0");
+   register char **array __asm("a2");
+   register struct MenuEntry *menu __asm("a1");
+#endif
+
    if(menu)
    {
       *array   = (menu->Name ? menu->Name : (STRPTR)"");
@@ -84,8 +95,15 @@ ULONG MenuPrefs_NewEntry(struct IClass *cl, Object *obj, Msg msg)
    return(NULL);
 }
 
-SAVEDS ASM LONG MenuList_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
+#ifdef __SASC
+SAVEDS ASM LONG MenuList_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
+LONG MenuList_AppMsgFunc()
 {
+   register APTR obj __asm("a2");
+   register struct AppMessage **x __asm("a1");
+#endif
+
    struct MainWindow_Data *main_data = INST_DATA(CL_MainWindow->mcc_Class, win);
    struct MenuPrefs_Data *data = INST_DATA(CL_MenuPrefs->mcc_Class, main_data->GR_Menus);
    struct WBArg *ap;
@@ -121,8 +139,15 @@ SAVEDS ASM LONG MenuList_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage 
 }
 struct Hook MenuList_AppMsgHook = { {NULL, NULL}, (VOID *)MenuList_AppMsgFunc, NULL, NULL };
 
-SAVEDS ASM LONG ProgramList_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x)
+#ifdef __SASC
+SAVEDS ASM LONG ProgramList_AppMsgFunc(REG(a2) APTR obj, REG(a1) struct AppMessage **x) {
+#else /* gcc */
+LONG ProgramList_AppMsgFunc()
 {
+   register APTR obj __asm("a2");
+   register struct AppMessage **x __asm("a1");
+#endif
+
    struct MainWindow_Data *main_data = INST_DATA(CL_MainWindow->mcc_Class, win);
    struct WBArg *ap;
    struct AppMessage *amsg = *x;
@@ -460,8 +485,16 @@ ULONG MenuPrefs_New(struct IClass *cl, Object *obj, struct opSet *msg)
    return((ULONG)obj);
 }
 
-SAVEDS ASM ULONG MenuPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg)
+#ifdef __SASC
+SAVEDS ASM ULONG MenuPrefs_Dispatcher(REG(a0) struct IClass *cl, REG(a2) Object *obj, REG(a1) Msg msg) {
+#else /* gcc */
+ULONG MenuPrefs_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch (msg->MethodID)
    {
       case OM_NEW                                  : return(MenuPrefs_New                    (cl, obj, (APTR)msg));

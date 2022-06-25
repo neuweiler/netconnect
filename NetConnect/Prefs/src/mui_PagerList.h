@@ -1,3 +1,17 @@
+#ifndef PAGERLIST_H_
+#define PAGERLIST_H_
+
+#include "includes.h"
+
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
+#include "mui.h"
+#include "mui_PagerList.h"
+#include "protos.h"
+#include "images/information.h"
+#include "images/menus.h"
+#include "images/dock.h"
+
 struct PagerList_Data
 {
    Object *o_information;
@@ -13,3 +27,4 @@ struct PagerList_Data
    struct Hook DisplayHook;
 };
 
+#endif

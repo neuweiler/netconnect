@@ -1,3 +1,15 @@
+#ifndef MENUPREFS_H_
+#define MENUPREFS_H_
+
+#include "includes.h"
+
+#include "NetConnect.h"
+#include "locale/NetConnect.h"
+#include "mui.h"
+#include "mui_MainWindow.h"
+#include "mui_ProgramList.h"
+#include "protos.h"
+
 #define MUIM_MenuPrefs_NewEntry                 (TAGBASE_NETCONNECTPREFS | 0x1050)
 #define MUIM_MenuPrefs_MenuList_Active          (TAGBASE_NETCONNECTPREFS | 0x1051)
 #define MUIM_MenuPrefs_MenuList_ChangeLine      (TAGBASE_NETCONNECTPREFS | 0x1052)
@@ -26,3 +38,4 @@ struct MenuPrefs_Data
    Object *STR_Program;
 };
 
+#endif

@@ -1,16 +1,5 @@
-/// includes
-#include "/includes.h"
-
-#include "/NetConnect.h"
-#include "/locale/Strings.h"
-#include "mui.h"
 #include "mui_IconList.h"
-#include "mui_MainWindow.h"
-#include "mui_DockPrefs.h"
-#include "protos.h"
 
-///
-/// external variables
 extern Object *win;
 extern struct MUI_CustomClass *CL_MainWindow, *CL_DockPrefs;
 
@@ -168,8 +157,15 @@ ULONG IconList_DragDrop(struct IClass *cl, Object *obj, struct MUIP_DragDrop *ms
    }
 }
 
-SAVEDS ASM struct Icon *IconList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Icon *src)
+#ifdef __SASC
+SAVEDS ASM struct Icon *IconList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct Icon *src) {
+#else /* gcc */
+struct Icon *IconList_ConstructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Icon *src __asm("a1");
+#endif
+
    struct Icon *new;
 
    if((new = (struct Icon *)AllocVec(sizeof(struct Icon), MEMF_ANY | MEMF_CLEAR)) && src)
@@ -178,8 +174,15 @@ SAVEDS ASM struct Icon *IconList_ConstructFunc(REG(a2) APTR pool, REG(a1) struct
 }
 struct Hook IconList_ConstructHook = { { 0,0 }, (VOID *)IconList_ConstructFunc  , NULL, NULL };
 
-SAVEDS ASM VOID IconList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Icon *icon)
+#ifdef __SASC
+SAVEDS ASM VOID IconList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Icon *icon) {
+#else /* gcc */
+VOID IconList_DestructFunc()
 {
+   register APTR pool __asm("a2");
+   register struct Icon *icon __asm("a1");
+#endif
+
    if(icon)
    {
       if(icon->Name)
@@ -212,8 +215,17 @@ SAVEDS ASM VOID IconList_DestructFunc(REG(a2) APTR pool, REG(a1) struct Icon *ic
 }
 struct Hook IconList_DestructHook  = { { 0,0 }, (VOID *)IconList_DestructFunc   , NULL, NULL };
 
+#ifdef __SASC
 SAVEDS ASM LONG IconList_DisplayFunc(REG(a0) struct Hook *hook, REG(a2) char **array, REG(a1) struct Icon *icon)
 {
+#else /* gcc */
+LONG IconList_DisplayFunc()
+{
+   register struct Hook *hook __asm("a0");
+   register char **array __asm("a2");
+   register struct Icon *icon __asm("a1");
+#endif
+
    if(icon)
    {
       static char buf[31];
@@ -260,9 +272,16 @@ ULONG IconList_New(struct IClass *cl, Object *obj, struct opSet *msg)
    return((ULONG)obj);
 }
 
-
-SAVEDS ASM ULONG IconList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg)
+#ifdef __SASC
+SAVEDS ASM ULONG IconList_Dispatcher(REG(a0) struct IClass *cl,REG(a2) Object *obj,REG(a1) Msg msg) {
+#else /* gcc */
+ULONG IconList_Dispatcher()
 {
+   register struct IClass *cl __asm("a0");
+   register Object *obj __asm("a2");
+   register Msg msg __asm("a1");
+#endif
+
    switch(msg->MethodID)
    {
       case OM_NEW                         : return(IconList_New            (cl, obj, (APTR)msg));
