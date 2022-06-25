@@ -57,7 +57,7 @@ NetConnect: $(OBJS)
    <
 
 main.o: main.c includes.h //shared/NetConnect.h //shared/locale/NetConnect.h\
- ///genesis.lib/src/pragmas/nc_lib.h mui.h mui_About.h mui_Button.h mui_Dock.h mui_MenuList.h protos.h\
+ mui.h mui_About.h mui_Button.h mui_Dock.h mui_MenuList.h protos.h\
  rev.h
 
 FixPath.o: FixPath.c
