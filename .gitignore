@@ -8,9 +8,10 @@
 *.gst
 *.gst.info
 *.bh
+*.map
 
 # Compiled libraries
-*.libraray
+*.library
 
 # Executables
 NetConnect/Controller/src/NetConnect
